@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:novelty/screens/toc_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 
@@ -185,6 +186,17 @@ class _RankingListState extends State<RankingList> {
             title: Text(title),
             subtitle: Text(
                 'Nコード: ${item['ncode'] ?? 'N/A'} - ${item['pt'] ?? 0}pt\nジャンル: $genreName - $status'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TocPage(
+                    ncode: (item['ncode'] as String).toLowerCase(),
+                    title: title,
+                  ),
+                ),
+              );
+            },
           );
         },
       ),

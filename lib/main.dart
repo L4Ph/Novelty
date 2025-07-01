@@ -3,8 +3,7 @@ import 'package:novelty/screens/ranking_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
-  const envFile = String.fromEnvironment('env');
-  await dotenv.load(fileName: envFile);
+  await dotenv.load(fileName: '.env');
 
   runApp(const MyApp());
 }

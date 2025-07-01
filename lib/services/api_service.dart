@@ -1,9 +1,37 @@
 import 'dart:convert';
 import 'package:archive/archive.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 
 class ApiService {
   final CacheManager _cacheManager = DefaultCacheManager();
+  final String _noveltyApiUrl = dotenv.env['NOVELTY_API_URL'] ?? '';
+
+  Future<dynamic> _fetchJsonData(String url) async {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return json.decode(utf8.decode(response.bodyBytes));
+    } else {
+      throw Exception('Failed to load data from $url');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchNovelInfo(String ncode) async {
+    if (_noveltyApiUrl.isEmpty) {
+      throw Exception('NOVELTY_API_URL is not set');
+    }
+    final url = '$_noveltyApiUrl/$ncode';
+    return await _fetchJsonData(url);
+  }
+
+  Future<Map<String, dynamic>> fetchEpisode(String ncode, int episode) async {
+    if (_noveltyApiUrl.isEmpty) {
+      throw Exception('NOVELTY_API_URL is not set');
+    }
+    final url = '$_noveltyApiUrl/$ncode/$episode';
+    return await _fetchJsonData(url);
+  }
 
   Future<List<dynamic>> _fetchData(String url) async {
     final file = await _cacheManager.getSingleFile(url);
