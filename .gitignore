@@ -1,4 +1,13 @@
 
 # FVM Version Cache
 .fvm/
+
+# Files and directories created by pub
+.dart_tool
+.packages
+.pub
+pubspec.lock
+build/
 .env
+
+coverage/
