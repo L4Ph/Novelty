@@ -194,6 +194,7 @@ class _RankingListState extends State<RankingList> {
               final novelInfo = await _apiService.fetchNovelInfo(ncode);
 
               if (novelInfo.containsKey('episodes')) {
+                // This is a series, navigate to TocPage
                 Navigator.push(
                   // ignore: use_build_context_synchronously
                   context,
@@ -202,10 +203,12 @@ class _RankingListState extends State<RankingList> {
                       ncode: ncode,
                       title: title,
                       episodes: novelInfo['episodes'],
+                      novelType: 1, // Explicitly set as series
                     ),
                   ),
                 );
               } else if (novelInfo.containsKey('body')) {
+                // This is a short story, navigate to NovelPage
                 Navigator.push(
                   // ignore: use_build_context_synchronously
                   context,
@@ -213,6 +216,7 @@ class _RankingListState extends State<RankingList> {
                     builder: (context) => NovelPage(
                       ncode: ncode,
                       title: title,
+                      novelType: 2, // Explicitly set as short story
                     ),
                   ),
                 );

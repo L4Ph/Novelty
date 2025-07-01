@@ -51,7 +51,6 @@ class _NovelContentState extends State<NovelContent> {
           return Container(
             color: settings.colorScheme.surface,
             child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16.0),
               child: Text(
                 content.replaceAll(RegExp(r'<br>'), '\n'),

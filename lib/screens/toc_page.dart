@@ -5,12 +5,14 @@ class TocPage extends StatelessWidget {
   final String ncode;
   final String title;
   final List<dynamic> episodes;
+  final int novelType;
 
   const TocPage({
     super.key,
     required this.ncode,
     required this.title,
     required this.episodes,
+    required this.novelType,
   });
 
   @override
@@ -33,6 +35,7 @@ class TocPage extends StatelessWidget {
                     ncode: ncode,
                     episode: index + 1,
                     title: episode['title'],
+                    novelType: 1, // Always a series from TocPage
                   ),
                 ),
               );

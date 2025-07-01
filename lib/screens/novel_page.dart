@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:novelty/widgets/novel_episode_page.dart';
+import 'package:novelty/widgets/novel_content.dart';
 
 class NovelPage extends StatefulWidget {
   final String ncode;
   final String title;
   final int? episode;
+  final int novelType;
 
   const NovelPage({
     super.key,
     required this.ncode,
     required this.title,
     this.episode,
+    required this.novelType,
   });
 
   @override
@@ -18,19 +20,21 @@ class NovelPage extends StatefulWidget {
 }
 
 class _NovelPageState extends State<NovelPage> {
-  late PageController _pageController;
+  PageController? _pageController;
   late int _currentEpisode;
 
   @override
   void initState() {
     super.initState();
     _currentEpisode = widget.episode ?? 1;
-    _pageController = PageController(initialPage: _currentEpisode - 1);
+    if (widget.novelType != 2) {
+      _pageController = PageController(initialPage: _currentEpisode - 1);
+    }
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _pageController?.dispose();
     super.dispose();
   }
 
@@ -38,23 +42,24 @@ class _NovelPageState extends State<NovelPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.title} - $_currentEpisode話'),
+        title: Text(widget.novelType == 2 ? widget.title : '${widget.title} - $_currentEpisode話'),
       ),
-      body: PageView.builder(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentEpisode = index + 1;
-          });
-        },
-        itemBuilder: (context, index) {
-          return NovelEpisodePage(
-            ncode: widget.ncode,
-            episode: index + 1,
-            pageController: _pageController,
-          );
-        },
-      ),
+      body: widget.novelType == 2
+          ? NovelContent(ncode: widget.ncode, episode: 1)
+          : PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentEpisode = index + 1;
+                });
+              },
+              itemBuilder: (context, index) {
+                return NovelContent(
+                  ncode: widget.ncode,
+                  episode: index + 1,
+                );
+              },
+            ),
     );
   }
 }
