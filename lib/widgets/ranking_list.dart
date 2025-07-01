@@ -213,7 +213,6 @@ class _RankingListState extends State<RankingList> {
                     builder: (context) => NovelPage(
                       ncode: ncode,
                       title: title,
-                      body: novelInfo['body'],
                     ),
                   ),
                 );

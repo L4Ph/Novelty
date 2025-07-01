@@ -41,6 +41,7 @@ dependencies:
   google_fonts: ^6.2.1
   provider: ^6.1.5
   shared_preferences: ^2.5.3
+  flutter_colorpicker: ^1.1.0
 
 dev_dependencies:
   flutter_test:

@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:novelty/screens/ranking_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:novelty/utils/font_provider.dart';
+import 'package:novelty/utils/settings_provider.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: '.env');
 
   runApp(
     ChangeNotifierProvider(
-      create: (context) => FontProvider(),
+      create: (context) => SettingsProvider(),
       child: const MyApp(),
     ),
   );
@@ -20,15 +20,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<FontProvider>(
-      builder: (context, fontProvider, child) {
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, child) {
         return MaterialApp(
           title: '小説ランキング',
           theme: ThemeData(
-            primarySwatch: Colors.blue,
-            textTheme: fontProvider.selectedFontTheme.apply(
-              bodyColor: Colors.black,
-              displayColor: Colors.black,
+            colorScheme: settings.colorScheme,
+            textTheme: settings.selectedFontTheme.apply(
+              bodyColor: settings.colorScheme.onSurface,
+              displayColor: settings.colorScheme.onSurface,
             ),
           ),
           home: const RankingPage(),
