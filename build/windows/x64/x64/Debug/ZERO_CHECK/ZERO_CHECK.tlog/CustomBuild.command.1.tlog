@@ -1,0 +1,10 @@
+^C:\USERS\L4PH\DOCUMENTS\GIT\NOVELTY\BUILD\WINDOWS\X64\CMAKEFILES\C8BD755EED140B6E8998FBF2434F0650\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SC:/Users/L4Ph/Documents/git/novelty/windows -BC:/Users/L4Ph/Documents/git/novelty/build/windows/x64 --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/L4Ph/Documents/git/novelty/build/windows/x64/novelty.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
