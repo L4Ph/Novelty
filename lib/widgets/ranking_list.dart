@@ -32,10 +32,34 @@ class _RankingListState extends State<RankingList> {
 
   Future<void> _fetchData() async {
     try {
-      final data = await _apiService.fetchRankingAndDetails(widget.rankingType);
+      final ranking = await _apiService.fetchRanking(widget.rankingType);
+      final ncodes =
+          ranking.map((item) => item['ncode'] as String).toList();
+      final details = await _apiService.fetchNovelDetails(ncodes);
+
+      final List<Map<String, dynamic>> allData = [];
+      for (var rankItem in ranking) {
+        final ncode = rankItem['ncode'];
+        if (details.containsKey(ncode)) {
+          final detail = details[ncode];
+          detail['rank'] = rankItem['rank'];
+          detail['pt'] = rankItem['pt'];
+          allData.add(detail);
+        } else {
+          allData.add({
+            'ncode': ncode,
+            'title': 'タイトル取得失敗',
+            'rank': rankItem['rank'],
+            'pt': rankItem['pt'],
+            'end': -1,
+            'genre': -1,
+          });
+        }
+      }
+
       if (!mounted) return;
       setState(() {
-        _allNovelData = data;
+        _allNovelData = allData;
         _applyFilters();
         _isLoading = false;
       });
