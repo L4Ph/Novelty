@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:novelty/services/api_service.dart';
 import 'package:novelty/screens/novel_page.dart';
-import 'package:novelty/widgets/novel_content.dart';
 
 class TocPage extends StatelessWidget {
   final String ncode;

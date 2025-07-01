@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:archive/archive.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
@@ -86,7 +87,9 @@ class ApiService {
     try {
       rankingData = await _fetchData(rankingUrl);
     } catch (e) {
-      print('Failed to fetch ranking data: $e');
+      if (kDebugMode) {
+        print('Failed to fetch ranking data: $e');
+      }
       return [];
     }
 
@@ -114,8 +117,10 @@ class ApiService {
           }
         }
       } catch (e) {
-        print(
+        if (kDebugMode) {
+          print(
             'An error occurred while fetching novel details for ncodes: $ncodesParam. Error: $e');
+        }
       }
     }
 

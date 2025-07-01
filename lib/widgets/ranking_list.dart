@@ -19,7 +19,7 @@ class _RankingListState extends State<RankingList> {
   List<Map<String, dynamic>> _filteredNovelData = [];
   bool _isLoading = true;
   String _errorMessage = '';
-  int _itemsPerPage = 50;
+  final int _itemsPerPage = 50;
   int _currentPage = 1;
 
   bool _showOnlyOngoing = false;
@@ -111,7 +111,7 @@ class _RankingListState extends State<RankingList> {
                           value: genre['id'],
                           child: Text(genre['name']),
                         );
-                      }).toList(),
+                      }),
                     ],
                     onChanged: (int? newValue) {
                       setState(() {
@@ -195,6 +195,7 @@ class _RankingListState extends State<RankingList> {
 
               if (novelInfo.containsKey('episodes')) {
                 Navigator.push(
+                  // ignore: use_build_context_synchronously
                   context,
                   MaterialPageRoute(
                     builder: (context) => TocPage(
@@ -206,6 +207,7 @@ class _RankingListState extends State<RankingList> {
                 );
               } else if (novelInfo.containsKey('body')) {
                 Navigator.push(
+                  // ignore: use_build_context_synchronously
                   context,
                   MaterialPageRoute(
                     builder: (context) => NovelPage(
