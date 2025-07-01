@@ -20,6 +20,9 @@ q Quit (terminate the application on the device).
 # APIドキュメント
 それぞれのドキュメントは、以下にあります。
 
+## Novelty API
+- [Novelty API](./docs/novelty_api/api.md)
+
 ## なろう小説
 - [なろう小説API](./docs/narou_api/novel_api.md)
 - [なろう小説ランキングAPI](./docs/narou_api/ranking_api.md)
