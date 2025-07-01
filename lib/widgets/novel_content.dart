@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:novelty/services/api_service.dart';
+import 'package:Novelty/services/api_service.dart';
 import 'package:provider/provider.dart';
-import 'package:novelty/utils/settings_provider.dart';
+import 'package:Novelty/utils/settings_provider.dart';
 
 class NovelContent extends StatefulWidget {
   final String ncode;

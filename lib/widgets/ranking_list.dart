@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:novelty/screens/novel_page.dart';
-import 'package:novelty/screens/toc_page.dart';
-import 'package:novelty/services/api_service.dart';
-import 'package:novelty/utils/app_constants.dart';
+import 'package:Novelty/screens/novel_page.dart';
+import 'package:Novelty/screens/toc_page.dart';
+import 'package:Novelty/services/api_service.dart';
+import 'package:Novelty/utils/app_constants.dart';
 
 class RankingList extends StatefulWidget {
   final String rankingType;

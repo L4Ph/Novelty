@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:novelty/utils/settings_provider.dart';
+import 'package:Novelty/utils/settings_provider.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class SettingsPage extends StatelessWidget {

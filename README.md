@@ -1,6 +1,7 @@
-# novelty
+# Novelty
 
-A new Flutter project.
+Noveltyは、よりモダンでシンプルさ、透明性の高さをもって開発された、なろう小説向けのビュアーです。
+Flutterによるクロスプラットフォームにより、あらゆるOS上にて、同じ体験を得ることができます。
 
 ## Getting Started
 

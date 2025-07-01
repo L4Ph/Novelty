@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:novelty/services/api_service.dart';
-import 'package:novelty/widgets/novel_content.dart';
+import 'package:Novelty/services/api_service.dart';
+import 'package:Novelty/widgets/novel_content.dart';
 
 class NovelPage extends StatefulWidget {
   final String ncode;
@@ -48,9 +48,7 @@ class _NovelPageState extends State<NovelPage> {
       setState(() {
         _episodeTitle = episodeData['title'];
         _currentEpisode = episode;
-        if (_totalEpisodes == null) {
-          _totalEpisodes = episodeData['totalEpisodes'];
-        }
+        _totalEpisodes ??= episodeData['totalEpisodes'];
       });
     } catch (e) {
       // Handle error

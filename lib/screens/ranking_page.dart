@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:novelty/screens/settings_page.dart';
-import 'package:novelty/widgets/ranking_list.dart';
+import 'package:Novelty/screens/settings_page.dart';
+import 'package:Novelty/widgets/ranking_list.dart';
 
 class RankingPage extends StatefulWidget {
   const RankingPage({super.key});

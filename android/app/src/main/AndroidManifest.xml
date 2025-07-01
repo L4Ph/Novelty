@@ -1,6 +1,6 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="moe.l4ph.novelty">
     <application
-        android:label="novelty"
+        android:label="Novelty"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

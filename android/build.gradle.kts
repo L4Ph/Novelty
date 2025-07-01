@@ -19,3 +19,28 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+andoid {
+    signingConfigs {
+        create("release") {
+            keyAlias = localProperties.getProperty("keyAlias")
+            keyPassword = localProperties.getProperty("keyPassword")
+            storeFile = file(localProperties.getProperty("storeFile"))
+            storePassword = localProperties.getProperty("storePassword")
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+}
