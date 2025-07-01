@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
 class NovelPage extends StatefulWidget {
@@ -20,16 +21,18 @@ class NovelPage extends StatefulWidget {
 }
 
 class _NovelPageState extends State<NovelPage> {
+  final ApiService _apiService = ApiService();
   PageController? _pageController;
   late int _currentEpisode;
+  String _episodeTitle = '';
+  int? _totalEpisodes;
 
   @override
   void initState() {
     super.initState();
     _currentEpisode = widget.episode ?? 1;
-    if (widget.novelType != 2) {
-      _pageController = PageController(initialPage: _currentEpisode - 1);
-    }
+    _pageController = PageController(initialPage: _currentEpisode - 1);
+    _fetchEpisodeData(_currentEpisode);
   }
 
   @override
@@ -38,20 +41,39 @@ class _NovelPageState extends State<NovelPage> {
     super.dispose();
   }
 
+  Future<void> _fetchEpisodeData(int episode) async {
+    try {
+      final episodeData = await _apiService.fetchEpisode(widget.ncode, episode);
+      if (!mounted) return;
+      setState(() {
+        _episodeTitle = episodeData['title'];
+        _currentEpisode = episode;
+        if (_totalEpisodes == null) {
+          _totalEpisodes = episodeData['totalEpisodes'];
+        }
+      });
+    } catch (e) {
+      // Handle error
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final appBarTitle = _episodeTitle.isEmpty
+        ? widget.title
+        : (widget.novelType == 2 ? _episodeTitle : '${widget.title} - $_episodeTitle');
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.novelType == 2 ? widget.title : '${widget.title} - $_currentEpisode話'),
+        title: Text(appBarTitle),
       ),
-      body: widget.novelType == 2
-          ? NovelContent(ncode: widget.ncode, episode: 1)
+      body: _totalEpisodes == null
+          ? const Center(child: CircularProgressIndicator())
           : PageView.builder(
               controller: _pageController,
+              itemCount: _totalEpisodes,
               onPageChanged: (index) {
-                setState(() {
-                  _currentEpisode = index + 1;
-                });
+                _fetchEpisodeData(index + 1);
               },
               itemBuilder: (context, index) {
                 return NovelContent(
