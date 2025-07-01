@@ -81,9 +81,13 @@ class ApiService {
     final date = _getFormattedDate(rankingType);
     final rankingUrl =
         'https://api.syosetu.com/rank/rankget/?rtype=$date-$rankingType&out=json&gzip=5';
-    var rankingData = await _fetchData(rankingUrl);
-    if (rankingData.isNotEmpty && rankingData[0]['allcount'] != null) {
-      rankingData = rankingData.sublist(1);
+
+    List<dynamic> rankingData;
+    try {
+      rankingData = await _fetchData(rankingUrl);
+    } catch (e) {
+      print('Failed to fetch ranking data: $e');
+      return [];
     }
 
     final ncodes =
@@ -93,7 +97,7 @@ class ApiService {
     }
 
     final Map<String, dynamic> novelDetails = {};
-    const chunkSize = 50;
+    const chunkSize = 20;
 
     for (var i = 0; i < ncodes.length; i += chunkSize) {
       final chunk = ncodes.sublist(
@@ -104,13 +108,14 @@ class ApiService {
 
       try {
         final detailsData = await _fetchData(detailsUrl);
-        // The first element is a metadata object, so skip it.
-        for (var item in detailsData.sublist(1)) {
-          novelDetails[item['ncode']] = item;
+        if (detailsData.isNotEmpty && detailsData[0]['allcount'] != null) {
+          for (var item in detailsData.sublist(1)) {
+            novelDetails[item['ncode']] = item;
+          }
         }
       } catch (e) {
         print(
-            'An error occurred while fetching novel details for chunk $i: $e');
+            'An error occurred while fetching novel details for ncodes: $ncodesParam. Error: $e');
       }
     }
 
@@ -128,6 +133,7 @@ class ApiService {
           'title': 'タイトル取得失敗',
           'rank': rankItem['rank'],
           'pt': rankItem['pt'],
+          'novel_type': 1,
           'end': -1,
           'genre': -1,
         });
