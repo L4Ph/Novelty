@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:novelty/screens/novel_page.dart';
 import 'package:novelty/screens/toc_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
@@ -32,30 +33,8 @@ class _RankingListState extends State<RankingList> {
 
   Future<void> _fetchData() async {
     try {
-      final ranking = await _apiService.fetchRanking(widget.rankingType);
-      final ncodes =
-          ranking.map((item) => item['ncode'] as String).toList();
-      final details = await _apiService.fetchNovelDetails(ncodes);
-
-      final List<Map<String, dynamic>> allData = [];
-      for (var rankItem in ranking) {
-        final ncode = rankItem['ncode'];
-        if (details.containsKey(ncode)) {
-          final detail = details[ncode];
-          detail['rank'] = rankItem['rank'];
-          detail['pt'] = rankItem['pt'];
-          allData.add(detail);
-        } else {
-          allData.add({
-            'ncode': ncode,
-            'title': 'タイトル取得失敗',
-            'rank': rankItem['rank'],
-            'pt': rankItem['pt'],
-            'end': -1,
-            'genre': -1,
-          });
-        }
-      }
+      final allData =
+          await _apiService.fetchRankingAndDetails(widget.rankingType);
 
       if (!mounted) return;
       setState(() {
@@ -211,15 +190,30 @@ class _RankingListState extends State<RankingList> {
             subtitle: Text(
                 'Nコード: ${item['ncode'] ?? 'N/A'} - ${item['pt'] ?? 0}pt\nジャンル: $genreName - $status'),
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TocPage(
-                    ncode: (item['ncode'] as String).toLowerCase(),
-                    title: title,
+              final novelType = item['novel_type'] ?? 1;
+              if (novelType == 1) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TocPage(
+                      ncode: (item['ncode'] as String).toLowerCase(),
+                      title: title,
+                      novelType: novelType,
+                    ),
                   ),
-                ),
-              );
+                );
+              } else if (novelType == 2) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => NovelPage(
+                      ncode: (item['ncode'] as String).toLowerCase(),
+                      title: title,
+                      novelType: novelType,
+                    ),
+                  ),
+                );
+              }
             },
           );
         },
