@@ -189,27 +189,29 @@ class _RankingListState extends State<RankingList> {
             title: Text(title),
             subtitle: Text(
                 'Nコード: ${item['ncode'] ?? 'N/A'} - ${item['pt'] ?? 0}pt\nジャンル: $genreName - $status'),
-            onTap: () {
-              final novelType = item['novel_type'] ?? 1;
-              if (novelType == 1) {
+            onTap: () async {
+              final ncode = (item['ncode'] as String).toLowerCase();
+              final novelInfo = await _apiService.fetchNovelInfo(ncode);
+
+              if (novelInfo.containsKey('episodes')) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => TocPage(
-                      ncode: (item['ncode'] as String).toLowerCase(),
+                      ncode: ncode,
                       title: title,
-                      novelType: novelType,
+                      episodes: novelInfo['episodes'],
                     ),
                   ),
                 );
-              } else if (novelType == 2) {
+              } else if (novelInfo.containsKey('body')) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => NovelPage(
-                      ncode: (item['ncode'] as String).toLowerCase(),
+                      ncode: ncode,
                       title: title,
-                      novelType: novelType,
+                      body: novelInfo['body'],
                     ),
                   ),
                 );

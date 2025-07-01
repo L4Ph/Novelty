@@ -3,83 +3,45 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/screens/novel_page.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
-class TocPage extends StatefulWidget {
+class TocPage extends StatelessWidget {
   final String ncode;
   final String title;
-  final int novelType;
+  final List<dynamic> episodes;
 
-  const TocPage(
-      {super.key,
-      required this.ncode,
-      required this.title,
-      required this.novelType});
-
-  @override
-  State<TocPage> createState() => _TocPageState();
-}
-
-class _TocPageState extends State<TocPage> {
-  final ApiService _apiService = ApiService();
-  late Future<Map<String, dynamic>> _novelInfo;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.novelType != 2) {
-      _novelInfo = _apiService.fetchNovelInfo(widget.ncode);
-    }
-  }
+  const TocPage({
+    super.key,
+    required this.ncode,
+    required this.title,
+    required this.episodes,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(title),
       ),
-      body: widget.novelType == 2
-          ? NovelContent(ncode: widget.ncode, episode: 1)
-          : FutureBuilder<Map<String, dynamic>>(
-              future: _novelInfo,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No data found.'));
-                }
-
-                final novelInfo = snapshot.data!;
-                final episodes = novelInfo['episodes'] as List?;
-
-                if (episodes == null || episodes.isEmpty) {
-                  return const Center(child: Text('No episodes found.'));
-                }
-
-                return ListView.builder(
-                  itemCount: episodes.length,
-                  itemBuilder: (context, index) {
-                    final episode = episodes[index];
-                    return ListTile(
-                      title: Text(episode['title']),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => NovelPage(
-                              ncode: widget.ncode,
-                              episode: index + 1,
-                              title: episode['title'],
-                              novelType: 1,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
+      body: ListView.builder(
+        itemCount: episodes.length,
+        itemBuilder: (context, index) {
+          final episode = episodes[index];
+          return ListTile(
+            title: Text(episode['title']),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NovelPage(
+                    ncode: ncode,
+                    episode: index + 1,
+                    title: episode['title'],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
