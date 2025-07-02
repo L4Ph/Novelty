@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="moe.l4ph.novelty">
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="Novelty"
         android:name="${applicationName}"
