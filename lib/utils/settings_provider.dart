@@ -61,7 +61,7 @@ class SettingsProvider with ChangeNotifier {
   Future<void> setAndSaveSeedColor(Color color) async {
     _seedColor = color;
     _colorScheme = ColorScheme.fromSeed(seedColor: color);
-    await _saveInt(_seedColorPreferenceKey, color.value);
+    await _saveInt(_seedColorPreferenceKey, color.toARGB32());
     notifyListeners();
   }
 
@@ -70,7 +70,7 @@ class SettingsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _selectedFont = prefs.getString(_fontPreferenceKey) ?? availableFonts.first;
     _fontSize = prefs.getDouble(_fontSizePreferenceKey) ?? 16.0;
-    _seedColor = Color(prefs.getInt(_seedColorPreferenceKey) ?? Colors.blue.value);
+    _seedColor = Color(prefs.getInt(_seedColorPreferenceKey) ?? Colors.blue.toARGB32());
     _colorScheme = ColorScheme.fromSeed(seedColor: _seedColor);
     notifyListeners();
   }

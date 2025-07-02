@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:Novelty/screens/novel_page.dart';
-import 'package:Novelty/screens/toc_page.dart';
-import 'package:Novelty/services/api_service.dart';
-import 'package:Novelty/utils/app_constants.dart';
+import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/screens/novel_page.dart';
+import 'package:novelty/screens/toc_page.dart';
+import 'package:novelty/services/api_service.dart';
+import 'package:novelty/utils/app_constants.dart';
 
 class RankingList extends StatefulWidget {
   final String rankingType;
@@ -15,8 +16,8 @@ class RankingList extends StatefulWidget {
 
 class _RankingListState extends State<RankingList> {
   final ApiService _apiService = ApiService();
-  List<Map<String, dynamic>> _allNovelData = [];
-  List<Map<String, dynamic>> _filteredNovelData = [];
+  List<RankingResponse> _allNovelData = [];
+  List<RankingResponse> _filteredNovelData = [];
   bool _isLoading = true;
   String _errorMessage = '';
   final int _itemsPerPage = 50;
@@ -52,15 +53,15 @@ class _RankingListState extends State<RankingList> {
   }
 
   void _applyFilters() {
-    List<Map<String, dynamic>> filtered = List.from(_allNovelData);
+    List<RankingResponse> filtered = List.from(_allNovelData);
 
     if (_showOnlyOngoing) {
-      filtered = filtered.where((novel) => novel['end'] == 0).toList();
+      filtered = filtered.where((novel) => novel.end == 0).toList();
     }
 
     if (_selectedGenre != null) {
       filtered =
-          filtered.where((novel) => novel['genre'] == _selectedGenre).toList();
+          filtered.where((novel) => novel.genre == _selectedGenre).toList();
     }
 
     if (!mounted) return;
@@ -82,14 +83,14 @@ class _RankingListState extends State<RankingList> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Filter Options'),
+          title: const Text('Filter Options'),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   CheckboxListTile(
-                    title: Text('連載中のみ'),
+                    title: const Text('連載中のみ'),
                     value: _showOnlyOngoing,
                     onChanged: (bool? value) {
                       setState(() {
@@ -99,17 +100,17 @@ class _RankingListState extends State<RankingList> {
                   ),
                   DropdownButton<int?>(
                     value: _selectedGenre,
-                    hint: Text('ジャンルを選択'),
+                    hint: const Text('ジャンルを選択'),
                     isExpanded: true,
                     items: [
-                      DropdownMenuItem<int?>(
+                      const DropdownMenuItem<int?>(
                         value: null,
                         child: Text('すべて'),
                       ),
                       ...genreList.map((genre) {
                         return DropdownMenuItem<int?>(
                           value: genre['id'],
-                          child: Text(genre['name']),
+                          child: Text(genre['name'] as String),
                         );
                       }),
                     ],
@@ -125,13 +126,13 @@ class _RankingListState extends State<RankingList> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('キャンセル'),
+              child: const Text('キャンセル'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text('適用'),
+              child: const Text('適用'),
               onPressed: () {
                 _applyFilters();
                 Navigator.of(context).pop();
@@ -155,7 +156,7 @@ class _RankingListState extends State<RankingList> {
 
     final int totalItems = _filteredNovelData.length;
     final int endIndex = _currentPage * _itemsPerPage;
-    final List<Map<String, dynamic>> visibleData = _filteredNovelData.sublist(
+    final List<RankingResponse> visibleData = _filteredNovelData.sublist(
         0, endIndex > totalItems ? totalItems : endIndex);
 
     return Scaffold(
@@ -175,25 +176,25 @@ class _RankingListState extends State<RankingList> {
                 : const SizedBox.shrink();
           }
           final item = visibleData[index];
-          final title = item['title'] ?? 'No title';
-          final genreName = item['genre'] != -1
-              ? genreList.firstWhere((g) => g['id'] == item['genre'],
-                  orElse: () => {'name': '不明'})['name']
+          final title = item.title ?? 'タイトルなし';
+          final genreName = item.genre != null && item.genre != -1
+              ? genreList.firstWhere((g) => g['id'] == item.genre,
+                  orElse: () => {'name': '不明'})['name'] as String
               : '不明';
-          final status = item['end'] == -1
+          final status = item.end == null || item.end == -1
               ? '情報取得失敗'
-              : (item['end'] == 0 ? '連載中' : '完結済');
+              : (item.end == 0 ? '連載中' : '完結済');
 
           return ListTile(
-            leading: Text('${item['rank']}'),
+            leading: Text('${item.rank ?? ''}'),
             title: Text(title),
             subtitle: Text(
-                'Nコード: ${item['ncode'] ?? 'N/A'} - ${item['pt'] ?? 0}pt\nジャンル: $genreName - $status'),
+                'Nコード: ${item.ncode} - ${item.pt ?? 0}pt\nジャンル: $genreName - $status'),
             onTap: () async {
-              final ncode = (item['ncode'] as String).toLowerCase();
+              final ncode = item.ncode.toLowerCase();
               final novelInfo = await _apiService.fetchNovelInfo(ncode);
 
-              if (novelInfo.containsKey('episodes')) {
+              if (novelInfo.episodes != null) {
                 // This is a series, navigate to TocPage
                 Navigator.push(
                   // ignore: use_build_context_synchronously
@@ -201,13 +202,13 @@ class _RankingListState extends State<RankingList> {
                   MaterialPageRoute(
                     builder: (context) => TocPage(
                       ncode: ncode,
-                      title: title,
-                      episodes: novelInfo['episodes'],
+                      title: novelInfo.title ?? '',
+                      episodes: novelInfo.episodes!,
                       novelType: 1, // Explicitly set as series
                     ),
                   ),
                 );
-              } else if (novelInfo.containsKey('body')) {
+              } else {
                 // This is a short story, navigate to NovelPage
                 Navigator.push(
                   // ignore: use_build_context_synchronously
@@ -215,7 +216,8 @@ class _RankingListState extends State<RankingList> {
                   MaterialPageRoute(
                     builder: (context) => NovelPage(
                       ncode: ncode,
-                      title: title,
+                      title: novelInfo.title ?? '',
+                      episode: 1,
                       novelType: 2, // Explicitly set as short story
                     ),
                   ),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:Novelty/screens/ranking_page.dart';
+import 'package:novelty/screens/ranking_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:Novelty/utils/settings_provider.dart';
+import 'package:novelty/utils/settings_provider.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: '.env');

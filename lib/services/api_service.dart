@@ -1,37 +1,43 @@
 import 'dart:convert';
 import 'package:archive/archive.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
+import 'package:novelty/models/episode.dart';
+import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/ranking_response.dart';
 
 class ApiService {
+  final Dio _dio = Dio();
   final CacheManager _cacheManager = DefaultCacheManager();
   final String _noveltyApiUrl = dotenv.env['NOVELTY_API_URL'] ?? '';
 
   Future<dynamic> _fetchJsonData(String url) async {
-    final response = await http.get(Uri.parse(url));
+    final response = await _dio.get(url);
     if (response.statusCode == 200) {
-      return json.decode(utf8.decode(response.bodyBytes));
+      return response.data;
     } else {
       throw Exception('Failed to load data from $url');
     }
   }
 
-  Future<Map<String, dynamic>> fetchNovelInfo(String ncode) async {
+  Future<NovelInfo> fetchNovelInfo(String ncode) async {
     if (_noveltyApiUrl.isEmpty) {
       throw Exception('NOVELTY_API_URL is not set');
     }
     final url = '$_noveltyApiUrl/$ncode';
-    return await _fetchJsonData(url);
+    final data = await _fetchJsonData(url);
+    return NovelInfo.fromJson(data);
   }
 
-  Future<Map<String, dynamic>> fetchEpisode(String ncode, int episode) async {
+  Future<Episode> fetchEpisode(String ncode, int episode) async {
     if (_noveltyApiUrl.isEmpty) {
       throw Exception('NOVELTY_API_URL is not set');
     }
     final url = '$_noveltyApiUrl/$ncode/$episode';
-    return await _fetchJsonData(url);
+    final data = await _fetchJsonData(url);
+    return Episode.fromJson(data);
   }
 
   Future<List<dynamic>> _fetchData(String url) async {
@@ -77,7 +83,7 @@ class ApiService {
     return '0$n';
   }
 
-  Future<List<Map<String, dynamic>>> fetchRankingAndDetails(
+  Future<List<RankingResponse>> fetchRankingAndDetails(
       String rankingType) async {
     final date = _getFormattedDate(rankingType);
     final rankingUrl =
@@ -124,24 +130,27 @@ class ApiService {
       }
     }
 
-    final List<Map<String, dynamic>> allData = [];
+    final List<RankingResponse> allData = [];
     for (var rankItem in rankingData) {
       final ncode = rankItem['ncode'];
       if (novelDetails.containsKey(ncode)) {
         final details = novelDetails[ncode];
         details['rank'] = rankItem['rank'];
         details['pt'] = rankItem['pt'];
-        allData.add(details);
+        allData.add(RankingResponse.fromJson(details));
       } else {
-        allData.add({
+        allData.add(RankingResponse.fromJson({
           'ncode': ncode,
           'title': 'タイトル取得失敗',
           'rank': rankItem['rank'],
           'pt': rankItem['pt'],
-          'novel_type': 1,
-          'end': -1,
-          'genre': -1,
-        });
+          'novel_type': null,
+          'end': null,
+          'genre': null,
+          'writer': null,
+          'story': null,
+          'userid': null,
+        }));
       }
     }
     return allData;
