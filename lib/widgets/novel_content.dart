@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:Novelty/services/api_service.dart';
 import 'package:provider/provider.dart';
 import 'package:Novelty/utils/settings_provider.dart';
@@ -52,12 +53,15 @@ class _NovelContentState extends State<NovelContent> {
             color: settings.colorScheme.surface,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
-              child: Text(
-                content.replaceAll(RegExp(r'<br>'), '\n'),
-                style: TextStyle(
-                  fontSize: settings.fontSize,
-                  color: settings.colorScheme.onSurface,
-                ),
+              child: Html(
+                data: content,
+                style: {
+                  "body": Style(
+                    fontSize: FontSize(settings.fontSize),
+                    color: settings.colorScheme.onSurface,
+                    whiteSpace: WhiteSpace.normal,
+                  ),
+                },
               ),
             ),
           );
