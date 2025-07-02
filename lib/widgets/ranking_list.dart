@@ -202,7 +202,7 @@ class _RankingListState extends State<RankingList> {
                   MaterialPageRoute(
                     builder: (context) => TocPage(
                       ncode: ncode,
-                      title: title,
+                      title: novelInfo.title ?? '',
                       episodes: novelInfo.episodes!,
                       novelType: 1, // Explicitly set as series
                     ),
@@ -216,7 +216,7 @@ class _RankingListState extends State<RankingList> {
                   MaterialPageRoute(
                     builder: (context) => NovelPage(
                       ncode: ncode,
-                      title: title,
+                      title: novelInfo.title ?? '',
                       episode: 1,
                       novelType: 2, // Explicitly set as short story
                     ),
