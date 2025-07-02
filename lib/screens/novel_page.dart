@@ -43,11 +43,18 @@ class _NovelPageState extends State<NovelPage> {
   }
 
   Future<void> _fetchNovelInfo() async {
+    if (widget.novelType == 2) {
+      if (!mounted) return;
+      setState(() {
+        _totalEpisodes = 1;
+      });
+      return;
+    }
     try {
       final novelInfo = await _apiService.fetchNovelInfo(widget.ncode);
       if (!mounted) return;
       setState(() {
-        _totalEpisodes = novelInfo.generalAllNo;
+        _totalEpisodes = novelInfo.generalAllNo ?? 1;
       });
     } catch (e) {
       // Handle error
@@ -59,7 +66,7 @@ class _NovelPageState extends State<NovelPage> {
       final episodeData = await _apiService.fetchEpisode(widget.ncode, episode);
       if (!mounted) return;
       setState(() {
-        _episodeTitle = episodeData.title;
+        _episodeTitle = episodeData.title ?? '';
         _currentEpisode = episode;
       });
     } catch (e) {

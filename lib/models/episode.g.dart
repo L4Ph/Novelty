@@ -7,11 +7,11 @@ part of 'episode.dart';
 // **************************************************************************
 
 Episode _$EpisodeFromJson(Map<String, dynamic> json) => Episode(
-      title: json['title'] as String,
-      ncode: json['ncode'] as String,
-      index: (json['index'] as num).toInt(),
-      body: json['body'] as String,
-      novelUpdatedAt: json['novelUpdatedAt'] as String,
+      title: json['title'] as String?,
+      ncode: json['ncode'] as String?,
+      index: (json['index'] as num?)?.toInt(),
+      body: json['body'] as String?,
+      novelUpdatedAt: json['novel_updated_at'] as String?,
     );
 
 Map<String, dynamic> _$EpisodeToJson(Episode instance) => <String, dynamic>{
@@ -19,5 +19,5 @@ Map<String, dynamic> _$EpisodeToJson(Episode instance) => <String, dynamic>{
       'ncode': instance.ncode,
       'index': instance.index,
       'body': instance.body,
-      'novelUpdatedAt': instance.novelUpdatedAt,
+      'novel_updated_at': instance.novelUpdatedAt,
     };
