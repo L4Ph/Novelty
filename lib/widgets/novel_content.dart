@@ -7,8 +7,14 @@ import 'package:novelty/utils/settings_provider.dart';
 class NovelContent extends StatefulWidget {
   final String ncode;
   final int episode;
+  final Episode? initialData;
 
-  const NovelContent({super.key, required this.ncode, required this.episode});
+  const NovelContent({
+    super.key,
+    required this.ncode,
+    required this.episode,
+    this.initialData,
+  });
 
   @override
   State<NovelContent> createState() => _NovelContentState();
@@ -21,16 +27,23 @@ class _NovelContentState extends State<NovelContent> {
   @override
   void initState() {
     super.initState();
-    _episodeData = _apiService.fetchEpisode(widget.ncode, widget.episode);
+    _loadEpisode();
   }
 
   @override
   void didUpdateWidget(NovelContent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.ncode != oldWidget.ncode || widget.episode != oldWidget.episode) {
-      setState(() {
-        _episodeData = _apiService.fetchEpisode(widget.ncode, widget.episode);
-      });
+    if (widget.ncode != oldWidget.ncode ||
+        widget.episode != oldWidget.episode) {
+      _loadEpisode();
+    }
+  }
+
+  void _loadEpisode() {
+    if (widget.initialData != null) {
+      _episodeData = Future.value(widget.initialData);
+    } else {
+      _episodeData = _apiService.fetchEpisode(widget.ncode, widget.episode);
     }
   }
 
@@ -40,14 +53,14 @@ class _NovelContentState extends State<NovelContent> {
     return FutureBuilder<Episode>(
       future: _episodeData,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            widget.initialData == null) {
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData) {
           return const Center(child: Text('No content available.'));
-        }
-        else {
+        } else {
           final content = snapshot.data!.body;
           return Container(
             color: settings.colorScheme.surface,

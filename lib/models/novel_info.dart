@@ -30,7 +30,7 @@ class NovelInfo {
   final int? kaiwaritu;
   final int? novelupdatedAt;
   final int? updatedAt;
-  final List<dynamic>? episodes;
+  final List<Map<String, dynamic>>? episodes;
 
   NovelInfo({
     this.title,

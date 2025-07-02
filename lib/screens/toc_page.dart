@@ -4,7 +4,7 @@ import 'package:novelty/screens/novel_page.dart';
 class TocPage extends StatelessWidget {
   final String ncode;
   final String title;
-  final List<dynamic> episodes;
+  final List<Map<String, dynamic>> episodes;
   final int novelType;
 
   const TocPage({
@@ -25,8 +25,9 @@ class TocPage extends StatelessWidget {
         itemCount: episodes.length,
         itemBuilder: (context, index) {
           final episode = episodes[index];
+          final episodeTitle = episode['title'] as String? ?? 'No Title';
           return ListTile(
-            title: Text(episode['title']),
+            title: Text(episodeTitle),
             onTap: () {
               Navigator.push(
                 context,
@@ -34,7 +35,7 @@ class TocPage extends StatelessWidget {
                   builder: (context) => NovelPage(
                     ncode: ncode,
                     episode: index + 1,
-                    title: episode['title'],
+                    title: title, // Pass the novel title
                     novelType: 1, // Always a series from TocPage
                   ),
                 ),

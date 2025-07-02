@@ -40,11 +40,15 @@ class ApiService {
     return Episode.fromJson(data);
   }
 
+  static List<dynamic> _parseJson(List<int> bytes) {
+    final decoded = utf8.decode(GZipDecoder().decodeBytes(bytes));
+    return json.decode(decoded);
+  }
+
   Future<List<dynamic>> _fetchData(String url) async {
     final file = await _cacheManager.getSingleFile(url);
     final bytes = await file.readAsBytes();
-    final decoded = utf8.decode(GZipDecoder().decodeBytes(bytes));
-    return json.decode(decoded);
+    return compute(_parseJson, bytes);
   }
 
   String _getFormattedDate(String rtype) {

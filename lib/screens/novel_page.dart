@@ -1,4 +1,7 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
+import 'package:novelty/models/episode.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
@@ -26,6 +29,8 @@ class _NovelPageState extends State<NovelPage> {
   late int _currentEpisode;
   String _episodeTitle = '';
   int? _totalEpisodes;
+
+  final LruMap<int, Future<Episode>> _episodeCache = LruMap(maximumSize: 5);
 
   @override
   void initState() {
@@ -61,16 +66,43 @@ class _NovelPageState extends State<NovelPage> {
     }
   }
 
-  Future<void> _fetchEpisodeData(int episode) async {
-    try {
-      final episodeData = await _apiService.fetchEpisode(widget.ncode, episode);
+  Future<Episode> _fetchEpisodeData(int episode) {
+    if (_episodeCache.containsKey(episode)) {
+      return _episodeCache[episode]!;
+    }
+    final future = _apiService.fetchEpisode(widget.ncode, episode);
+    _episodeCache[episode] = future;
+    future.then((data) {
       if (!mounted) return;
-      setState(() {
-        _episodeTitle = episodeData.title ?? '';
-        _currentEpisode = episode;
-      });
-    } catch (e) {
-      // Handle error
+      if (_currentEpisode == episode) {
+        setState(() {
+          _episodeTitle = data.title ?? '';
+        });
+      }
+    }).catchError((e) {
+      if (mounted) {
+        _episodeCache.remove(episode);
+      }
+      throw e;
+    });
+
+    // Prefetch next and previous episodes
+    _prefetchEpisode(episode + 1);
+    _prefetchEpisode(episode - 1);
+
+    return future;
+  }
+
+  void _prefetchEpisode(int episode) {
+    if (episode > 0 &&
+        (_totalEpisodes == null || episode <= _totalEpisodes!)) {
+      if (!_episodeCache.containsKey(episode)) {
+        _apiService.fetchEpisode(widget.ncode, episode).then((ep) {
+          _episodeCache[episode] = Future.value(ep);
+        }).catchError((_) {
+          // Prefetch failed, ignore.
+        });
+      }
     }
   }
 
@@ -92,17 +124,63 @@ class _NovelPageState extends State<NovelPage> {
               controller: _pageController,
               itemCount: _totalEpisodes,
               onPageChanged: (index) {
-                _fetchEpisodeData(index + 1);
+                setState(() {
+                  _currentEpisode = index + 1;
+                });
+                _fetchEpisodeData(_currentEpisode);
               },
               itemBuilder: (context, index) {
-                return NovelContent(
-                  ncode: widget.ncode,
-                  episode: index + 1,
+                return FutureBuilder<Episode>(
+                  future: _fetchEpisodeData(index + 1),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else if (!snapshot.hasData) {
+                      return const Center(child: Text('No content available.'));
+                    } else {
+                      return NovelContent(
+                        ncode: widget.ncode,
+                        episode: index + 1,
+                        initialData: snapshot.data,
+                      );
+                    }
+                  },
                 );
               },
             ),
     );
   }
+}
+
+class LruMap<K, V> {
+  final int _maximumSize;
+  final LinkedHashMap<K, V> _map = LinkedHashMap<K, V>();
+
+  LruMap({required int maximumSize}) : _maximumSize = maximumSize;
+
+  V? operator [](K key) {
+    final value = _map.remove(key);
+    if (value != null) {
+      _map[key] = value;
+    }
+    return value;
+  }
+
+  void operator []=(K key, V value) {
+    _map.remove(key);
+    _map[key] = value;
+    if (_map.length > _maximumSize) {
+      _map.remove(_map.keys.first);
+    }
+  }
+
+  bool containsKey(K key) => _map.containsKey(key);
+
+  V? remove(K key) => _map.remove(key);
+
+  void clear() => _map.clear();
 }
 
 
