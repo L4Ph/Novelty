@@ -155,9 +155,11 @@ class _RankingListState extends State<RankingList> {
     }
 
     final int totalItems = _filteredNovelData.length;
-    final int endIndex = _currentPage * _itemsPerPage;
-    final List<RankingResponse> visibleData = _filteredNovelData.sublist(
-        0, endIndex > totalItems ? totalItems : endIndex);
+    int displayItemCount = _currentPage * _itemsPerPage;
+    if (displayItemCount > totalItems) {
+      displayItemCount = totalItems;
+    }
+    final bool hasMore = displayItemCount < totalItems;
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -165,17 +167,16 @@ class _RankingListState extends State<RankingList> {
         child: const Icon(Icons.filter_list),
       ),
       body: ListView.builder(
-        itemCount: visibleData.length + 1,
+        itemCount: displayItemCount + (hasMore ? 1 : 0),
         itemBuilder: (context, index) {
-          if (index == visibleData.length) {
-            return totalItems > visibleData.length
-                ? TextButton(
-                    onPressed: _loadMore,
-                    child: const Text('さらに読み込む'),
-                  )
-                : const SizedBox.shrink();
+          if (index == displayItemCount) {
+            return TextButton(
+              onPressed: _loadMore,
+              child: const Text('さらに読み込む'),
+            );
           }
-          final item = visibleData[index];
+
+          final item = _filteredNovelData[index];
           final title = item.title ?? 'タイトルなし';
           final genreName = item.genre != null && item.genre != -1
               ? genreList.firstWhere((g) => g['id'] == item.genre,
