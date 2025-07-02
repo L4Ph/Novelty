@@ -1,4 +1,4 @@
-name: Novelty
+name: novelty
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -34,7 +34,6 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  http: ^1.2.2
   archive: ^4.0.7
   flutter_cache_manager: ^3.4.1
   flutter_dotenv: ^5.2.1
@@ -42,6 +41,10 @@ dependencies:
   provider: ^6.1.5
   shared_preferences: ^2.5.3
   flutter_colorpicker: ^1.1.0
+  dio: ^5.8.0+1
+  json_annotation: ^4.9.0
+  json_serializable: ^6.9.0
+  build_runner: ^2.5.4
 
 dev_dependencies:
   flutter_test:

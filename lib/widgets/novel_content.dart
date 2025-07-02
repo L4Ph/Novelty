@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:Novelty/services/api_service.dart';
+import 'package:novelty/models/episode.dart';
+import 'package:novelty/services/api_service.dart';
 import 'package:provider/provider.dart';
-import 'package:Novelty/utils/settings_provider.dart';
+import 'package:novelty/utils/settings_provider.dart';
 
 class NovelContent extends StatefulWidget {
   final String ncode;
@@ -15,7 +16,7 @@ class NovelContent extends StatefulWidget {
 
 class _NovelContentState extends State<NovelContent> {
   final ApiService _apiService = ApiService();
-  late Future<Map<String, dynamic>> _episodeData;
+  late Future<Episode> _episodeData;
 
   @override
   void initState() {
@@ -36,18 +37,18 @@ class _NovelContentState extends State<NovelContent> {
   @override
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
-    return FutureBuilder<Map<String, dynamic>>(
+    return FutureBuilder<Episode>(
       future: _episodeData,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        } else if (!snapshot.hasData) {
           return const Center(child: Text('No content available.'));
         }
         else {
-          final content = snapshot.data!['body'] as String? ?? '本文がありません。';
+          final content = snapshot.data!.body;
           return Container(
             color: settings.colorScheme.surface,
             child: SingleChildScrollView(
@@ -66,3 +67,4 @@ class _NovelContentState extends State<NovelContent> {
     );
   }
 }
+
