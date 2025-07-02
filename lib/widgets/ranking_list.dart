@@ -1,5 +1,3 @@
-import 'dart:isolate';
-
 import 'package:flutter/material.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/screens/novel_page.dart';
