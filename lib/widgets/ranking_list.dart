@@ -14,7 +14,8 @@ class RankingList extends StatefulWidget {
   State<RankingList> createState() => _RankingListState();
 }
 
-class _RankingListState extends State<RankingList> {
+class _RankingListState extends State<RankingList>
+    with AutomaticKeepAliveClientMixin<RankingList> {
   final ApiService _apiService = ApiService();
   List<RankingResponse> _allNovelData = [];
   List<RankingResponse> _filteredNovelData = [];
@@ -25,6 +26,9 @@ class _RankingListState extends State<RankingList> {
 
   bool _showOnlyOngoing = false;
   int? _selectedGenre;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
