@@ -13,7 +13,7 @@ class LibraryPage extends StatefulWidget {
 class _LibraryPageState extends State<LibraryPage> {
   final DatabaseService _databaseService = DatabaseService();
   late Future<List<NovelInfo>> _libraryNovels;
-  bool _isListenerAdded = false;
+  GoRouter? _router;
 
   @override
   void initState() {
@@ -24,22 +24,22 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_isListenerAdded) {
-      GoRouter.of(context).routerDelegate.addListener(_routerListener);
-      _isListenerAdded = true;
+    final router = GoRouter.of(context);
+    if (_router != router) {
+      _router?.routerDelegate.removeListener(_routerListener);
+      _router = router;
+      _router?.routerDelegate.addListener(_routerListener);
     }
   }
 
   @override
   void dispose() {
-    GoRouter.of(context).routerDelegate.removeListener(_routerListener);
+    _router?.routerDelegate.removeListener(_routerListener);
     super.dispose();
   }
 
   void _routerListener() {
-    if (mounted &&
-        GoRouter.of(context).routerDelegate.currentConfiguration.uri.toString() ==
-            '/') {
+    if (mounted && _router?.routerDelegate.currentConfiguration.uri.toString() == '/') {
       _loadLibraryNovels();
     }
   }
@@ -81,7 +81,7 @@ class _LibraryPageState extends State<LibraryPage> {
               subtitle: Text(novel.writer ?? ''),
               onTap: () {
                 if (novel.ncode != null) {
-                  context.go('/toc/${novel.ncode}');
+                  context.push('/toc/${novel.ncode}');
                 }
               },
               onLongPress: () {

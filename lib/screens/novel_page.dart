@@ -109,6 +109,10 @@ class _NovelPageState extends State<NovelPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(appBarTitle),
       ),
       body: _totalEpisodes == null

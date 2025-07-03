@@ -23,14 +23,7 @@ class ApiService {
     }
   }
 
-  Future<NovelInfo> fetchNovelInfo(String ncode) async {
-    if (_noveltyApiUrl.isEmpty) {
-      throw Exception('NOVELTY_API_URL is not set');
-    }
-    final url = '$_noveltyApiUrl/$ncode';
-    final data = await _fetchJsonData(url);
-    return NovelInfo.fromJson(data);
-  }
+  
 
   Future<NovelInfo> fetchNovelInfoByNcode(String ncode) async {
     final query = NovelSearchQuery(ncode: [ncode]);

@@ -28,24 +28,6 @@ final GoRouter router = GoRouter(
             GoRoute(
               path: '/',
               builder: (context, state) => const LibraryPage(),
-              routes: [
-                GoRoute(
-                  path: 'novel/:ncode',
-                  builder: (BuildContext context, GoRouterState state) {
-                    final ncode = state.pathParameters['ncode']!;
-                    final episode =
-                        int.tryParse(state.uri.queryParameters['episode'] ?? '1') ?? 1;
-                    return NovelPage(ncode: ncode, episode: episode);
-                  },
-                ),
-                GoRoute(
-                  path: 'toc/:ncode',
-                  builder: (BuildContext context, GoRouterState state) {
-                    final ncode = state.pathParameters['ncode']!;
-                    return TocPage(ncode: ncode);
-                  },
-                ),
-              ],
             ),
           ],
         ),
@@ -90,6 +72,23 @@ final GoRouter router = GoRouter(
           ],
         ),
       ],
+    ),
+    GoRoute(
+      path: '/novel/:ncode',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (BuildContext context, GoRouterState state) {
+        final ncode = state.pathParameters['ncode']!;
+        final episode = int.tryParse(state.uri.queryParameters['episode'] ?? '1') ?? 1;
+        return NovelPage(ncode: ncode, episode: episode);
+      },
+    ),
+    GoRoute(
+      path: '/toc/:ncode',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (BuildContext context, GoRouterState state) {
+        final ncode = state.pathParameters['ncode']!;
+        return TocPage(ncode: ncode);
+      },
     ),
   ],
 );

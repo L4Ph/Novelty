@@ -33,7 +33,7 @@ class _TocPageState extends State<TocPage> {
 
   Future<void> _fetchNovelInfo() async {
     try {
-      final novelInfo = await _apiService.fetchNovelInfo(widget.ncode);
+      final novelInfo = await _apiService.fetchNovelInfoByNcode(widget.ncode);
       if (mounted) {
         setState(() {
           _novelInfo = novelInfo;
@@ -95,6 +95,10 @@ class _TocPageState extends State<TocPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
         title: Text(_novelInfo?.title ?? '目次'),
       ),
       body: ListView.builder(
@@ -105,7 +109,7 @@ class _TocPageState extends State<TocPage> {
           return ListTile(
             title: Text(episodeTitle),
             onTap: () {
-              context.go('/novel/${widget.ncode}?episode=${index + 1}');
+              context.push('/novel/${widget.ncode}?episode=${index + 1}');
             },
           );
         },

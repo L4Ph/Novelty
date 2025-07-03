@@ -36,9 +36,9 @@ class NovelList extends StatelessWidget {
           onTap: () async {
             final ncode = item.ncode.toLowerCase();
             if (item.novelType == 2) {
-              context.go('/novel/$ncode');
+              context.push('/novel/$ncode');
             } else {
-              context.go('/toc/$ncode');
+              context.push('/toc/$ncode');
             }
           },
           onLongPress: () async {
