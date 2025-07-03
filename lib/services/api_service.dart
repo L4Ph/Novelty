@@ -26,21 +26,21 @@ class ApiService {
   
 
   Future<NovelInfo> fetchNovelInfoByNcode(String ncode) async {
-    final query = NovelSearchQuery(ncode: [ncode]);
-    final results = await searchNovels(query);
-    if (results.isNotEmpty) {
-      final novel = results.first;
-      return NovelInfo(
-        ncode: novel.ncode,
-        title: novel.title,
-        writer: novel.writer,
-        story: novel.story,
-        genre: novel.genre,
-        keyword: novel.keyword,
-        generalAllNo: novel.generalAllNo,
-        end: novel.end,
-        novelType: novel.novelType,
-      );
+    final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
+      'ncode': ncode,
+      'out': 'json',
+      'gzip': '5',
+      'of':
+          't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua-ga-k',
+    });
+
+    final data = await _fetchData(uri.toString());
+    if (data.isNotEmpty &&
+        data[0]['allcount'] != null &&
+        data[0]['allcount'] > 0 &&
+        data.length > 1) {
+      final novelData = data[1];
+      return NovelInfo.fromJson(novelData);
     } else {
       throw Exception('Novel not found');
     }
@@ -50,9 +50,24 @@ class ApiService {
     if (_noveltyApiUrl.isEmpty) {
       throw Exception('NOVELTY_API_URL is not set');
     }
-    final url = '$_noveltyApiUrl/$ncode/$episode';
+    final url = '$_noveltyApiUrl/${ncode.toLowerCase()}/$episode';
     final data = await _fetchJsonData(url);
     return Episode.fromJson(data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchEpisodes(String ncode) async {
+    if (_noveltyApiUrl.isEmpty) {
+      throw Exception('NOVELTY_API_URL is not set');
+    }
+    final url = '$_noveltyApiUrl/${ncode.toLowerCase()}';
+    final data = await _fetchJsonData(url);
+    if (data is List) {
+      return List<Map<String, dynamic>>.from(data);
+    } else if (data is Map && data.containsKey('episodes')) {
+      return List<Map<String, dynamic>>.from(data['episodes']);
+    } else {
+      throw Exception('Unexpected response format for episodes');
+    }
   }
 
   static List<dynamic> _parseJson(List<int> bytes) {

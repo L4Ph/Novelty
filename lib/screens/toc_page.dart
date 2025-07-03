@@ -34,9 +34,11 @@ class _TocPageState extends State<TocPage> {
   Future<void> _fetchNovelInfo() async {
     try {
       final novelInfo = await _apiService.fetchNovelInfoByNcode(widget.ncode);
+      final episodes = await _apiService.fetchEpisodes(widget.ncode);
       if (mounted) {
         setState(() {
           _novelInfo = novelInfo;
+          _novelInfo?.episodes = episodes;
           _isLoading = false;
         });
       }

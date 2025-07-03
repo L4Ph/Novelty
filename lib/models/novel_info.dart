@@ -2,33 +2,54 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'novel_info.g.dart';
 
+int? _toInt(dynamic val) => val is int ? val : int.tryParse(val as String? ?? '');
+
 @JsonSerializable(fieldRename: FieldRename.snake)
 class NovelInfo {
   String? title;
   String? ncode;
   String? writer;
   String? story;
+  @JsonKey(fromJson: _toInt)
   int? novelType;
+  @JsonKey(fromJson: _toInt)
   int? end;
+  @JsonKey(fromJson: _toInt)
   int? generalAllNo;
+  @JsonKey(fromJson: _toInt)
   int? genre;
   String? keyword;
   String? generalFirstup;
   String? generalLastup;
+  @JsonKey(fromJson: _toInt)
   int? globalPoint;
+  @JsonKey(fromJson: _toInt)
   int? dailyPoint;
+  @JsonKey(fromJson: _toInt)
   int? weeklyPoint;
+  @JsonKey(fromJson: _toInt)
   int? monthlyPoint;
+  @JsonKey(fromJson: _toInt)
   int? quarterPoint;
+  @JsonKey(fromJson: _toInt)
   int? yearlyPoint;
+  @JsonKey(fromJson: _toInt)
   int? favNovelCnt;
+  @JsonKey(fromJson: _toInt)
   int? impressionCnt;
+  @JsonKey(fromJson: _toInt)
   int? reviewCnt;
+  @JsonKey(fromJson: _toInt)
   int? allPoint;
+  @JsonKey(fromJson: _toInt)
   int? allHyokaCnt;
+  @JsonKey(fromJson: _toInt)
   int? sasieCnt;
+  @JsonKey(fromJson: _toInt)
   int? kaiwaritu;
+  @JsonKey(fromJson: _toInt)
   int? novelupdatedAt;
+  @JsonKey(fromJson: _toInt)
   int? updatedAt;
   List<Map<String, dynamic>>? episodes;
 
@@ -65,15 +86,5 @@ class NovelInfo {
   factory NovelInfo.fromJson(Map<String, dynamic> json) =>
       _$NovelInfoFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-        'ncode': ncode,
-        'title': title,
-        'writer': writer,
-        'story': story,
-        'genre': genre,
-        'keyword': keyword,
-        'general_all_no': generalAllNo,
-        'end': end,
-        'novel_type': novelType,
-      };
+  Map<String, dynamic> toJson() => _$NovelInfoToJson(this);
 }
