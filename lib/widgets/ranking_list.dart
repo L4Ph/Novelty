@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/screens/novel_page.dart';
-import 'package:novelty/screens/toc_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 
@@ -198,55 +197,10 @@ class _RankingListState extends State<RankingList>
                 'Nコード: ${item.ncode} - ${item.pt ?? 0}pt\nジャンル: $genreName - $status'),
             onTap: () async {
               final ncode = item.ncode.toLowerCase();
-
               if (item.novelType == 2) {
-                // This is a short story, navigate to NovelPage directly
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => NovelPage(
-                      ncode: ncode,
-                      title: item.title ?? '',
-                      episode: 1,
-                      novelType: 2, // Explicitly set as short story
-                    ),
-                  ),
-                );
+                context.go('/novel/$ncode');
               } else {
-                // This is a series, fetch novel info for episodes
-                final novelInfo = await _apiService.fetchNovelInfo(ncode);
-
-                if (novelInfo.episodes != null &&
-                    novelInfo.episodes!.isNotEmpty) {
-                  // Navigate to TocPage
-                  Navigator.push(
-                    // ignore: use_build_context_synchronously
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TocPage(
-                        ncode: ncode,
-                        title: novelInfo.title ?? '',
-                        episodes: novelInfo.episodes!,
-                        novelType: 1, // Explicitly set as series
-                      ),
-                    ),
-                  );
-                } else {
-                  // Fallback to NovelPage if it's a series with no episodes
-                  // or failed to fetch details
-                  Navigator.push(
-                    // ignore: use_build_context_synchronously
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => NovelPage(
-                        ncode: ncode,
-                        title: novelInfo.title ?? item.title ?? '',
-                        episode: 1,
-                        novelType: 2, // Treat as short story
-                      ),
-                    ),
-                  );
-                }
+                context.go('/toc/$ncode');
               }
             },
           );

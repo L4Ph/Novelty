@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:novelty/screens/settings_page.dart';
+import 'package:go_router/go_router.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -16,10 +16,7 @@ class MorePage extends StatelessWidget {
             leading: const Icon(Icons.settings),
             title: const Text('設定'),
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
-              );
+              context.go('/more/settings');
             },
           ),
         ],

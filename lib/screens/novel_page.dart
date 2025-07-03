@@ -7,16 +7,12 @@ import 'package:novelty/widgets/novel_content.dart';
 
 class NovelPage extends StatefulWidget {
   final String ncode;
-  final String title;
   final int? episode;
-  final int novelType;
 
   const NovelPage({
     super.key,
     required this.ncode,
-    required this.title,
     this.episode,
-    required this.novelType,
   });
 
   @override
@@ -28,7 +24,9 @@ class _NovelPageState extends State<NovelPage> {
   PageController? _pageController;
   late int _currentEpisode;
   String _episodeTitle = '';
+  String _novelTitle = '';
   int? _totalEpisodes;
+  int? _novelType;
 
   final LruMap<int, Future<Episode>> _episodeCache = LruMap(maximumSize: 5);
 
@@ -38,7 +36,6 @@ class _NovelPageState extends State<NovelPage> {
     _currentEpisode = widget.episode ?? 1;
     _pageController = PageController(initialPage: _currentEpisode - 1);
     _fetchNovelInfo();
-    _fetchEpisodeData(_currentEpisode);
   }
 
   @override
@@ -48,19 +45,15 @@ class _NovelPageState extends State<NovelPage> {
   }
 
   Future<void> _fetchNovelInfo() async {
-    if (widget.novelType == 2) {
-      if (!mounted) return;
-      setState(() {
-        _totalEpisodes = 1;
-      });
-      return;
-    }
     try {
       final novelInfo = await _apiService.fetchNovelInfo(widget.ncode);
       if (!mounted) return;
       setState(() {
+        _novelTitle = novelInfo.title ?? '';
         _totalEpisodes = novelInfo.generalAllNo ?? 1;
+        _novelType = novelInfo.novelType;
       });
+      _fetchEpisodeData(_currentEpisode);
     } catch (e) {
       // Handle error
     }
@@ -109,10 +102,10 @@ class _NovelPageState extends State<NovelPage> {
   @override
   Widget build(BuildContext context) {
     final appBarTitle = _episodeTitle.isEmpty
-        ? widget.title
-        : (widget.novelType == 2
+        ? _novelTitle
+        : (_novelType == 2
             ? _episodeTitle
-            : '${widget.title} - $_episodeTitle');
+            : '$_novelTitle - $_episodeTitle');
 
     return Scaffold(
       appBar: AppBar(
