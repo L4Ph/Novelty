@@ -6,6 +6,7 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
 
 class ApiService {
@@ -49,6 +50,32 @@ class ApiService {
     final file = await _cacheManager.getSingleFile(url);
     final bytes = await file.readAsBytes();
     return compute(_parseJson, bytes);
+  }
+
+  Future<List<RankingResponse>> searchNovels(NovelSearchQuery query) async {
+    final queryParameters = query.toMap();
+    queryParameters.removeWhere((key, value) => value == null);
+
+    final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
+      ...queryParameters.map((key, value) => MapEntry(key, value.toString())),
+      'out': 'json',
+      'gzip': '5',
+      'of':
+          't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua',
+    });
+
+    try {
+      final data = await _fetchData(uri.toString());
+      if (data.isNotEmpty && data[0]['allcount'] != null) {
+        return data.sublist(1).map((item) => RankingResponse.fromJson(item)).toList();
+      }
+      return [];
+    } catch (e) {
+      if (kDebugMode) {
+        print('An error occurred while searching for novels. Error: $e');
+      }
+      return [];
+    }
   }
 
   String _getFormattedDate(String rtype) {
