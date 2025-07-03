@@ -18,7 +18,7 @@ const List<Map<String, dynamic>> genreList = [
   {'id': 9902, 'name': '詩〔その他〕'},
   {'id': 9903, 'name': 'エッセイ〔その他〕'},
   {'id': 9904, 'name': 'リプレイ〔その他〕'},
-  {'id': 9999, 'name': '��の他〔その他〕'},
+  {'id': 9999, 'name': 'その他〔その他〕'},
 ];
 
 const Map<String, String> novelTypes = {
