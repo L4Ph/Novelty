@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:novelty/screens/settings_page.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
 class RankingPage extends StatefulWidget {
@@ -29,18 +28,7 @@ class _RankingPageState extends State<RankingPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('小説ランキング'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
-              );
-            },
-          ),
-        ],
+        title: const Text('ランキング'),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [

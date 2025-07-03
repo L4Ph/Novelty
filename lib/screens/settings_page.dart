@@ -44,15 +44,18 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildThemeColorSetting(BuildContext context, SettingsProvider settings) {
+  Widget _buildThemeColorSetting(
+      BuildContext context, SettingsProvider settings) {
     return ListTile(
       title: const Text('テーマカラー'),
-      trailing: CircleAvatar(backgroundColor: settings.colorScheme.primary, radius: 15),
+      trailing: CircleAvatar(
+          backgroundColor: settings.colorScheme.primary, radius: 15),
       onTap: () => _showColorPickerDialog(context, settings),
     );
   }
 
-  void _showFontSelectionDialog(BuildContext context, SettingsProvider settings) {
+  void _showFontSelectionDialog(
+      BuildContext context, SettingsProvider settings) {
     showDialog(
       context: context,
       builder: (context) {
@@ -99,7 +102,11 @@ class SettingsPage extends StatelessWidget {
                 settings.updateSeedColor(color);
                 pickerColor = color;
               },
-              labelTypes: const [ColorLabelType.rgb, ColorLabelType.hsv, ColorLabelType.hsl],
+              labelTypes: const [
+                ColorLabelType.rgb,
+                ColorLabelType.hsv,
+                ColorLabelType.hsl
+              ],
               pickerAreaHeightPercent: 0.8,
             ),
           ),
