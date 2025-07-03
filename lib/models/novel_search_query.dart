@@ -1,5 +1,6 @@
 class NovelSearchQuery {
   String? word;
+  String? notword;
   bool title = false;
   bool ex = false;
   bool keyword = false;
@@ -44,6 +45,7 @@ class NovelSearchQuery {
   Map<String, dynamic> toMap() {
     return {
       'word': word,
+      'notword': notword,
       'title': title ? 1 : null,
       'ex': ex ? 1 : null,
       'keyword': keyword ? 1 : null,

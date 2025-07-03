@@ -86,7 +86,7 @@ class _RankingListState extends State<RankingList>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Filter Options'),
+          title: const Text('検索条件'),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
               return Column(

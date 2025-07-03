@@ -36,41 +36,124 @@ class _SearchPageState extends State<SearchPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Filter Options'),
+          title: const Text('検索条件'),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  TextField(
-                    decoration: const InputDecoration(labelText: 'キーワード'),
-                    onChanged: (value) {
-                      _searchQuery.word = value;
-                    },
-                  ),
-                  DropdownButton<int?>(
-                    value: _searchQuery.genre?.first,
-                    hint: const Text('ジャンルを選択'),
-                    isExpanded: true,
-                    items: [
-                      const DropdownMenuItem<int?>(
-                        value: null,
-                        child: Text('すべて'),
-                      ),
-                      ...genreList.map((genre) {
-                        return DropdownMenuItem<int?>(
-                          value: genre['id'],
-                          child: Text(genre['name'] as String),
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    TextField(
+                      decoration: const InputDecoration(labelText: 'キーワード'),
+                      onChanged: (value) {
+                        _searchQuery.word = value;
+                      },
+                    ),
+                    TextField(
+                      decoration: const InputDecoration(labelText: '除外キーワード'),
+                      onChanged: (value) {
+                        _searchQuery.notword = value;
+                      },
+                    ),
+                    CheckboxListTile(
+                      title: const Text('タイトル'),
+                      value: _searchQuery.title,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _searchQuery.title = value ?? false;
+                        });
+                      },
+                    ),
+                    CheckboxListTile(
+                      title: const Text('あらすじ'),
+                      value: _searchQuery.ex,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _searchQuery.ex = value ?? false;
+                        });
+                      },
+                    ),
+                    CheckboxListTile(
+                      title: const Text('キーワード'),
+                      value: _searchQuery.keyword,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _searchQuery.keyword = value ?? false;
+                        });
+                      },
+                    ),
+                    CheckboxListTile(
+                      title: const Text('作者名'),
+                      value: _searchQuery.wname,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          _searchQuery.wname = value ?? false;
+                        });
+                      },
+                    ),
+                    DropdownButton<String?>(
+                      value: _searchQuery.type,
+                      hint: const Text('小説タイプ'),
+                      isExpanded: true,
+                      items: [
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('すべて'),
+                        ),
+                        ...novelTypes.entries.map((entry) {
+                          return DropdownMenuItem<String?>(
+                            value: entry.key,
+                            child: Text(entry.value),
+                          );
+                        }),
+                      ],
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _searchQuery.type = newValue;
+                        });
+                      },
+                    ),
+                    DropdownButton<int?>(
+                      value: _searchQuery.genre?.first,
+                      hint: const Text('ジャンルを選択'),
+                      isExpanded: true,
+                      items: [
+                        const DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text('すべて'),
+                        ),
+                        ...genreList.map((genre) {
+                          return DropdownMenuItem<int?>(
+                            value: genre['id'],
+                            child: Text(genre['name'] as String),
+                          );
+                        }),
+                      ],
+                      onChanged: (int? newValue) {
+                        setState(() {
+                          _searchQuery.genre =
+                              newValue == null ? null : [newValue];
+                        });
+                      },
+                    ),
+                    DropdownButton<String>(
+                      value: _searchQuery.order,
+                      hint: const Text('並び替え'),
+                      isExpanded: true,
+                      items: novelOrders.entries.map((entry) {
+                        return DropdownMenuItem<String>(
+                          value: entry.key,
+                          child: Text(entry.value),
                         );
-                      }),
-                    ],
-                    onChanged: (int? newValue) {
-                      setState(() {
-                        _searchQuery.genre = newValue == null ? null : [newValue];
-                      });
-                    },
-                  ),
-                ],
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _searchQuery.order = newValue ?? 'new';
+                        });
+                      },
+                    ),
+                  ],
+                ),
               );
             },
           ),
