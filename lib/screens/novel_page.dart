@@ -46,7 +46,7 @@ class _NovelPageState extends State<NovelPage> {
 
   Future<void> _fetchNovelInfo() async {
     try {
-      final novelInfo = await _apiService.fetchNovelInfo(widget.ncode);
+      final novelInfo = await _apiService.fetchNovelInfoByNcode(widget.ncode);
       if (!mounted) return;
       setState(() {
         _novelTitle = novelInfo.title ?? '';
