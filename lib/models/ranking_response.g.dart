@@ -18,6 +18,8 @@ RankingResponse _$RankingResponseFromJson(Map<String, dynamic> json) =>
       writer: json['writer'] as String?,
       story: json['story'] as String?,
       userId: (json['userid'] as num?)?.toInt(),
+      generalAllNo: (json['general_all_no'] as num?)?.toInt(),
+      keyword: json['keyword'] as String?,
     );
 
 Map<String, dynamic> _$RankingResponseToJson(RankingResponse instance) =>
@@ -32,4 +34,6 @@ Map<String, dynamic> _$RankingResponseToJson(RankingResponse instance) =>
       'writer': instance.writer,
       'story': instance.story,
       'userid': instance.userId,
+      'general_all_no': instance.generalAllNo,
+      'keyword': instance.keyword,
     };

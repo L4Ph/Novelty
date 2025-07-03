@@ -32,6 +32,27 @@ class ApiService {
     return NovelInfo.fromJson(data);
   }
 
+  Future<NovelInfo> fetchNovelInfoByNcode(String ncode) async {
+    final query = NovelSearchQuery(ncode: [ncode]);
+    final results = await searchNovels(query);
+    if (results.isNotEmpty) {
+      final novel = results.first;
+      return NovelInfo(
+        ncode: novel.ncode,
+        title: novel.title,
+        writer: novel.writer,
+        story: novel.story,
+        genre: novel.genre,
+        keyword: novel.keyword,
+        generalAllNo: novel.generalAllNo,
+        end: novel.end,
+        novelType: novel.novelType,
+      );
+    } else {
+      throw Exception('Novel not found');
+    }
+  }
+
   Future<Episode> fetchEpisode(String ncode, int episode) async {
     if (_noveltyApiUrl.isEmpty) {
       throw Exception('NOVELTY_API_URL is not set');
@@ -61,13 +82,16 @@ class ApiService {
       'out': 'json',
       'gzip': '5',
       'of':
-          't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua',
+          't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua-ga-k',
     });
 
     try {
       final data = await _fetchData(uri.toString());
       if (data.isNotEmpty && data[0]['allcount'] != null) {
-        return data.sublist(1).map((item) => RankingResponse.fromJson(item)).toList();
+        return data
+            .sublist(1)
+            .map((item) => RankingResponse.fromJson(item))
+            .toList();
       }
       return [];
     } catch (e) {
@@ -156,7 +180,7 @@ class ApiService {
       } catch (e) {
         if (kDebugMode) {
           print(
-            'An error occurred while fetching novel details for ncodes: $ncodesParam. Error: $e');
+              'An error occurred while fetching novel details for ncodes: $ncodesParam. Error: $e');
         }
       }
     }

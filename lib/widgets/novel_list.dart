@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/services/api_service.dart';
+import 'package:novelty/services/database_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 
 class NovelList extends StatelessWidget {
   final List<RankingResponse> novels;
   final bool isRanking;
+  final ApiService _apiService = ApiService();
+  final DatabaseService _databaseService = DatabaseService();
 
-  const NovelList({super.key, required this.novels, this.isRanking = true});
+  NovelList({super.key, required this.novels, this.isRanking = true});
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +39,30 @@ class NovelList extends StatelessWidget {
               context.go('/novel/$ncode');
             } else {
               context.go('/toc/$ncode');
+            }
+          },
+          onLongPress: () async {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            try {
+              final isInLibrary =
+                  await _databaseService.isNovelInLibrary(item.ncode);
+              if (isInLibrary) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('すでにライブラリに登録されています')),
+                );
+                return;
+              }
+
+              final novelInfo =
+                  await _apiService.fetchNovelInfoByNcode(item.ncode);
+              await _databaseService.addNovelToLibrary(novelInfo);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('ライブラリに追加しました')),
+              );
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('エラー: $e')),
+              );
             }
           },
         );

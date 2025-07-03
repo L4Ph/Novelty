@@ -42,6 +42,8 @@ class NovelSearchQuery {
   int lim = 20;
   int st = 1;
 
+  NovelSearchQuery({this.ncode});
+
   Map<String, dynamic> toMap() {
     return {
       'word': word,

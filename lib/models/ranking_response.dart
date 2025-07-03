@@ -16,6 +16,9 @@ class RankingResponse {
   final String? story;
   @JsonKey(name: 'userid')
   final int? userId;
+  @JsonKey(name: 'general_all_no')
+  final int? generalAllNo;
+  final String? keyword;
 
   RankingResponse({
     this.rank,
@@ -28,6 +31,8 @@ class RankingResponse {
     this.writer,
     this.story,
     this.userId,
+    this.generalAllNo,
+    this.keyword,
   });
 
   factory RankingResponse.fromJson(Map<String, dynamic> json) =>

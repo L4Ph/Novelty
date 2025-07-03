@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/services/database_service.dart';
 
 class TocPage extends StatefulWidget {
   final String ncode;
@@ -17,14 +18,17 @@ class TocPage extends StatefulWidget {
 
 class _TocPageState extends State<TocPage> {
   final ApiService _apiService = ApiService();
+  final DatabaseService _databaseService = DatabaseService();
   NovelInfo? _novelInfo;
   bool _isLoading = true;
+  bool _isInLibrary = false;
   String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
     _fetchNovelInfo();
+    _checkIfInLibrary();
   }
 
   Future<void> _fetchNovelInfo() async {
@@ -44,6 +48,33 @@ class _TocPageState extends State<TocPage> {
         });
       }
     }
+  }
+
+  Future<void> _checkIfInLibrary() async {
+    final isInLibrary = await _databaseService.isNovelInLibrary(widget.ncode);
+    if (mounted) {
+      setState(() {
+        _isInLibrary = isInLibrary;
+      });
+    }
+  }
+
+  void _toggleLibraryStatus() async {
+    if (_novelInfo == null) return;
+
+    if (_isInLibrary) {
+      await _databaseService.removeNovelFromLibrary(widget.ncode);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ライブラリから削除しました')),
+      );
+    } else {
+      _novelInfo!.ncode = widget.ncode;
+      await _databaseService.addNovelToLibrary(_novelInfo!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ライブラリに追加しました')),
+      );
+    }
+    _checkIfInLibrary();
   }
 
   @override
@@ -78,6 +109,10 @@ class _TocPageState extends State<TocPage> {
             },
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _toggleLibraryStatus,
+        child: Icon(_isInLibrary ? Icons.remove : Icons.add),
       ),
     );
   }

@@ -4,33 +4,33 @@ part 'novel_info.g.dart';
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class NovelInfo {
-  final String? title;
-  final String? ncode;
-  final String? writer;
-  final String? story;
-  final int? novelType;
-  final int? end;
-  final int? generalAllNo;
-  final int? genre;
-  final String? keyword;
-  final String? generalFirstup;
-  final String? generalLastup;
-  final int? globalPoint;
-  final int? dailyPoint;
-  final int? weeklyPoint;
-  final int? monthlyPoint;
-  final int? quarterPoint;
-  final int? yearlyPoint;
-  final int? favNovelCnt;
-  final int? impressionCnt;
-  final int? reviewCnt;
-  final int? allPoint;
-  final int? allHyokaCnt;
-  final int? sasieCnt;
-  final int? kaiwaritu;
-  final int? novelupdatedAt;
-  final int? updatedAt;
-  final List<Map<String, dynamic>>? episodes;
+  String? title;
+  String? ncode;
+  String? writer;
+  String? story;
+  int? novelType;
+  int? end;
+  int? generalAllNo;
+  int? genre;
+  String? keyword;
+  String? generalFirstup;
+  String? generalLastup;
+  int? globalPoint;
+  int? dailyPoint;
+  int? weeklyPoint;
+  int? monthlyPoint;
+  int? quarterPoint;
+  int? yearlyPoint;
+  int? favNovelCnt;
+  int? impressionCnt;
+  int? reviewCnt;
+  int? allPoint;
+  int? allHyokaCnt;
+  int? sasieCnt;
+  int? kaiwaritu;
+  int? novelupdatedAt;
+  int? updatedAt;
+  List<Map<String, dynamic>>? episodes;
 
   NovelInfo({
     this.title,
@@ -65,5 +65,15 @@ class NovelInfo {
   factory NovelInfo.fromJson(Map<String, dynamic> json) =>
       _$NovelInfoFromJson(json);
 
-  Map<String, dynamic> toJson() => _$NovelInfoToJson(this);
+  Map<String, dynamic> toJson() => {
+        'ncode': ncode,
+        'title': title,
+        'writer': writer,
+        'story': story,
+        'genre': genre,
+        'keyword': keyword,
+        'general_all_no': generalAllNo,
+        'end': end,
+        'novel_type': novelType,
+      };
 }
