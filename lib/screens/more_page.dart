@@ -7,9 +7,7 @@ class MorePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('もっと'),
-      ),
+      appBar: AppBar(title: const Text('もっと')),
       body: ListView(
         children: [
           ListTile(

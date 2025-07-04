@@ -2,11 +2,11 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'novel_info.g.dart';
 
-int? _toInt(dynamic val) => val is int ? val : int.tryParse(val as String? ?? '');
+int? _toInt(dynamic val) =>
+    val is int ? val : int.tryParse(val as String? ?? '');
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class NovelInfo {
-
   NovelInfo({
     this.title,
     this.ncode,

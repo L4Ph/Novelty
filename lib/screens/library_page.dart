@@ -39,7 +39,8 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   void _routerListener() {
-    if (mounted && _router?.routerDelegate.currentConfiguration.uri.toString() == '/') {
+    if (mounted &&
+        _router?.routerDelegate.currentConfiguration.uri.toString() == '/') {
       _loadLibraryNovels();
     }
   }
@@ -52,9 +53,9 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Future<void> _removeNovelFromLibrary(String ncode) async {
     await _databaseService.removeNovelFromLibrary(ncode);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('ライブラリから削除しました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('ライブラリから削除しました')));
     _loadLibraryNovels();
   }
 

@@ -6,12 +6,7 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
 class NovelPage extends StatefulWidget {
-
-  const NovelPage({
-    super.key,
-    required this.ncode,
-    this.episode,
-  });
+  const NovelPage({super.key, required this.ncode, this.episode});
   final String ncode;
   final int? episode;
 
@@ -67,21 +62,23 @@ class _NovelPageState extends State<NovelPage> {
     }
     final future = _apiService.fetchEpisode(widget.ncode, episode);
     _episodeCache[episode] = future;
-    future.then((data) {
-      if (!mounted) {
-        return;
-      }
-      if (_currentEpisode == episode) {
-        setState(() {
-          _episodeTitle = data.title ?? '';
+    future
+        .then((data) {
+          if (!mounted) {
+            return;
+          }
+          if (_currentEpisode == episode) {
+            setState(() {
+              _episodeTitle = data.title ?? '';
+            });
+          }
+        })
+        .catchError((e) {
+          if (mounted) {
+            _episodeCache.remove(episode);
+          }
+          throw e;
         });
-      }
-    }).catchError((e) {
-      if (mounted) {
-        _episodeCache.remove(episode);
-      }
-      throw e;
-    });
 
     // Prefetch next and previous episodes
     _prefetchEpisode(episode + 1);
@@ -91,14 +88,16 @@ class _NovelPageState extends State<NovelPage> {
   }
 
   void _prefetchEpisode(int episode) {
-    if (episode > 0 &&
-        (_totalEpisodes == null || episode <= _totalEpisodes!)) {
+    if (episode > 0 && (_totalEpisodes == null || episode <= _totalEpisodes!)) {
       if (!_episodeCache.containsKey(episode)) {
-        _apiService.fetchEpisode(widget.ncode, episode).then((ep) {
-          _episodeCache[episode] = Future.value(ep);
-        }).catchError((_) {
-          // Prefetch failed, ignore.
-        });
+        _apiService
+            .fetchEpisode(widget.ncode, episode)
+            .then((ep) {
+              _episodeCache[episode] = Future.value(ep);
+            })
+            .catchError((_) {
+              // Prefetch failed, ignore.
+            });
       }
     }
   }
@@ -107,9 +106,7 @@ class _NovelPageState extends State<NovelPage> {
   Widget build(BuildContext context) {
     final appBarTitle = _episodeTitle.isEmpty
         ? _novelTitle
-        : (_novelType == 2
-            ? _episodeTitle
-            : '$_novelTitle - $_episodeTitle');
+        : (_novelType == 2 ? _episodeTitle : '$_novelTitle - $_episodeTitle');
 
     return Scaffold(
       appBar: AppBar(
@@ -156,7 +153,6 @@ class _NovelPageState extends State<NovelPage> {
 }
 
 class LruMap<K, V> {
-
   LruMap({required int maximumSize}) : _maximumSize = maximumSize;
   final int _maximumSize;
   final LinkedHashMap<K, V> _map = LinkedHashMap<K, V>();
@@ -183,5 +179,3 @@ class LruMap<K, V> {
 
   void clear() => _map.clear();
 }
-
-

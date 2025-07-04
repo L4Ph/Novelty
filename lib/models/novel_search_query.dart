@@ -1,5 +1,4 @@
 class NovelSearchQuery {
-
   NovelSearchQuery({this.ncode});
   String? word;
   String? notword;

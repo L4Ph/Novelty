@@ -5,7 +5,6 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 
 class RankingList extends StatefulWidget {
-
   const RankingList({super.key, required this.rankingType});
   final String rankingType;
 
@@ -37,8 +36,9 @@ class _RankingListState extends State<RankingList>
 
   Future<void> _fetchData() async {
     try {
-      final allData =
-          await _apiService.fetchRankingAndDetails(widget.rankingType);
+      final allData = await _apiService.fetchRankingAndDetails(
+        widget.rankingType,
+      );
 
       if (!mounted) {
         return;
@@ -67,8 +67,9 @@ class _RankingListState extends State<RankingList>
     }
 
     if (_selectedGenre != null) {
-      filtered =
-          filtered.where((novel) => novel.genre == _selectedGenre).toList();
+      filtered = filtered
+          .where((novel) => novel.genre == _selectedGenre)
+          .toList();
     }
 
     if (!mounted) {
@@ -191,8 +192,11 @@ class _RankingListState extends State<RankingList>
           final item = _filteredNovelData[index];
           final title = item.title ?? 'タイトルなし';
           final genreName = item.genre != null && item.genre != -1
-              ? genreList.firstWhere((g) => g['id'] == item.genre,
-                  orElse: () => {'name': '不明'})['name'] as String
+              ? genreList.firstWhere(
+                      (g) => g['id'] == item.genre,
+                      orElse: () => {'name': '不明'},
+                    )['name']
+                    as String
               : '不明';
           final status = item.end == null || item.end == -1
               ? '情報取得失敗'
@@ -202,7 +206,8 @@ class _RankingListState extends State<RankingList>
             leading: Text('${item.rank ?? ''}'),
             title: Text(title),
             subtitle: Text(
-                'Nコード: ${item.ncode} - ${item.pt ?? 0}pt\nジャンル: $genreName - $status'),
+              'Nコード: ${item.ncode} - ${item.pt ?? 0}pt\nジャンル: $genreName - $status',
+            ),
             onTap: () async {
               final ncode = item.ncode.toLowerCase();
               if (item.novelType == 2) {

@@ -23,8 +23,6 @@ class ApiService {
     }
   }
 
-  
-
   Future<NovelInfo> fetchNovelInfoByNcode(String ncode) async {
     final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
       'ncode': ncode,
@@ -147,7 +145,8 @@ class ApiService {
   }
 
   Future<List<RankingResponse>> fetchRankingAndDetails(
-      String rankingType) async {
+    String rankingType,
+  ) async {
     final date = _getFormattedDate(rankingType);
     final rankingUrl =
         'https://api.syosetu.com/rank/rankget/?rtype=$date-$rankingType&out=json&gzip=5';
@@ -162,8 +161,7 @@ class ApiService {
       return [];
     }
 
-    final ncodes =
-        rankingData.map((item) => item['ncode'] as String).toList();
+    final ncodes = rankingData.map((item) => item['ncode'] as String).toList();
     if (ncodes.isEmpty) {
       return [];
     }
@@ -173,7 +171,9 @@ class ApiService {
 
     for (var i = 0; i < ncodes.length; i += chunkSize) {
       final chunk = ncodes.sublist(
-          i, i + chunkSize > ncodes.length ? ncodes.length : i + chunkSize);
+        i,
+        i + chunkSize > ncodes.length ? ncodes.length : i + chunkSize,
+      );
       final ncodesParam = chunk.join('-');
       final detailsUrl =
           'https://api.syosetu.com/novelapi/api?out=json&of=t-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua&ncode=$ncodesParam&gzip=5';
@@ -188,7 +188,8 @@ class ApiService {
       } catch (e) {
         if (kDebugMode) {
           print(
-              'An error occurred while fetching novel details for ncodes: $ncodesParam. Error: $e');
+            'An error occurred while fetching novel details for ncodes: $ncodesParam. Error: $e',
+          );
         }
       }
     }
@@ -202,18 +203,20 @@ class ApiService {
         details['pt'] = rankItem['pt'];
         allData.add(RankingResponse.fromJson(details));
       } else {
-        allData.add(RankingResponse.fromJson({
-          'ncode': ncode,
-          'title': 'タイトル取得失敗',
-          'rank': rankItem['rank'],
-          'pt': rankItem['pt'],
-          'novel_type': null,
-          'end': null,
-          'genre': null,
-          'writer': null,
-          'story': null,
-          'userid': null,
-        }));
+        allData.add(
+          RankingResponse.fromJson({
+            'ncode': ncode,
+            'title': 'タイトル取得失敗',
+            'rank': rankItem['rank'],
+            'pt': rankItem['pt'],
+            'novel_type': null,
+            'end': null,
+            'genre': null,
+            'writer': null,
+            'story': null,
+            'userid': null,
+          }),
+        );
       }
     }
     return allData;

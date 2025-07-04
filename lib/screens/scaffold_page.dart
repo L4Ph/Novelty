@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class ScaffoldPage extends StatelessWidget {
-  const ScaffoldPage({
-    required this.child,
-    super.key,
-  });
+  const ScaffoldPage({required this.child, super.key});
 
   final Widget child;
 
@@ -15,26 +12,14 @@ class ScaffoldPage extends StatelessWidget {
       body: child,
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book),
-            label: 'ライブラリ',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'ライブラリ'),
           BottomNavigationBarItem(
             icon: Icon(Icons.trending_up),
             label: 'ランキング',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: '履歴',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: '検索',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.more_horiz),
-            label: 'もっと',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: '履歴'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: '検索'),
+          BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: 'もっと'),
         ],
         currentIndex: _calculateSelectedIndex(context),
         selectedItemColor: Theme.of(context).colorScheme.primary,

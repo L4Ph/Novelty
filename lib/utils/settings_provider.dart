@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsProvider with ChangeNotifier {
-
   SettingsProvider() {
     _loadSettings();
   }
@@ -70,7 +69,9 @@ class SettingsProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _selectedFont = prefs.getString(_fontPreferenceKey) ?? availableFonts.first;
     _fontSize = prefs.getDouble(_fontSizePreferenceKey) ?? 16.0;
-    _seedColor = Color(prefs.getInt(_seedColorPreferenceKey) ?? Colors.blue.toARGB32());
+    _seedColor = Color(
+      prefs.getInt(_seedColorPreferenceKey) ?? Colors.blue.toARGB32(),
+    );
     _colorScheme = ColorScheme.fromSeed(seedColor: _seedColor);
     notifyListeners();
   }

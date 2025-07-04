@@ -5,7 +5,6 @@ import 'package:novelty/utils/settings_provider.dart';
 import 'package:provider/provider.dart';
 
 class NovelContent extends StatefulWidget {
-
   const NovelContent({
     super.key,
     required this.ncode,
@@ -80,4 +79,3 @@ class _NovelContentState extends State<NovelContent> {
     );
   }
 }
-

@@ -81,10 +81,6 @@ class DatabaseService {
 
   Future<void> removeNovelFromLibrary(String ncode) async {
     final db = await database;
-    await db.delete(
-      'novels',
-      where: 'ncode = ?',
-      whereArgs: [ncode],
-    );
+    await db.delete('novels', where: 'ncode = ?', whereArgs: [ncode]);
   }
 }

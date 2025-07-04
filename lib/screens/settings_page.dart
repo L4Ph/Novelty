@@ -10,9 +10,7 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('設定'),
-      ),
+      appBar: AppBar(title: const Text('設定')),
       body: ListView(
         children: [
           _buildFontSetting(context, settings),
@@ -31,7 +29,10 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFontSizeSetting(BuildContext context, SettingsProvider settings) {
+  Widget _buildFontSizeSetting(
+    BuildContext context,
+    SettingsProvider settings,
+  ) {
     return ListTile(
       title: Text('文字サイズ: ${settings.fontSize.toStringAsFixed(1)}'),
       subtitle: Slider(
@@ -45,17 +46,23 @@ class SettingsPage extends StatelessWidget {
   }
 
   Widget _buildThemeColorSetting(
-      BuildContext context, SettingsProvider settings) {
+    BuildContext context,
+    SettingsProvider settings,
+  ) {
     return ListTile(
       title: const Text('テーマカラー'),
       trailing: CircleAvatar(
-          backgroundColor: settings.colorScheme.primary, radius: 15),
+        backgroundColor: settings.colorScheme.primary,
+        radius: 15,
+      ),
       onTap: () => _showColorPickerDialog(context, settings),
     );
   }
 
   void _showFontSelectionDialog(
-      BuildContext context, SettingsProvider settings) {
+    BuildContext context,
+    SettingsProvider settings,
+  ) {
     showDialog(
       context: context,
       builder: (context) {
@@ -105,7 +112,7 @@ class SettingsPage extends StatelessWidget {
               labelTypes: const [
                 ColorLabelType.rgb,
                 ColorLabelType.hsv,
-                ColorLabelType.hsl
+                ColorLabelType.hsl,
               ],
               pickerAreaHeightPercent: 0.8,
             ),
@@ -131,4 +138,3 @@ class SettingsPage extends StatelessWidget {
     );
   }
 }
-

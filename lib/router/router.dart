@@ -78,7 +78,8 @@ final GoRouter router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
         final ncode = state.pathParameters['ncode']!;
-        final episode = int.tryParse(state.uri.queryParameters['episode'] ?? '1') ?? 1;
+        final episode =
+            int.tryParse(state.uri.queryParameters['episode'] ?? '1') ?? 1;
         return NovelPage(ncode: ncode, episode: episode);
       },
     ),

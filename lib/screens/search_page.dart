@@ -131,8 +131,9 @@ class _SearchPageState extends State<SearchPage> {
                       ],
                       onChanged: (int? newValue) {
                         setState(() {
-                          _searchQuery.genre =
-                              newValue == null ? null : [newValue];
+                          _searchQuery.genre = newValue == null
+                              ? null
+                              : [newValue];
                         });
                       },
                     ),
@@ -191,10 +192,7 @@ class _SearchPageState extends State<SearchPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : NovelList(
-              novels: _searchResults,
-              isRanking: false,
-            ),
+          : NovelList(novels: _searchResults, isRanking: false),
     );
   }
 }

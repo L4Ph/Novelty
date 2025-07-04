@@ -5,11 +5,7 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/services/database_service.dart';
 
 class TocPage extends StatefulWidget {
-
-  const TocPage({
-    super.key,
-    required this.ncode,
-  });
+  const TocPage({super.key, required this.ncode});
   final String ncode;
 
   @override
@@ -68,15 +64,15 @@ class _TocPageState extends State<TocPage> {
 
     if (_isInLibrary) {
       await _databaseService.removeNovelFromLibrary(widget.ncode);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ライブラリから削除しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ライブラリから削除しました')));
     } else {
       _novelInfo!.ncode = widget.ncode;
       await _databaseService.addNovelToLibrary(_novelInfo!);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ライブラリに追加しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ライブラリに追加しました')));
     }
     _checkIfInLibrary();
   }

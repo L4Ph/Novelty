@@ -4,7 +4,6 @@ part 'ranking_response.g.dart';
 
 @JsonSerializable()
 class RankingResponse {
-
   RankingResponse({
     this.rank,
     this.pt,
