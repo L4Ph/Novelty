@@ -62,19 +62,27 @@ class _TocPageState extends State<TocPage> {
       return;
     }
 
+    if (!mounted) {
+      return;
+    }
+
     if (_isInLibrary) {
       await _databaseService.removeNovelFromLibrary(widget.ncode);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('ライブラリから削除しました')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('ライブラ��から削除しました')));
+      }
     } else {
       _novelInfo!.ncode = widget.ncode;
       await _databaseService.addNovelToLibrary(_novelInfo!);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('ライブラリに追加しました')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('ライブラリに追加しました')));
+      }
     }
-    _checkIfInLibrary();
+    await _checkIfInLibrary();
   }
 
   @override

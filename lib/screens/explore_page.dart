@@ -4,19 +4,34 @@ import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/novel_list.dart';
+import 'package:novelty/widgets/ranking_list.dart';
 
-class SearchPage extends StatefulWidget {
-  const SearchPage({super.key});
+class ExplorePage extends StatefulWidget {
+  const ExplorePage({super.key});
 
   @override
-  State<SearchPage> createState() => _SearchPageState();
+  State<ExplorePage> createState() => _ExplorePageState();
 }
 
-class _SearchPageState extends State<SearchPage> {
+class _ExplorePageState extends State<ExplorePage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   final _apiService = ApiService();
   final _searchQuery = NovelSearchQuery();
   List<RankingResponse> _searchResults = [];
   var _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 5, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   Future<void> _performSearch() async {
     setState(() {
@@ -180,17 +195,36 @@ class _SearchPageState extends State<SearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('小説検索'),
+        title: const Text('探す'),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: _showFilterDialog,
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: '日間'),
+            Tab(text: '週間'),
+            Tab(text: '月間'),
+            Tab(text: '四半期'),
+            Tab(text: '累計'),
+          ],
+        ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : NovelList(novels: _searchResults, isRanking: false),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          const RankingList(rankingType: 'd', key: PageStorageKey('d')),
+          const RankingList(rankingType: 'w', key: PageStorageKey('w')),
+          const RankingList(rankingType: 'm', key: PageStorageKey('m')),
+          const RankingList(rankingType: 'q', key: PageStorageKey('q')),
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : NovelList(novels: _searchResults, isRanking: false),
+        ],
+      ),
     );
   }
 }

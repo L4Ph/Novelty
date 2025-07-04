@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:novelty/screens/explore_page.dart';
 import 'package:novelty/screens/history_page.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/screens/more_page.dart';
 import 'package:novelty/screens/novel_page.dart';
-import 'package:novelty/screens/ranking_page.dart';
 import 'package:novelty/screens/scaffold_page.dart';
-import 'package:novelty/screens/search_page.dart';
 import 'package:novelty/screens/settings_page.dart';
 import 'package:novelty/screens/toc_page.dart';
 
@@ -34,8 +33,8 @@ final router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/ranking',
-              builder: (context, state) => const RankingPage(),
+              path: '/explore',
+              builder: (context, state) => const ExplorePage(),
             ),
           ],
         ),
@@ -44,14 +43,6 @@ final router = GoRouter(
             GoRoute(
               path: '/history',
               builder: (context, state) => const HistoryPage(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/search',
-              builder: (context, state) => const SearchPage(),
             ),
           ],
         ),

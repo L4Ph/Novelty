@@ -52,10 +52,15 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Future<void> _removeNovelFromLibrary(String ncode) async {
+    if (!mounted) {
+      return;
+    }
     await _databaseService.removeNovelFromLibrary(ncode);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('ライブラリから削除しました')));
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ライブラリから削除しました')));
+    }
     _loadLibraryNovels();
   }
 

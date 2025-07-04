@@ -14,11 +14,10 @@ class ScaffoldPage extends StatelessWidget {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.book), label: 'ライブラリ'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.trending_up),
-            label: 'ランキング',
+            icon: Icon(Icons.explore),
+            label: '探す',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: '履歴'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: '検索'),
           BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: 'もっと'),
         ],
         currentIndex: _calculateSelectedIndex(context),
@@ -32,17 +31,14 @@ class ScaffoldPage extends StatelessWidget {
 
   static int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith('/ranking')) {
+    if (location.startsWith('/explore')) {
       return 1;
     }
     if (location.startsWith('/history')) {
       return 2;
     }
-    if (location.startsWith('/search')) {
-      return 3;
-    }
     if (location.startsWith('/more')) {
-      return 4;
+      return 3;
     }
     return 0;
   }
@@ -52,12 +48,10 @@ class ScaffoldPage extends StatelessWidget {
       case 0:
         context.go('/');
       case 1:
-        context.go('/ranking');
+        context.go('/explore');
       case 2:
         context.go('/history');
       case 3:
-        context.go('/search');
-      case 4:
         context.go('/more');
     }
   }

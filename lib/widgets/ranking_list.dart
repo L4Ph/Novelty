@@ -207,7 +207,7 @@ class _RankingListState extends State<RankingList>
             subtitle: Text(
               'Nコード: ${item.ncode} - ${item.pt ?? 0}pt\nジャンル: $genreName - $status',
             ),
-            onTap: () async {
+            onTap: () {
               final ncode = item.ncode.toLowerCase();
               if (item.novelType == 2) {
                 context.go('/novel/$ncode');
