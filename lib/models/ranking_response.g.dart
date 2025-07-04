@@ -10,6 +10,7 @@ RankingResponse _$RankingResponseFromJson(Map<String, dynamic> json) =>
     RankingResponse(
       rank: (json['rank'] as num?)?.toInt(),
       pt: (json['pt'] as num?)?.toInt(),
+      allPoint: (json['all_point'] as num?)?.toInt(),
       ncode: json['ncode'] as String,
       title: json['title'] as String?,
       novelType: (json['novel_type'] as num?)?.toInt(),
@@ -26,6 +27,7 @@ Map<String, dynamic> _$RankingResponseToJson(RankingResponse instance) =>
     <String, dynamic>{
       'rank': instance.rank,
       'pt': instance.pt,
+      'all_point': instance.allPoint,
       'ncode': instance.ncode,
       'title': instance.title,
       'novel_type': instance.novelType,

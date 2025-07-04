@@ -7,6 +7,7 @@ class RankingResponse {
   RankingResponse({
     this.rank,
     this.pt,
+    this.allPoint,
     required this.ncode,
     this.title,
     this.novelType,
@@ -23,6 +24,8 @@ class RankingResponse {
       _$RankingResponseFromJson(json);
   final int? rank;
   final int? pt;
+  @JsonKey(name: 'all_point')
+  final int? allPoint;
   final String ncode;
   final String? title;
   @JsonKey(name: 'novel_type')

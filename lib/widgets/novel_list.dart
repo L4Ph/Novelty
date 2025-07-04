@@ -34,7 +34,7 @@ class NovelList extends StatelessWidget {
           leading: isRanking ? Text('${item.rank ?? ''}') : null,
           title: Text(title),
           subtitle: Text(
-            'Nコード: ${item.ncode} - ${item.pt ?? 0}pt\nジャンル: $genreName - $status',
+            'Nコード: ${item.ncode} - ${item.allPoint ?? 0}pt\nジャンル: $genreName - $status',
           ),
           onTap: () async {
             final ncode = item.ncode.toLowerCase();
