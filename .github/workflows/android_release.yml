@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*.*.*' # vX.Y.Z の形式のタグに反応
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Enter the version (tag) to deploy'
+        required: true
 
 jobs:
   build:
