@@ -3,7 +3,7 @@ import 'package:archive/archive.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
@@ -12,7 +12,8 @@ import 'package:novelty/models/ranking_response.dart';
 class ApiService {
   final _dio = Dio();
   final CacheManager _cacheManager = DefaultCacheManager();
-  final String _noveltyApiUrl = dotenv.env['NOVELTY_API_URL'] ?? '';
+  final String _noveltyApiUrl =
+      const String.fromEnvironment('NOVELTY_API_URL');
 
   Future<dynamic> _fetchJsonData(String url) async {
     final response = await _dio.get<dynamic>(url);
