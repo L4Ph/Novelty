@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
+import 'package:novelty/widgets/novel_list_tile.dart';
 
 class RankingList extends StatefulWidget {
   const RankingList({super.key, required this.rankingType});
@@ -67,9 +67,8 @@ class _RankingListState extends State<RankingList>
     }
 
     if (_selectedGenre != null) {
-      filtered = filtered
-          .where((novel) => novel.genre == _selectedGenre)
-          .toList();
+      filtered =
+          filtered.where((novel) => novel.genre == _selectedGenre).toList();
     }
 
     if (!mounted) {
@@ -116,6 +115,7 @@ class _RankingListState extends State<RankingList>
                     isExpanded: true,
                     items: [
                       const DropdownMenuItem<int?>(
+                        value: null,
                         child: Text('すべて'),
                       ),
                       ...genreList.map((genre) {
@@ -189,33 +189,7 @@ class _RankingListState extends State<RankingList>
           }
 
           final item = _filteredNovelData[index];
-          final title = item.title ?? 'タイトルなし';
-          final genreName = item.genre != null && item.genre != -1
-              ? genreList.firstWhere(
-                      (g) => g['id'] == item.genre,
-                      orElse: () => {'name': '不明'},
-                    )['name']
-                    as String
-              : '不明';
-          final status = item.end == null || item.end == -1
-              ? '情報取得失敗'
-              : (item.end == 0 ? '連載中' : '完結済');
-
-          return ListTile(
-            leading: Text('${item.rank ?? ''}'),
-            title: Text(title),
-            subtitle: Text(
-              'Nコード: ${item.ncode} - ${item.pt ?? 0}pt\nジャンル: $genreName - $status',
-            ),
-            onTap: () {
-              final ncode = item.ncode.toLowerCase();
-              if (item.novelType == 2) {
-                context.push('/novel/$ncode');
-              } else {
-                context.push('/toc/$ncode');
-              }
-            },
-          );
+          return NovelListTile(item: item, isRanking: true);
         },
       ),
     );
