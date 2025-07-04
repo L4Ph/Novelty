@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
 
       - name: Set up Flutter
         run: |
@@ -28,20 +30,28 @@ jobs:
       - name: Get Flutter packages
         run: fvm flutter pub get
 
+      - name: Set version name
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION_NAME=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+          else
+            echo "VERSION_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
+
       - name: Create .env file
         run: echo "NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}" > .env
 
       - name: Decode Keystore
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
           echo "STORE_FILE=upload-keystore.jks" >> $GITHUB_ENV
 
       - name: Build Android APKs
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: |
           fvm flutter build apk --release --split-per-abi \
-            --build-name=${{ github.ref_name }} \
+            --build-name=${{ env.VERSION_NAME }} \
             --build-number=${{ github.run_number }} \
             --dart-define=NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}
         env:
@@ -51,10 +61,10 @@ jobs:
 
       # Build AAB
       - name: Build Android App Bundle (AAB)
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: |
           fvm flutter build appbundle --release \
-            --build-name=${{ github.ref_name }} \
+            --build-name=${{ env.VERSION_NAME }} \
             --build-number=${{ github.run_number }} \
             --dart-define=NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}
         env:
@@ -64,16 +74,16 @@ jobs:
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         with:
           files: |
             build/app/outputs/bundle/release/app-release.aab
             build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
             build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
             build/app/outputs/flutter-apk/app-x86_64-release.apk
-          name: Release ${{ github.ref_name }}
-          tag_name: ${{ github.ref_name }}
+          name: Release ${{ env.VERSION_NAME }}
+          tag_name: ${{ env.VERSION_NAME }}
           body: |
-            Android Release ${{ github.ref_name }}
+            Android Release ${{ env.VERSION_NAME }}
             Changes in this release:
-            - Update to version ${{ github.ref_name }}
+            - Update to version ${{ env.VERSION_NAME }}
