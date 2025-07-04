@@ -20,15 +20,31 @@ class _ExplorePageState extends State<ExplorePage>
   final _searchQuery = NovelSearchQuery();
   List<RankingResponse> _searchResults = [];
   var _isLoading = false;
+  bool _isSearching = false;
+  late final VoidCallback _tabListener;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    _tabListener = () {
+      if (_tabController.indexIsChanging) {
+        return;
+      }
+
+      if (_isSearching) {
+        setState(() {
+          _isSearching = false;
+          _searchResults = [];
+        });
+      }
+    };
+    _tabController.addListener(_tabListener);
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_tabListener);
     _tabController.dispose();
     super.dispose();
   }
@@ -36,6 +52,7 @@ class _ExplorePageState extends State<ExplorePage>
   Future<void> _performSearch() async {
     setState(() {
       _isLoading = true;
+      _isSearching = true;
     });
 
     final results = await _apiService.searchNovels(_searchQuery);
@@ -193,37 +210,63 @@ class _ExplorePageState extends State<ExplorePage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('探す'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: _showFilterDialog,
-          ),
-        ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: '日間'),
-            Tab(text: '週間'),
-            Tab(text: '月間'),
-            Tab(text: '四半期'),
-            Tab(text: '累計'),
+    return PopScope(
+      canPop: !_isSearching,
+      onPopInvoked: (didPop) {
+        if (didPop) {
+          return;
+        }
+        setState(() {
+          _isSearching = false;
+          _searchResults = [];
+        });
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('探す'),
+          actions: [
+            if (_isSearching)
+              IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchResults = [];
+                  });
+                },
+              ),
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: _showFilterDialog,
+            ),
           ],
+          bottom: _isSearching
+              ? null
+              : TabBar(
+                  controller: _tabController,
+                  tabs: const [
+                    Tab(text: '日間'),
+                    Tab(text: '週間'),
+                    Tab(text: '月間'),
+                    Tab(text: '四半期'),
+                    Tab(text: '累計'),
+                  ],
+                ),
         ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          const RankingList(rankingType: 'd', key: PageStorageKey('d')),
-          const RankingList(rankingType: 'w', key: PageStorageKey('w')),
-          const RankingList(rankingType: 'm', key: PageStorageKey('m')),
-          const RankingList(rankingType: 'q', key: PageStorageKey('q')),
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : NovelList(novels: _searchResults, isRanking: false),
-        ],
+        body: _isSearching
+            ? _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : NovelList(novels: _searchResults, isRanking: false)
+            : TabBarView(
+                controller: _tabController,
+                children: const [
+                  RankingList(rankingType: 'd', key: PageStorageKey('d')),
+                  RankingList(rankingType: 'w', key: PageStorageKey('w')),
+                  RankingList(rankingType: 'm', key: PageStorageKey('m')),
+                  RankingList(rankingType: 'q', key: PageStorageKey('q')),
+                  RankingList(rankingType: 'all', key: PageStorageKey('all')),
+                ],
+              ),
       ),
     );
   }
