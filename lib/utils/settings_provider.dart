@@ -1,94 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SettingsProvider with ChangeNotifier {
-  SettingsProvider() {
-    _loadSettings();
-  }
-  // Font settings
-  static const availableFonts = <String>[
-    'Noto Sans JP',
-    'IBM Plex Sans JP',
-    'M PLUS 1p',
-    'M PLUS 1',
-    'Murecho',
-    'M PLUS 2',
-  ];
-  String _selectedFont = availableFonts.first;
+part 'settings_provider.g.dart';
 
-  // Font size settings
-  double _fontSize = 16;
+@immutable
+class AppSettings {
+  const AppSettings({
+    required this.selectedFont,
+    required this.fontSize,
+    required this.seedColor,
+  });
 
-  // Color scheme settings
-  var _colorScheme = ColorScheme.fromSeed(seedColor: Colors.blue);
-  Color _seedColor = Colors.blue;
+  final String selectedFont;
+  final double fontSize;
+  final Color seedColor;
 
-  // SharedPreferences keys
-  static const _fontPreferenceKey = 'selected_font';
-  static const _fontSizePreferenceKey = 'font_size';
-  static const _seedColorPreferenceKey = 'seed_color';
+  ColorScheme get colorScheme => ColorScheme.fromSeed(seedColor: seedColor);
 
-  // Getters
-  String get selectedFont => _selectedFont;
-  double get fontSize => _fontSize;
-  ColorScheme get colorScheme => _colorScheme;
-  Color get seedColor => _seedColor;
+  TextTheme get selectedFontTheme => _getTextTheme(selectedFont);
 
-  TextTheme get selectedFontTheme => _getTextTheme(_selectedFont);
-
-  // Setters
-  Future<void> setSelectedFont(String font) async {
-    if (availableFonts.contains(font)) {
-      _selectedFont = font;
-      await _saveString(_fontPreferenceKey, font);
-      notifyListeners();
-    }
-  }
-
-  Future<void> setFontSize(double size) async {
-    _fontSize = size;
-    await _saveDouble(_fontSizePreferenceKey, size);
-    notifyListeners();
-  }
-
-  void updateSeedColor(Color color) {
-    _colorScheme = ColorScheme.fromSeed(seedColor: color);
-    notifyListeners();
-  }
-
-  Future<void> setAndSaveSeedColor(Color color) async {
-    _seedColor = color;
-    _colorScheme = ColorScheme.fromSeed(seedColor: color);
-    await _saveInt(_seedColorPreferenceKey, color.toARGB32());
-    notifyListeners();
-  }
-
-  // Load and Save methods
-  Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    _selectedFont = prefs.getString(_fontPreferenceKey) ?? availableFonts.first;
-    _fontSize = prefs.getDouble(_fontSizePreferenceKey) ?? 16.0;
-    _seedColor = Color(
-      prefs.getInt(_seedColorPreferenceKey) ?? Colors.blue.toARGB32(),
+  AppSettings copyWith({
+    String? selectedFont,
+    double? fontSize,
+    Color? seedColor,
+  }) {
+    return AppSettings(
+      selectedFont: selectedFont ?? this.selectedFont,
+      fontSize: fontSize ?? this.fontSize,
+      seedColor: seedColor ?? this.seedColor,
     );
-    _colorScheme = ColorScheme.fromSeed(seedColor: _seedColor);
-    notifyListeners();
-  }
-
-  Future<void> _saveString(String key, String value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(key, value);
-  }
-
-  Future<void> _saveDouble(String key, double value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble(key, value);
-  }
-
-  Future<void> _saveInt(String key, int value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(key, value);
   }
 
   TextTheme _getTextTheme(String font) {
@@ -106,6 +48,62 @@ class SettingsProvider with ChangeNotifier {
       case 'Noto Sans JP':
       default:
         return GoogleFonts.notoSansJpTextTheme();
+    }
+  }
+}
+
+@Riverpod(keepAlive: true)
+class Settings extends _$Settings {
+  static const availableFonts = <String>[
+    'Noto Sans JP',
+    'IBM Plex Sans JP',
+    'M PLUS 1p',
+    'M PLUS 1',
+    'Murecho',
+    'M PLUS 2',
+  ];
+
+  static const _fontPreferenceKey = 'selected_font';
+  static const _fontSizePreferenceKey = 'font_size';
+  static const _seedColorPreferenceKey = 'seed_color';
+
+  Future<SharedPreferences> get _prefs async => SharedPreferences.getInstance();
+
+  @override
+  Future<AppSettings> build() async {
+    final prefs = await _prefs;
+    final selectedFont =
+        prefs.getString(_fontPreferenceKey) ?? availableFonts.first;
+    final fontSize = prefs.getDouble(_fontSizePreferenceKey) ?? 16.0;
+    final seedColor = Color(
+      prefs.getInt(_seedColorPreferenceKey) ?? Colors.blue.value,
+    );
+
+    return AppSettings(
+      selectedFont: selectedFont,
+      fontSize: fontSize,
+      seedColor: seedColor,
+    );
+  }
+
+  Future<void> setSelectedFont(String font) async {
+    if (availableFonts.contains(font) && state.hasValue) {
+      await (await _prefs).setString(_fontPreferenceKey, font);
+      state = AsyncData(state.value!.copyWith(selectedFont: font));
+    }
+  }
+
+  Future<void> setFontSize(double size) async {
+    if (state.hasValue) {
+      await (await _prefs).setDouble(_fontSizePreferenceKey, size);
+      state = AsyncData(state.value!.copyWith(fontSize: size));
+    }
+  }
+
+  Future<void> setAndSaveSeedColor(Color color) async {
+    if (state.hasValue) {
+      await (await _prefs).setInt(_seedColorPreferenceKey, color.value);
+      state = AsyncData(state.value!.copyWith(seedColor: color));
     }
   }
 }

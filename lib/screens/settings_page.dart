@@ -1,37 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/utils/settings_provider.dart';
-import 'package:provider/provider.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final settings = Provider.of<SettingsProvider>(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
-      body: ListView(
-        children: [
-          _buildFontSetting(context, settings),
-          _buildFontSizeSetting(context, settings),
-          _buildThemeColorSetting(context, settings),
-        ],
+      body: settings.when(
+        data: (settings) => ListView(
+          children: [
+            _buildFontSetting(context, ref, settings),
+            _buildFontSizeSetting(context, ref, settings),
+            _buildThemeColorSetting(context, ref, settings),
+          ],
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );
   }
 
-  Widget _buildFontSetting(BuildContext context, SettingsProvider settings) {
+  Widget _buildFontSetting(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettings settings,
+  ) {
     return ListTile(
       title: const Text('フォント'),
       subtitle: Text(settings.selectedFont),
-      onTap: () => _showFontSelectionDialog(context, settings),
+      onTap: () => _showFontSelectionDialog(context, ref, settings),
     );
   }
 
   Widget _buildFontSizeSetting(
     BuildContext context,
-    SettingsProvider settings,
+    WidgetRef ref,
+    AppSettings settings,
   ) {
     return ListTile(
       title: Text('文字サイズ: ${settings.fontSize.toStringAsFixed(1)}'),
@@ -40,14 +50,16 @@ class SettingsPage extends StatelessWidget {
         min: 10,
         max: 30,
         divisions: 20,
-        onChanged: (value) => settings.setFontSize(value),
+        onChanged: (value) =>
+            ref.read(settingsProvider.notifier).setFontSize(value),
       ),
     );
   }
 
   Widget _buildThemeColorSetting(
     BuildContext context,
-    SettingsProvider settings,
+    WidgetRef ref,
+    AppSettings settings,
   ) {
     return ListTile(
       title: const Text('テーマカラー'),
@@ -55,13 +67,14 @@ class SettingsPage extends StatelessWidget {
         backgroundColor: settings.colorScheme.primary,
         radius: 15,
       ),
-      onTap: () => _showColorPickerDialog(context, settings),
+      onTap: () => _showColorPickerDialog(context, ref, settings),
     );
   }
 
   void _showFontSelectionDialog(
     BuildContext context,
-    SettingsProvider settings,
+    WidgetRef ref,
+    AppSettings settings,
   ) {
     showDialog<void>(
       context: context,
@@ -72,16 +85,18 @@ class SettingsPage extends StatelessWidget {
             width: double.maxFinite,
             child: ListView.builder(
               shrinkWrap: true,
-              itemCount: SettingsProvider.availableFonts.length,
+              itemCount: Settings.availableFonts.length,
               itemBuilder: (context, index) {
-                final font = SettingsProvider.availableFonts[index];
+                final font = Settings.availableFonts[index];
                 return RadioListTile<String>(
                   title: Text(font),
                   value: font,
                   groupValue: settings.selectedFont,
                   onChanged: (value) {
                     if (value != null) {
-                      settings.setSelectedFont(value);
+                      ref
+                          .read(settingsProvider.notifier)
+                          .setSelectedFont(value);
                       Navigator.of(context).pop();
                     }
                   },
@@ -94,7 +109,11 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  void _showColorPickerDialog(BuildContext context, SettingsProvider settings) {
+  void _showColorPickerDialog(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettings settings,
+  ) {
     var pickerColor = settings.seedColor;
 
     showDialog<void>(
@@ -106,7 +125,6 @@ class SettingsPage extends StatelessWidget {
             child: ColorPicker(
               pickerColor: pickerColor,
               onColorChanged: (color) {
-                settings.updateSeedColor(color);
                 pickerColor = color;
               },
               pickerAreaHeightPercent: 0.8,
@@ -116,14 +134,15 @@ class SettingsPage extends StatelessWidget {
             TextButton(
               child: const Text('キャンセル'),
               onPressed: () {
-                settings.updateSeedColor(settings.seedColor);
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: const Text('完了'),
               onPressed: () {
-                settings.setAndSaveSeedColor(pickerColor);
+                ref
+                    .read(settingsProvider.notifier)
+                    .setAndSaveSeedColor(pickerColor);
                 Navigator.of(context).pop();
               },
             ),
