@@ -38,9 +38,47 @@ class NovelListTile extends StatelessWidget {
         'Nコード: ${item.ncode} - ${item.allPoint ?? item.pt ?? 0}pt\nジャンル: $genreName - $status',
       ),
       onTap: onTap ??
-          () {
+          () async {
             final ncode = item.ncode.toLowerCase();
-            context.push('/toc/$ncode');
+            // Show loading indicator
+            final navigator = Navigator.of(context);
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => const Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+            
+            try {
+              // Fetch novel info to determine navigation path
+              final apiService = ApiService();
+              final novelInfo = await apiService.fetchNovelInfo(ncode);
+              
+              // Dismiss loading dialog
+              navigator.pop();
+              
+              if (!context.mounted) return;
+              
+              // Determine navigation path based on novel info
+              if (novelInfo.novelType == 2 || novelInfo.episodes == null || novelInfo.episodes!.isEmpty) {
+                // Short story or no episodes, go directly to the novel page
+                context.push('/novel/$ncode/1');
+              } else {
+                // Has multiple episodes, go to TOC page
+                context.push('/toc/$ncode');
+              }
+            } catch (e) {
+              // Dismiss loading dialog
+              navigator.pop();
+              if (!context.mounted) return;
+              
+              // Show error and default to TOC page
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('情報の取得に失敗しました: $e')),
+              );
+              context.push('/toc/$ncode');
+            }
           },
       onLongPress: onLongPress,
     );

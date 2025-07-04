@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/services/api_service.dart';
 import 'package:novelty/services/database_service.dart';
 
 class LibraryPage extends StatefulWidget {
@@ -85,9 +86,48 @@ class _LibraryPageState extends State<LibraryPage> {
             return ListTile(
               title: Text(novel.title ?? ''),
               subtitle: Text(novel.writer ?? ''),
-              onTap: () {
+              onTap: () async {
                 if (novel.ncode != null) {
-                  context.push('/toc/${novel.ncode}');
+                  final ncode = novel.ncode!.toLowerCase();
+                  // Show loading indicator
+                  final navigator = Navigator.of(context);
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                  
+                  try {
+                    // Fetch novel info to determine navigation path
+                    final apiService = ApiService();
+                    final novelInfo = await apiService.fetchNovelInfo(ncode);
+                    
+                    // Dismiss loading dialog
+                    navigator.pop();
+                    
+                    if (!context.mounted) return;
+                    
+                    // Determine navigation path based on novel info
+                    if (novelInfo.novelType == 2 || novelInfo.episodes == null || novelInfo.episodes!.isEmpty) {
+                      // Short story or no episodes, go directly to the novel page
+                      context.push('/novel/$ncode/1');
+                    } else {
+                      // Has multiple episodes, go to TOC page
+                      context.push('/toc/$ncode');
+                    }
+                  } catch (e) {
+                    // Dismiss loading dialog
+                    navigator.pop();
+                    if (!context.mounted) return;
+                    
+                    // Show error and default to TOC page
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('情報の取得に失敗しました: $e')),
+                    );
+                    context.push('/toc/$ncode');
+                  }
                 }
               },
               onLongPress: () {

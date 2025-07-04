@@ -31,11 +31,8 @@ class _TocPageState extends State<TocPage> {
     try {
       final novelInfo = await _apiService.fetchNovelInfo(widget.ncode);
       if (mounted) {
-        if (novelInfo.episodes == null || novelInfo.episodes!.isEmpty) {
-          context.pushReplacement('/novel/${widget.ncode}/1');
-          return;
-        }
-
+        // We no longer redirect here, as the decision is made at button press time
+        // Instead, we'll handle the empty episodes case in the UI
         setState(() {
           _novelInfo = novelInfo;
           _isLoading = false;
@@ -112,19 +109,35 @@ class _TocPageState extends State<TocPage> {
         ),
         title: Text(_novelInfo?.title ?? '目次'),
       ),
-      body: ListView.builder(
-        itemCount: _novelInfo?.episodes?.length ?? 0,
-        itemBuilder: (context, index) {
-          final episode = _novelInfo!.episodes![index];
-          final episodeTitle = episode['title'] as String? ?? 'No Title';
-          return ListTile(
-            title: Text(episodeTitle),
-            onTap: () {
-              context.push('/novel/${widget.ncode}/${index + 1}');
-            },
-          );
-        },
-      ),
+      body: (_novelInfo?.episodes == null || _novelInfo!.episodes!.isEmpty)
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('エピソードがありません。'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.push('/novel/${widget.ncode}/1');
+                    },
+                    child: const Text('小説を読む'),
+                  ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              itemCount: _novelInfo?.episodes?.length ?? 0,
+              itemBuilder: (context, index) {
+                final episode = _novelInfo!.episodes![index];
+                final episodeTitle = episode['title'] as String? ?? 'No Title';
+                return ListTile(
+                  title: Text(episodeTitle),
+                  onTap: () {
+                    context.push('/novel/${widget.ncode}/${index + 1}');
+                  },
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: _toggleLibraryStatus,
         child: Icon(_isInLibrary ? Icons.remove : Icons.add),
