@@ -28,7 +28,7 @@ jobs:
       - name: Decode Keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
-          echo "STORE_FILE=android/app/upload-keystore.jks" >> $GITHUB_ENV
+          echo "STORE_FILE=upload-keystore.jks" >> $GITHUB_ENV
         if: success() && startsWith(github.ref, 'refs/tags/v')
 
       # Build APK for arm64
