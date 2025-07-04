@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:novelty/models/novel_info.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -21,7 +23,7 @@ class DatabaseService {
     final path = join(await getDatabasesPath(), 'novelty.db');
     return openDatabase(
       path,
-      version: 2,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -30,22 +32,39 @@ class DatabaseService {
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE novels (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ncode TEXT NOT NULL UNIQUE,
-        title TEXT NOT NULL,
+        title TEXT,
+        ncode TEXT PRIMARY KEY,
         writer TEXT,
         story TEXT,
+        novel_type INTEGER,
+        end INTEGER,
+        general_all_no INTEGER,
         genre INTEGER,
         keyword TEXT,
-        general_all_no INTEGER,
-        end INTEGER,
-        novel_type INTEGER
+        general_firstup TEXT,
+        general_lastup TEXT,
+        global_point INTEGER,
+        daily_point INTEGER,
+        weekly_point INTEGER,
+        monthly_point INTEGER,
+        quarter_point INTEGER,
+        yearly_point INTEGER,
+        fav_novel_cnt INTEGER,
+        impression_cnt INTEGER,
+        review_cnt INTEGER,
+        all_point INTEGER,
+        all_hyoka_cnt INTEGER,
+        sasie_cnt INTEGER,
+        kaiwaritu INTEGER,
+        novelupdated_at INTEGER,
+        updated_at INTEGER,
+        episodes TEXT
       )
     ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
+    if (oldVersion < 4) {
       await db.execute('DROP TABLE IF EXISTS novels');
       await _onCreate(db, newVersion);
     }
@@ -53,9 +72,13 @@ class DatabaseService {
 
   Future<void> addNovelToLibrary(NovelInfo novel) async {
     final db = await database;
+    final novelJson = novel.toJson();
+    if (novelJson['episodes'] != null) {
+      novelJson['episodes'] = jsonEncode(novelJson['episodes']);
+    }
     await db.insert(
       'novels',
-      novel.toJson(),
+      novelJson,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -65,7 +88,11 @@ class DatabaseService {
     final List<Map<String, dynamic>> maps = await db.query('novels');
 
     return List.generate(maps.length, (i) {
-      return NovelInfo.fromJson(maps[i]);
+      final map = Map<String, dynamic>.from(maps[i]);
+      if (map['episodes'] is String) {
+        map['episodes'] = jsonDecode(map['episodes'] as String);
+      }
+      return NovelInfo.fromJson(map);
     });
   }
 
