@@ -1,23 +1,25 @@
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
 class DatabaseService {
-  static final DatabaseService _instance = DatabaseService._internal();
   factory DatabaseService() => _instance;
   DatabaseService._internal();
+  static final DatabaseService _instance = DatabaseService._internal();
 
   static Database? _database;
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
+    if (_database != null) {
+      return _database!;
+    }
     _database = await _initDB();
     return _database!;
   }
 
   Future<Database> _initDB() async {
-    String path = join(await getDatabasesPath(), 'novelty.db');
-    return await openDatabase(
+    final path = join(await getDatabasesPath(), 'novelty.db');
+    return openDatabase(
       path,
       version: 2,
       onCreate: _onCreate,

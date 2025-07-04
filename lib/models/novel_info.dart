@@ -6,6 +6,39 @@ int? _toInt(dynamic val) => val is int ? val : int.tryParse(val as String? ?? ''
 
 @JsonSerializable(fieldRename: FieldRename.snake)
 class NovelInfo {
+
+  NovelInfo({
+    this.title,
+    this.ncode,
+    this.writer,
+    this.story,
+    this.novelType,
+    this.end,
+    this.generalAllNo,
+    this.genre,
+    this.keyword,
+    this.generalFirstup,
+    this.generalLastup,
+    this.globalPoint,
+    this.dailyPoint,
+    this.weeklyPoint,
+    this.monthlyPoint,
+    this.quarterPoint,
+    this.yearlyPoint,
+    this.favNovelCnt,
+    this.impressionCnt,
+    this.reviewCnt,
+    this.allPoint,
+    this.allHyokaCnt,
+    this.sasieCnt,
+    this.kaiwaritu,
+    this.novelupdatedAt,
+    this.updatedAt,
+    this.episodes,
+  });
+
+  factory NovelInfo.fromJson(Map<String, dynamic> json) =>
+      _$NovelInfoFromJson(json);
   String? title;
   String? ncode;
   String? writer;
@@ -52,39 +85,6 @@ class NovelInfo {
   @JsonKey(fromJson: _toInt)
   int? updatedAt;
   List<Map<String, dynamic>>? episodes;
-
-  NovelInfo({
-    this.title,
-    this.ncode,
-    this.writer,
-    this.story,
-    this.novelType,
-    this.end,
-    this.generalAllNo,
-    this.genre,
-    this.keyword,
-    this.generalFirstup,
-    this.generalLastup,
-    this.globalPoint,
-    this.dailyPoint,
-    this.weeklyPoint,
-    this.monthlyPoint,
-    this.quarterPoint,
-    this.yearlyPoint,
-    this.favNovelCnt,
-    this.impressionCnt,
-    this.reviewCnt,
-    this.allPoint,
-    this.allHyokaCnt,
-    this.sasieCnt,
-    this.kaiwaritu,
-    this.novelupdatedAt,
-    this.updatedAt,
-    this.episodes,
-  });
-
-  factory NovelInfo.fromJson(Map<String, dynamic> json) =>
-      _$NovelInfoFromJson(json);
 
   Map<String, dynamic> toJson() => _$NovelInfoToJson(this);
 }

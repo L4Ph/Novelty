@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:novelty/utils/settings_provider.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:novelty/utils/settings_provider.dart';
+import 'package:provider/provider.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -36,8 +36,8 @@ class SettingsPage extends StatelessWidget {
       title: Text('文字サイズ: ${settings.fontSize.toStringAsFixed(1)}'),
       subtitle: Slider(
         value: settings.fontSize,
-        min: 10.0,
-        max: 30.0,
+        min: 10,
+        max: 30,
         divisions: 20,
         onChanged: (value) => settings.setFontSize(value),
       ),
@@ -88,7 +88,7 @@ class SettingsPage extends StatelessWidget {
   }
 
   void _showColorPickerDialog(BuildContext context, SettingsProvider settings) {
-    Color pickerColor = settings.seedColor;
+    var pickerColor = settings.seedColor;
 
     showDialog(
       context: context,

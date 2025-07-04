@@ -5,12 +5,12 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/services/database_service.dart';
 
 class TocPage extends StatefulWidget {
-  final String ncode;
 
   const TocPage({
     super.key,
     required this.ncode,
   });
+  final String ncode;
 
   @override
   State<TocPage> createState() => _TocPageState();
@@ -61,8 +61,10 @@ class _TocPageState extends State<TocPage> {
     }
   }
 
-  void _toggleLibraryStatus() async {
-    if (_novelInfo == null) return;
+  Future<void> _toggleLibraryStatus() async {
+    if (_novelInfo == null) {
+      return;
+    }
 
     if (_isInLibrary) {
       await _databaseService.removeNovelFromLibrary(widget.ncode);

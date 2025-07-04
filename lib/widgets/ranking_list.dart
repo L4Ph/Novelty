@@ -5,9 +5,9 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 
 class RankingList extends StatefulWidget {
-  final String rankingType;
 
   const RankingList({super.key, required this.rankingType});
+  final String rankingType;
 
   @override
   State<RankingList> createState() => _RankingListState();
@@ -40,14 +40,18 @@ class _RankingListState extends State<RankingList>
       final allData =
           await _apiService.fetchRankingAndDetails(widget.rankingType);
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _allNovelData = allData;
         _applyFilters();
         _isLoading = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _errorMessage = 'An error occurred: $e';
         _isLoading = false;
@@ -56,7 +60,7 @@ class _RankingListState extends State<RankingList>
   }
 
   void _applyFilters() {
-    List<RankingResponse> filtered = List.from(_allNovelData);
+    var filtered = List<RankingResponse>.from(_allNovelData);
 
     if (_showOnlyOngoing) {
       filtered = filtered.where((novel) => novel.end == 0).toList();
@@ -67,7 +71,9 @@ class _RankingListState extends State<RankingList>
           filtered.where((novel) => novel.genre == _selectedGenre).toList();
     }
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _filteredNovelData = filtered;
       _currentPage = 1;
@@ -75,7 +81,9 @@ class _RankingListState extends State<RankingList>
   }
 
   void _loadMore() {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _currentPage++;
     });
@@ -158,12 +166,12 @@ class _RankingListState extends State<RankingList>
       return Center(child: Text(_errorMessage));
     }
 
-    final int totalItems = _filteredNovelData.length;
-    int displayItemCount = _currentPage * _itemsPerPage;
+    final totalItems = _filteredNovelData.length;
+    var displayItemCount = _currentPage * _itemsPerPage;
     if (displayItemCount > totalItems) {
       displayItemCount = totalItems;
     }
-    final bool hasMore = displayItemCount < totalItems;
+    final hasMore = displayItemCount < totalItems;
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(

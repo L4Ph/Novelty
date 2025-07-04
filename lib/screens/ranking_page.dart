@@ -41,7 +41,7 @@ class _RankingPageState extends State<RankingPage>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
+        children: const [
           RankingList(rankingType: 'd', key: PageStorageKey('d')),
           RankingList(rankingType: 'w', key: PageStorageKey('w')),
           RankingList(rankingType: 'm', key: PageStorageKey('m')),

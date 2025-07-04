@@ -6,14 +6,14 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
 class NovelPage extends StatefulWidget {
-  final String ncode;
-  final int? episode;
 
   const NovelPage({
     super.key,
     required this.ncode,
     this.episode,
   });
+  final String ncode;
+  final int? episode;
 
   @override
   State<NovelPage> createState() => _NovelPageState();
@@ -47,7 +47,9 @@ class _NovelPageState extends State<NovelPage> {
   Future<void> _fetchNovelInfo() async {
     try {
       final novelInfo = await _apiService.fetchNovelInfoByNcode(widget.ncode);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _novelTitle = novelInfo.title ?? '';
         _totalEpisodes = novelInfo.generalAllNo ?? 1;
@@ -66,7 +68,9 @@ class _NovelPageState extends State<NovelPage> {
     final future = _apiService.fetchEpisode(widget.ncode, episode);
     _episodeCache[episode] = future;
     future.then((data) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       if (_currentEpisode == episode) {
         setState(() {
           _episodeTitle = data.title ?? '';
@@ -152,10 +156,10 @@ class _NovelPageState extends State<NovelPage> {
 }
 
 class LruMap<K, V> {
-  final int _maximumSize;
-  final LinkedHashMap<K, V> _map = LinkedHashMap<K, V>();
 
   LruMap({required int maximumSize}) : _maximumSize = maximumSize;
+  final int _maximumSize;
+  final LinkedHashMap<K, V> _map = LinkedHashMap<K, V>();
 
   V? operator [](K key) {
     final value = _map.remove(key);

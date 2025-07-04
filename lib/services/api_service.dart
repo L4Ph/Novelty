@@ -71,7 +71,7 @@ class ApiService {
   }
 
   static List<dynamic> _parseJson(List<int> bytes) {
-    final decoded = utf8.decode(GZipDecoder().decodeBytes(bytes));
+    final decoded = utf8.decode(const GZipDecoder().decodeBytes(bytes));
     return json.decode(decoded);
   }
 
@@ -168,7 +168,7 @@ class ApiService {
       return [];
     }
 
-    final Map<String, dynamic> novelDetails = {};
+    final novelDetails = <String, dynamic>{};
     const chunkSize = 20;
 
     for (var i = 0; i < ncodes.length; i += chunkSize) {
@@ -181,7 +181,7 @@ class ApiService {
       try {
         final detailsData = await _fetchData(detailsUrl);
         if (detailsData.isNotEmpty && detailsData[0]['allcount'] != null) {
-          for (var item in detailsData.sublist(1)) {
+          for (final item in detailsData.sublist(1)) {
             novelDetails[item['ncode']] = item;
           }
         }
@@ -193,8 +193,8 @@ class ApiService {
       }
     }
 
-    final List<RankingResponse> allData = [];
-    for (var rankItem in rankingData) {
+    final allData = <RankingResponse>[];
+    for (final rankItem in rankingData) {
       final ncode = rankItem['ncode'];
       if (novelDetails.containsKey(ncode)) {
         final details = novelDetails[ncode];

@@ -1,4 +1,6 @@
 class NovelSearchQuery {
+
+  NovelSearchQuery({this.ncode});
   String? word;
   String? notword;
   bool title = false;
@@ -41,8 +43,6 @@ class NovelSearchQuery {
   String order = 'new';
   int lim = 20;
   int st = 1;
-
-  NovelSearchQuery({this.ncode});
 
   Map<String, dynamic> toMap() {
     return {

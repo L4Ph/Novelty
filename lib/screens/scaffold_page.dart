@@ -46,7 +46,7 @@ class ScaffoldPage extends StatelessWidget {
   }
 
   static int _calculateSelectedIndex(BuildContext context) {
-    final String location = GoRouterState.of(context).uri.toString();
+    final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/ranking')) {
       return 1;
     }

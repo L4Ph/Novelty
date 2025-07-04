@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsProvider with ChangeNotifier {
+
+  SettingsProvider() {
+    _loadSettings();
+  }
   // Font settings
   static const List<String> availableFonts = [
     'Noto Sans JP',
@@ -15,7 +19,7 @@ class SettingsProvider with ChangeNotifier {
   String _selectedFont = availableFonts.first;
 
   // Font size settings
-  double _fontSize = 16.0;
+  double _fontSize = 16;
 
   // Color scheme settings
   ColorScheme _colorScheme = ColorScheme.fromSeed(seedColor: Colors.blue);
@@ -25,10 +29,6 @@ class SettingsProvider with ChangeNotifier {
   static const String _fontPreferenceKey = 'selected_font';
   static const String _fontSizePreferenceKey = 'font_size';
   static const String _seedColorPreferenceKey = 'seed_color';
-
-  SettingsProvider() {
-    _loadSettings();
-  }
 
   // Getters
   String get selectedFont => _selectedFont;

@@ -6,12 +6,12 @@ import 'package:novelty/services/database_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 
 class NovelList extends StatelessWidget {
+
+  NovelList({super.key, required this.novels, this.isRanking = true});
   final List<RankingResponse> novels;
   final bool isRanking;
   final ApiService _apiService = ApiService();
   final DatabaseService _databaseService = DatabaseService();
-
-  NovelList({super.key, required this.novels, this.isRanking = true});
 
   @override
   Widget build(BuildContext context) {

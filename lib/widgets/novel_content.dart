@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:provider/provider.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:provider/provider.dart';
 
 class NovelContent extends StatefulWidget {
-  final String ncode;
-  final int episode;
-  final Episode? initialData;
 
   const NovelContent({
     super.key,
@@ -15,6 +12,9 @@ class NovelContent extends StatefulWidget {
     required this.episode,
     this.initialData,
   });
+  final String ncode;
+  final int episode;
+  final Episode? initialData;
 
   @override
   State<NovelContent> createState() => _NovelContentState();
@@ -65,7 +65,7 @@ class _NovelContentState extends State<NovelContent> {
           return Container(
             color: settings.colorScheme.surface,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16),
               child: Text(
                 content?.replaceAll(RegExp(r'<br>'), '\n') ?? '',
                 style: TextStyle(

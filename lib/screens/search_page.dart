@@ -18,7 +18,7 @@ class _SearchPageState extends State<SearchPage> {
   List<RankingResponse> _searchResults = [];
   bool _isLoading = false;
 
-  void _performSearch() async {
+  Future<void> _performSearch() async {
     setState(() {
       _isLoading = true;
     });
