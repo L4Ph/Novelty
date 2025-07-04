@@ -38,9 +38,6 @@ jobs:
             echo "VERSION_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
           fi
 
-      - name: Create .env file
-        run: echo "NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}" > .env
-
       - name: Decode Keystore
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: |
