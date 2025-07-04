@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/services/database_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
 class NovelPage extends StatefulWidget {
@@ -14,6 +15,7 @@ class NovelPage extends StatefulWidget {
 
 class _NovelPageState extends State<NovelPage> {
   final _apiService = ApiService();
+  final _databaseService = DatabaseService();
   PageController? _pageController;
   late int _currentEpisode;
   var _episodeTitle = '';
@@ -29,12 +31,17 @@ class _NovelPageState extends State<NovelPage> {
     _currentEpisode = widget.episode ?? 1;
     _pageController = PageController(initialPage: _currentEpisode - 1);
     _fetchNovelInfo();
+    _addHistory();
   }
 
   @override
   void dispose() {
     _pageController?.dispose();
     super.dispose();
+  }
+
+  Future<void> _addHistory() async {
+    await _databaseService.addNovelToHistory(widget.ncode);
   }
 
   Future<void> _fetchNovelInfo() async {

@@ -72,7 +72,7 @@ class NovelInfo {
   int? impressionCnt;
   @JsonKey(fromJson: _toInt)
   int? reviewCnt;
-  @JsonKey(name: 'allpoint', fromJson: _toInt)
+  @JsonKey(fromJson: _toInt)
   int? allPoint;
   @JsonKey(fromJson: _toInt)
   int? allHyokaCnt;

@@ -23,7 +23,7 @@ class DatabaseService {
     final path = join(await getDatabasesPath(), 'novelty.db');
     return openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -61,11 +61,19 @@ class DatabaseService {
         episodes TEXT
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE history (
+        ncode TEXT PRIMARY KEY,
+        viewed_at INTEGER
+      )
+    ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 4) {
+    if (oldVersion < 5) {
       await db.execute('DROP TABLE IF EXISTS novels');
+      await db.execute('DROP TABLE IF EXISTS history');
       await _onCreate(db, newVersion);
     }
   }
@@ -109,5 +117,23 @@ class DatabaseService {
   Future<void> removeNovelFromLibrary(String ncode) async {
     final db = await database;
     await db.delete('novels', where: 'ncode = ?', whereArgs: [ncode]);
+  }
+
+  Future<void> addNovelToHistory(String ncode) async {
+    final db = await database;
+    await db.insert(
+      'history',
+      {'ncode': ncode, 'viewed_at': DateTime.now().millisecondsSinceEpoch},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getHistory() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'history',
+      orderBy: 'viewed_at DESC',
+    );
+    return maps;
   }
 }
