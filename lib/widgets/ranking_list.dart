@@ -14,15 +14,15 @@ class RankingList extends StatefulWidget {
 
 class _RankingListState extends State<RankingList>
     with AutomaticKeepAliveClientMixin<RankingList> {
-  final ApiService _apiService = ApiService();
+  final _apiService = ApiService();
   List<RankingResponse> _allNovelData = [];
   List<RankingResponse> _filteredNovelData = [];
-  bool _isLoading = true;
-  String _errorMessage = '';
-  final int _itemsPerPage = 50;
-  int _currentPage = 1;
+  var _isLoading = true;
+  var _errorMessage = '';
+  final _itemsPerPage = 50;
+  var _currentPage = 1;
 
-  bool _showOnlyOngoing = false;
+  var _showOnlyOngoing = false;
   int? _selectedGenre;
 
   @override
@@ -48,7 +48,7 @@ class _RankingListState extends State<RankingList>
         _applyFilters();
         _isLoading = false;
       });
-    } catch (e) {
+    } on Exception catch (e) {
       if (!mounted) {
         return;
       }
@@ -116,7 +116,6 @@ class _RankingListState extends State<RankingList>
                     isExpanded: true,
                     items: [
                       const DropdownMenuItem<int?>(
-                        value: null,
                         child: Text('すべて'),
                       ),
                       ...genreList.map((genre) {

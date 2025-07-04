@@ -20,7 +20,7 @@ class NovelContent extends StatefulWidget {
 }
 
 class _NovelContentState extends State<NovelContent> {
-  final ApiService _apiService = ApiService();
+  final _apiService = ApiService();
   late Future<Episode> _episodeData;
 
   @override
@@ -61,7 +61,7 @@ class _NovelContentState extends State<NovelContent> {
           return const Center(child: Text('No content available.'));
         } else {
           final content = snapshot.data!.body;
-          return Container(
+          return ColoredBox(
             color: settings.colorScheme.surface,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),

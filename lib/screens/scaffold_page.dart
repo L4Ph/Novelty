@@ -51,19 +51,14 @@ class ScaffoldPage extends StatelessWidget {
     switch (index) {
       case 0:
         context.go('/');
-        break;
       case 1:
         context.go('/ranking');
-        break;
       case 2:
         context.go('/history');
-        break;
       case 3:
         context.go('/search');
-        break;
       case 4:
         context.go('/more');
-        break;
     }
   }
 }

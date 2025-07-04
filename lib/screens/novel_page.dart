@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:flutter/material.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/services/api_service.dart';
@@ -15,11 +13,11 @@ class NovelPage extends StatefulWidget {
 }
 
 class _NovelPageState extends State<NovelPage> {
-  final ApiService _apiService = ApiService();
+  final _apiService = ApiService();
   PageController? _pageController;
   late int _currentEpisode;
-  String _episodeTitle = '';
-  String _novelTitle = '';
+  var _episodeTitle = '';
+  var _novelTitle = '';
   int? _totalEpisodes;
   int? _novelType;
 
@@ -50,8 +48,8 @@ class _NovelPageState extends State<NovelPage> {
         _totalEpisodes = novelInfo.generalAllNo ?? 1;
         _novelType = novelInfo.novelType;
       });
-      _fetchEpisodeData(_currentEpisode);
-    } catch (e) {
+      await _fetchEpisodeData(_currentEpisode);
+    } on Exception catch (_) {
       // Handle error
     }
   }
@@ -155,7 +153,7 @@ class _NovelPageState extends State<NovelPage> {
 class LruMap<K, V> {
   LruMap({required int maximumSize}) : _maximumSize = maximumSize;
   final int _maximumSize;
-  final LinkedHashMap<K, V> _map = LinkedHashMap<K, V>();
+  final _map = <K, V>{};
 
   V? operator [](K key) {
     final value = _map.remove(key);

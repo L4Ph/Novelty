@@ -9,8 +9,8 @@ class NovelList extends StatelessWidget {
   NovelList({super.key, required this.novels, this.isRanking = true});
   final List<RankingResponse> novels;
   final bool isRanking;
-  final ApiService _apiService = ApiService();
-  final DatabaseService _databaseService = DatabaseService();
+  final _apiService = ApiService();
+  final _databaseService = DatabaseService();
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +64,7 @@ class NovelList extends StatelessWidget {
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(const SnackBar(content: Text('ライブラリに追加しました')));
-            } catch (e) {
+            } on Exception catch (e) {
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(SnackBar(content: Text('エラー: $e')));

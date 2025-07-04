@@ -21,7 +21,7 @@ const List<Map<String, dynamic>> genreList = [
   {'id': 9999, 'name': 'その他〔その他〕'},
 ];
 
-const Map<String, String> novelTypes = {
+const novelTypes = <String, String>{
   't': '短編',
   'r': '連載中',
   'er': '完結済連載作品',
@@ -29,7 +29,7 @@ const Map<String, String> novelTypes = {
   'ter': '短編と完結済連載作品',
 };
 
-const Map<String, String> novelOrders = {
+const novelOrders = <String, String>{
   'new': '新着更新順',
   'favnovelcnt': 'ブックマーク数の多い順',
   'reviewcnt': 'レビュー数の多い順',

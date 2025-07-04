@@ -109,11 +109,6 @@ class SettingsPage extends StatelessWidget {
                 settings.updateSeedColor(color);
                 pickerColor = color;
               },
-              labelTypes: const [
-                ColorLabelType.rgb,
-                ColorLabelType.hsv,
-                ColorLabelType.hsl,
-              ],
               pickerAreaHeightPercent: 0.8,
             ),
           ),

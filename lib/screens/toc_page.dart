@@ -13,12 +13,12 @@ class TocPage extends StatefulWidget {
 }
 
 class _TocPageState extends State<TocPage> {
-  final ApiService _apiService = ApiService();
-  final DatabaseService _databaseService = DatabaseService();
+  final _apiService = ApiService();
+  final _databaseService = DatabaseService();
   NovelInfo? _novelInfo;
-  bool _isLoading = true;
-  bool _isInLibrary = false;
-  String _errorMessage = '';
+  var _isLoading = true;
+  var _isInLibrary = false;
+  var _errorMessage = '';
 
   @override
   void initState() {
@@ -38,7 +38,7 @@ class _TocPageState extends State<TocPage> {
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to load novel info: $e';

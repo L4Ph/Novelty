@@ -13,10 +13,10 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  final ApiService _apiService = ApiService();
+  final _apiService = ApiService();
   final _searchQuery = NovelSearchQuery();
   List<RankingResponse> _searchResults = [];
-  bool _isLoading = false;
+  var _isLoading = false;
 
   Future<void> _performSearch() async {
     setState(() {
@@ -97,7 +97,6 @@ class _SearchPageState extends State<SearchPage> {
                       isExpanded: true,
                       items: [
                         const DropdownMenuItem<String?>(
-                          value: null,
                           child: Text('すべて'),
                         ),
                         ...novelTypes.entries.map((entry) {
@@ -119,7 +118,6 @@ class _SearchPageState extends State<SearchPage> {
                       isExpanded: true,
                       items: [
                         const DropdownMenuItem<int?>(
-                          value: null,
                           child: Text('すべて'),
                         ),
                         ...genreList.map((genre) {

@@ -5,7 +5,7 @@ import 'package:novelty/utils/settings_provider.dart';
 import 'package:provider/provider.dart';
 
 Future<void> main() async {
-  await dotenv.load(fileName: '.env');
+  await dotenv.load();
 
   runApp(
     ChangeNotifierProvider(

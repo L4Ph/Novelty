@@ -11,7 +11,7 @@ class LibraryPage extends StatefulWidget {
 }
 
 class _LibraryPageState extends State<LibraryPage> {
-  final DatabaseService _databaseService = DatabaseService();
+  final _databaseService = DatabaseService();
   late Future<List<NovelInfo>> _libraryNovels;
   GoRouter? _router;
 

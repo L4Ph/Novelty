@@ -7,7 +7,7 @@ class SettingsProvider with ChangeNotifier {
     _loadSettings();
   }
   // Font settings
-  static const List<String> availableFonts = [
+  static const availableFonts = <String>[
     'Noto Sans JP',
     'IBM Plex Sans JP',
     'M PLUS 1p',
@@ -21,13 +21,13 @@ class SettingsProvider with ChangeNotifier {
   double _fontSize = 16;
 
   // Color scheme settings
-  ColorScheme _colorScheme = ColorScheme.fromSeed(seedColor: Colors.blue);
+  var _colorScheme = ColorScheme.fromSeed(seedColor: Colors.blue);
   Color _seedColor = Colors.blue;
 
   // SharedPreferences keys
-  static const String _fontPreferenceKey = 'selected_font';
-  static const String _fontSizePreferenceKey = 'font_size';
-  static const String _seedColorPreferenceKey = 'seed_color';
+  static const _fontPreferenceKey = 'selected_font';
+  static const _fontSizePreferenceKey = 'font_size';
+  static const _seedColorPreferenceKey = 'seed_color';
 
   // Getters
   String get selectedFont => _selectedFont;

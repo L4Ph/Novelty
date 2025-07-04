@@ -5,7 +5,7 @@ import 'package:sqflite/sqflite.dart';
 class DatabaseService {
   factory DatabaseService() => _instance;
   DatabaseService._internal();
-  static final DatabaseService _instance = DatabaseService._internal();
+  static final _instance = DatabaseService._internal();
 
   static Database? _database;
 

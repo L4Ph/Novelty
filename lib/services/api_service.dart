@@ -10,7 +10,7 @@ import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
 
 class ApiService {
-  final Dio _dio = Dio();
+  final _dio = Dio();
   final CacheManager _cacheManager = DefaultCacheManager();
   final String _noveltyApiUrl = dotenv.env['NOVELTY_API_URL'] ?? '';
 
@@ -34,10 +34,10 @@ class ApiService {
 
     final data = await _fetchData(uri.toString());
     if (data.isNotEmpty &&
-        data[0]['allcount'] != null &&
-        data[0]['allcount'] > 0 &&
+        (data[0] as Map<String, dynamic>)['allcount'] != null &&
+        (data[0] as Map<String, dynamic>)['allcount'] > 0 &&
         data.length > 1) {
-      final novelData = data[1];
+      final novelData = data[1] as Map<String, dynamic>;
       return NovelInfo.fromJson(novelData);
     } else {
       throw Exception('Novel not found');
@@ -81,10 +81,10 @@ class ApiService {
 
   Future<List<RankingResponse>> searchNovels(NovelSearchQuery query) async {
     final queryParameters = query.toMap();
-    queryParameters.removeWhere((key, value) => value == null);
+    final filteredQueryParameters = queryParameters..removeWhere((key, value) => value == null);
 
     final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
-      ...queryParameters.map((key, value) => MapEntry(key, value.toString())),
+      ...filteredQueryParameters.map((key, value) => MapEntry(key, value.toString())),
       'out': 'json',
       'gzip': '5',
       'of':
@@ -93,14 +93,14 @@ class ApiService {
 
     try {
       final data = await _fetchData(uri.toString());
-      if (data.isNotEmpty && data[0]['allcount'] != null) {
+      if (data.isNotEmpty && (data[0] as Map<String, dynamic>)['allcount'] != null) {
         return data
             .sublist(1)
             .map((item) => RankingResponse.fromJson(item))
             .toList();
       }
       return [];
-    } catch (e) {
+    } on Exception catch (e) {
       if (kDebugMode) {
         print('An error occurred while searching for novels. Error: $e');
       }
@@ -140,7 +140,9 @@ class ApiService {
   }
 
   String _twoDigits(int n) {
-    if (n >= 10) return '$n';
+    if (n >= 10) {
+      return '$n';
+    }
     return '0$n';
   }
 
@@ -154,14 +156,14 @@ class ApiService {
     List<dynamic> rankingData;
     try {
       rankingData = await _fetchData(rankingUrl);
-    } catch (e) {
+    } on Exception catch (e) {
       if (kDebugMode) {
         print('Failed to fetch ranking data: $e');
       }
       return [];
     }
 
-    final ncodes = rankingData.map((item) => item['ncode'] as String).toList();
+    final ncodes = rankingData.map((item) => (item as Map<String, dynamic>)['ncode'] as String).toList();
     if (ncodes.isEmpty) {
       return [];
     }
@@ -180,12 +182,12 @@ class ApiService {
 
       try {
         final detailsData = await _fetchData(detailsUrl);
-        if (detailsData.isNotEmpty && detailsData[0]['allcount'] != null) {
+        if (detailsData.isNotEmpty && (detailsData[0] as Map<String, dynamic>)['allcount'] != null) {
           for (final item in detailsData.sublist(1)) {
-            novelDetails[item['ncode']] = item;
+            novelDetails[(item as Map<String, dynamic>)['ncode']] = item;
           }
         }
-      } catch (e) {
+      } on Exception catch (e) {
         if (kDebugMode) {
           print(
             'An error occurred while fetching novel details for ncodes: $ncodesParam. Error: $e',
@@ -196,9 +198,9 @@ class ApiService {
 
     final allData = <RankingResponse>[];
     for (final rankItem in rankingData) {
-      final ncode = rankItem['ncode'];
+      final ncode = (rankItem as Map<String, dynamic>)['ncode'];
       if (novelDetails.containsKey(ncode)) {
-        final details = novelDetails[ncode];
+        final details = novelDetails[ncode] as Map<String, dynamic>;
         details['rank'] = rankItem['rank'];
         details['pt'] = rankItem['pt'];
         allData.add(RankingResponse.fromJson(details));

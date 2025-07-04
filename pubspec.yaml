@@ -49,7 +49,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   json_serializable: ^6.9.0
-  pedantic_mono: ^1.12.3
+  pedantic_mono: ^1.32.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
