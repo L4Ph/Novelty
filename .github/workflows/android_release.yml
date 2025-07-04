@@ -24,6 +24,9 @@ jobs:
       - name: Get Flutter packages
         run: fvm flutter pub get
 
+      - name: Create .env file
+        run: echo "NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}" > .env
+
       - name: Decode Keystore
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
