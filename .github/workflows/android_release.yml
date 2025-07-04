@@ -1,0 +1,95 @@
+name: Android Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*' # vX.Y.Z の形式のタグに反応
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        run: |
+          curl -fsSL https://fvm.app/install.sh | bash
+          fvm install
+
+      - name: Get Flutter packages
+        run: fvm flutter pub get
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+        if: success() && startsWith(github.ref, 'refs/tags/v')
+
+      # Build APK for arm64
+      - name: Build Android APK (arm64)
+        run: |
+          fvm flutter build apk --release \
+            --target-platform android-arm64 \
+            --build-name=${{ github.ref_name }} \
+            --build-number=${{ github.run_number }} \
+            --dart-define=NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}
+        env:
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      # Build APK for armeabi-v7a (arm)
+      - name: Build Android APK (arm)
+        run: |
+          fvm flutter build apk --release \
+            --target-platform android-arm \
+            --build-name=${{ github.ref_name }} \
+            --build-number=${{ github.run_number }} \
+            --dart-define=NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}
+        env:
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      # Build APK for x86_64 (x64) - Optional, mainly for emulators
+      - name: Build Android APK (x64)
+        run: |
+          fvm flutter build apk --release \
+            --target-platform android-x64 \
+            --build-name=${{ github.ref_name }} \
+            --build-number=${{ github.run_number }} \
+            --dart-define=NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}
+        env:
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      # Build AAB
+      - name: Build Android App Bundle (AAB)
+        run: |
+          fvm flutter build appbundle --release \
+            --build-name=${{ github.ref_name }} \
+            --build-number=${{ github.run_number }} \
+            --dart-define=NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}
+        env:
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: |
+            build/app/outputs/bundle/release/app-release.aab
+            build/app/outputs/flutter-apk/app-arm64-release.apk
+            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+            build/app/outputs/flutter-apk/app-x86_64-release.apk
+          name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          body: |
+            Android Release ${{ github.ref_name }}
+            Changes in this release:
+            - Update to version ${{ github.ref_name }}
