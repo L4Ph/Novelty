@@ -115,7 +115,6 @@ class _RankingListState extends State<RankingList>
                     isExpanded: true,
                     items: [
                       const DropdownMenuItem<int?>(
-                        value: null,
                         child: Text('すべて'),
                       ),
                       ...genreList.map((genre) {

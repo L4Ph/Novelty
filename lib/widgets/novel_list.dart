@@ -22,7 +22,9 @@ class NovelList extends StatelessWidget {
           item: item,
           isRanking: isRanking,
           onLongPress: () async {
-            if (!context.mounted) return;
+            if (!context.mounted) {
+              return;
+            }
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
             try {
               final isInLibrary = await databaseService.isNovelInLibrary(
@@ -59,4 +61,3 @@ class NovelList extends StatelessWidget {
     );
   }
 }
-

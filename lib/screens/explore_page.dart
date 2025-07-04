@@ -20,7 +20,7 @@ class _ExplorePageState extends State<ExplorePage>
   final _searchQuery = NovelSearchQuery();
   List<RankingResponse> _searchResults = [];
   var _isLoading = false;
-  bool _isSearching = false;
+  var _isSearching = false;
   late final VoidCallback _tabListener;
 
   @override
@@ -44,8 +44,9 @@ class _ExplorePageState extends State<ExplorePage>
 
   @override
   void dispose() {
-    _tabController.removeListener(_tabListener);
-    _tabController.dispose();
+    _tabController
+      ..removeListener(_tabListener)
+      ..dispose();
     super.dispose();
   }
 
@@ -255,8 +256,8 @@ class _ExplorePageState extends State<ExplorePage>
         ),
         body: _isSearching
             ? _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : NovelList(novels: _searchResults, isRanking: false)
+                  ? const Center(child: CircularProgressIndicator())
+                  : NovelList(novels: _searchResults, isRanking: false)
             : TabBarView(
                 controller: _tabController,
                 children: const [

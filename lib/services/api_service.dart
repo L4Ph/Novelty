@@ -12,7 +12,7 @@ import 'package:novelty/models/ranking_response.dart';
 class ApiService {
   final _dio = Dio();
   final CacheManager _cacheManager = DefaultCacheManager();
-  final String _noveltyApiUrl = const String.fromEnvironment('NOVELTY_API_URL');
+  final _noveltyApiUrl = const String.fromEnvironment('NOVELTY_API_URL');
 
   Future<dynamic> _fetchJsonData(String url) async {
     final response = await _dio.get<dynamic>(url);
