@@ -65,12 +65,11 @@ final router = GoRouter(
       ],
     ),
     GoRoute(
-      path: '/novel/:ncode',
+      path: '/novel/:ncode/:episode',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
         final ncode = state.pathParameters['ncode']!;
-        final episode =
-            int.tryParse(state.uri.queryParameters['episode'] ?? '1') ?? 1;
+        final episode = int.tryParse(state.pathParameters['episode'] ?? '1') ?? 1;
         return NovelPage(ncode: ncode, episode: episode);
       },
     ),

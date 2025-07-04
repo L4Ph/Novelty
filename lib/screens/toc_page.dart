@@ -32,7 +32,7 @@ class _TocPageState extends State<TocPage> {
       final novelInfo = await _apiService.fetchNovelInfo(widget.ncode);
       if (mounted) {
         if (novelInfo.episodes == null || novelInfo.episodes!.isEmpty) {
-          context.pushReplacement('/novel/${widget.ncode}?episode=1');
+          context.pushReplacement('/novel/${widget.ncode}/1');
           return;
         }
 
@@ -74,7 +74,7 @@ class _TocPageState extends State<TocPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('ライブラ��から削除しました')));
+        ).showSnackBar(const SnackBar(content: Text('ライブラリから削除しました')));
       }
     } else {
       _novelInfo!.ncode = widget.ncode;
@@ -120,7 +120,7 @@ class _TocPageState extends State<TocPage> {
           return ListTile(
             title: Text(episodeTitle),
             onTap: () {
-              context.push('/novel/${widget.ncode}?episode=${index + 1}');
+              context.push('/novel/${widget.ncode}/${index + 1}');
             },
           );
         },
