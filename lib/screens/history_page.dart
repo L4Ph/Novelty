@@ -35,7 +35,7 @@ class _HistoryPageState extends State<HistoryPage> {
     final novels = <NovelInfo>[];
     for (final ncode in ncodes) {
       try {
-        final novelInfo = await _apiService.fetchNovelInfoByNcode(ncode);
+        final novelInfo = await _apiService.fetchNovelInfo(ncode);
         novels.add(novelInfo);
       } on Exception catch (_) {
         // Handle error if a novel can't be fetched

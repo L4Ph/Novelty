@@ -37,7 +37,7 @@ class NovelList extends StatelessWidget {
                 return;
               }
 
-              final novelInfo = await apiService.fetchNovelInfoByNcode(
+              final novelInfo = await apiService.fetchNovelInfo(
                 item.ncode,
               );
               await databaseService.addNovelToLibrary(novelInfo);

@@ -23,7 +23,7 @@ class ApiService {
     }
   }
 
-  Future<NovelInfo> fetchNovelInfoByNcode(String ncode) async {
+  Future<NovelInfo> _fetchNovelInfoFromNarou(String ncode) async {
     final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
       'ncode': ncode,
       'out': 'json',
@@ -42,6 +42,19 @@ class ApiService {
     } else {
       throw Exception('Novel not found');
     }
+  }
+
+  Future<NovelInfo> fetchNovelInfo(String ncode) async {
+    final info = await _fetchNovelInfoFromNarou(ncode);
+
+    if (info.novelType == 2) {
+      info.episodes = [];
+      return info;
+    }
+
+    final episodes = await fetchEpisodes(ncode);
+    info.episodes = episodes;
+    return info;
   }
 
   Future<Episode> fetchEpisode(String ncode, int episode) async {

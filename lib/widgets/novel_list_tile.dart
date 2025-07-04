@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/services/api_service.dart';
-import 'package:novelty/services/database_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 
 class NovelListTile extends StatelessWidget {
@@ -42,11 +40,7 @@ class NovelListTile extends StatelessWidget {
       onTap: onTap ??
           () {
             final ncode = item.ncode.toLowerCase();
-            if (item.novelType == 2) {
-              context.push('/novel/$ncode');
-            } else {
-              context.push('/toc/$ncode');
-            }
+            context.push('/toc/$ncode');
           },
       onLongPress: onLongPress,
     );
