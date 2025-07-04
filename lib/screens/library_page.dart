@@ -87,7 +87,7 @@ class _LibraryPageState extends State<LibraryPage> {
               },
               onLongPress: () {
                 if (novel.ncode != null) {
-                  showDialog(
+                  showDialog<void>(
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text('削除の確認'),

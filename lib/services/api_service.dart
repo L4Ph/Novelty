@@ -15,7 +15,7 @@ class ApiService {
   final String _noveltyApiUrl = dotenv.env['NOVELTY_API_URL'] ?? '';
 
   Future<dynamic> _fetchJsonData(String url) async {
-    final response = await _dio.get(url);
+    final response = await _dio.get<dynamic>(url);
     if (response.statusCode == 200) {
       return response.data;
     } else {
@@ -34,8 +34,8 @@ class ApiService {
 
     final data = await _fetchData(uri.toString());
     if (data.isNotEmpty &&
-        (data[0] as Map<String, dynamic>)['allcount'] != null &&
-        (data[0] as Map<String, dynamic>)['allcount'] > 0 &&
+        (data[0] as Map<String, dynamic>?)?['allcount'] != null &&
+        ((data[0] as Map<String, dynamic>?)?['allcount'] as int? ?? 0) > 0 &&
         data.length > 1) {
       final novelData = data[1] as Map<String, dynamic>;
       return NovelInfo.fromJson(novelData);
@@ -49,7 +49,7 @@ class ApiService {
       throw Exception('NOVELTY_API_URL is not set');
     }
     final url = '$_noveltyApiUrl/${ncode.toLowerCase()}/$episode';
-    final data = await _fetchJsonData(url);
+    final data = await _fetchJsonData(url) as Map<String, dynamic>;
     return Episode.fromJson(data);
   }
 
@@ -60,9 +60,13 @@ class ApiService {
     final url = '$_noveltyApiUrl/${ncode.toLowerCase()}';
     final data = await _fetchJsonData(url);
     if (data is List) {
-      return List<Map<String, dynamic>>.from(data);
+      return List<Map<String, dynamic>>.from(
+        data.map((e) => e as Map<String, dynamic>),
+      );
     } else if (data is Map && data.containsKey('episodes')) {
-      return List<Map<String, dynamic>>.from(data['episodes']);
+      return List<Map<String, dynamic>>.from(
+        (data['episodes'] as List).map((e) => e as Map<String, dynamic>),
+      );
     } else {
       throw Exception('Unexpected response format for episodes');
     }
@@ -70,7 +74,12 @@ class ApiService {
 
   static List<dynamic> _parseJson(List<int> bytes) {
     final decoded = utf8.decode(const GZipDecoder().decodeBytes(bytes));
-    return json.decode(decoded);
+    final decodedJson = json.decode(decoded);
+    if (decodedJson is List) {
+      return decodedJson;
+    } else {
+      return [decodedJson];
+    }
   }
 
   Future<List<dynamic>> _fetchData(String url) async {
@@ -93,10 +102,12 @@ class ApiService {
 
     try {
       final data = await _fetchData(uri.toString());
-      if (data.isNotEmpty && (data[0] as Map<String, dynamic>)['allcount'] != null) {
+      if (data.isNotEmpty && (data[0] as Map<String, dynamic>?)?['allcount'] != null) {
         return data
             .sublist(1)
-            .map((item) => RankingResponse.fromJson(item))
+            .map(
+              (item) => RankingResponse.fromJson(item as Map<String, dynamic>),
+            )
             .toList();
       }
       return [];
@@ -163,7 +174,11 @@ class ApiService {
       return [];
     }
 
-    final ncodes = rankingData.map((item) => (item as Map<String, dynamic>)['ncode'] as String).toList();
+    final ncodes = rankingData
+        .map((item) => (item as Map<String, dynamic>)['ncode'] as String?)
+        .where((ncode) => ncode != null)
+        .cast<String>()
+        .toList();
     if (ncodes.isEmpty) {
       return [];
     }
@@ -182,9 +197,12 @@ class ApiService {
 
       try {
         final detailsData = await _fetchData(detailsUrl);
-        if (detailsData.isNotEmpty && (detailsData[0] as Map<String, dynamic>)['allcount'] != null) {
+        if (detailsData.isNotEmpty && (detailsData[0] as Map<String, dynamic>?)?['allcount'] != null) {
           for (final item in detailsData.sublist(1)) {
-            novelDetails[(item as Map<String, dynamic>)['ncode']] = item;
+            final ncode = (item as Map<String, dynamic>)['ncode'] as String?;
+            if (ncode != null) {
+              novelDetails[ncode] = item;
+            }
           }
         }
       } on Exception catch (e) {
@@ -198,8 +216,8 @@ class ApiService {
 
     final allData = <RankingResponse>[];
     for (final rankItem in rankingData) {
-      final ncode = (rankItem as Map<String, dynamic>)['ncode'];
-      if (novelDetails.containsKey(ncode)) {
+      final ncode = (rankItem as Map<String, dynamic>)['ncode'] as String?;
+      if (ncode != null && novelDetails.containsKey(ncode)) {
         final details = novelDetails[ncode] as Map<String, dynamic>;
         details['rank'] = rankItem['rank'];
         details['pt'] = rankItem['pt'];

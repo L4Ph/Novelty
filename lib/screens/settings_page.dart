@@ -63,7 +63,7 @@ class SettingsPage extends StatelessWidget {
     BuildContext context,
     SettingsProvider settings,
   ) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -97,7 +97,7 @@ class SettingsPage extends StatelessWidget {
   void _showColorPickerDialog(BuildContext context, SettingsProvider settings) {
     var pickerColor = settings.seedColor;
 
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) {
         return AlertDialog(

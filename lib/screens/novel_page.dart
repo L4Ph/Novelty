@@ -71,11 +71,11 @@ class _NovelPageState extends State<NovelPage> {
             });
           }
         })
-        .catchError((e) {
+        .catchError((Object e) {
           if (mounted) {
             _episodeCache.remove(episode);
           }
-          throw e;
+          throw Exception(e);
         });
 
     // Prefetch next and previous episodes

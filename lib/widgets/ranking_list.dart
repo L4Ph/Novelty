@@ -91,7 +91,7 @@ class _RankingListState extends State<RankingList>
   }
 
   void _showFilterDialog() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -120,7 +120,7 @@ class _RankingListState extends State<RankingList>
                       ),
                       ...genreList.map((genre) {
                         return DropdownMenuItem<int?>(
-                          value: genre['id'],
+                          value: genre['id'] as int?,
                           child: Text(genre['name'] as String),
                         );
                       }),

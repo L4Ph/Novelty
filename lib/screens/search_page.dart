@@ -32,7 +32,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   void _showFilterDialog() {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -122,7 +122,7 @@ class _SearchPageState extends State<SearchPage> {
                         ),
                         ...genreList.map((genre) {
                           return DropdownMenuItem<int?>(
-                            value: genre['id'],
+                            value: genre['id'] as int?,
                             child: Text(genre['name'] as String),
                           );
                         }),
