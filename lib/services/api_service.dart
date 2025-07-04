@@ -12,8 +12,7 @@ import 'package:novelty/models/ranking_response.dart';
 class ApiService {
   final _dio = Dio();
   final CacheManager _cacheManager = DefaultCacheManager();
-  final String _noveltyApiUrl =
-      const String.fromEnvironment('NOVELTY_API_URL');
+  final String _noveltyApiUrl = const String.fromEnvironment('NOVELTY_API_URL');
 
   Future<dynamic> _fetchJsonData(String url) async {
     final response = await _dio.get<dynamic>(url);
@@ -59,6 +58,9 @@ class ApiService {
       throw Exception('NOVELTY_API_URL is not set');
     }
     final url = '$_noveltyApiUrl/${ncode.toLowerCase()}';
+    if (kDebugMode) {
+      print(url);
+    }
     final data = await _fetchJsonData(url);
     if (data is List) {
       return List<Map<String, dynamic>>.from(
@@ -91,10 +93,13 @@ class ApiService {
 
   Future<List<RankingResponse>> searchNovels(NovelSearchQuery query) async {
     final queryParameters = query.toMap();
-    final filteredQueryParameters = queryParameters..removeWhere((key, value) => value == null);
+    final filteredQueryParameters = queryParameters
+      ..removeWhere((key, value) => value == null);
 
     final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
-      ...filteredQueryParameters.map((key, value) => MapEntry(key, value.toString())),
+      ...filteredQueryParameters.map(
+        (key, value) => MapEntry(key, value.toString()),
+      ),
       'out': 'json',
       'gzip': '5',
       'of':
@@ -103,7 +108,8 @@ class ApiService {
 
     try {
       final data = await _fetchData(uri.toString());
-      if (data.isNotEmpty && (data[0] as Map<String, dynamic>?)?['allcount'] != null) {
+      if (data.isNotEmpty &&
+          (data[0] as Map<String, dynamic>?)?['allcount'] != null) {
         return data
             .sublist(1)
             .map(
@@ -198,7 +204,8 @@ class ApiService {
 
       try {
         final detailsData = await _fetchData(detailsUrl);
-        if (detailsData.isNotEmpty && (detailsData[0] as Map<String, dynamic>?)?['allcount'] != null) {
+        if (detailsData.isNotEmpty &&
+            (detailsData[0] as Map<String, dynamic>?)?['allcount'] != null) {
           for (final item in detailsData.sublist(1)) {
             final ncode = (item as Map<String, dynamic>)['ncode'] as String?;
             if (ncode != null) {
