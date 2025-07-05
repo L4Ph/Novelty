@@ -44,8 +44,8 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
         _novelInfo = novelInfo;
       });
 
-      // 短編小説の場合は本文も取得
-      if (novelInfo.novelType == 2) {
+      // 短編小説の場合、または小説タイプが不明な場合は本文も取得
+      if (novelInfo.novelType == 2 || novelInfo.novelType == null) {
         final episode = await _apiService.fetchEpisode(widget.ncode, 1);
         if (!mounted) return;
         setState(() {
@@ -116,8 +116,8 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
 
     final novelInfo = _novelInfo!;
 
-    // 短編小説の場合は本文を表示
-    if (novelInfo.novelType == 2) {
+    // 短編小説の場合、または小説タイプが不明な場合は本文を表示
+    if (novelInfo.novelType == 2 || novelInfo.novelType == null) {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -139,6 +139,30 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
                 episode: 1,
                 initialData: _shortStoryEpisode,
               ),
+      );
+    }
+    
+    // エピソードリストが空の場合は、短編小説として扱う
+    if (novelInfo.episodes == null || novelInfo.episodes!.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
+          title: Text(novelInfo.title ?? ''),
+          actions: [
+            IconButton(
+              icon: Icon(_isInLibrary ? Icons.favorite : Icons.favorite_border),
+              onPressed: _toggleLibraryStatus,
+            ),
+          ],
+        ),
+        body: NovelContent(
+          ncode: widget.ncode,
+          episode: 1,
+          initialData: null,
+        ),
       );
     }
 

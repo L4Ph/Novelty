@@ -61,8 +61,17 @@ class ApiService {
   Future<NovelInfo> fetchNovelInfo(String ncode) async {
     final info = await _fetchNovelInfoFromNarou(ncode);
 
-    if (info.novelType == 2) {
-      info.episodes = [];
+    // 短編小説の場合、または小説タイプが不明な場合は、単一のエピソードとして扱う
+    if (info.novelType == 2 || info.novelType == null) {
+      // 短編小説の場合は、単一のエピソードとして扱う
+      info.episodes = [
+        Episode(
+          subtitle: info.title,
+          url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
+          ncode: ncode,
+          index: 1,
+        )
+      ];
       return info;
     }
 
@@ -119,7 +128,8 @@ class ApiService {
 
   Future<Episode> fetchEpisode(String ncode, int episode) async {
     final info = await _fetchNovelInfoFromNarou(ncode);
-    final isShortStory = info.novelType == 2;
+    // novelTypeが設定されていない場合も短編として扱う可能性を考慮
+    final isShortStory = info.novelType == 2 || info.novelType == null;
 
     // 短編小説の場合、episode が 1 以外は無効
     if (isShortStory && episode != 1) {
