@@ -34,15 +34,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create tag if needed on workflow_dispatch
+      - name: Create and push tag on workflow_dispatch
         if: github.event_name == 'workflow_dispatch'
         run: |
           TAG=${{ env.VERSION_NAME }}
-          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            echo "Tag $TAG already exists."
-          else
-            git tag $TAG
-          fi
+          git tag -f $TAG
+          git push origin $TAG
 
       - name: Get previous tag
         id: get_previous_tag
