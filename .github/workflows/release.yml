@@ -85,7 +85,7 @@ jobs:
         env:
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           
       # 5. Tag and Push
       - name: Tag and Push
