@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart' as parser;
+import 'package:http/http.dart' as http;
 
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
@@ -11,6 +14,30 @@ import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
 
 class ApiService {
+  Future<http.Response> _fetchWithCache(String url) async {
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      },
+    );
+    return response;
+  }
+
+  List<Episode> _parseEpisodes(dom.Document document) {
+    final elements = document.querySelectorAll('.p-eplist__sublist');
+    return elements.map((el) {
+      final subtitle = el.querySelector('.p-eplist__subtitle');
+      final update = el.querySelector('.p-eplist__update');
+      final revisedAttr = update?.querySelector('span')?.attributes['title'];
+      return Episode(
+        subtitle: subtitle?.text.trim(),
+        url: subtitle?.attributes['href'],
+        update: update?.text.trim().replaceAll(RegExp(r'（.+）'), '').trim(),
+        revised: revisedAttr?.replaceAll(' 改稿', '').trim(),
+      );
+    }).toList();
   Future<http.Response> _fetchWithCache(String url) async {
     final response = await http.get(
       Uri.parse(url),
@@ -168,6 +195,54 @@ class ApiService {
       currentPage++;
     }
     info.episodes = allEpisodes;
+    final firstPageUrl = 'https://ncode.syosetu.com/${ncode.toLowerCase()}/';
+    final firstPageResponse = await _fetchWithCache(firstPageUrl);
+
+    if (firstPageResponse.statusCode != 200) {
+      throw Exception(
+        'Failed to fetch URL: ${firstPageResponse.statusCode} ${firstPageResponse.reasonPhrase}',
+      );
+    }
+
+    final firstPageHtml = firstPageResponse.body;
+    var document = parser.parse(firstPageHtml);
+
+    final allEpisodes = _parseEpisodes(document);
+    final episodeUrls = allEpisodes.map((e) => e.url).toSet();
+
+    var currentPage = 2;
+    while (true) {
+      final pageUrl =
+          'https://ncode.syosetu.com/${ncode.toLowerCase()}/?p=$currentPage';
+      final response = await _fetchWithCache(pageUrl);
+
+      if (response.statusCode != 200) {
+        break;
+      }
+
+      final html = response.body;
+      document = parser.parse(html);
+      final episodesOnPage = _parseEpisodes(document);
+
+      if (episodesOnPage.isEmpty) {
+        break;
+      }
+
+      final newEpisodes = episodesOnPage
+          .where((e) => !episodeUrls.contains(e.url))
+          .toList();
+      if (newEpisodes.isEmpty) {
+        break;
+      }
+
+      for (final e in newEpisodes) {
+        allEpisodes.add(e);
+        episodeUrls.add(e.url);
+      }
+
+      currentPage++;
+    }
+    info.episodes = allEpisodes;
     return info;
   }
 
@@ -273,9 +348,12 @@ class ApiService {
     }
     final response = await http.get(Uri.parse(url));
     final bytes = response.bodyBytes;
+    final response = await http.get(Uri.parse(url));
+    final bytes = response.bodyBytes;
     if (kDebugMode) {
       print('Downloaded ${bytes.length} bytes from cache/network');
     }
+    return compute(_parseJson, bytes.toList());
     return compute(_parseJson, bytes.toList());
   }
 
@@ -492,6 +570,7 @@ class ApiService {
             }),
           );
         }
+      } on Exception catch (e) {
       } on Exception catch (e) {
         if (kDebugMode) {
           print('Error processing ranking item for ncode $ncode: $e');
