@@ -168,13 +168,8 @@ class ApiService {
     final now = DateTime.now();
     switch (rtype) {
       case 'd':
-        // 日間ランキングは午前4時～7時に作成されるため、
-        // 現在時刻が午前8時前の場合は前日のランキングを取得
-        var targetDate = now;
-        if (now.hour < 8) {
-          targetDate = now.subtract(const Duration(days: 1));
-        }
-        return '${targetDate.year}${_twoDigits(targetDate.month)}${_twoDigits(targetDate.day)}';
+        final yesterday = now.subtract(const Duration(days: 1));
+        return '${yesterday.year}${_twoDigits(yesterday.month)}${_twoDigits(yesterday.day)}';
       case 'w':
         var date = now;
         while (date.weekday != DateTime.tuesday) {
@@ -248,37 +243,7 @@ class ApiService {
         print('Failed to fetch ranking data: $e');
         print('URL was: $rankingUrl');
       }
-
-      // 日間ランキングの場合、前日のデータを試す
-      if (rankingType == 'd') {
-        if (kDebugMode) {
-          print('Trying previous day for daily ranking...');
-        }
-        final now = DateTime.now();
-        final previousDay = now.subtract(const Duration(days: 1));
-        final previousDate =
-            '${previousDay.year}${_twoDigits(previousDay.month)}${_twoDigits(previousDay.day)}';
-        final fallbackUrl =
-            'https://api.syosetu.com/rank/rankget/?rtype=$previousDate-$rankingType&out=json&gzip=5';
-
-        try {
-          rankingData = await _fetchData(fallbackUrl);
-          if (kDebugMode) {
-            print(
-              'Successfully fetched ranking data from previous day, count: ${rankingData.length}',
-            );
-          }
-        } on Exception catch (fallbackError) {
-          if (kDebugMode) {
-            print(
-              'Failed to fetch ranking data from previous day: $fallbackError',
-            );
-          }
-          return [];
-        }
-      } else {
-        return [];
-      }
+      return [];
     }
 
     // ランキングデータの検証
