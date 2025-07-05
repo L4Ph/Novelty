@@ -11,16 +11,118 @@ on:
         required: true
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || github.event_name == 'workflow_dispatch'
     permissions:
-      contents: write
+      contents: write # リリース作成のために必要
+      id-token: write # GitHub Appトークン生成のため
+      pull-requests: read # PRの情報を取得するため
 
     steps:
-      - name: Checkout code
+      - name: Set version name
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION_NAME=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+            echo "version=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+            echo "version=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate GitHub App Token
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          token: ${{ steps.generate_token.outputs.token }}
+          fetch-depth: 0 # 全コミット履歴を取得するために必要
+
+      - name: Get previous tag
+        id: get_previous_tag
+        run: |
+          LATEST_TAG="${{ steps.get_version.outputs.version }}"
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${LATEST_TAG}^" 2>/dev/null || echo "")
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Get commits since last release
+        id: get_commits
+        run: |
+          LATEST_TAG="${{ steps.get_previous_tag.outputs.latest_tag }}"
+          PREVIOUS_TAG="${{ steps.get_previous_tag.outputs.previous_tag }}"
+
+          if [ -n "$PREVIOUS_TAG" ]; then
+            COMMIT_RANGE="${PREVIOUS_TAG}..${LATEST_TAG}"
+          else
+            COMMIT_RANGE="${LATEST_TAG}"
+          fi
+          
+          COMMITS=$(git log ${COMMIT_RANGE} --pretty=format:"* %s - %h (%an)" --no-merges)
+          
+          echo "COMMITS<<EOF" >> $GITHUB_ENV
+          echo "$COMMITS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Generate release notes with Gemini
+        uses: google-gemini/gemini-cli-action@main
+        id: generate_release_notes
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          COMMITS_HISTORY: ${{ env.COMMITS }}
+          REPOSITORY: ${{ github.repository }}
+          LATEST_TAG: ${{ env.VERSION_NAME }}
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          prompt: |
+            あなたは、GitHubリポジトリのリリースノートを生成するAIアシスタントです。
+            以下のコミット履歴を元に、簡潔でわかりやすいリリースノートを作成してください。
+            リリースノートは、以下のセクションに分けてください。
+
+            **ルール:**
+            - Markdown形式で出力してください。
+            - リリースノートの本文のみを出力し、それ以外の前置きや挨拶などは含めないでください。
+            - ユーザーが理解しやすい言葉遣いを心がけてください。
+            - 新機能、バグ修正、改善点などを明確に区別してください。
+            - コミットメッセージに `#` と数字がある場合、それは関連するPR番号である可能性が高いので、そのように出力に含めてください。例: 機能Aを追加 (#123)
+
+            ---
+            **コミット履歴:**
+            ${{ env.COMMITS_HISTORY }}
+            ---
+
+            **利用可能な情報:**
+            - リポジトリ: ${{ env.REPOSITORY }}
+            - 新しいバージョンタグ: ${{ env.LATEST_TAG }}
+            ---
+            **出力例の構成:**
+
+            ## 新機能
+            - 機能Aを追加 (#PR番号)
+            - 機能Bを実装
+
+            ## 改善
+            - パフォーマンスを向上
+            - UIの調整
+
+            ## バグ修正
+            - 〇〇の不具合を修正 (#PR番号)
+
+            ---
+            **リリースノートの本文をここに生成してください。**
+
+      - name: Save release notes to file
+        if: success() && steps.generate_release_notes.outputs.text_output != ''
+        run: echo "${{ steps.generate_release_notes.outputs.text_output }}" > RELEASE_NOTES.md
+        shell: bash
 
       - name: Set up Flutter
         run: |
@@ -30,36 +132,18 @@ jobs:
       - name: Get Flutter packages
         run: fvm flutter pub get
 
-      - name: Set version name
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "VERSION_NAME=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
-          else
-            echo "VERSION_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
-          fi
-
       - name: Decode Keystore
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
           echo "STORE_FILE=upload-keystore.jks" >> $GITHUB_ENV
 
-      - name: Build Android APKs
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+      - name: Build Android Release Files
         run: |
           fvm flutter build apk --release --split-per-abi \
             --build-name=${{ env.VERSION_NAME }} \
             --build-number=${{ github.run_number }} \
             --dart-define=NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}
-        env:
-          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-
-      # Build AAB
-      - name: Build Android App Bundle (AAB)
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
-        run: |
+          
           fvm flutter build appbundle --release \
             --build-name=${{ env.VERSION_NAME }} \
             --build-number=${{ github.run_number }} \
@@ -69,18 +153,15 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
-        with:
-          files: |
-            build/app/outputs/bundle/release/app-release.aab
-            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          gh release create "${{ env.VERSION_NAME }}" \
+            --title "Release ${{ env.VERSION_NAME }}" \
+            --notes-file RELEASE_NOTES.md \
+            build/app/outputs/bundle/release/app-release.aab \
+            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
+            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
             build/app/outputs/flutter-apk/app-x86_64-release.apk
-          name: Release ${{ env.VERSION_NAME }}
-          tag_name: ${{ env.VERSION_NAME }}
-          body: |
-            Android Release ${{ env.VERSION_NAME }}
-            Changes in this release:
-            - Update to version ${{ env.VERSION_NAME }}
+        shell: bash

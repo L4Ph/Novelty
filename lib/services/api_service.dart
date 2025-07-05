@@ -89,18 +89,43 @@ class ApiService {
   }
 
   static List<dynamic> _parseJson(List<int> bytes) {
-    final decoded = utf8.decode(const GZipDecoder().decodeBytes(bytes));
-    final decodedJson = json.decode(decoded);
-    if (decodedJson is List) {
-      return decodedJson;
-    } else {
-      return [decodedJson];
+    try {
+      if (kDebugMode) {
+        print('Attempting to decode ${bytes.length} bytes');
+      }
+      final decoded = utf8.decode(const GZipDecoder().decodeBytes(bytes));
+      if (kDebugMode) {
+        print('Successfully decoded gzip, string length: ${decoded.length}');
+        print(
+          'First 200 chars: ${decoded.length > 200 ? decoded.substring(0, 200) : decoded}',
+        );
+      }
+      final decodedJson = json.decode(decoded);
+      if (kDebugMode) {
+        print('Successfully parsed JSON');
+      }
+      if (decodedJson is List) {
+        return decodedJson;
+      } else {
+        return [decodedJson];
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error in _parseJson: $e');
+      }
+      rethrow;
     }
   }
 
   Future<List<dynamic>> _fetchData(String url) async {
+    if (kDebugMode) {
+      print('Fetching data from URL: $url');
+    }
     final file = await _cacheManager.getSingleFile(url);
     final bytes = await file.readAsBytes();
+    if (kDebugMode) {
+      print('Downloaded ${bytes.length} bytes from cache/network');
+    }
     return compute(_parseJson, bytes);
   }
 
@@ -143,7 +168,8 @@ class ApiService {
     final now = DateTime.now();
     switch (rtype) {
       case 'd':
-        return '${now.year}${_twoDigits(now.month)}${_twoDigits(now.day)}';
+        final yesterday = now.subtract(const Duration(days: 1));
+        return '${yesterday.year}${_twoDigits(yesterday.month)}${_twoDigits(yesterday.day)}';
       case 'w':
         var date = now;
         while (date.weekday != DateTime.tuesday) {
@@ -165,6 +191,9 @@ class ApiService {
           quarterStartMonth = 10;
         }
         return '${now.year}${_twoDigits(quarterStartMonth)}01';
+      case 'all':
+        // 累計ランキングの場合は空文字を返す（特別な処理が必要）
+        return '';
       default:
         return '';
     }
@@ -180,27 +209,70 @@ class ApiService {
   Future<List<RankingResponse>> fetchRankingAndDetails(
     String rankingType,
   ) async {
-    final date = _getFormattedDate(rankingType);
-    final rankingUrl =
-        'https://api.syosetu.com/rank/rankget/?rtype=$date-$rankingType&out=json&gzip=5';
+    // 累計ランキングの場合は小説APIの検索機能を使用
+    if (rankingType == 'all') {
+      return _fetchAllTimeRanking();
+    }
 
-    List<dynamic> rankingData;
-    try {
-      rankingData = await _fetchData(rankingUrl);
-    } on Exception catch (e) {
+    final date = _getFormattedDate(rankingType);
+    if (date.isEmpty) {
       if (kDebugMode) {
-        print('Failed to fetch ranking data: $e');
+        print('Invalid ranking type: $rankingType');
       }
       return [];
     }
 
-    final ncodes = rankingData
-        .map((item) => (item as Map<String, dynamic>)['ncode'] as String?)
-        .where((ncode) => ncode != null)
-        .cast<String>()
-        .toList();
-    if (ncodes.isEmpty) {
+    final rankingUrl =
+        'https://api.syosetu.com/rank/rankget/?rtype=$date-$rankingType&out=json&gzip=5';
+
+    if (kDebugMode) {
+      print('Fetching ranking data from: $rankingUrl');
+      print('Ranking type: $rankingType, Date: $date');
+    }
+
+    List<dynamic> rankingData;
+    try {
+      rankingData = await _fetchData(rankingUrl);
+      if (kDebugMode) {
+        print(
+          'Successfully fetched ranking data, count: ${rankingData.length}',
+        );
+      }
+    } on Exception catch (e) {
+      if (kDebugMode) {
+        print('Failed to fetch ranking data: $e');
+        print('URL was: $rankingUrl');
+      }
       return [];
+    }
+
+    // ランキングデータの検証
+    if (rankingData.isEmpty) {
+      if (kDebugMode) {
+        print('Ranking data is empty');
+      }
+      return [];
+    }
+
+    final ncodes = <String>[];
+    for (final item in rankingData) {
+      if (item is Map<String, dynamic>) {
+        final ncode = item['ncode'] as String?;
+        if (ncode != null && ncode.isNotEmpty) {
+          ncodes.add(ncode);
+        }
+      }
+    }
+
+    if (ncodes.isEmpty) {
+      if (kDebugMode) {
+        print('No valid ncodes found in ranking data');
+      }
+      return [];
+    }
+
+    if (kDebugMode) {
+      print('Found ${ncodes.length} valid ncodes');
     }
 
     final novelDetails = <String, dynamic>{};
@@ -237,29 +309,94 @@ class ApiService {
 
     final allData = <RankingResponse>[];
     for (final rankItem in rankingData) {
-      final ncode = (rankItem as Map<String, dynamic>)['ncode'] as String?;
-      if (ncode != null && novelDetails.containsKey(ncode)) {
-        final details = novelDetails[ncode] as Map<String, dynamic>;
-        details['rank'] = rankItem['rank'];
-        details['pt'] = rankItem['pt'];
-        allData.add(RankingResponse.fromJson(details));
-      } else {
-        allData.add(
-          RankingResponse.fromJson({
-            'ncode': ncode,
-            'title': 'タイトル取得失敗',
-            'rank': rankItem['rank'],
-            'pt': rankItem['pt'],
-            'novel_type': null,
-            'end': null,
-            'genre': null,
-            'writer': null,
-            'story': null,
-            'userid': null,
-          }),
-        );
+      if (rankItem is! Map<String, dynamic>) {
+        continue;
+      }
+
+      final ncode = rankItem['ncode'] as String?;
+      if (ncode == null || ncode.isEmpty) {
+        continue;
+      }
+
+      try {
+        if (novelDetails.containsKey(ncode)) {
+          final details = Map<String, dynamic>.from(
+            novelDetails[ncode] as Map<String, dynamic>,
+          );
+          details['rank'] = rankItem['rank'];
+          details['pt'] = rankItem['pt'];
+          allData.add(RankingResponse.fromJson(details));
+        } else {
+          allData.add(
+            RankingResponse.fromJson({
+              'ncode': ncode,
+              'title': 'タイトル取得失敗',
+              'rank': rankItem['rank'],
+              'pt': rankItem['pt'],
+              'novel_type': null,
+              'end': null,
+              'genre': null,
+              'writer': null,
+              'story': null,
+              'userid': null,
+            }),
+          );
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error processing ranking item for ncode $ncode: $e');
+        }
+        continue;
       }
     }
     return allData;
+  }
+
+  Future<List<RankingResponse>> _fetchAllTimeRanking() async {
+    if (kDebugMode) {
+      print('Fetching all-time ranking using novel search API');
+    }
+
+    final query = NovelSearchQuery()
+      ..order = 'hyoka'
+      ..lim = 300;
+
+    try {
+      final results = await searchNovels(query);
+      if (kDebugMode) {
+        print(
+          'Successfully fetched all-time ranking, count: ${results.length}',
+        );
+      }
+
+      // ランキング順位を追加
+      for (var i = 0; i < results.length; i++) {
+        // RankingResponseは不変オブジェクトなので、新しいインスタンスを作成
+        final item = results[i];
+        final newItem = RankingResponse(
+          rank: i + 1,
+          pt: item.allPoint,
+          allPoint: item.allPoint,
+          ncode: item.ncode,
+          title: item.title,
+          novelType: item.novelType,
+          end: item.end,
+          genre: item.genre,
+          writer: item.writer,
+          story: item.story,
+          userId: item.userId,
+          generalAllNo: item.generalAllNo,
+          keyword: item.keyword,
+        );
+        results[i] = newItem;
+      }
+
+      return results;
+    } on Exception catch (e) {
+      if (kDebugMode) {
+        print('Failed to fetch all-time ranking: $e');
+      }
+      return [];
+    }
   }
 }
