@@ -73,12 +73,12 @@ jobs:
         uses: google-gemini/gemini-cli-action@main
         id: generate_release_notes
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMITS_HISTORY: ${{ env.COMMITS }}
           REPOSITORY: ${{ github.repository }}
           LATEST_TAG: ${{ env.VERSION_NAME }}
         with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           prompt: |
             あなたは、GitHubリポジトリのリリースノートを生成するAIアシスタントです。
             以下のコミット履歴を元に、簡潔でわかりやすいリリースノートを作成してください。
