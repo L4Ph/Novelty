@@ -53,8 +53,7 @@ class _NovelPageState extends State<NovelPage> {
       }
 
       // 短編小説の場合は、エピソード番号を1として扱う
-      // novelTypeがnullまたは2の場合は短編小説として扱う
-      if (novelInfo.novelType == 2 || novelInfo.novelType == null) {
+      if (novelInfo.novelType == 2) {
         setState(() {
           _currentEpisode = 1;
           _novelTitle = novelInfo.title ?? '';
@@ -128,7 +127,7 @@ class _NovelPageState extends State<NovelPage> {
   Widget build(BuildContext context) {
     final appBarTitle = _episodeSubtitle.isEmpty
         ? _novelTitle
-        : (_novelType == 2 || _novelType == null
+        : (_novelType == 2
               ? _episodeSubtitle
               : '$_novelTitle - $_episodeSubtitle');
 

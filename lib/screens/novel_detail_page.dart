@@ -45,8 +45,7 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
       });
 
       // 短編小説の場合は本文も取得
-      // novelTypeがnullまたは2の場合は短編小説として扱う
-      if (novelInfo.novelType == 2 || novelInfo.novelType == null) {
+      if (novelInfo.novelType == 2) {
         final episode = await _apiService.fetchEpisode(widget.ncode, 1);
         if (!mounted) return;
         setState(() {
@@ -118,8 +117,7 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
     final novelInfo = _novelInfo!;
 
     // 短編小説の場合は本文を表示
-    // novelTypeがnullまたは2の場合は短編小説として扱う
-    if (novelInfo.novelType == 2 || novelInfo.novelType == null) {
+    if (novelInfo.novelType == 2) {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(

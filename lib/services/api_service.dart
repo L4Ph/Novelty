@@ -52,6 +52,22 @@ class ApiService {
         ((data[0] as Map<String, dynamic>?)?['allcount'] as int? ?? 0) > 0 &&
         data.length > 1) {
       final novelData = data[1] as Map<String, dynamic>;
+      
+      // デバッグ: APIレスポンスを確認
+      if (kDebugMode) {
+        print('Novel data from API: $novelData');
+        print('Novel type: ${novelData['novel_type']}');
+      }
+      
+      // novelTypeが文字列の場合、整数に変換
+      if (novelData['novel_type'] is String) {
+        final novelTypeStr = novelData['novel_type'] as String;
+        novelData['novel_type'] = int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
+      } else if (novelData['novel_type'] == null) {
+        // novelTypeがnullの場合、デフォルト値を設定
+        novelData['novel_type'] = 1; // デフォルトは連載(1)
+      }
+      
       return NovelInfo.fromJson(novelData);
     } else {
       throw Exception('Novel not found');
@@ -60,10 +76,19 @@ class ApiService {
 
   Future<NovelInfo> fetchNovelInfo(String ncode) async {
     final info = await _fetchNovelInfoFromNarou(ncode);
+    
+    // novelTypeがnullの場合、デフォルト値を設定
+    if (info.novelType == null) {
+      // APIからnovelTypeが取得できなかった場合、デフォルトは連載(1)
+      info.novelType = 1;
+    }
+    
+    if (kDebugMode) {
+      print('Novel type after processing: ${info.novelType}');
+    }
 
     // 短編小説の場合は、単一のエピソードとして扱う
-    // novelTypeがnullまたは2の場合は短編小説として扱う
-    if (info.novelType == 2 || info.novelType == null) {
+    if (info.novelType == 2) {
       // 短編小説の場合は、単一のエピソードとして扱う
       info.episodes = [
         Episode(
@@ -129,8 +154,15 @@ class ApiService {
 
   Future<Episode> fetchEpisode(String ncode, int episode) async {
     final info = await _fetchNovelInfoFromNarou(ncode);
-    // novelTypeがnullまたは2の場合は短編小説として扱う
-    final isShortStory = info.novelType == 2 || info.novelType == null;
+    
+    // novelTypeがnullの場合、デフォルト値を設定
+    if (info.novelType == null) {
+      // APIからnovelTypeが取得できなかった場合、デフォルトは連載(1)
+      info.novelType = 1;
+    }
+    
+    // 短編小説の場合のみ特別処理
+    final isShortStory = info.novelType == 2;
 
     // 短編小説の場合、episode が 1 以外は無効
     if (isShortStory && episode != 1) {
