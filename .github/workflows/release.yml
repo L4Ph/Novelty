@@ -95,8 +95,6 @@ jobs:
           git tag ${{ steps.versions.outputs.new_tag }}
           git push origin ${{ steps.versions.outputs.new_tag }}
 
-      ---
-
       # 6. Create GitHub Release (as a draft)
       - name: Create GitHub Release
         env:
