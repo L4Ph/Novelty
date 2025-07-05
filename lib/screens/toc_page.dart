@@ -117,7 +117,7 @@ class _TocPageState extends State<TocPage> {
         itemCount: _novelInfo?.episodes?.length ?? 0,
         itemBuilder: (context, index) {
           final episode = _novelInfo!.episodes![index];
-          final episodeTitle = episode['title'] as String? ?? 'No Title';
+          final episodeTitle = episode.subtitle ?? 'No Title';
           return ListTile(
             title: Text(episodeTitle),
             onTap: () {
@@ -132,8 +132,4 @@ class _TocPageState extends State<TocPage> {
       ),
     );
   }
-}
-
-extension on Episode {
-  void operator [](String other) {}
 }

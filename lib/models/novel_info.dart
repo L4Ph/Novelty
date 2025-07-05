@@ -1,5 +1,5 @@
-import 'package:novelty/models/episode.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:novelty/models/episode.dart';
 
 part 'novel_info.g.dart';
 

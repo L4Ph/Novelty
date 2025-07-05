@@ -29,7 +29,7 @@ class ApiService {
       final update = el.querySelector('.p-eplist__update');
       final revisedAttr = update?.querySelector('span')?.attributes['title'];
       return Episode(
-        title: subtitle?.text.trim(),
+        subtitle: subtitle?.text.trim(),
         url: subtitle?.attributes['href'],
         update: update?.text.trim().replaceAll(RegExp(r'（.+）'), '').trim(),
         revised: revisedAttr?.replaceAll(' 改稿', '').trim(),
@@ -137,8 +137,8 @@ class ApiService {
     final document = parser.parse(html);
 
     final episodeTitle = isShortStory
-        ? document.querySelector('h1.p-novel__title')?.text
-        : document.querySelector('.p-novel__title')?.text;
+        ? document.querySelector('h1.p-novel_title')?.text
+        : document.querySelector('p.p-novel__subtitle')?.text;
     final episodeNumberRaw = isShortStory
         ? '1/1'
         : document.querySelector('.p-novel__number')?.text;
@@ -152,12 +152,12 @@ class ApiService {
           '.p-novel__text:not(.p-novel__text--preface):not(.p-novel__text--afterword)',
         )
         .map((el) => el.text)
-        .join('\n');
+        .join('');
 
     return Episode(
       ncode: ncode,
       index: currentEpisode,
-      title: episodeTitle,
+      subtitle: episodeTitle,
       body: body,
     );
   }
@@ -416,7 +416,7 @@ class ApiService {
             }),
           );
         }
-      } catch (e) {
+      } on Exception catch (e) {
         if (kDebugMode) {
           print('Error processing ranking item for ncode $ncode: $e');
         }

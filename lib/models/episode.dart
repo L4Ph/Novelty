@@ -5,7 +5,7 @@ part 'episode.g.dart';
 @JsonSerializable(fieldRename: FieldRename.snake)
 class Episode {
   Episode({
-    this.title,
+    this.subtitle,
     this.url,
     this.update,
     this.revised,
@@ -16,7 +16,7 @@ class Episode {
   });
 
   factory Episode.fromJson(Map<String, dynamic> json) => _$EpisodeFromJson(json);
-  final String? title;
+  final String? subtitle;
   final String? url;
   final String? update;
   final String? revised;
