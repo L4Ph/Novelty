@@ -165,23 +165,27 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (novelInfo.writer != null)
-                        Text(
-                          '作者: ${novelInfo.writer}',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      const SizedBox(height: 8),
-                      Text(
-                        novelInfo.story!,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
+                child: ExpansionTile(
+                  // Replaced Padding with ExpansionTile
+                  title: Text(
+                    '作品情報', // You can set a title for the collapsible section
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
+                  childrenPadding: const EdgeInsets.all(
+                    16,
+                  ), // Padding for the content inside the expanded tile
+                  children: [
+                    if (novelInfo.writer != null)
+                      Text(
+                        '作者: ${novelInfo.writer}',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    const SizedBox(height: 8),
+                    Text(
+                      novelInfo.story!,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
                 ),
               ),
             ),
