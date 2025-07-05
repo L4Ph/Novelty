@@ -44,6 +44,18 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
           fetch-depth: 0 # 全コミット履歴を取得するために必要
 
+      - name: Create tag if needed on workflow_dispatch
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          TAG=${{ env.VERSION_NAME }}
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists."
+          else
+            echo "Tag $TAG does not exist. Creating it on HEAD."
+            git tag $TAG
+          fi
+        shell: bash
+
       - name: Get previous tag
         id: get_previous_tag
         run: |
