@@ -87,7 +87,7 @@ class _LibraryPageState extends State<LibraryPage> {
               subtitle: Text(novel.writer ?? ''),
               onTap: () {
                 if (novel.ncode != null) {
-                  context.push('/toc/${novel.ncode}');
+                  context.push('/novel/${novel.ncode}');
                 }
               },
               onLongPress: () {

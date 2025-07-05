@@ -64,7 +64,7 @@ class _HistoryPageState extends State<HistoryPage> {
               return ListTile(
                 title: Text(novel.title ?? 'No Title'),
                 subtitle: Text(novel.writer ?? 'No Writer'),
-                onTap: () => context.push('/novel/${novel.ncode}/1'),
+                onTap: () => context.push('/novel/${novel.ncode}'),
               );
             },
           );
