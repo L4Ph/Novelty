@@ -83,6 +83,7 @@ jobs:
             あなたは、GitHubリポジトリのリリースノートを生成するAIアシスタントです。
             以下のコミット履歴を元に、簡潔でわかりやすいリリースノートを作成してください。
             リリースノートは、以下のセクションに分けてください。
+            また、生成したリリースノートは、`RELEASE_NOTES.md`として、出力してください。
 
             **ルール:**
             - Markdown形式で出力してください。
@@ -99,11 +100,6 @@ jobs:
             **利用可能な情報:**
             - リポジトリ: ${{ env.REPOSITORY }}
             - 新しいバージョンタグ: ${{ env.LATEST_TAG }}
-
-      - name: Save release notes to file
-        if: success()
-        run: |
-          echo "${{ steps.generate_release_notes.outputs.text_output }}" > RELEASE_NOTES.md
 
       - name: Set up Flutter
         run: |
