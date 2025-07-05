@@ -52,6 +52,37 @@ class ApiService {
         ((data[0] as Map<String, dynamic>?)?['allcount'] as int? ?? 0) > 0 &&
         data.length > 1) {
       final novelData = data[1] as Map<String, dynamic>;
+      
+      // デバッグ: APIレスポンスを確認
+      if (kDebugMode) {
+        print('Novel data from API: $novelData');
+        print('Novel type: ${novelData['novel_type']}');
+        print('General all no: ${novelData['general_all_no']}');
+      }
+      
+      // novelTypeが文字列の場合、整数に変換
+      if (novelData['novel_type'] is String) {
+        final novelTypeStr = novelData['novel_type'] as String;
+        novelData['novel_type'] = int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
+      } else if (novelData['novel_type'] == null) {
+        // novelTypeがnullの場合、general_all_noを使って判断
+        // general_all_noが1または0の場合は短編小説、それ以外は連載小説
+        final generalAllNo = novelData['general_all_no'];
+        int allNo = 0;
+        
+        if (generalAllNo is String) {
+          allNo = int.tryParse(generalAllNo) ?? 0;
+        } else if (generalAllNo is int) {
+          allNo = generalAllNo;
+        }
+        
+        if (allNo <= 1) {
+          novelData['novel_type'] = 2; // 短編小説
+        } else {
+          novelData['novel_type'] = 1; // 連載小説
+        }
+      }
+      
       return NovelInfo.fromJson(novelData);
     } else {
       throw Exception('Novel not found');
@@ -60,9 +91,32 @@ class ApiService {
 
   Future<NovelInfo> fetchNovelInfo(String ncode) async {
     final info = await _fetchNovelInfoFromNarou(ncode);
+    
+    // novelTypeがnullの場合、general_all_noを使って判断
+    if (info.novelType == null) {
+      if (info.generalAllNo != null && info.generalAllNo! <= 1) {
+        info.novelType = 2; // 短編小説
+      } else {
+        info.novelType = 1; // 連載小説
+      }
+    }
+    
+    if (kDebugMode) {
+      print('Novel type after processing: ${info.novelType}');
+      print('General all no: ${info.generalAllNo}');
+    }
 
+    // 短編小説の場合は、単一のエピソードとして扱う
     if (info.novelType == 2) {
-      info.episodes = [];
+      // 短編小説の場合は、単一のエピソードとして扱う
+      info.episodes = [
+        Episode(
+          subtitle: info.title,
+          url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
+          ncode: ncode,
+          index: 1,
+        )
+      ];
       return info;
     }
 
@@ -119,6 +173,22 @@ class ApiService {
 
   Future<Episode> fetchEpisode(String ncode, int episode) async {
     final info = await _fetchNovelInfoFromNarou(ncode);
+    
+    // novelTypeがnullの場合、general_all_noを使って判断
+    if (info.novelType == null) {
+      if (info.generalAllNo != null && info.generalAllNo! <= 1) {
+        info.novelType = 2; // 短編小説
+      } else {
+        info.novelType = 1; // 連載小説
+      }
+    }
+    
+    if (kDebugMode) {
+      print('fetchEpisode - Novel type: ${info.novelType}');
+      print('fetchEpisode - General all no: ${info.generalAllNo}');
+    }
+    
+    // 短編小説の場合のみ特別処理
     final isShortStory = info.novelType == 2;
 
     // 短編小説の場合、episode が 1 以外は無効
@@ -126,6 +196,7 @@ class ApiService {
       throw Exception('短編小説にはエピソード番号 $episode は存在しません');
     }
 
+    // 短編小説の場合は、エピソード番号を含まないURLを使用する
     final url = isShortStory
         ? 'https://ncode.syosetu.com/${ncode.toLowerCase()}/'
         : 'https://ncode.syosetu.com/${ncode.toLowerCase()}/$episode/';

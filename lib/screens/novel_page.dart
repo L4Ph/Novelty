@@ -52,11 +52,15 @@ class _NovelPageState extends State<NovelPage> {
         return;
       }
 
-      // 短編小説の場合はエピソード指定でのアクセスは無効
+      // 短編小説の場合は、エピソード番号を1として扱う
       if (novelInfo.novelType == 2) {
         setState(() {
-          _errorMessage = '短編小説にはエピソード番号でアクセスできません';
+          _currentEpisode = 1;
+          _novelTitle = novelInfo.title ?? '';
+          _totalEpisodes = 1;
+          _novelType = novelInfo.novelType;
         });
+        await _fetchEpisodeData(1);
         return;
       }
 

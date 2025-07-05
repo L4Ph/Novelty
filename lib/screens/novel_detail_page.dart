@@ -141,6 +141,52 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
               ),
       );
     }
+    
+    // エピソードリストが空の場合は、短編小説として扱う
+    if (novelInfo.episodes == null || novelInfo.episodes!.isEmpty) {
+      // 短編小説の場合は本文を取得して表示
+      if (_shortStoryEpisode == null) {
+        // まだ本文を取得していない場合は取得を開始
+        _apiService.fetchEpisode(widget.ncode, 1).then((episode) {
+          if (mounted) {
+            setState(() {
+              _shortStoryEpisode = episode;
+            });
+          }
+        }).catchError((error) {
+          if (mounted) {
+            setState(() {
+              _errorMessage = 'エラーが発生しました: $error';
+            });
+          }
+        });
+      }
+      
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
+          title: Text(novelInfo.title ?? ''),
+          actions: [
+            IconButton(
+              icon: Icon(_isInLibrary ? Icons.favorite : Icons.favorite_border),
+              onPressed: _toggleLibraryStatus,
+            ),
+          ],
+        ),
+        body: _errorMessage.isNotEmpty
+            ? Center(child: Text(_errorMessage))
+            : (_shortStoryEpisode == null
+                ? const Center(child: CircularProgressIndicator())
+                : NovelContent(
+                    ncode: widget.ncode,
+                    episode: 1,
+                    initialData: _shortStoryEpisode,
+                  )),
+      );
+    }
 
     // 連載小説の場合は目次を表示
     return Scaffold(
@@ -205,10 +251,15 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
                     // エピソードのURLから番号を抽出
                     final episodeUrl = episode.url;
                     if (episodeUrl != null) {
-                      final match = RegExp(r'/(\d+)/$').firstMatch(episodeUrl);
-                      if (match != null) {
-                        final episodeNumber = match.group(1);
-                        context.push('/novel/${widget.ncode}/$episodeNumber');
+                      // 短編小説の場合は特別な処理
+                      if (novelInfo.novelType == 2) {
+                        context.push('/novel/${widget.ncode}');
+                      } else {
+                        final match = RegExp(r'/(\d+)/$').firstMatch(episodeUrl);
+                        if (match != null) {
+                          final episodeNumber = match.group(1);
+                          context.push('/novel/${widget.ncode}/$episodeNumber');
+                        }
                       }
                     }
                   },
