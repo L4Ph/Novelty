@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:archive/archive.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart' as parser;
+import 'package:http/http.dart' as http;
 
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
@@ -10,17 +11,30 @@ import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
 
 class ApiService {
-  final _dio = Dio();
-  final CacheManager _cacheManager = DefaultCacheManager();
-  final _noveltyApiUrl = const String.fromEnvironment('NOVELTY_API_URL');
+  Future<http.Response> _fetchWithCache(String url) async {
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      },
+    );
+    return response;
+  }
 
-  Future<dynamic> _fetchJsonData(String url) async {
-    final response = await _dio.get<dynamic>(url);
-    if (response.statusCode == 200) {
-      return response.data;
-    } else {
-      throw Exception('Failed to load data from $url');
-    }
+  List<Episode> _parseEpisodes(dom.Document document) {
+    final elements = document.querySelectorAll('.p-eplist__sublist');
+    return elements.map((el) {
+      final subtitle = el.querySelector('.p-eplist__subtitle');
+      final update = el.querySelector('.p-eplist__update');
+      final revisedAttr = update?.querySelector('span')?.attributes['title'];
+      return Episode(
+        title: subtitle?.text.trim(),
+        url: subtitle?.attributes['href'],
+        update: update?.text.trim().replaceAll(RegExp(r'（.+）'), '').trim(),
+        revised: revisedAttr?.replaceAll(' 改稿', '').trim(),
+      );
+    }).toList();
   }
 
   Future<NovelInfo> _fetchNovelInfoFromNarou(String ncode) async {
@@ -52,40 +66,100 @@ class ApiService {
       return info;
     }
 
-    final episodes = await fetchEpisodes(ncode);
-    info.episodes = episodes;
+    final firstPageUrl = 'https://ncode.syosetu.com/${ncode.toLowerCase()}/';
+    final firstPageResponse = await _fetchWithCache(firstPageUrl);
+
+    if (firstPageResponse.statusCode != 200) {
+      throw Exception(
+        'Failed to fetch URL: ${firstPageResponse.statusCode} ${firstPageResponse.reasonPhrase}',
+      );
+    }
+
+    final firstPageHtml = firstPageResponse.body;
+    var document = parser.parse(firstPageHtml);
+
+    final allEpisodes = _parseEpisodes(document);
+    final episodeUrls = allEpisodes.map((e) => e.url).toSet();
+
+    var currentPage = 2;
+    while (true) {
+      final pageUrl =
+          'https://ncode.syosetu.com/${ncode.toLowerCase()}/?p=$currentPage';
+      final response = await _fetchWithCache(pageUrl);
+
+      if (response.statusCode != 200) {
+        break;
+      }
+
+      final html = response.body;
+      document = parser.parse(html);
+      final episodesOnPage = _parseEpisodes(document);
+
+      if (episodesOnPage.isEmpty) {
+        break;
+      }
+
+      final newEpisodes = episodesOnPage
+          .where((e) => !episodeUrls.contains(e.url))
+          .toList();
+      if (newEpisodes.isEmpty) {
+        break;
+      }
+
+      for (final e in newEpisodes) {
+        allEpisodes.add(e);
+        episodeUrls.add(e.url);
+      }
+
+      currentPage++;
+    }
+    info.episodes = allEpisodes;
     return info;
   }
 
   Future<Episode> fetchEpisode(String ncode, int episode) async {
-    if (_noveltyApiUrl.isEmpty) {
-      throw Exception('NOVELTY_API_URL is not set');
-    }
-    final url = '$_noveltyApiUrl/${ncode.toLowerCase()}/$episode';
-    final data = await _fetchJsonData(url) as Map<String, dynamic>;
-    return Episode.fromJson(data);
-  }
+    final info = await _fetchNovelInfoFromNarou(ncode);
+    final isShortStory = info.novelType == 2;
 
-  Future<List<Map<String, dynamic>>> fetchEpisodes(String ncode) async {
-    if (_noveltyApiUrl.isEmpty) {
-      throw Exception('NOVELTY_API_URL is not set');
-    }
-    final url = '$_noveltyApiUrl/${ncode.toLowerCase()}';
-    if (kDebugMode) {
-      print(url);
-    }
-    final data = await _fetchJsonData(url);
-    if (data is List) {
-      return List<Map<String, dynamic>>.from(
-        data.map((e) => e as Map<String, dynamic>),
+    final url = isShortStory && episode == 1
+        ? 'https://ncode.syosetu.com/${ncode.toLowerCase()}/'
+        : 'https://ncode.syosetu.com/${ncode.toLowerCase()}/$episode/';
+
+    final response = await _fetchWithCache(url);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to fetch URL: ${response.statusCode} ${response.reasonPhrase}',
       );
-    } else if (data is Map && data.containsKey('episodes')) {
-      return List<Map<String, dynamic>>.from(
-        (data['episodes'] as List).map((e) => e as Map<String, dynamic>),
-      );
-    } else {
-      throw Exception('Unexpected response format for episodes');
     }
+
+    final html = response.body;
+    final document = parser.parse(html);
+
+    final episodeTitle = isShortStory
+        ? document.querySelector('h1.p-novel__title')?.text
+        : document.querySelector('.p-novel__title')?.text;
+    final episodeNumberRaw = isShortStory
+        ? '1/1'
+        : document.querySelector('.p-novel__number')?.text;
+    final episodeNumberParts = episodeNumberRaw
+        ?.split('/')
+        .map((s) => int.tryParse(s.trim()));
+    final currentEpisode = episodeNumberParts?.elementAt(0);
+
+    final body = document
+        .querySelectorAll(
+          '.p-novel__text:not(.p-novel__text--preface):not(.p-novel__text--afterword)',
+        )
+        .map((el) => el.text)
+        .join('\n');
+
+    return Episode(
+      ncode: ncode,
+      index: currentEpisode,
+      title: episodeTitle,
+      body: body,
+    );
   }
 
   static List<dynamic> _parseJson(List<int> bytes) {
@@ -121,12 +195,12 @@ class ApiService {
     if (kDebugMode) {
       print('Fetching data from URL: $url');
     }
-    final file = await _cacheManager.getSingleFile(url);
-    final bytes = await file.readAsBytes();
+    final response = await http.get(Uri.parse(url));
+    final bytes = response.bodyBytes;
     if (kDebugMode) {
       print('Downloaded ${bytes.length} bytes from cache/network');
     }
-    return compute(_parseJson, bytes);
+    return compute(_parseJson, bytes.toList());
   }
 
   Future<List<RankingResponse>> searchNovels(NovelSearchQuery query) async {

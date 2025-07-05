@@ -1,3 +1,4 @@
+import 'package:novelty/models/episode.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'novel_info.g.dart';
@@ -84,7 +85,7 @@ class NovelInfo {
   int? novelupdatedAt;
   @JsonKey(fromJson: _toInt)
   int? updatedAt;
-  List<Map<String, dynamic>>? episodes;
+  List<Episode>? episodes;
 
   Map<String, dynamic> toJson() => _$NovelInfoToJson(this);
 }

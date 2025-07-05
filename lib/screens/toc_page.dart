@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/services/database_service.dart';
@@ -131,4 +132,8 @@ class _TocPageState extends State<TocPage> {
       ),
     );
   }
+}
+
+extension on Episode {
+  void operator [](String other) {}
 }
