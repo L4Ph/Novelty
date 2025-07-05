@@ -62,7 +62,8 @@ class ApiService {
     final info = await _fetchNovelInfoFromNarou(ncode);
 
     // 短編小説の場合は、単一のエピソードとして扱う
-    if (info.novelType == 2) {
+    // novelTypeがnullまたは2の場合は短編小説として扱う
+    if (info.novelType == 2 || info.novelType == null) {
       // 短編小説の場合は、単一のエピソードとして扱う
       info.episodes = [
         Episode(
@@ -128,13 +129,15 @@ class ApiService {
 
   Future<Episode> fetchEpisode(String ncode, int episode) async {
     final info = await _fetchNovelInfoFromNarou(ncode);
-    final isShortStory = info.novelType == 2;
+    // novelTypeがnullまたは2の場合は短編小説として扱う
+    final isShortStory = info.novelType == 2 || info.novelType == null;
 
     // 短編小説の場合、episode が 1 以外は無効
     if (isShortStory && episode != 1) {
       throw Exception('短編小説にはエピソード番号 $episode は存在しません');
     }
 
+    // 短編小説の場合は、エピソード番号を含まないURLを使用する
     final url = isShortStory
         ? 'https://ncode.syosetu.com/${ncode.toLowerCase()}/'
         : 'https://ncode.syosetu.com/${ncode.toLowerCase()}/$episode/';
