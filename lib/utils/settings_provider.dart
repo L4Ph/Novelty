@@ -67,7 +67,7 @@ class Settings extends _$Settings {
   static const _fontSizePreferenceKey = 'font_size';
   static const _seedColorPreferenceKey = 'seed_color';
 
-  Future<SharedPreferences> get _prefs async => SharedPreferences.getInstance();
+  Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
   @override
   Future<AppSettings> build() async {
