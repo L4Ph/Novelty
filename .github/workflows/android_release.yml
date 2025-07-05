@@ -3,7 +3,7 @@ name: Android Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - '*.*.*'
   workflow_dispatch:
     inputs:
       tag:
@@ -151,6 +151,9 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
           echo "STORE_FILE=upload-keystore.jks" >> $GITHUB_ENV
+
+      - name: Update version in pubspec.yaml
+        run: yq -i '.version = "${{ env.VERSION_NAME }}+${{ github.run_number }}"' pubspec.yaml
 
       - name: Build Android Release Files
         run: |

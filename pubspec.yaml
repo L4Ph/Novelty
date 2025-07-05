@@ -39,10 +39,12 @@ dependencies:
   go_router: ^16.0.0
   google_fonts: ^6.2.1
   json_annotation: ^4.9.0
+  package_info_plus: ^8.3.0
   path: ^1.9.0
   riverpod_annotation: ^3.0.0-dev.16
   shared_preferences: ^2.5.3
   sqflite: ^2.3.4
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   build_runner: ^2.5.4

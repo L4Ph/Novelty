@@ -17,6 +17,13 @@ class MorePage extends StatelessWidget {
               context.go('/more/settings');
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('このアプリについて'),
+            onTap: () {
+              context.go('/more/about');
+            },
+          ),
         ],
       ),
     );
