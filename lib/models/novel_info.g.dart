@@ -34,7 +34,7 @@ NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => NovelInfo(
   novelupdatedAt: _toInt(json['novelupdated_at']),
   updatedAt: _toInt(json['updated_at']),
   episodes: (json['episodes'] as List<dynamic>?)
-      ?.map((e) => e as Map<String, dynamic>)
+      ?.map((e) => Episode.fromJson(e as Map<String, dynamic>))
       .toList(),
 );
 

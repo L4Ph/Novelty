@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/services/database_service.dart';
@@ -116,7 +117,7 @@ class _TocPageState extends State<TocPage> {
         itemCount: _novelInfo?.episodes?.length ?? 0,
         itemBuilder: (context, index) {
           final episode = _novelInfo!.episodes![index];
-          final episodeTitle = episode['title'] as String? ?? 'No Title';
+          final episodeTitle = episode.subtitle ?? 'No Title';
           return ListTile(
             title: Text(episodeTitle),
             onTap: () {
