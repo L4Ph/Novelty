@@ -8,7 +8,7 @@ import 'package:novelty/screens/more_page.dart';
 import 'package:novelty/screens/novel_page.dart';
 import 'package:novelty/screens/scaffold_page.dart';
 import 'package:novelty/screens/settings_page.dart';
-import 'package:novelty/screens/toc_page.dart';
+import 'package:novelty/screens/novel_detail_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -72,21 +72,22 @@ final router = GoRouter(
       ],
     ),
     GoRoute(
-      path: '/novel/:ncode/:episode',
+      path: '/novel/:ncode',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
         final ncode = state.pathParameters['ncode']!;
-        final episode = int.tryParse(state.pathParameters['episode'] ?? '1') ?? 1;
-        return NovelPage(ncode: ncode, episode: episode);
+        return NovelDetailPage(ncode: ncode);
       },
-    ),
-    GoRoute(
-      path: '/toc/:ncode',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (BuildContext context, GoRouterState state) {
-        final ncode = state.pathParameters['ncode']!;
-        return TocPage(ncode: ncode);
-      },
+      routes: [
+        GoRoute(
+          path: ':episode',
+          builder: (BuildContext context, GoRouterState state) {
+            final ncode = state.pathParameters['ncode']!;
+            final episode = int.tryParse(state.pathParameters['episode'] ?? '1') ?? 1;
+            return NovelPage(ncode: ncode, episode: episode);
+          },
+        ),
+      ],
     ),
   ],
 );

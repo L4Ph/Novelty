@@ -20,6 +20,7 @@ class _NovelPageState extends State<NovelPage> {
   late int _currentEpisode;
   var _episodeSubtitle = '';
   var _novelTitle = '';
+  var _errorMessage = '';
   int? _totalEpisodes;
   int? _novelType;
 
@@ -50,14 +51,25 @@ class _NovelPageState extends State<NovelPage> {
       if (!mounted) {
         return;
       }
+
+      // 短編小説の場合はエピソード指定でのアクセスは無効
+      if (novelInfo.novelType == 2) {
+        setState(() {
+          _errorMessage = '短編小説にはエピソード番号でアクセスできません';
+        });
+        return;
+      }
+
       setState(() {
         _novelTitle = novelInfo.title ?? '';
         _totalEpisodes = novelInfo.generalAllNo ?? 1;
         _novelType = novelInfo.novelType;
       });
       await _fetchEpisodeData(_currentEpisode);
-    } on Exception catch (_) {
-      // Handle error
+    } on Exception catch (e) {
+      setState(() {
+        _errorMessage = 'エラーが発生しました: $e';
+      });
     }
   }
 
@@ -123,9 +135,23 @@ class _NovelPageState extends State<NovelPage> {
         ),
         title: Text(appBarTitle),
       ),
-      body: _totalEpisodes == null
-          ? const Center(child: CircularProgressIndicator())
-          : PageView.builder(
+      body: _errorMessage.isNotEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(_errorMessage),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('戻る'),
+                  ),
+                ],
+              ),
+            )
+          : _totalEpisodes == null
+              ? const Center(child: CircularProgressIndicator())
+              : PageView.builder(
               controller: _pageController,
               itemCount: _totalEpisodes,
               onPageChanged: (index) {
