@@ -18,7 +18,7 @@ class _NovelPageState extends State<NovelPage> {
   final _databaseService = DatabaseService();
   PageController? _pageController;
   late int _currentEpisode;
-  var _episodeTitle = '';
+  var _episodeSubtitle = '';
   var _novelTitle = '';
   int? _totalEpisodes;
   int? _novelType;
@@ -74,7 +74,7 @@ class _NovelPageState extends State<NovelPage> {
           }
           if (_currentEpisode == episode) {
             setState(() {
-              _episodeTitle = data.title ?? '';
+              _episodeSubtitle = data.subtitle ?? '';
             });
           }
         })
@@ -109,9 +109,11 @@ class _NovelPageState extends State<NovelPage> {
 
   @override
   Widget build(BuildContext context) {
-    final appBarTitle = _episodeTitle.isEmpty
+    final appBarTitle = _episodeSubtitle.isEmpty
         ? _novelTitle
-        : (_novelType == 2 ? _episodeTitle : '$_novelTitle - $_episodeTitle');
+        : (_novelType == 2
+              ? _episodeSubtitle
+              : '$_novelTitle - $_episodeSubtitle');
 
     return Scaffold(
       appBar: AppBar(

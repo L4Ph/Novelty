@@ -60,8 +60,9 @@ fvm dart analyze
 # APIドキュメント
 それぞれのドキュメントは、以下にあります。
 
-## Novelty API
-- [Novelty API](./docs/novelty_api/api.md)
+## なろう小説のhtml
+- [{ncode}へのリクエスト](./docs/narou_html/{ncode}.md)
+- [{ncode}/{episodes}へのリクエスト](./docs/narou_html/{ncode}/{episodes}.md)
 
 ## なろう小説
 - [なろう小説API](./docs/narou_api/novel_api.md)
