@@ -17,7 +17,7 @@ class SettingsPage extends ConsumerWidget {
           children: [
             _buildFontSetting(context, ref, settings),
             _buildFontSizeSetting(context, ref, settings),
-            _buildThemeColorSetting(context, ref, settings),
+            // _buildThemeColorSetting(context, ref, settings),
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -56,20 +56,20 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildThemeColorSetting(
-    BuildContext context,
-    WidgetRef ref,
-    AppSettings settings,
-  ) {
-    return ListTile(
-      title: const Text('テーマカラー'),
-      trailing: CircleAvatar(
-        backgroundColor: settings.colorScheme.primary,
-        radius: 15,
-      ),
-      onTap: () => _showColorPickerDialog(context, ref, settings),
-    );
-  }
+  // Widget _buildThemeColorSetting(
+  //   BuildContext context,
+  //   WidgetRef ref,
+  //   AppSettings settings,
+  // ) {
+  //   return ListTile(
+  //     title: const Text('テーマカラー'),
+  //     trailing: CircleAvatar(
+  //       backgroundColor: settings.colorScheme.primary,
+  //       radius: 15,
+  //     ),
+  //     onTap: () => _showColorPickerDialog(context, ref, settings),
+  //   );
+  // }
 
   void _showFontSelectionDialog(
     BuildContext context,
@@ -109,46 +109,46 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  void _showColorPickerDialog(
-    BuildContext context,
-    WidgetRef ref,
-    AppSettings settings,
-  ) {
-    var pickerColor = settings.seedColor;
+  //   void _showColorPickerDialog(
+  //     BuildContext context,
+  //     WidgetRef ref,
+  //     AppSettings settings,
+  //   ) {
+  //     var pickerColor = settings.seedColor;
 
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('テーマカラーを選択'),
-          content: SingleChildScrollView(
-            child: ColorPicker(
-              pickerColor: pickerColor,
-              onColorChanged: (color) {
-                pickerColor = color;
-              },
-              pickerAreaHeightPercent: 0.8,
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('キャンセル'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('完了'),
-              onPressed: () {
-                ref
-                    .read(settingsProvider.notifier)
-                    .setAndSaveSeedColor(pickerColor);
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+  //     showDialog<void>(
+  //       context: context,
+  //       builder: (context) {
+  //         return AlertDialog(
+  //           title: const Text('テーマカラーを選択'),
+  //           content: SingleChildScrollView(
+  //             child: ColorPicker(
+  //               pickerColor: pickerColor,
+  //               onColorChanged: (color) {
+  //                 pickerColor = color;
+  //               },
+  //               pickerAreaHeightPercent: 0.8,
+  //             ),
+  //           ),
+  //           actions: <Widget>[
+  //             TextButton(
+  //               child: const Text('キャンセル'),
+  //               onPressed: () {
+  //                 Navigator.of(context).pop();
+  //               },
+  //             ),
+  //             TextButton(
+  //               child: const Text('完了'),
+  //               onPressed: () {
+  //                 ref
+  //                     .read(settingsProvider.notifier)
+  //                     .setAndSaveSeedColor(pickerColor);
+  //                 Navigator.of(context).pop();
+  //               },
+  //             ),
+  //           ],
+  //         );
+  //       },
+  //     );
+  //   }
 }

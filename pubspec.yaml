@@ -31,6 +31,7 @@ dependencies:
   archive: ^4.0.7
   cupertino_icons: ^1.0.8
   dio: ^5.8.0+1
+  dynamic_color: ^1.7.0
   flutter:
     sdk: flutter
   flutter_cache_manager: ^3.4.1

@@ -1,6 +1,7 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 import 'package:novelty/router/router.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
@@ -20,16 +21,28 @@ class MyApp extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
 
     return settings.when(
-      data: (settings) => MaterialApp.router(
-        title: 'Novelty',
-        theme: ThemeData(
-          colorScheme: settings.colorScheme,
-          textTheme: settings.selectedFontTheme.apply(
-            bodyColor: settings.colorScheme.onSurface,
-            displayColor: settings.colorScheme.onSurface,
-          ),
-        ),
-        routerConfig: router,
+      data: (settings) => DynamicColorBuilder(
+        builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+          final colorScheme =
+              lightDynamic ??
+              ColorScheme.fromSeed(seedColor: const Color(0x00b6e1e1));
+          final darkColorSchema =
+              darkDynamic ??
+              ColorScheme.fromSeed(seedColor: const Color(0x00b6e1e1));
+
+          return MaterialApp.router(
+            title: 'Novelty',
+            theme: ThemeData(
+              colorScheme: colorScheme,
+              fontFamily: GoogleFonts.notoSansJp().fontFamily,
+            ),
+            darkTheme: ThemeData(
+              colorScheme: darkColorSchema,
+              fontFamily: GoogleFonts.notoSansJp().fontFamily,
+            ),
+            routerConfig: router,
+          );
+        },
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Center(child: Text('Error: $err')),

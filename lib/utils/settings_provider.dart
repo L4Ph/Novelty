@@ -19,7 +19,7 @@ class AppSettings {
 
   ColorScheme get colorScheme => ColorScheme.fromSeed(seedColor: seedColor);
 
-  TextTheme get selectedFontTheme => _getTextTheme(selectedFont);
+  TextStyle get selectedFontTheme => _getTextStyle(selectedFont);
 
   AppSettings copyWith({
     String? selectedFont,
@@ -33,21 +33,21 @@ class AppSettings {
     );
   }
 
-  TextTheme _getTextTheme(String font) {
+  TextStyle _getTextStyle(String font) {
     switch (font) {
       case 'IBM Plex Sans JP':
-        return GoogleFonts.ibmPlexSansJpTextTheme();
+        return GoogleFonts.ibmPlexSansJp();
       case 'M PLUS 1p':
-        return GoogleFonts.mPlus1pTextTheme();
+        return GoogleFonts.mPlus1p();
       case 'M PLUS 1':
-        return GoogleFonts.mPlus1TextTheme();
+        return GoogleFonts.mPlus1();
       case 'Murecho':
-        return GoogleFonts.murechoTextTheme();
+        return GoogleFonts.murecho();
       case 'M PLUS 2':
-        return GoogleFonts.mPlus2TextTheme();
+        return GoogleFonts.mPlus2();
       case 'Noto Sans JP':
       default:
-        return GoogleFonts.notoSansJpTextTheme();
+        return GoogleFonts.notoSansJp();
     }
   }
 }

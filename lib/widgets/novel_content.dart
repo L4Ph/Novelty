@@ -62,16 +62,12 @@ class _NovelContentState extends ConsumerState<NovelContent> {
             return const Center(child: Text('No content available.'));
           } else {
             final content = snapshot.data!.body;
-            return ColoredBox(
-              color: settings.colorScheme.surface,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  content?.replaceAll(RegExp(r'<br>'), '\n') ?? '',
-                  style: TextStyle(
-                    fontSize: settings.fontSize,
-                    color: settings.colorScheme.onSurface,
-                  ),
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                content?.replaceAll(RegExp(r'<br>'), '\n') ?? '',
+                style: settings.selectedFontTheme.copyWith(
+                  fontSize: settings.fontSize,
                 ),
               ),
             );
