@@ -113,12 +113,30 @@ jobs:
         id: versions
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           # gh CLIで最新のリリース情報を取得
           PREVIOUS_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || echo "v0.0.0")
           VERSION=${PREVIOUS_TAG#v}
           IFS='.' read -r -a V_PARTS <<< "$VERSION"
-          V_PARTS[2]=$((V_PARTS[2] + 1))
+
+          # PRからsemverラベルを取得
+          LABELS=$(gh pr view $PR_NUMBER --json labels -q '.labels.[].name')
+
+          if echo "$LABELS" | grep -q "semver:major"; then
+            echo "Bumping major version"
+            V_PARTS[0]=$((V_PARTS[0] + 1))
+            V_PARTS[1]=0
+            V_PARTS[2]=0
+          elif echo "$LABELS" | grep -q "semver:minor"; then
+            echo "Bumping minor version"
+            V_PARTS[1]=$((V_PARTS[1] + 1))
+            V_PARTS[2]=0
+          else
+            echo "Bumping patch version (default)"
+            V_PARTS[2]=$((V_PARTS[2] + 1))
+          fi
+
           NEW_VERSION="${V_PARTS[0]}.${V_PARTS[1]}.${V_PARTS[2]}"
           NEW_TAG="v${NEW_VERSION}"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -163,12 +181,11 @@ jobs:
           # mainブランチの最新状態に追従
           git fetch origin main
           git checkout -b release-prep ${{ github.sha }}
-          git add pubspec.yaml RELEASE_NOTES.md
+          git add pubspec.yaml
           git commit -m "chore(release): prepare for release ${{ steps.versions.outputs.new_tag }} [skip ci]"
           # 新しいコミットにタグを付ける
           git tag ${{ steps.versions.outputs.new_tag }}
-          # mainブランチにプッシュし、タグもプッシュ
-          git push origin HEAD:main
+          # タグをプッシュ
           git push origin ${{ steps.versions.outputs.new_tag }}
 
       # 9. GitHubリリースを作成
