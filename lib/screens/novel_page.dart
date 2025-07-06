@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:novelty/main.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/services/drift_database_service.dart';
+import 'package:novelty/services/database_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
 class NovelPage extends ConsumerStatefulWidget {
@@ -17,7 +16,7 @@ class NovelPage extends ConsumerStatefulWidget {
 
 class _NovelPageState extends ConsumerState<NovelPage> {
   final _apiService = ApiService();
-  late DriftDatabaseService _databaseService;
+  late DatabaseService _databaseService;
   PageController? _pageController;
   late int _currentEpisode;
   var _episodeSubtitle = '';
@@ -31,7 +30,7 @@ class _NovelPageState extends ConsumerState<NovelPage> {
   @override
   void initState() {
     super.initState();
-    _databaseService = ref.read(driftDatabaseServiceProvider);
+    _databaseService = ref.read(databaseServiceProvider);
     _currentEpisode = widget.episode ?? 1;
     _pageController = PageController(initialPage: _currentEpisode - 1);
     _fetchNovelInfo();
@@ -65,7 +64,7 @@ class _NovelPageState extends ConsumerState<NovelPage> {
           _totalEpisodes = 1;
           _novelType = novelInfo.novelType;
         });
-        
+
         // 小説情報が取得できたら、タイトル、作者名、エピソード番号を含めて履歴を更新
         await _databaseService.addNovelToHistory(
           widget.ncode,
@@ -73,7 +72,7 @@ class _NovelPageState extends ConsumerState<NovelPage> {
           writer: novelInfo.writer,
           lastEpisode: _currentEpisode,
         );
-        
+
         await _fetchEpisodeData(1);
         return;
       }
@@ -83,7 +82,7 @@ class _NovelPageState extends ConsumerState<NovelPage> {
         _totalEpisodes = novelInfo.generalAllNo ?? 1;
         _novelType = novelInfo.novelType;
       });
-      
+
       // 小説情報が取得できたら、タイトル、作者名、エピソード番号を含めて履歴を更新
       await _databaseService.addNovelToHistory(
         widget.ncode,
@@ -178,43 +177,47 @@ class _NovelPageState extends ConsumerState<NovelPage> {
           : _totalEpisodes == null
               ? const Center(child: CircularProgressIndicator())
               : PageView.builder(
-              controller: _pageController,
-              itemCount: _totalEpisodes,
-              onPageChanged: (index) {
-                final newEpisode = index + 1;
-                setState(() {
-                  _currentEpisode = newEpisode;
-                });
-                _fetchEpisodeData(_currentEpisode);
-                
-                // エピソードが変わったら履歴を更新
-                _databaseService.addNovelToHistory(
-                  widget.ncode,
-                  title: _novelTitle,
-                  lastEpisode: newEpisode,
-                );
-              },
-              itemBuilder: (context, index) {
-                return FutureBuilder<Episode>(
-                  future: _fetchEpisodeData(index + 1),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else if (!snapshot.hasData) {
-                      return const Center(child: Text('No content available.'));
-                    } else {
-                      return NovelContent(
-                        ncode: widget.ncode,
-                        episode: index + 1,
-                        initialData: snapshot.data,
-                      );
-                    }
+                  controller: _pageController,
+                  itemCount: _totalEpisodes,
+                  onPageChanged: (index) {
+                    final newEpisode = index + 1;
+                    setState(() {
+                      _currentEpisode = newEpisode;
+                    });
+                    _fetchEpisodeData(_currentEpisode);
+
+                    // エピソードが変わったら履歴を更新
+                    _databaseService.addNovelToHistory(
+                      widget.ncode,
+                      title: _novelTitle,
+                      lastEpisode: newEpisode,
+                    );
                   },
-                );
-              },
-            ),
+                  itemBuilder: (context, index) {
+                    return FutureBuilder<Episode>(
+                      future: _fetchEpisodeData(index + 1),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Center(
+                              child: Text('Error: ${snapshot.error}'));
+                        } else if (!snapshot.hasData) {
+                          return const Center(
+                              child: Text('No content available.'));
+                        } else {
+                          return NovelContent(
+                            ncode: widget.ncode,
+                            episode: index + 1,
+                            initialData: snapshot.data,
+                          );
+                        }
+                      },
+                    );
+                  },
+                ),
     );
   }
 }
@@ -246,3 +249,4 @@ class LruMap<K, V> {
 
   void clear() => _map.clear();
 }
+

@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/services/database_service.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
-class NovelList extends StatelessWidget {
+class NovelList extends ConsumerWidget {
   const NovelList({super.key, required this.novels, this.isRanking = true});
   final List<RankingResponse> novels;
   final bool isRanking;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final apiService = ApiService();
-    final databaseService = DatabaseService();
+    final databaseService = ref.watch(databaseServiceProvider);
 
     return ListView.builder(
       itemCount: novels.length,

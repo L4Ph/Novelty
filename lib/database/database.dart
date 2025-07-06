@@ -4,8 +4,14 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'database.g.dart';
+
+@riverpod
+AppDatabase appDatabase(AppDatabaseRef ref) {
+  return AppDatabase();
+}
 
 // テーブル定義
 class Novels extends Table {
@@ -189,3 +195,4 @@ LazyDatabase _openConnection() {
     return NativeDatabase.createInBackground(file);
   });
 }
+

@@ -6,46 +6,32 @@ import 'package:novelty/database/database.dart';
 import 'package:novelty/router/router.dart';
 import 'package:novelty/services/database_migration_service.dart';
 import 'package:novelty/services/database_service.dart';
-import 'package:novelty/services/drift_database_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Driftデータベースのプロバイダー
-final databaseProvider = Provider<AppDatabase>((ref) {
-  return AppDatabase();
-});
-
-// DriftDatabaseServiceのプロバイダー
-final driftDatabaseServiceProvider = Provider<DriftDatabaseService>((ref) {
-  final database = ref.watch(databaseProvider);
-  return DriftDatabaseService(database);
-});
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // データベースの初期化
-  final database = AppDatabase();
-  final oldDatabaseService = DatabaseService();
-  
+
+  final container = ProviderContainer();
+  final database = container.read(appDatabaseProvider);
+  final oldDatabaseService = DatabaseService(database);
+
   // データ移行が必要かチェック
   final prefs = await SharedPreferences.getInstance();
   final migrationCompleted = prefs.getBool('drift_migration_completed') ?? false;
-  
+
   if (!migrationCompleted) {
     // データ移行の実行
-    final migrationService = DatabaseMigrationService(oldDatabaseService, database);
+    final migrationService =
+        DatabaseMigrationService(oldDatabaseService, database);
     await migrationService.migrateData();
-    
+
     // 移行完了フラグを設定
     await prefs.setBool('drift_migration_completed', true);
   }
-  
+
   runApp(
     ProviderScope(
-      overrides: [
-        databaseProvider.overrideWithValue(database),
-      ],
       child: const MyApp(),
     ),
   );
@@ -87,3 +73,4 @@ class MyApp extends ConsumerWidget {
     );
   }
 }
+

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:novelty/main.dart';
-import 'package:novelty/services/drift_database_service.dart';
+import 'package:novelty/services/database_service.dart';
 
 class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({super.key});
@@ -12,13 +11,13 @@ class HistoryPage extends ConsumerStatefulWidget {
 }
 
 class _HistoryPageState extends ConsumerState<HistoryPage> {
-  late DriftDatabaseService _databaseService;
+  late DatabaseService _databaseService;
   late Future<List<Map<String, dynamic>>> _history;
 
   @override
   void initState() {
     super.initState();
-    _databaseService = ref.read(driftDatabaseServiceProvider);
+    _databaseService = ref.read(databaseServiceProvider);
     _loadHistory();
   }
 
@@ -49,14 +48,15 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
               final title = item['title'] as String? ?? 'No Title';
               final writer = item['writer'] as String? ?? 'No Writer';
               final lastEpisode = item['last_episode'] as int?;
-              
+
               return ListTile(
                 title: Text(title),
                 subtitle: Row(
                   children: [
                     Expanded(child: Text(writer)),
                     if (lastEpisode != null)
-                      Text('最終: $lastEpisode話', 
+                      Text(
+                        '最終: $lastEpisode話',
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).colorScheme.secondary,
