@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/services/api_service.dart';
 import 'package:novelty/services/database_service.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -13,8 +11,7 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   final _databaseService = DatabaseService();
-  final _apiService = ApiService();
-  late Future<List<NovelInfo>> _history;
+  late Future<List<Map<String, dynamic>>> _history;
 
   @override
   void initState() {
@@ -24,29 +21,13 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> _loadHistory() async {
     setState(() {
-      _history = _fetchHistory();
+      _history = _databaseService.getHistory();
     });
-  }
-
-  Future<List<NovelInfo>> _fetchHistory() async {
-    final historyData = await _databaseService.getHistory();
-    final ncodes = historyData.map((e) => e['ncode'] as String).toList();
-
-    final novels = <NovelInfo>[];
-    for (final ncode in ncodes) {
-      try {
-        final novelInfo = await _apiService.fetchNovelInfo(ncode);
-        novels.add(novelInfo);
-      } on Exception catch (_) {
-        // Handle error if a novel can't be fetched
-      }
-    }
-    return novels;
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<NovelInfo>>(
+    return FutureBuilder<List<Map<String, dynamic>>>(
       future: _history,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -56,15 +37,38 @@ class _HistoryPageState extends State<HistoryPage> {
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text('No history found.'));
         } else {
-          final novels = snapshot.data!;
+          final historyItems = snapshot.data!;
           return ListView.builder(
-            itemCount: novels.length,
+            itemCount: historyItems.length,
             itemBuilder: (context, index) {
-              final novel = novels[index];
+              final item = historyItems[index];
+              final ncode = item['ncode'] as String;
+              final title = item['title'] as String? ?? 'No Title';
+              final writer = item['writer'] as String? ?? 'No Writer';
+              final lastEpisode = item['last_episode'] as int?;
+              
               return ListTile(
-                title: Text(novel.title ?? 'No Title'),
-                subtitle: Text(novel.writer ?? 'No Writer'),
-                onTap: () => context.push('/novel/${novel.ncode}'),
+                title: Text(title),
+                subtitle: Row(
+                  children: [
+                    Expanded(child: Text(writer)),
+                    if (lastEpisode != null)
+                      Text('最終: $lastEpisode話', 
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
+                  ],
+                ),
+                onTap: () {
+                  // 最後に開いたエピソードがある場合はそのエピソードに移動
+                  if (lastEpisode != null && lastEpisode > 0) {
+                    context.push('/novel/$ncode/$lastEpisode');
+                  } else {
+                    context.push('/novel/$ncode');
+                  }
+                },
               );
             },
           );

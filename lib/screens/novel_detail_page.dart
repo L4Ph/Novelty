@@ -28,11 +28,18 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
     super.initState();
     _fetchNovelInfo();
     _checkIfInLibrary();
-    _addHistory();
+    // 初期状態では基本情報だけで履歴に追加
+    // 詳細ページでは特定のエピソードを表示していないのでlastEpisodeは指定しない
+    _databaseService.addNovelToHistory(widget.ncode);
   }
 
   Future<void> _addHistory() async {
-    await _databaseService.addNovelToHistory(widget.ncode);
+    // 小説情報がまだ取得されていない場合は、基本情報だけで履歴に追加
+    await _databaseService.addNovelToHistory(
+      widget.ncode,
+      title: _novelInfo?.title,
+      writer: _novelInfo?.writer,
+    );
   }
 
   Future<void> _fetchNovelInfo() async {
@@ -43,6 +50,13 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
       setState(() {
         _novelInfo = novelInfo;
       });
+      
+      // 小説情報が取得できたら、タイトルと作者名を含めて履歴を更新
+      await _databaseService.addNovelToHistory(
+        widget.ncode,
+        title: novelInfo.title,
+        writer: novelInfo.writer,
+      );
 
       // 短編小説の場合は本文も取得
       if (novelInfo.novelType == 2) {

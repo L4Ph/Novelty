@@ -32,7 +32,11 @@ class _NovelPageState extends State<NovelPage> {
     _currentEpisode = widget.episode ?? 1;
     _pageController = PageController(initialPage: _currentEpisode - 1);
     _fetchNovelInfo();
-    _addHistory();
+    // 初期状態では基本情報とエピソード番号を履歴に追加
+    _databaseService.addNovelToHistory(
+      widget.ncode,
+      lastEpisode: _currentEpisode,
+    );
   }
 
   @override
@@ -41,9 +45,7 @@ class _NovelPageState extends State<NovelPage> {
     super.dispose();
   }
 
-  Future<void> _addHistory() async {
-    await _databaseService.addNovelToHistory(widget.ncode);
-  }
+  // 履歴追加メソッドは不要になったため削除
 
   Future<void> _fetchNovelInfo() async {
     try {
@@ -60,6 +62,15 @@ class _NovelPageState extends State<NovelPage> {
           _totalEpisodes = 1;
           _novelType = novelInfo.novelType;
         });
+        
+        // 小説情報が取得できたら、タイトル、作者名、エピソード番号を含めて履歴を更新
+        await _databaseService.addNovelToHistory(
+          widget.ncode,
+          title: novelInfo.title,
+          writer: novelInfo.writer,
+          lastEpisode: _currentEpisode,
+        );
+        
         await _fetchEpisodeData(1);
         return;
       }
@@ -69,6 +80,14 @@ class _NovelPageState extends State<NovelPage> {
         _totalEpisodes = novelInfo.generalAllNo ?? 1;
         _novelType = novelInfo.novelType;
       });
+      
+      // 小説情報が取得できたら、タイトル、作者名、エピソード番号を含めて履歴を更新
+      await _databaseService.addNovelToHistory(
+        widget.ncode,
+        title: novelInfo.title,
+        writer: novelInfo.writer,
+        lastEpisode: _currentEpisode,
+      );
       await _fetchEpisodeData(_currentEpisode);
     } on Exception catch (e) {
       setState(() {
@@ -159,10 +178,18 @@ class _NovelPageState extends State<NovelPage> {
               controller: _pageController,
               itemCount: _totalEpisodes,
               onPageChanged: (index) {
+                final newEpisode = index + 1;
                 setState(() {
-                  _currentEpisode = index + 1;
+                  _currentEpisode = newEpisode;
                 });
                 _fetchEpisodeData(_currentEpisode);
+                
+                // エピソードが変わったら履歴を更新
+                _databaseService.addNovelToHistory(
+                  widget.ncode,
+                  title: _novelTitle,
+                  lastEpisode: newEpisode,
+                );
               },
               itemBuilder: (context, index) {
                 return FutureBuilder<Episode>(
