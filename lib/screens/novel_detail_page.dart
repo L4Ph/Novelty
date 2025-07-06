@@ -1,145 +1,94 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/services/database_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
-class NovelDetailPage extends ConsumerStatefulWidget {
+final novelInfoProvider = FutureProvider.autoDispose.family<NovelInfo, String>((
+  ref,
+  ncode,
+) async {
+  final apiService = ApiService();
+  final db = ref.watch(appDatabaseProvider);
+
+  // まずDBから取得試行
+  final cachedNovel = await db.getNovel(ncode);
+  if (cachedNovel != null) {
+    // TODO: キャッシュ有効期限チェック
+    // return NovelInfo.fromDb(cachedNovel);
+  }
+
+  // なければAPIから取得
+  final novelInfo = await apiService.fetchNovelInfo(ncode);
+  await db.insertNovel(novelInfo.toDbCompanion());
+
+  // 履歴に追加
+  await db.addToHistory(
+    HistoryCompanion(
+      ncode: drift.Value(ncode),
+      title: drift.Value(novelInfo.title),
+      writer: drift.Value(novelInfo.writer),
+      viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
+    ),
+  );
+
+  return novelInfo;
+});
+
+final shortStoryEpisodeProvider = FutureProvider.autoDispose
+    .family<Episode, String>((ref, ncode) async {
+      final apiService = ApiService();
+      return apiService.fetchEpisode(ncode, 1);
+    });
+
+final isInLibraryProvider = FutureProvider.autoDispose.family<bool, String>((
+  ref,
+  ncode,
+) async {
+  final db = ref.watch(appDatabaseProvider);
+  final novel = await db.getNovel(ncode);
+  return novel != null;
+});
+
+class NovelDetailPage extends ConsumerWidget {
   const NovelDetailPage({super.key, required this.ncode});
   final String ncode;
 
   @override
-  ConsumerState<NovelDetailPage> createState() => _NovelDetailPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final novelInfoAsync = ref.watch(novelInfoProvider(ncode));
 
-class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
-  final _apiService = ApiService();
-  late DatabaseService _databaseService;
-  NovelInfo? _novelInfo;
-  Episode? _shortStoryEpisode;
-  var _isLoading = true;
-  var _isInLibrary = false;
-  var _errorMessage = '';
-
-  @override
-  void initState() {
-    super.initState();
-    // ref.readはinitState内で安全に使用できます
-    _databaseService = ref.read(databaseServiceProvider);
-    _fetchNovelInfo();
-    _checkIfInLibrary();
-    // 初期状態では基本情報だけで履歴に追加
-    // 詳細ページでは特定のエピソードを表示していないのでlastEpisodeは指定しない
-    _databaseService.addNovelToHistory(widget.ncode);
-  }
-
-  Future<void> _fetchNovelInfo() async {
-    try {
-      final novelInfo = await _apiService.fetchNovelInfo(widget.ncode);
-      if (!mounted) return;
-
-      setState(() {
-        _novelInfo = novelInfo;
-      });
-
-      // 小説情報が取得できたら、タイトルと作者名を含めて履歴を更新
-      await _databaseService.addNovelToHistory(
-        widget.ncode,
-        title: novelInfo.title,
-        writer: novelInfo.writer,
-      );
-
-      // 短編小説の場合は本文も取得
-      if (novelInfo.novelType == 2) {
-        final episode = await _apiService.fetchEpisode(widget.ncode, 1);
-        if (!mounted) return;
-        setState(() {
-          _shortStoryEpisode = episode;
-        });
-      }
-    } on Exception catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Failed to load novel info: $e';
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _checkIfInLibrary() async {
-    final isInLibrary = await _databaseService.isNovelInLibrary(widget.ncode);
-    if (mounted) {
-      setState(() {
-        _isInLibrary = isInLibrary;
-      });
-    }
-  }
-
-  Future<void> _toggleLibraryStatus() async {
-    if (_novelInfo == null) return;
-
-    if (_isInLibrary) {
-      await _databaseService.removeNovelFromLibrary(widget.ncode);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ライブラリから削除しました')),
-        );
-      }
-    } else {
-      _novelInfo!.ncode = widget.ncode;
-      await _databaseService.addNovelToLibrary(_novelInfo!);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ライブラリに追加しました')),
-        );
-      }
-    }
-    await _checkIfInLibrary();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
+    return novelInfoAsync.when(
+      data: (novelInfo) => _buildContent(context, ref, novelInfo),
+      loading: () => Scaffold(
         appBar: AppBar(),
         body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_errorMessage.isNotEmpty) {
-      return Scaffold(
+      ),
+      error: (err, stack) => Scaffold(
         appBar: AppBar(),
-        body: Center(child: Text(_errorMessage)),
-      );
-    }
+        body: Center(child: Text('Failed to load novel info: $err')),
+      ),
+    );
+  }
 
-    final novelInfo = _novelInfo!;
-
-    // 短編小説 (novelType == 2) またはエピソードリストが空の場合の処理を統合
+  Widget _buildContent(
+    BuildContext context,
+    WidgetRef ref,
+    NovelInfo novelInfo,
+  ) {
     final isShortStory =
         novelInfo.novelType == 2 || (novelInfo.episodes?.isEmpty ?? true);
+    final isInLibrary = ref.watch(isInLibraryProvider(ncode));
 
     if (isShortStory) {
-      // 本文がまだ取得できていない場合
-      if (_shortStoryEpisode == null && _errorMessage.isEmpty) {
-        // ビルド中に非同期処理を呼び出すのは良くないため、
-        // _fetchNovelInfo 内で処理するように変更済み
-        // ここではローディング表示に留める
-        return Scaffold(
-          appBar: AppBar(title: Text(novelInfo.title ?? '')),
-          body: const Center(child: CircularProgressIndicator()),
-        );
-      }
-
+      final shortStoryEpisodeAsync = ref.watch(
+        shortStoryEpisodeProvider(ncode),
+      );
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -148,23 +97,34 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
           ),
           title: Text(novelInfo.title ?? ''),
           actions: [
-            IconButton(
-              icon: Icon(_isInLibrary ? Icons.favorite : Icons.favorite_border),
-              onPressed: _toggleLibraryStatus,
+            isInLibrary.when(
+              data: (inLibrary) => IconButton(
+                icon: Icon(inLibrary ? Icons.favorite : Icons.favorite_border),
+                onPressed: () => _toggleLibraryStatus(ref, novelInfo),
+              ),
+              loading: () => const IconButton(
+                icon: Icon(Icons.favorite_border),
+                onPressed: null,
+              ),
+              error: (e, s) => const IconButton(
+                icon: Icon(Icons.error),
+                onPressed: null,
+              ),
             ),
           ],
         ),
-        body: _shortStoryEpisode == null
-            ? Center(child: Text(_errorMessage))
-            : NovelContent(
-                ncode: widget.ncode,
-                episode: 1,
-                initialData: _shortStoryEpisode,
-              ),
+        body: shortStoryEpisodeAsync.when(
+          data: (episode) => NovelContent(
+            ncode: ncode,
+            episode: 1,
+            initialData: episode,
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => Center(child: Text('Error: $err')),
+        ),
       );
     }
 
-    // 連載小説の場合は目次を表示
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -173,15 +133,24 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
         ),
         title: Text(novelInfo.title ?? '目次'),
         actions: [
-          IconButton(
-            icon: Icon(_isInLibrary ? Icons.favorite : Icons.favorite_border),
-            onPressed: _toggleLibraryStatus,
+          isInLibrary.when(
+            data: (inLibrary) => IconButton(
+              icon: Icon(inLibrary ? Icons.favorite : Icons.favorite_border),
+              onPressed: () => _toggleLibraryStatus(ref, novelInfo),
+            ),
+            loading: () => const IconButton(
+              icon: Icon(Icons.favorite_border),
+              onPressed: null,
+            ),
+            error: (e, s) => const IconButton(
+              icon: Icon(Icons.error),
+              onPressed: null,
+            ),
           ),
         ],
       ),
       body: Column(
         children: [
-          // 小説情報表示
           if (novelInfo.story != null && novelInfo.story!.isNotEmpty)
             Container(
               width: double.infinity,
@@ -211,7 +180,6 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                 ),
               ),
             ),
-          // エピソードリスト
           Expanded(
             child: ListView.builder(
               itemCount: novelInfo.episodes?.length ?? 0,
@@ -226,12 +194,11 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                   onTap: () {
                     final episodeUrl = episode.url;
                     if (episodeUrl != null) {
-                      // URLからエピソード番号を正規表現で抽出
-                      final match = RegExp(r'/(\d+)/$').firstMatch(episodeUrl);
+                      final match = RegExp(r'/(\d+)/').firstMatch(episodeUrl);
                       if (match != null) {
                         final episodeNumber = match.group(1);
                         if (episodeNumber != null) {
-                          context.push('/novel/${widget.ncode}/$episodeNumber');
+                          context.push('/novel/$ncode/$episodeNumber');
                         }
                       }
                     }
@@ -243,5 +210,28 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _toggleLibraryStatus(WidgetRef ref, NovelInfo novelInfo) async {
+    final db = ref.read(appDatabaseProvider);
+    final inLibrary = await ref.read(isInLibraryProvider(ncode).future);
+
+    if (inLibrary) {
+      await db.deleteNovel(ncode);
+      if (ref.context.mounted) {
+        ScaffoldMessenger.of(ref.context).showSnackBar(
+          const SnackBar(content: Text('ライブラリから削除しました')),
+        );
+      }
+    } else {
+      await db.insertNovel(novelInfo.toDbCompanion());
+      if (ref.context.mounted) {
+        ScaffoldMessenger.of(ref.context).showSnackBar(
+          const SnackBar(content: Text('ライブラリに追加しました')),
+        );
+      }
+    }
+    ref.invalidate(isInLibraryProvider(ncode));
+    ref.invalidate(libraryNovelsProvider);
   }
 }

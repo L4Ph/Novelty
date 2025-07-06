@@ -46,7 +46,7 @@ final class DatabaseServiceProvider
   }
 }
 
-String _$databaseServiceHash() => r'd5450bd38911007e594a7676dc88b8470ecca7bd';
+String _$databaseServiceHash() => r'e8030c9073ab43c46071b0972fe395b93b032be3';
 
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

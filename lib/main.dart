@@ -2,33 +2,11 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:novelty/database/database.dart';
 import 'package:novelty/router/router.dart';
-import 'package:novelty/services/database_migration_service.dart';
-import 'package:novelty/services/database_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  final container = ProviderContainer();
-  final database = container.read(appDatabaseProvider);
-  final oldDatabaseService = DatabaseService(database);
-
-  // データ移行が必要かチェック
-  final prefs = await SharedPreferences.getInstance();
-  final migrationCompleted = prefs.getBool('drift_migration_completed') ?? false;
-
-  if (!migrationCompleted) {
-    // データ移行の実行
-    final migrationService =
-        DatabaseMigrationService(oldDatabaseService, database);
-    await migrationService.migrateData();
-
-    // 移行完了フラグを設定
-    await prefs.setBool('drift_migration_completed', true);
-  }
 
   runApp(
     ProviderScope(

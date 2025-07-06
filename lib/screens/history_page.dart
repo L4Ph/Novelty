@@ -1,36 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:novelty/services/database_service.dart';
+import 'package:novelty/database/database.dart';
 
-class HistoryPage extends ConsumerStatefulWidget {
+class HistoryPage extends ConsumerWidget {
   const HistoryPage({super.key});
 
   @override
-  ConsumerState<HistoryPage> createState() => _HistoryPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final historyFuture = ref.watch(appDatabaseProvider).getHistory();
 
-class _HistoryPageState extends ConsumerState<HistoryPage> {
-  late DatabaseService _databaseService;
-  late Future<List<Map<String, dynamic>>> _history;
-
-  @override
-  void initState() {
-    super.initState();
-    _databaseService = ref.read(databaseServiceProvider);
-    _loadHistory();
-  }
-
-  Future<void> _loadHistory() async {
-    setState(() {
-      _history = _databaseService.getHistory();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _history,
+    return FutureBuilder<List<HistoryData>>(
+      future: historyFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -44,10 +25,10 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
             itemCount: historyItems.length,
             itemBuilder: (context, index) {
               final item = historyItems[index];
-              final ncode = item['ncode'] as String;
-              final title = item['title'] as String? ?? 'No Title';
-              final writer = item['writer'] as String? ?? 'No Writer';
-              final lastEpisode = item['last_episode'] as int?;
+              final ncode = item.ncode;
+              final title = item.title ?? 'No Title';
+              final writer = item.writer ?? 'No Writer';
+              final lastEpisode = item.lastEpisode;
 
               return ListTile(
                 title: Text(title),

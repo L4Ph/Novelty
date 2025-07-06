@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/database/database.dart';
 import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/services/database_service.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 class NovelList extends ConsumerWidget {
@@ -13,7 +14,7 @@ class NovelList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final apiService = ApiService();
-    final databaseService = ref.watch(databaseServiceProvider);
+    final db = ref.watch(appDatabaseProvider);
 
     return ListView.builder(
       itemCount: novels.length,
@@ -28,10 +29,8 @@ class NovelList extends ConsumerWidget {
             }
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
             try {
-              final isInLibrary = await databaseService.isNovelInLibrary(
-                item.ncode,
-              );
-              if (isInLibrary) {
+              final novel = await db.getNovel(item.ncode);
+              if (novel != null) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('すでにライブラリに登録されています')),
@@ -43,7 +42,8 @@ class NovelList extends ConsumerWidget {
               final novelInfo = await apiService.fetchNovelInfo(
                 item.ncode,
               );
-              await databaseService.addNovelToLibrary(novelInfo);
+              await db.insertNovel(novelInfo.toDbCompanion());
+              ref.invalidate(libraryNovelsProvider);
               if (context.mounted) {
                 ScaffoldMessenger.of(
                   context,
@@ -62,3 +62,4 @@ class NovelList extends ConsumerWidget {
     );
   }
 }
+
