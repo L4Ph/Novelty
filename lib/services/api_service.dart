@@ -69,7 +69,7 @@ class ApiService {
         // novelTypeがnullの場合、general_all_noを使って判断
         // general_all_noが1または0の場合は短編小説、それ以外は連載小説
         final generalAllNo = novelData['general_all_no'];
-        int allNo = 0;
+        var allNo = 0;
 
         if (generalAllNo is String) {
           allNo = int.tryParse(generalAllNo) ?? 0;
@@ -134,7 +134,7 @@ class ApiService {
                     int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
               } else if (novelData['novel_type'] == null) {
                 final generalAllNo = novelData['general_all_no'];
-                int allNo = 0;
+                var allNo = 0;
                 
                 if (generalAllNo is String) {
                   allNo = int.tryParse(generalAllNo) ?? 0;

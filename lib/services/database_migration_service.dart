@@ -14,12 +14,11 @@ class DatabaseMigrationService {
   Future<void> migrateData() async {
     await _migrateNovels();
     await _migrateHistory();
-    await _migrateEpisodes();
-    await _migrateBookmarks();
   }
 
   Future<void> _migrateNovels() async {
-    final novels = await _oldDatabaseService.getAllNovels();
+    final db = await _oldDatabaseService.database;
+    final novels = await db.query('novels');
     for (final novel in novels) {
       await _newDatabase.insertNovel(
         NovelsCompanion(
@@ -36,20 +35,22 @@ class DatabaseMigrationService {
           istensei: Value(novel['istensei'] as int?),
           istenni: Value(novel['istenni'] as int?),
           keyword: Value(novel['keyword'] as String?),
-          generalFirstup: Value(novel['general_firstup'] as int?),
-          generalLastup: Value(novel['general_lastup'] as int?),
+          generalFirstup:
+              Value(int.tryParse((novel['general_firstup'] as String?) ?? '')),
+          generalLastup:
+              Value(int.tryParse((novel['general_lastup'] as String?) ?? '')),
           globalPoint: Value(novel['global_point'] as int?),
-          fav: Value(novel['fav'] as int?),
-          reviewCount: Value(novel['review_count'] as int?),
-          rateCount: Value(novel['rate_count'] as int?),
+          fav: Value(novel['fav_novel_cnt'] as int?),
+          reviewCount: Value(novel['review_cnt'] as int?),
+          rateCount: Value(novel['all_hyoka_cnt'] as int?),
           allPoint: Value(novel['all_point'] as int?),
-          poinCount: Value(novel['poin_count'] as int?),
+          poinCount: Value(novel['impression_cnt'] as int?),
           weeklyPoint: Value(novel['weekly_point'] as int?),
           monthlyPoint: Value(novel['monthly_point'] as int?),
           quarterPoint: Value(novel['quarter_point'] as int?),
           yearlyPoint: Value(novel['yearly_point'] as int?),
           generalAllNo: Value(novel['general_all_no'] as int?),
-          novelUpdatedAt: Value(novel['novel_updated_at'] as String?),
+          novelUpdatedAt: Value(novel['novelupdated_at']?.toString()),
           cachedAt: Value(novel['cached_at'] as int?),
         ),
       );
@@ -66,36 +67,6 @@ class DatabaseMigrationService {
           writer: Value(item['writer'] as String?),
           lastEpisode: Value(item['last_episode'] as int?),
           viewedAt: Value(item['viewed_at'] as int),
-        ),
-      );
-    }
-  }
-
-  Future<void> _migrateEpisodes() async {
-    final episodes = await _oldDatabaseService.getAllEpisodes();
-    for (final episode in episodes) {
-      await _newDatabase.insertEpisode(
-        EpisodesCompanion(
-          ncode: Value(episode['ncode'] as String),
-          episode: Value(episode['episode'] as int),
-          title: Value(episode['title'] as String?),
-          content: Value(episode['content'] as String?),
-          cachedAt: Value(episode['cached_at'] as int?),
-        ),
-      );
-    }
-  }
-
-  Future<void> _migrateBookmarks() async {
-    final bookmarks = await _oldDatabaseService.getAllBookmarks();
-    for (final bookmark in bookmarks) {
-      await _newDatabase.addBookmark(
-        BookmarksCompanion(
-          ncode: Value(bookmark['ncode'] as String),
-          episode: Value(bookmark['episode'] as int),
-          position: Value(bookmark['position'] as int),
-          content: Value(bookmark['content'] as String?),
-          createdAt: Value(bookmark['created_at'] as int),
         ),
       );
     }

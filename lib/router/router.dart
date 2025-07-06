@@ -5,10 +5,10 @@ import 'package:novelty/screens/explore_page.dart';
 import 'package:novelty/screens/history_page.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/screens/more_page.dart';
+import 'package:novelty/screens/novel_detail_page.dart';
 import 'package:novelty/screens/novel_page.dart';
 import 'package:novelty/screens/scaffold_page.dart';
 import 'package:novelty/screens/settings_page.dart';
-import 'package:novelty/screens/novel_detail_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();

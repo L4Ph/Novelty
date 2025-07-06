@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_info.dart';
@@ -10,11 +8,9 @@ class DriftDatabaseService {
 
   // 小説をライブラリに追加
   Future<void> addNovelToLibrary(NovelInfo novel) async {
-    novel.toJson();
-
     await _database.insertNovel(
       NovelsCompanion(
-        ncode: Value(novel.ncode),
+        ncode: Value(novel.ncode!),
         title: Value(novel.title),
         writer: Value(novel.writer),
         story: Value(novel.story),
@@ -27,20 +23,20 @@ class DriftDatabaseService {
         istensei: Value(novel.istensei),
         istenni: Value(novel.istenni),
         keyword: Value(novel.keyword),
-        generalFirstup: Value(novel.generalFirstup),
-        generalLastup: Value(novel.generalLastup),
+        generalFirstup: Value(int.tryParse(novel.generalFirstup ?? '')),
+        generalLastup: Value(int.tryParse(novel.generalLastup ?? '')),
         globalPoint: Value(novel.globalPoint),
-        fav: Value(novel.fav),
-        reviewCount: Value(novel.reviewCount),
-        rateCount: Value(novel.rateCount),
+        fav: Value(novel.favNovelCnt),
+        reviewCount: Value(novel.reviewCnt),
+        rateCount: Value(novel.allHyokaCnt),
         allPoint: Value(novel.allPoint),
-        poinCount: Value(novel.poinCount),
+        poinCount: Value(novel.impressionCnt),
         weeklyPoint: Value(novel.weeklyPoint),
         monthlyPoint: Value(novel.monthlyPoint),
         quarterPoint: Value(novel.quarterPoint),
         yearlyPoint: Value(novel.yearlyPoint),
         generalAllNo: Value(novel.generalAllNo),
-        novelUpdatedAt: Value(novel.novelUpdatedAt),
+        novelUpdatedAt: Value(novel.novelupdatedAt?.toString()),
         cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
       ),
     );
@@ -73,7 +69,8 @@ class DriftDatabaseService {
     // 既存のレコードがあるか確認
     final existing = await (_database.select(
       _database.history,
-    )..where((t) => t.ncode.equals(ncode))).getSingleOrNull();
+    )..where((t) => t.ncode.equals(ncode)))
+        .getSingleOrNull();
 
     // 既存のレコードがあり、lastEpisodeが指定されていない場合は、
     // 既存のlast_episodeを保持する
@@ -129,13 +126,13 @@ class DriftDatabaseService {
     final now = DateTime.now().millisecondsSinceEpoch;
     final maxAgeMs = maxAgeMinutes * 60 * 1000;
 
-    final novel =
-        await (_database.select(_database.novels)..where(
-              (t) =>
-                  t.ncode.equals(ncode) &
-                  t.cachedAt.isBiggerThanValue(now - maxAgeMs),
-            ))
-            .getSingleOrNull();
+    final novel = await (_database.select(_database.novels)
+          ..where(
+            (t) =>
+                t.ncode.equals(ncode) &
+                t.cachedAt.isBiggerThanValue(now - maxAgeMs),
+          ))
+        .getSingleOrNull();
 
     if (novel == null) {
       return null;
@@ -156,13 +153,13 @@ class DriftDatabaseService {
     final now = DateTime.now().millisecondsSinceEpoch;
     final maxAgeMs = maxAgeMinutes * 60 * 1000;
 
-    final novels =
-        await (_database.select(_database.novels)..where(
-              (t) =>
-                  t.ncode.isIn(ncodes) &
-                  t.cachedAt.isBiggerThanValue(now - maxAgeMs),
-            ))
-            .get();
+    final novels = await (_database.select(_database.novels)
+          ..where(
+            (t) =>
+                t.ncode.isIn(ncodes) &
+                t.cachedAt.isBiggerThanValue(now - maxAgeMs),
+          ))
+        .get();
 
     final result = <String, NovelInfo>{};
     for (final novel in novels) {
@@ -261,20 +258,20 @@ class DriftDatabaseService {
       istensei: novel.istensei,
       istenni: novel.istenni,
       keyword: novel.keyword,
-      generalFirstup: novel.generalFirstup,
-      generalLastup: novel.generalLastup,
+      generalFirstup: novel.generalFirstup?.toString(),
+      generalLastup: novel.generalLastup?.toString(),
       globalPoint: novel.globalPoint,
-      fav: novel.fav,
-      reviewCount: novel.reviewCount,
-      rateCount: novel.rateCount,
+      favNovelCnt: novel.fav,
+      reviewCnt: novel.reviewCount,
+      allHyokaCnt: novel.rateCount,
       allPoint: novel.allPoint,
-      poinCount: novel.poinCount,
+      impressionCnt: novel.poinCount,
       weeklyPoint: novel.weeklyPoint,
       monthlyPoint: novel.monthlyPoint,
       quarterPoint: novel.quarterPoint,
       yearlyPoint: novel.yearlyPoint,
       generalAllNo: novel.generalAllNo,
-      novelUpdatedAt: novel.novelUpdatedAt,
+      novelupdatedAt: int.tryParse(novel.novelUpdatedAt ?? ''),
     );
   }
 }

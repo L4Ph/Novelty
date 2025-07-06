@@ -36,6 +36,12 @@ NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => NovelInfo(
   episodes: (json['episodes'] as List<dynamic>?)
       ?.map((e) => Episode.fromJson(e as Map<String, dynamic>))
       .toList(),
+  isr15: _toInt(json['isr15']),
+  isbl: _toInt(json['isbl']),
+  isgl: _toInt(json['isgl']),
+  iszankoku: _toInt(json['iszankoku']),
+  istensei: _toInt(json['istensei']),
+  istenni: _toInt(json['istenni']),
 );
 
 Map<String, dynamic> _$NovelInfoToJson(NovelInfo instance) => <String, dynamic>{
@@ -66,4 +72,10 @@ Map<String, dynamic> _$NovelInfoToJson(NovelInfo instance) => <String, dynamic>{
   'novelupdated_at': instance.novelupdatedAt,
   'updated_at': instance.updatedAt,
   'episodes': instance.episodes,
+  'isr15': instance.isr15,
+  'isbl': instance.isbl,
+  'isgl': instance.isgl,
+  'iszankoku': instance.iszankoku,
+  'istensei': instance.istensei,
+  'istenni': instance.istenni,
 };

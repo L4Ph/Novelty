@@ -83,26 +83,23 @@ class DatabaseService {
       // Add cached_at column if upgrading from version 5
       try {
         await db.execute('ALTER TABLE novels ADD COLUMN cached_at INTEGER');
-      } catch (e) {
+      } on DatabaseException {
         // Column might already exist
-        print('Error adding cached_at column: $e');
       }
     } else if (oldVersion < 7) {
       // Add title and writer columns to history table
       try {
         await db.execute('ALTER TABLE history ADD COLUMN title TEXT');
         await db.execute('ALTER TABLE history ADD COLUMN writer TEXT');
-      } catch (e) {
+      } on DatabaseException {
         // Columns might already exist
-        print('Error adding title/writer columns to history: $e');
       }
     } else if (oldVersion < 8) {
       // Add last_episode column to history table
       try {
         await db.execute('ALTER TABLE history ADD COLUMN last_episode INTEGER');
-      } catch (e) {
+      } on DatabaseException {
         // Column might already exist
-        print('Error adding last_episode column to history: $e');
       }
     }
   }
@@ -262,7 +259,7 @@ class DatabaseService {
     if (map['episodes'] is String) {
       try {
         map['episodes'] = jsonDecode(map['episodes'] as String);
-      } catch (e) {
+      } on Exception {
         // If JSON decoding fails, set episodes to null
         map['episodes'] = null;
       }
@@ -298,7 +295,7 @@ class DatabaseService {
       if (novelMap['episodes'] is String) {
         try {
           novelMap['episodes'] = jsonDecode(novelMap['episodes'] as String);
-        } catch (e) {
+        } on Exception {
           // If JSON decoding fails, set episodes to null
           novelMap['episodes'] = null;
         }

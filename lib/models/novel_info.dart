@@ -36,6 +36,12 @@ class NovelInfo {
     this.novelupdatedAt,
     this.updatedAt,
     this.episodes,
+    this.isr15,
+    this.isbl,
+    this.isgl,
+    this.iszankoku,
+    this.istensei,
+    this.istenni,
   });
 
   factory NovelInfo.fromJson(Map<String, dynamic> json) =>
@@ -86,6 +92,18 @@ class NovelInfo {
   @JsonKey(fromJson: _toInt)
   int? updatedAt;
   List<Episode>? episodes;
+  @JsonKey(fromJson: _toInt)
+  int? isr15;
+  @JsonKey(fromJson: _toInt)
+  int? isbl;
+  @JsonKey(fromJson: _toInt)
+  int? isgl;
+  @JsonKey(fromJson: _toInt)
+  int? iszankoku;
+  @JsonKey(fromJson: _toInt)
+  int? istensei;
+  @JsonKey(fromJson: _toInt)
+  int? istenni;
 
   Map<String, dynamic> toJson() => _$NovelInfoToJson(this);
 }

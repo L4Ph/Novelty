@@ -36,14 +36,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     _databaseService.addNovelToHistory(widget.ncode);
   }
 
-  Future<void> _addHistory() async {
-    // 小説情報がまだ取得されていない場合は、基本情報だけで履歴に追加
-    await _databaseService.addNovelToHistory(
-      widget.ncode,
-      title: _novelInfo?.title,
-      writer: _novelInfo?.writer,
-    );
-  }
+  
 
   Future<void> _fetchNovelInfo() async {
     try {
@@ -170,7 +163,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
               _shortStoryEpisode = episode;
             });
           }
-        }).catchError((error) {
+        }).catchError((Object error) {
           if (mounted) {
             setState(() {
               _errorMessage = 'エラーが発生しました: $error';
