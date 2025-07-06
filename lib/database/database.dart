@@ -96,7 +96,9 @@ class AppDatabase extends _$AppDatabase {
 
   // 小説情報の取得
   Future<Novel?> getNovel(String ncode) {
-    return (select(novels)..where((t) => t.ncode.equals(ncode))).getSingleOrNull();
+    return (select(
+      novels,
+    )..where((t) => t.ncode.equals(ncode))).getSingleOrNull();
   }
 
   // 小説情報の保存
@@ -121,8 +123,10 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // 履歴の取得
-  Future<List<History>> getHistory() {
-    return (select(history)..orderBy([(t) => OrderingTerm.desc(t.viewedAt)])).get();
+  Future<List<HistoryData>> getHistory() {
+    return (select(
+      history,
+    )..orderBy([(t) => OrderingTerm.desc(t.viewedAt)])).get();
   }
 
   // 履歴の削除
@@ -168,11 +172,12 @@ class AppDatabase extends _$AppDatabase {
 
   // ブックマークの削除
   Future<int> deleteBookmark(String ncode, int episode, int position) {
-    return (delete(bookmarks)
-          ..where((t) =>
+    return (delete(bookmarks)..where(
+          (t) =>
               t.ncode.equals(ncode) &
               t.episode.equals(episode) &
-              t.position.equals(position)))
+              t.position.equals(position),
+        ))
         .go();
   }
 }

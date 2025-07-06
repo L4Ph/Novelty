@@ -5,14 +5,13 @@ import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_info.dart';
 
 class DriftDatabaseService {
-  final AppDatabase _database;
-
   DriftDatabaseService(this._database);
+  final AppDatabase _database;
 
   // 小説をライブラリに追加
   Future<void> addNovelToLibrary(NovelInfo novel) async {
-    final novelJson = novel.toJson();
-    
+    novel.toJson();
+
     await _database.insertNovel(
       NovelsCompanion(
         ncode: Value(novel.ncode),
@@ -50,7 +49,7 @@ class DriftDatabaseService {
   // ライブラリの小説を取得
   Future<List<NovelInfo>> getLibraryNovels() async {
     final novels = await _database.select(_database.novels).get();
-    return novels.map((novel) => _novelToNovelInfo(novel)).toList();
+    return novels.map(_novelToNovelInfo).toList();
   }
 
   // 小説がライブラリにあるか確認
@@ -72,17 +71,17 @@ class DriftDatabaseService {
     int? lastEpisode,
   }) async {
     // 既存のレコードがあるか確認
-    final existing = await (
-      _database.select(_database.history)..where((t) => t.ncode.equals(ncode))
-    ).getSingleOrNull();
-    
+    final existing = await (_database.select(
+      _database.history,
+    )..where((t) => t.ncode.equals(ncode))).getSingleOrNull();
+
     // 既存のレコードがあり、lastEpisodeが指定されていない場合は、
     // 既存のlast_episodeを保持する
-    int? episodeToSave = lastEpisode;
+    var episodeToSave = lastEpisode;
     if (existing != null && episodeToSave == null) {
       episodeToSave = existing.lastEpisode;
     }
-    
+
     await _database.addToHistory(
       HistoryCompanion(
         ncode: Value(ncode),
@@ -97,13 +96,17 @@ class DriftDatabaseService {
   // 履歴を取得
   Future<List<Map<String, dynamic>>> getHistory() async {
     final history = await _database.getHistory();
-    return history.map((item) => {
-      'ncode': item.ncode,
-      'title': item.title,
-      'writer': item.writer,
-      'last_episode': item.lastEpisode,
-      'viewed_at': item.viewedAt,
-    }).toList();
+    return history
+        .map(
+          (item) => {
+            'ncode': item.ncode,
+            'title': item.title,
+            'writer': item.writer,
+            'last_episode': item.lastEpisode,
+            'viewed_at': item.viewedAt,
+          },
+        )
+        .toList();
   }
 
   // 小説情報をキャッシュ
@@ -119,46 +122,63 @@ class DriftDatabaseService {
   }
 
   // キャッシュされた小説情報を取得
-  Future<NovelInfo?> getCachedNovelInfo(String ncode, {int maxAgeMinutes = 60}) async {
+  Future<NovelInfo?> getCachedNovelInfo(
+    String ncode, {
+    int maxAgeMinutes = 60,
+  }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final maxAgeMs = maxAgeMinutes * 60 * 1000;
-    
-    final novel = await (
-      _database.select(_database.novels)
-        ..where((t) => t.ncode.equals(ncode) & t.cachedAt.isBiggerThanValue(now - maxAgeMs))
-    ).getSingleOrNull();
-    
+
+    final novel =
+        await (_database.select(_database.novels)..where(
+              (t) =>
+                  t.ncode.equals(ncode) &
+                  t.cachedAt.isBiggerThanValue(now - maxAgeMs),
+            ))
+            .getSingleOrNull();
+
     if (novel == null) {
       return null;
     }
-    
+
     return _novelToNovelInfo(novel);
   }
 
   // 複数のキャッシュされた小説情報を取得
-  Future<Map<String, NovelInfo>> getCachedNovels(List<String> ncodes, {int maxAgeMinutes = 60}) async {
+  Future<Map<String, NovelInfo>> getCachedNovels(
+    List<String> ncodes, {
+    int maxAgeMinutes = 60,
+  }) async {
     if (ncodes.isEmpty) {
       return {};
     }
-    
+
     final now = DateTime.now().millisecondsSinceEpoch;
     final maxAgeMs = maxAgeMinutes * 60 * 1000;
-    
-    final novels = await (
-      _database.select(_database.novels)
-        ..where((t) => t.ncode.isIn(ncodes) & t.cachedAt.isBiggerThanValue(now - maxAgeMs))
-    ).get();
-    
+
+    final novels =
+        await (_database.select(_database.novels)..where(
+              (t) =>
+                  t.ncode.isIn(ncodes) &
+                  t.cachedAt.isBiggerThanValue(now - maxAgeMs),
+            ))
+            .get();
+
     final result = <String, NovelInfo>{};
     for (final novel in novels) {
       result[novel.ncode] = _novelToNovelInfo(novel);
     }
-    
+
     return result;
   }
 
   // エピソードを保存
-  Future<void> saveEpisode(String ncode, int episode, String? title, String? content) async {
+  Future<void> saveEpisode(
+    String ncode,
+    int episode,
+    String? title,
+    String? content,
+  ) async {
     await _database.insertEpisode(
       EpisodesCompanion(
         ncode: Value(ncode),
@@ -176,7 +196,7 @@ class DriftDatabaseService {
     if (result == null) {
       return null;
     }
-    
+
     return {
       'ncode': result.ncode,
       'episode': result.episode,
@@ -187,7 +207,12 @@ class DriftDatabaseService {
   }
 
   // ブックマークを追加
-  Future<void> addBookmark(String ncode, int episode, int position, String? content) async {
+  Future<void> addBookmark(
+    String ncode,
+    int episode,
+    int position,
+    String? content,
+  ) async {
     await _database.addBookmark(
       BookmarksCompanion(
         ncode: Value(ncode),
@@ -202,13 +227,17 @@ class DriftDatabaseService {
   // ブックマークを取得
   Future<List<Map<String, dynamic>>> getBookmarks(String ncode) async {
     final bookmarks = await _database.getBookmarks(ncode);
-    return bookmarks.map((bookmark) => {
-      'ncode': bookmark.ncode,
-      'episode': bookmark.episode,
-      'position': bookmark.position,
-      'content': bookmark.content,
-      'created_at': bookmark.createdAt,
-    }).toList();
+    return bookmarks
+        .map(
+          (bookmark) => {
+            'ncode': bookmark.ncode,
+            'episode': bookmark.episode,
+            'position': bookmark.position,
+            'content': bookmark.content,
+            'created_at': bookmark.createdAt,
+          },
+        )
+        .toList();
   }
 
   // ブックマークを削除

@@ -1,16 +1,15 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/services/database_service.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 
 class DatabaseMigrationService {
+  DatabaseMigrationService(this._oldDatabaseService, this._newDatabase);
   final DatabaseService _oldDatabaseService;
   final AppDatabase _newDatabase;
-
-  DatabaseMigrationService(this._oldDatabaseService, this._newDatabase);
 
   Future<void> migrateData() async {
     await _migrateNovels();
