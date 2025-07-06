@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:novelty/services/database_service.dart';
+import 'package:novelty/main.dart';
+import 'package:novelty/services/drift_database_service.dart';
 
-class HistoryPage extends StatefulWidget {
+class HistoryPage extends ConsumerStatefulWidget {
   const HistoryPage({super.key});
 
   @override
-  State<HistoryPage> createState() => _HistoryPageState();
+  ConsumerState<HistoryPage> createState() => _HistoryPageState();
 }
 
-class _HistoryPageState extends State<HistoryPage> {
-  final _databaseService = DatabaseService();
+class _HistoryPageState extends ConsumerState<HistoryPage> {
+  late DriftDatabaseService _databaseService;
   late Future<List<Map<String, dynamic>>> _history;
 
   @override
   void initState() {
     super.initState();
+    _databaseService = ref.read(driftDatabaseServiceProvider);
     _loadHistory();
   }
 

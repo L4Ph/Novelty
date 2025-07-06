@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/main.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/services/database_service.dart';
+import 'package:novelty/services/drift_database_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
-class NovelPage extends StatefulWidget {
+class NovelPage extends ConsumerStatefulWidget {
   const NovelPage({super.key, required this.ncode, this.episode});
   final String ncode;
   final int? episode;
 
   @override
-  State<NovelPage> createState() => _NovelPageState();
+  ConsumerState<NovelPage> createState() => _NovelPageState();
 }
 
-class _NovelPageState extends State<NovelPage> {
+class _NovelPageState extends ConsumerState<NovelPage> {
   final _apiService = ApiService();
-  final _databaseService = DatabaseService();
+  late DriftDatabaseService _databaseService;
   PageController? _pageController;
   late int _currentEpisode;
   var _episodeSubtitle = '';
@@ -29,6 +31,7 @@ class _NovelPageState extends State<NovelPage> {
   @override
   void initState() {
     super.initState();
+    _databaseService = ref.read(driftDatabaseServiceProvider);
     _currentEpisode = widget.episode ?? 1;
     _pageController = PageController(initialPage: _currentEpisode - 1);
     _fetchNovelInfo();

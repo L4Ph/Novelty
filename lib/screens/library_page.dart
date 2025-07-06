@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:novelty/main.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/services/database_service.dart';
+import 'package:novelty/services/drift_database_service.dart';
 
-class LibraryPage extends StatefulWidget {
+class LibraryPage extends ConsumerStatefulWidget {
   const LibraryPage({super.key});
 
   @override
-  State<LibraryPage> createState() => _LibraryPageState();
+  ConsumerState<LibraryPage> createState() => _LibraryPageState();
 }
 
-class _LibraryPageState extends State<LibraryPage> {
-  final _databaseService = DatabaseService();
+class _LibraryPageState extends ConsumerState<LibraryPage> {
+  late DriftDatabaseService _databaseService;
   late Future<List<NovelInfo>> _libraryNovels;
   GoRouter? _router;
 
   @override
   void initState() {
     super.initState();
+    _databaseService = ref.read(driftDatabaseServiceProvider);
     _loadLibraryNovels();
   }
 

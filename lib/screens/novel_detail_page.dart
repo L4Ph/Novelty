@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:novelty/main.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/services/database_service.dart';
+import 'package:novelty/services/drift_database_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
-class NovelDetailPage extends StatefulWidget {
+class NovelDetailPage extends ConsumerStatefulWidget {
   const NovelDetailPage({super.key, required this.ncode});
   final String ncode;
 
   @override
-  State<NovelDetailPage> createState() => _NovelDetailPageState();
+  ConsumerState<NovelDetailPage> createState() => _NovelDetailPageState();
 }
 
-class _NovelDetailPageState extends State<NovelDetailPage> {
+class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
   final _apiService = ApiService();
-  final _databaseService = DatabaseService();
+  late DriftDatabaseService _databaseService;
   NovelInfo? _novelInfo;
   Episode? _shortStoryEpisode;
   var _isLoading = true;
@@ -26,6 +28,7 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
   @override
   void initState() {
     super.initState();
+    _databaseService = ref.read(driftDatabaseServiceProvider);
     _fetchNovelInfo();
     _checkIfInLibrary();
     // 初期状態では基本情報だけで履歴に追加
