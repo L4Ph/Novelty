@@ -6,9 +6,11 @@ import 'package:novelty/router/router.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(
-    const ProviderScope(
-      child: MyApp(),
+    ProviderScope(
+      child: const MyApp(),
     ),
   );
 }
@@ -49,3 +51,4 @@ class MyApp extends ConsumerWidget {
     );
   }
 }
+
