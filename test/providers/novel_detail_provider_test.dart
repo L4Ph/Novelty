@@ -7,6 +7,7 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/screens/novel_detail_page.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/widgets/novel_content.dart';
 
 @GenerateMocks([AppDatabase, ApiService])
 import 'novel_detail_provider_test.mocks.dart';
@@ -23,6 +24,7 @@ void main() {
       container = ProviderContainer(
         overrides: [
           appDatabaseProvider.overrideWithValue(mockDatabase),
+          apiServiceProvider.overrideWithValue(mockApiService),
         ],
       );
     });
@@ -45,28 +47,34 @@ void main() {
       when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
       when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
       when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1);
+      when(mockApiService.fetchNovelInfo(testNcode)).thenAnswer((_) async => testNovelInfo);
 
-      try {
-        await container.read(novelInfoProvider(testNcode).future);
-      } catch (e) {
-        expect(e, isA<Exception>());
-      }
+      final result = await container.read(novelInfoProvider(testNcode).future);
 
+      expect(result, equals(testNovelInfo));
       verify(mockDatabase.getNovel(testNcode)).called(1);
+      verify(mockApiService.fetchNovelInfo(testNcode)).called(1);
+      verify(mockDatabase.insertNovel(any)).called(1);
+      verify(mockDatabase.addToHistory(any)).called(1);
     });
 
     test('should add novel to history when fetched', () async {
       const testNcode = 'N1234AB';
+      final testNovelInfo = NovelInfo(
+        ncode: testNcode,
+        title: 'テスト小説',
+        writer: 'テスト作者',
+        story: 'テストストーリー',
+        novelType: 1,
+        episodes: [],
+      );
 
       when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
       when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
       when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1);
+      when(mockApiService.fetchNovelInfo(testNcode)).thenAnswer((_) async => testNovelInfo);
 
-      try {
-        await container.read(novelInfoProvider(testNcode).future);
-      } catch (e) {
-        expect(e, isA<Exception>());
-      }
+      await container.read(novelInfoProvider(testNcode).future);
 
       verify(mockDatabase.addToHistory(any)).called(1);
     });
@@ -103,10 +111,16 @@ void main() {
   });
 
   group('shortStoryEpisodeProvider', () {
+    late MockApiService mockApiService;
     late ProviderContainer container;
 
     setUp(() {
-      container = ProviderContainer();
+      mockApiService = MockApiService();
+      container = ProviderContainer(
+        overrides: [
+          apiServiceProvider.overrideWithValue(mockApiService),
+        ],
+      );
     });
 
     tearDown(() {
@@ -116,11 +130,26 @@ void main() {
     test('should be auto-disposed when not in use', () {
       const testNcode = 'N1234AB';
       
+      final testEpisode = Episode(
+        ncode: testNcode,
+        index: 1,
+        subtitle: 'テストエピソード',
+        body: 'テスト本文',
+      );
+
+      when(mockApiService.fetchEpisode(testNcode, 1))
+          .thenAnswer((_) async => testEpisode);
+      
       container.read(shortStoryEpisodeProvider(testNcode));
       
       container.dispose();
       
-      final newContainer = ProviderContainer();
+      final newMockApiService = MockApiService();
+      final newContainer = ProviderContainer(
+        overrides: [
+          apiServiceProvider.overrideWithValue(newMockApiService),
+        ],
+      );
       expect(
         () => newContainer.read(shortStoryEpisodeProvider(testNcode)),
         returnsNormally,
@@ -130,6 +159,9 @@ void main() {
 
     test('should handle API errors gracefully', () async {
       const testNcode = 'INVALID_NCODE';
+
+      when(mockApiService.fetchEpisode(testNcode, 1))
+          .thenThrow(Exception('API error'));
 
       expect(
         () => container.read(shortStoryEpisodeProvider(testNcode).future),

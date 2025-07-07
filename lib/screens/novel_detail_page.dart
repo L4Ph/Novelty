@@ -13,7 +13,7 @@ final novelInfoProvider = FutureProvider.autoDispose.family<NovelInfo, String>((
   ref,
   ncode,
 ) async {
-  final apiService = ApiService();
+  final apiService = ref.read(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
 
   // まずDBから取得試行
@@ -42,7 +42,7 @@ final novelInfoProvider = FutureProvider.autoDispose.family<NovelInfo, String>((
 
 final shortStoryEpisodeProvider = FutureProvider.autoDispose
     .family<Episode, String>((ref, ncode) async {
-      final apiService = ApiService();
+      final apiService = ref.read(apiServiceProvider);
       return apiService.fetchEpisode(ncode, 1);
     });
 
