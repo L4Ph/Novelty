@@ -50,12 +50,15 @@ void main() {
       expect(asyncValue1, equals(asyncValue2));
     });
 
-    test('should create new state after refresh', () {
+    test('should create new state after refresh', () async {
+      // Wait for initial state to load
+      await container.read(libraryNovelsProvider.future);
       final asyncValue1 = container.read(libraryNovelsProvider);
       
       container.refresh(libraryNovelsProvider);
       final asyncValue2 = container.read(libraryNovelsProvider);
       
+      // After refresh, the new state should be different (likely AsyncLoading)
       expect(asyncValue1, isNot(equals(asyncValue2)));
     });
   });
