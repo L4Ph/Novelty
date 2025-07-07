@@ -27,10 +27,14 @@ class MyApp extends ConsumerWidget {
         builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
           final colorScheme =
               lightDynamic ??
-              ColorScheme.fromSeed(seedColor: const Color(0x00b6e1e1));
+              ColorScheme.fromSeed(
+                seedColor: const Color.fromARGB(255, 179, 220, 226),
+              );
           final darkColorSchema =
               darkDynamic ??
-              ColorScheme.fromSeed(seedColor: const Color(0x00b6e1e1));
+              ColorScheme.fromSeed(
+                seedColor: const Color.fromARGB(255, 179, 220, 226),
+              );
 
           return MaterialApp.router(
             title: 'Novelty',
@@ -51,4 +55,3 @@ class MyApp extends ConsumerWidget {
     );
   }
 }
-
