@@ -92,7 +92,7 @@ void main() {
       );
     });
 
-    test('should maintain separate state for different episodes of same novel', () {
+    test('should maintain separate state for different episodes of same novel', () async {
       const params1 = (ncode: 'N1234AB', episode: 1);
       const params2 = (ncode: 'N1234AB', episode: 2);
 
@@ -115,10 +115,13 @@ void main() {
       when(mockApiService.fetchEpisode('N1234AB', 2))
           .thenAnswer((_) async => testEpisode2);
 
-      final asyncValue1 = container.read(episodeProvider(params1));
-      final asyncValue2 = container.read(episodeProvider(params2));
+      final result1 = await container.read(episodeProvider(params1).future);
+      final result2 = await container.read(episodeProvider(params2).future);
 
-      expect(asyncValue1, isNot(equals(asyncValue2)));
+      expect(result1.index, equals(1));
+      expect(result2.index, equals(2));
+      expect(result1.subtitle, equals('テストエピソード1'));
+      expect(result2.subtitle, equals('テストエピソード2'));
     });
 
     test('should be disposed when container is disposed', () {
