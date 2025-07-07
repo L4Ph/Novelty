@@ -16,7 +16,11 @@ void main() {
 
     setUp(() {
       mockApiService = MockApiService();
-      container = ProviderContainer();
+      container = ProviderContainer(
+        overrides: [
+          apiServiceProvider.overrideWithValue(mockApiService),
+        ],
+      );
     });
 
     tearDown(() {
@@ -26,11 +30,26 @@ void main() {
     test('should be auto-disposed when not in use', () {
       const testParams = (ncode: 'N1234AB', episode: 1);
       
+      final testEpisode = Episode(
+        ncode: 'N1234AB',
+        index: 1,
+        subtitle: 'テストエピソード',
+        body: 'テスト本文',
+      );
+
+      when(mockApiService.fetchEpisode('N1234AB', 1))
+          .thenAnswer((_) async => testEpisode);
+      
       container.read(episodeProvider(testParams));
       
       container.dispose();
       
-      final newContainer = ProviderContainer();
+      final newMockApiService = MockApiService();
+      final newContainer = ProviderContainer(
+        overrides: [
+          apiServiceProvider.overrideWithValue(newMockApiService),
+        ],
+      );
       expect(
         () => newContainer.read(episodeProvider(testParams)),
         returnsNormally,
@@ -64,6 +83,9 @@ void main() {
     test('should handle API errors gracefully', () async {
       const testParams = (ncode: 'INVALID_NCODE', episode: 1);
 
+      when(mockApiService.fetchEpisode('INVALID_NCODE', 1))
+          .thenThrow(Exception('API error'));
+
       expect(
         () => container.read(episodeProvider(testParams).future),
         throwsA(isA<Exception>()),
@@ -74,6 +96,25 @@ void main() {
       const params1 = (ncode: 'N1234AB', episode: 1);
       const params2 = (ncode: 'N1234AB', episode: 2);
 
+      final testEpisode1 = Episode(
+        ncode: 'N1234AB',
+        index: 1,
+        subtitle: 'テストエピソード1',
+        body: 'テスト本文1',
+      );
+
+      final testEpisode2 = Episode(
+        ncode: 'N1234AB',
+        index: 2,
+        subtitle: 'テストエピソード2',
+        body: 'テスト本文2',
+      );
+
+      when(mockApiService.fetchEpisode('N1234AB', 1))
+          .thenAnswer((_) async => testEpisode1);
+      when(mockApiService.fetchEpisode('N1234AB', 2))
+          .thenAnswer((_) async => testEpisode2);
+
       final asyncValue1 = container.read(episodeProvider(params1));
       final asyncValue2 = container.read(episodeProvider(params2));
 
@@ -83,6 +124,16 @@ void main() {
     test('should be disposed when container is disposed', () {
       const testParams = (ncode: 'N1234AB', episode: 1);
       
+      final testEpisode = Episode(
+        ncode: 'N1234AB',
+        index: 1,
+        subtitle: 'テストエピソード',
+        body: 'テスト本文',
+      );
+
+      when(mockApiService.fetchEpisode('N1234AB', 1))
+          .thenAnswer((_) async => testEpisode);
+      
       container.read(episodeProvider(testParams));
       
       expect(() => container.dispose(), returnsNormally);
@@ -90,6 +141,16 @@ void main() {
 
     test('should handle concurrent requests for same episode', () async {
       const testParams = (ncode: 'N1234AB', episode: 1);
+
+      final testEpisode = Episode(
+        ncode: 'N1234AB',
+        index: 1,
+        subtitle: 'テストエピソード',
+        body: 'テスト本文',
+      );
+
+      when(mockApiService.fetchEpisode('N1234AB', 1))
+          .thenAnswer((_) async => testEpisode);
 
       final future1 = container.read(episodeProvider(testParams).future);
       final future2 = container.read(episodeProvider(testParams).future);

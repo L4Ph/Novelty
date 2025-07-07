@@ -4,8 +4,10 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
+final apiServiceProvider = Provider<ApiService>((ref) => ApiService());
+
 final episodeProvider = FutureProvider.autoDispose.family<Episode, ({String ncode, int episode})>((ref, params) async {
-  final apiService = ApiService();
+  final apiService = ref.read(apiServiceProvider);
   return apiService.fetchEpisode(params.ncode, params.episode);
 });
 
