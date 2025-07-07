@@ -63,12 +63,13 @@ class _RankingListState extends State<RankingList>
     var filtered = List<RankingResponse>.from(_allNovelData);
 
     if (_showOnlyOngoing) {
-      filtered = filtered.where((novel) => novel.end == 0).toList();
+      filtered = filtered.where((novel) => novel.end == 1).toList();
     }
 
     if (_selectedGenre != null) {
-      filtered =
-          filtered.where((novel) => novel.genre == _selectedGenre).toList();
+      filtered = filtered
+          .where((novel) => novel.genre == _selectedGenre)
+          .toList();
     }
 
     if (!mounted) {
