@@ -1,0 +1,216 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
+import 'package:novelty/database/database.dart';
+import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/episode.dart';
+import 'package:novelty/screens/novel_detail_page.dart';
+import 'package:novelty/services/api_service.dart';
+
+@GenerateMocks([AppDatabase, ApiService])
+import 'novel_detail_provider_test.mocks.dart';
+
+void main() {
+  group('novelInfoProvider', () {
+    late MockAppDatabase mockDatabase;
+    late MockApiService mockApiService;
+    late ProviderContainer container;
+
+    setUp(() {
+      mockDatabase = MockAppDatabase();
+      mockApiService = MockApiService();
+      container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(mockDatabase),
+        ],
+      );
+    });
+
+    tearDown(() {
+      container.dispose();
+    });
+
+    test('should fetch novel info from API when not cached', () async {
+      const testNcode = 'N1234AB';
+      final testNovelInfo = NovelInfo(
+        ncode: testNcode,
+        title: 'テスト小説',
+        writer: 'テスト作者',
+        story: 'テストストーリー',
+        novelType: 1,
+        episodes: [],
+      );
+
+      when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
+      when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
+      when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1);
+
+      try {
+        await container.read(novelInfoProvider(testNcode).future);
+      } catch (e) {
+        expect(e, isA<Exception>());
+      }
+
+      verify(mockDatabase.getNovel(testNcode)).called(1);
+    });
+
+    test('should add novel to history when fetched', () async {
+      const testNcode = 'N1234AB';
+
+      when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
+      when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
+      when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1);
+
+      try {
+        await container.read(novelInfoProvider(testNcode).future);
+      } catch (e) {
+        expect(e, isA<Exception>());
+      }
+
+      verify(mockDatabase.addToHistory(any)).called(1);
+    });
+
+    test('should handle database errors gracefully', () async {
+      const testNcode = 'N1234AB';
+
+      when(mockDatabase.getNovel(testNcode)).thenThrow(Exception('Database error'));
+
+      expect(
+        () => container.read(novelInfoProvider(testNcode).future),
+        throwsA(isA<Exception>()),
+      );
+    });
+
+    test('should be auto-disposed when not in use', () {
+      const testNcode = 'N1234AB';
+      
+      container.read(novelInfoProvider(testNcode));
+      
+      container.dispose();
+      
+      final newContainer = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(mockDatabase),
+        ],
+      );
+      expect(
+        () => newContainer.read(novelInfoProvider(testNcode)),
+        returnsNormally,
+      );
+      newContainer.dispose();
+    });
+  });
+
+  group('shortStoryEpisodeProvider', () {
+    late ProviderContainer container;
+
+    setUp(() {
+      container = ProviderContainer();
+    });
+
+    tearDown(() {
+      container.dispose();
+    });
+
+    test('should be auto-disposed when not in use', () {
+      const testNcode = 'N1234AB';
+      
+      container.read(shortStoryEpisodeProvider(testNcode));
+      
+      container.dispose();
+      
+      final newContainer = ProviderContainer();
+      expect(
+        () => newContainer.read(shortStoryEpisodeProvider(testNcode)),
+        returnsNormally,
+      );
+      newContainer.dispose();
+    });
+
+    test('should handle API errors gracefully', () async {
+      const testNcode = 'INVALID_NCODE';
+
+      expect(
+        () => container.read(shortStoryEpisodeProvider(testNcode).future),
+        throwsA(isA<Exception>()),
+      );
+    });
+  });
+
+  group('isInLibraryProvider', () {
+    late MockAppDatabase mockDatabase;
+    late ProviderContainer container;
+
+    setUp(() {
+      mockDatabase = MockAppDatabase();
+      container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(mockDatabase),
+        ],
+      );
+    });
+
+    tearDown(() {
+      container.dispose();
+    });
+
+    test('should return true when novel exists in database', () async {
+      const testNcode = 'N1234AB';
+      final testNovel = Novel(
+        ncode: testNcode,
+        title: 'テスト小説',
+        writer: 'テスト作者',
+        cachedAt: DateTime.now().millisecondsSinceEpoch,
+      );
+
+      when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => testNovel);
+
+      final result = await container.read(isInLibraryProvider(testNcode).future);
+
+      expect(result, isTrue);
+      verify(mockDatabase.getNovel(testNcode)).called(1);
+    });
+
+    test('should return false when novel does not exist in database', () async {
+      const testNcode = 'N1234AB';
+
+      when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
+
+      final result = await container.read(isInLibraryProvider(testNcode).future);
+
+      expect(result, isFalse);
+      verify(mockDatabase.getNovel(testNcode)).called(1);
+    });
+
+    test('should handle database errors', () async {
+      const testNcode = 'N1234AB';
+
+      when(mockDatabase.getNovel(testNcode)).thenThrow(Exception('Database error'));
+
+      expect(
+        () => container.read(isInLibraryProvider(testNcode).future),
+        throwsA(isA<Exception>()),
+      );
+    });
+
+    test('should be auto-disposed when not in use', () {
+      const testNcode = 'N1234AB';
+      
+      container.read(isInLibraryProvider(testNcode));
+      
+      container.dispose();
+      
+      final newContainer = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(mockDatabase),
+        ],
+      );
+      expect(
+        () => newContainer.read(isInLibraryProvider(testNcode)),
+        returnsNormally,
+      );
+      newContainer.dispose();
+    });
+  });
+}
