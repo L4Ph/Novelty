@@ -6,14 +6,14 @@ import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/screens/library_page.dart';
-import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
+import 'package:riverpod/src/providers/future_provider.dart';
 
-final novelInfoProvider = FutureProvider.autoDispose.family<NovelInfo, String>((
+final FutureProviderFamily<NovelInfo, String> novelInfoProvider = FutureProvider.autoDispose.family<NovelInfo, String>((
   ref,
   ncode,
 ) async {
-  final apiService = ApiService();
+  final apiService = ref.read(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
 
   // まずDBから取得試行
@@ -40,13 +40,13 @@ final novelInfoProvider = FutureProvider.autoDispose.family<NovelInfo, String>((
   return novelInfo;
 });
 
-final shortStoryEpisodeProvider = FutureProvider.autoDispose
+final FutureProviderFamily<Episode, String> shortStoryEpisodeProvider = FutureProvider.autoDispose
     .family<Episode, String>((ref, ncode) async {
-      final apiService = ApiService();
+      final apiService = ref.read(apiServiceProvider);
       return apiService.fetchEpisode(ncode, 1);
     });
 
-final isInLibraryProvider = FutureProvider.autoDispose.family<bool, String>((
+final FutureProviderFamily<bool, String> isInLibraryProvider = FutureProvider.autoDispose.family<bool, String>((
   ref,
   ncode,
 ) async {

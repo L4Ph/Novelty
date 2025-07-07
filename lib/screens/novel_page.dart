@@ -16,7 +16,11 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) {
 }
 
 @riverpod
-Future<Episode> episode(Ref ref, {required String ncode, required int episode}) {
+Future<Episode> episode(
+  Ref ref, {
+  required String ncode,
+  required int episode,
+}) {
   final apiService = ApiService();
   return apiService.fetchEpisode(ncode, episode);
 }
@@ -47,8 +51,7 @@ class NovelPage extends ConsumerWidget {
     return novelInfoAsync.when(
       data: (novelInfo) {
         final totalEpisodes = novelInfo.generalAllNo ?? 1;
-        final pageController =
-            PageController(initialPage: initialEpisode - 1);
+        final pageController = PageController(initialPage: initialEpisode - 1);
 
         // 最初の履歴追加
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -73,8 +76,8 @@ class NovelPage extends ConsumerWidget {
                     return Text(
                       novelInfo.novelType == 2
                           ? (subtitle.isNotEmpty
-                              ? subtitle
-                              : novelInfo.title ?? '')
+                                ? subtitle
+                                : novelInfo.title ?? '')
                           : '${novelInfo.title} - $subtitle',
                       overflow: TextOverflow.ellipsis,
                     );
@@ -95,8 +98,9 @@ class NovelPage extends ConsumerWidget {
             },
             itemBuilder: (context, index) {
               final episodeNum = index + 1;
-              final episodeAsync =
-                  ref.watch(episodeProvider(ncode: ncode, episode: episodeNum));
+              final episodeAsync = ref.watch(
+                episodeProvider(ncode: ncode, episode: episodeNum),
+              );
               return episodeAsync.when(
                 data: (ep) => NovelContent(
                   ncode: ncode,
@@ -134,16 +138,15 @@ class NovelPage extends ConsumerWidget {
   }
 
   void _updateHistory(WidgetRef ref, NovelInfo novelInfo, int episode) {
-    final db = ref.read(appDatabaseProvider);
-    db.addToHistory(
-      HistoryCompanion(
-        ncode: drift.Value(ncode),
-        title: drift.Value(novelInfo.title),
-        writer: drift.Value(novelInfo.writer),
-        lastEpisode: drift.Value(episode),
-        viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
-      ),
-    );
+    final db = ref.read(appDatabaseProvider)
+      ..addToHistory(
+        HistoryCompanion(
+          ncode: drift.Value(ncode),
+          title: drift.Value(novelInfo.title),
+          writer: drift.Value(novelInfo.writer),
+          lastEpisode: drift.Value(episode),
+          viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
+        ),
+      );
   }
 }
-
