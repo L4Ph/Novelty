@@ -27,7 +27,7 @@ class NovelListTile extends StatelessWidget {
               )['name']
               as String
         : '不明';
-    final status = item.end == null || item.end == -1
+    final status = item.end == null || item.end == -1 || item.novelType == null
         ? '情報取得失敗'
         : (item.novelType == 2 ? '短編' : (item.end == 0 ? '完結済' : '連載中'));
 
