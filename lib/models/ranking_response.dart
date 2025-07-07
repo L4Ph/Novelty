@@ -28,7 +28,7 @@ class RankingResponse {
   final int? allPoint;
   final String ncode;
   final String? title;
-  @JsonKey(name: 'novel_type')
+  @JsonKey(name: 'noveltype')
   final int? novelType;
   final int? end;
   final int? genre;
