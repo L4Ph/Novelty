@@ -52,6 +52,9 @@ void main() {
     test('should update font setting', () async {
       SharedPreferences.setMockInitialValues({});
 
+      // Wait for initial state to load
+      await container.read(settingsProvider.future);
+      
       final settingsNotifier = container.read(settingsProvider.notifier);
       await settingsNotifier.setSelectedFont('M PLUS 1p');
 
@@ -64,6 +67,9 @@ void main() {
     test('should update font size setting', () async {
       SharedPreferences.setMockInitialValues({});
 
+      // Wait for initial state to load
+      await container.read(settingsProvider.future);
+      
       final settingsNotifier = container.read(settingsProvider.notifier);
       await settingsNotifier.setFontSize(20.0);
 
@@ -76,6 +82,9 @@ void main() {
     test('should update seed color setting', () async {
       SharedPreferences.setMockInitialValues({});
 
+      // Wait for initial state to load
+      await container.read(settingsProvider.future);
+      
       final settingsNotifier = container.read(settingsProvider.notifier);
       await settingsNotifier.setAndSaveSeedColor(Colors.green);
 
