@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mockito/mockito.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -71,7 +70,7 @@ void main() {
       await container.read(settingsProvider.future);
       
       final settingsNotifier = container.read(settingsProvider.notifier);
-      await settingsNotifier.setFontSize(20.0);
+      await settingsNotifier.setFontSize(20);
 
       final asyncValue = container.read(settingsProvider);
       expect(asyncValue.hasValue, isTrue);
@@ -119,7 +118,7 @@ void main() {
     });
 
     test('should generate correct text style for each font', () async {
-      final fonts = Settings.availableFonts;
+      const fonts = Settings.availableFonts;
 
       for (final font in fonts) {
         SharedPreferences.setMockInitialValues({
@@ -140,7 +139,7 @@ void main() {
     test('should create instance with required parameters', () {
       const settings = AppSettings(
         selectedFont: 'Noto Sans JP',
-        fontSize: 16.0,
+        fontSize: 16,
         seedColor: Colors.blue,
       );
 
@@ -152,13 +151,13 @@ void main() {
     test('should create copy with updated values', () {
       const originalSettings = AppSettings(
         selectedFont: 'Noto Sans JP',
-        fontSize: 16.0,
+        fontSize: 16,
         seedColor: Colors.blue,
       );
 
       final updatedSettings = originalSettings.copyWith(
         selectedFont: 'IBM Plex Sans JP',
-        fontSize: 18.0,
+        fontSize: 18,
       );
 
       expect(updatedSettings.selectedFont, equals('IBM Plex Sans JP'));
@@ -180,7 +179,7 @@ void main() {
       for (final font in fonts) {
         final settings = AppSettings(
           selectedFont: font,
-          fontSize: 16.0,
+          fontSize: 16,
           seedColor: Colors.blue,
         );
 
