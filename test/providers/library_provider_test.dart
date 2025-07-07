@@ -4,6 +4,8 @@ import 'package:novelty/database/database.dart';
 import 'package:novelty/screens/library_page.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  
   group('libraryNovelsProvider', () {
     late ProviderContainer container;
 
