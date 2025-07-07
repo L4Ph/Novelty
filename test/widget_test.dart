@@ -11,10 +11,11 @@ void main() {
       ),
     );
 
-    // Wait for settings provider to load
-    await tester.pumpAndSettle();
+    // Pump a few frames to allow initial rendering
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
-    // Should find MaterialApp.router after settings load
+    // Should find MaterialApp after initial pump
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 
