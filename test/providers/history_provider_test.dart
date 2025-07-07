@@ -124,11 +124,13 @@ void main() {
       ];
 
       when(mockDatabase.getHistory())
-          .thenAnswer((_) async => initialData)
-          .thenAnswer((_) async => refreshedData);
-
+          .thenAnswer((_) async => initialData);
+      
       final initialResult = await container.read(historyProvider.future);
       expect(initialResult.length, equals(1));
+
+      when(mockDatabase.getHistory())
+          .thenAnswer((_) async => refreshedData);
 
       container.refresh(historyProvider);
       final refreshedResult = await container.read(historyProvider.future);

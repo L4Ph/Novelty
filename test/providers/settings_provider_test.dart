@@ -162,7 +162,7 @@ void main() {
       ];
 
       for (final font in fonts) {
-        const settings = AppSettings(
+        final settings = AppSettings(
           selectedFont: font,
           fontSize: 16.0,
           seedColor: Colors.blue,

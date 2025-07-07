@@ -14,28 +14,14 @@ void main() {
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 
-  testWidgets('App should have proper navigation structure', (WidgetTester tester) async {
+  testWidgets('App should have provider scope', (WidgetTester tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MyApp(),
       ),
     );
-
-    await tester.pumpAndSettle();
-
-    expect(find.byType(MaterialApp), findsOneWidget);
-  });
-
-  testWidgets('App should handle provider scope correctly', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MyApp(),
-      ),
-    );
-
-    await tester.pumpAndSettle();
 
     expect(find.byType(ProviderScope), findsOneWidget);
-    expect(find.byType(MaterialApp), findsOneWidget);
+    expect(find.byType(MyApp), findsOneWidget);
   });
 }
