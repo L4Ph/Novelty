@@ -29,7 +29,7 @@ class NovelListTile extends StatelessWidget {
         : '不明';
     final status = item.end == null || item.end == -1
         ? '情報取得失敗'
-        : (item.end == 0 ? '連載中' : '完結済');
+        : (item.novelType == 2 ? '短編' : (item.end == 0 ? '連載中' : '完結済'));
 
     return ListTile(
       leading: isRanking ? Text('${item.rank ?? ''}') : null,
