@@ -11,6 +11,10 @@ void main() {
       ),
     );
 
+    // Wait for settings provider to load
+    await tester.pumpAndSettle();
+
+    // Should find MaterialApp.router after settings load
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 
