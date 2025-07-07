@@ -3,25 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
 
+final historyProvider = FutureProvider<List<HistoryData>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.getHistory();
+});
+
 class HistoryPage extends ConsumerWidget {
   const HistoryPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final historyFuture = ref.watch(appDatabaseProvider).getHistory();
+    final historyAsync = ref.watch(historyProvider);
 
-    return FutureBuilder<List<HistoryData>>(
-      future: historyFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+    return historyAsync.when(
+      data: (historyItems) {
+        if (historyItems.isEmpty) {
           return const Center(child: Text('No history found.'));
-        } else {
-          final historyItems = snapshot.data!;
-          return ListView.builder(
+        }
+        return RefreshIndicator(
+          onRefresh: () => ref.refresh(historyProvider.future),
+          child: ListView.builder(
             itemCount: historyItems.length,
             itemBuilder: (context, index) {
               final item = historyItems[index];
@@ -46,7 +47,6 @@ class HistoryPage extends ConsumerWidget {
                   ],
                 ),
                 onTap: () {
-                  // 最後に開いたエピソードがある場合はそのエピソードに移動
                   if (lastEpisode != null && lastEpisode > 0) {
                     context.push('/novel/$ncode/$lastEpisode');
                   } else {
@@ -55,9 +55,11 @@ class HistoryPage extends ConsumerWidget {
                 },
               );
             },
-          );
-        }
+          ),
+        );
       },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Error: $err')),
     );
   }
 }
