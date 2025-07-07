@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'settings_provider_test.mocks.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('Settings Provider', () {
     late MockSharedPreferences mockPrefs;
     late ProviderContainer container;
@@ -31,7 +32,7 @@ void main() {
 
       expect(settings.selectedFont, equals('Noto Sans JP'));
       expect(settings.fontSize, equals(16.0));
-      expect(settings.seedColor, equals(Colors.blue));
+      expect(settings.seedColor.value, equals(Colors.blue.value));
     });
 
     test('should load saved preferences', () async {
@@ -45,7 +46,7 @@ void main() {
 
       expect(settings.selectedFont, equals('IBM Plex Sans JP'));
       expect(settings.fontSize, equals(18.0));
-      expect(settings.seedColor, equals(Colors.red));
+      expect(settings.seedColor.value, equals(Colors.red.value));
     });
 
     test('should update font setting', () async {
@@ -54,7 +55,9 @@ void main() {
       final settingsNotifier = container.read(settingsProvider.notifier);
       await settingsNotifier.setSelectedFont('M PLUS 1p');
 
-      final settings = container.read(settingsProvider).value!;
+      final asyncValue = container.read(settingsProvider);
+      expect(asyncValue.hasValue, isTrue);
+      final settings = asyncValue.value!;
       expect(settings.selectedFont, equals('M PLUS 1p'));
     });
 
@@ -64,7 +67,9 @@ void main() {
       final settingsNotifier = container.read(settingsProvider.notifier);
       await settingsNotifier.setFontSize(20.0);
 
-      final settings = container.read(settingsProvider).value!;
+      final asyncValue = container.read(settingsProvider);
+      expect(asyncValue.hasValue, isTrue);
+      final settings = asyncValue.value!;
       expect(settings.fontSize, equals(20.0));
     });
 
@@ -74,8 +79,10 @@ void main() {
       final settingsNotifier = container.read(settingsProvider.notifier);
       await settingsNotifier.setAndSaveSeedColor(Colors.green);
 
-      final settings = container.read(settingsProvider).value!;
-      expect(settings.seedColor, equals(Colors.green));
+      final asyncValue = container.read(settingsProvider);
+      expect(asyncValue.hasValue, isTrue);
+      final settings = asyncValue.value!;
+      expect(settings.seedColor.value, equals(Colors.green.value));
     });
 
     test('should handle invalid font gracefully', () async {
