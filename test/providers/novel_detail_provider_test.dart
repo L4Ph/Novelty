@@ -1,10 +1,10 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mockito/mockito.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart' hide Episode;
-import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/episode.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/screens/novel_detail_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
@@ -47,7 +47,9 @@ void main() {
       when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
       when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
       when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1);
-      when(mockApiService.fetchNovelInfo(testNcode)).thenAnswer((_) async => testNovelInfo);
+      when(
+        mockApiService.fetchNovelInfo(testNcode),
+      ).thenAnswer((_) async => testNovelInfo);
 
       final result = await container.read(novelInfoProvider(testNcode).future);
 
@@ -72,7 +74,9 @@ void main() {
       when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
       when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
       when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1);
-      when(mockApiService.fetchNovelInfo(testNcode)).thenAnswer((_) async => testNovelInfo);
+      when(
+        mockApiService.fetchNovelInfo(testNcode),
+      ).thenAnswer((_) async => testNovelInfo);
 
       await container.read(novelInfoProvider(testNcode).future);
 
@@ -82,7 +86,9 @@ void main() {
     test('should handle database errors gracefully', () async {
       const testNcode = 'N1234AB';
 
-      when(mockDatabase.getNovel(testNcode)).thenThrow(Exception('Database error'));
+      when(
+        mockDatabase.getNovel(testNcode),
+      ).thenThrow(Exception('Database error'));
 
       expect(
         () => container.read(novelInfoProvider(testNcode).future),
@@ -92,11 +98,11 @@ void main() {
 
     test('should be auto-disposed when not in use', () {
       const testNcode = 'N1234AB';
-      
+
       container.read(novelInfoProvider(testNcode));
-      
+
       container.dispose();
-      
+
       final newContainer = ProviderContainer(
         overrides: [
           appDatabaseProvider.overrideWithValue(mockDatabase),
@@ -129,7 +135,7 @@ void main() {
 
     test('should be auto-disposed when not in use', () {
       const testNcode = 'N1234AB';
-      
+
       final testEpisode = Episode(
         ncode: testNcode,
         index: 1,
@@ -137,13 +143,14 @@ void main() {
         body: 'テスト本文',
       );
 
-      when(mockApiService.fetchEpisode(testNcode, 1))
-          .thenAnswer((_) async => testEpisode);
-      
-      container.read(shortStoryEpisodeProvider(testNcode));
-      
-      container.dispose();
-      
+      when(
+        mockApiService.fetchEpisode(testNcode, 1),
+      ).thenAnswer((_) async => testEpisode);
+
+      container
+        ..read(shortStoryEpisodeProvider(testNcode))
+        ..dispose();
+
       final newMockApiService = MockApiService();
       final newContainer = ProviderContainer(
         overrides: [
@@ -160,8 +167,9 @@ void main() {
     test('should handle API errors gracefully', () async {
       const testNcode = 'INVALID_NCODE';
 
-      when(mockApiService.fetchEpisode(testNcode, 1))
-          .thenThrow(Exception('API error'));
+      when(
+        mockApiService.fetchEpisode(testNcode, 1),
+      ).thenThrow(Exception('API error'));
 
       expect(
         () => container.read(shortStoryEpisodeProvider(testNcode).future),
@@ -198,7 +206,9 @@ void main() {
 
       when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => testNovel);
 
-      final result = await container.read(isInLibraryProvider(testNcode).future);
+      final result = await container.read(
+        isInLibraryProvider(testNcode).future,
+      );
 
       expect(result, isTrue);
       verify(mockDatabase.getNovel(testNcode)).called(1);
@@ -209,7 +219,9 @@ void main() {
 
       when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
 
-      final result = await container.read(isInLibraryProvider(testNcode).future);
+      final result = await container.read(
+        isInLibraryProvider(testNcode).future,
+      );
 
       expect(result, isFalse);
       verify(mockDatabase.getNovel(testNcode)).called(1);
@@ -218,7 +230,9 @@ void main() {
     test('should handle database errors', () async {
       const testNcode = 'N1234AB';
 
-      when(mockDatabase.getNovel(testNcode)).thenThrow(Exception('Database error'));
+      when(
+        mockDatabase.getNovel(testNcode),
+      ).thenThrow(Exception('Database error'));
 
       expect(
         () => container.read(isInLibraryProvider(testNcode).future),
@@ -228,11 +242,11 @@ void main() {
 
     test('should be auto-disposed when not in use', () {
       const testNcode = 'N1234AB';
-      
-      container.read(isInLibraryProvider(testNcode));
-      
-      container.dispose();
-      
+
+      container
+        ..read(isInLibraryProvider(testNcode))
+        ..dispose();
+
       final newContainer = ProviderContainer(
         overrides: [
           appDatabaseProvider.overrideWithValue(mockDatabase),

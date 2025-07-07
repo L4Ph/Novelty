@@ -1,7 +1,7 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mockito/mockito.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/screens/history_page.dart';
 
@@ -123,14 +123,12 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getHistory())
-          .thenAnswer((_) async => initialData);
-      
+      when(mockDatabase.getHistory()).thenAnswer((_) async => initialData);
+
       final initialResult = await container.read(historyProvider.future);
       expect(initialResult.length, equals(1));
 
-      when(mockDatabase.getHistory())
-          .thenAnswer((_) async => refreshedData);
+      when(mockDatabase.getHistory()).thenAnswer((_) async => refreshedData);
 
       container.refresh(historyProvider);
       final refreshedResult = await container.read(historyProvider.future);

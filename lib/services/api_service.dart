@@ -89,68 +89,71 @@ class ApiService {
       throw Exception('Novel not found');
     }
   }
-  
+
   /// Fetches multiple novels' basic information in a single API request
   /// This is more efficient than making individual requests for each novel
-  Future<Map<String, NovelInfo>> fetchMultipleNovelsInfo(List<String> ncodes) async {
+  Future<Map<String, NovelInfo>> fetchMultipleNovelsInfo(
+    List<String> ncodes,
+  ) async {
     if (ncodes.isEmpty) {
       return {};
     }
-    
+
     // API allows fetching up to 20 novels at once, so we'll chunk the requests
     const chunkSize = 20;
     final result = <String, NovelInfo>{};
-    
+
     for (var i = 0; i < ncodes.length; i += chunkSize) {
       final chunk = ncodes.sublist(
         i,
         i + chunkSize > ncodes.length ? ncodes.length : i + chunkSize,
       );
-      
+
       final ncodesParam = chunk.join('-');
       final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
         'ncode': ncodesParam,
         'out': 'json',
         'gzip': '5',
-        'of': 't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua',
+        'of':
+            't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua',
       });
-      
+
       try {
         final data = await _fetchData(uri.toString());
         if (data.isNotEmpty &&
             (data[0] as Map<String, dynamic>?)?['allcount'] != null &&
-            ((data[0] as Map<String, dynamic>?)?['allcount'] as int? ?? 0) > 0) {
-          
+            ((data[0] as Map<String, dynamic>?)?['allcount'] as int? ?? 0) >
+                0) {
           // Skip the first item which contains metadata
           for (final item in data.sublist(1)) {
             final novelData = item as Map<String, dynamic>;
             final ncode = novelData['ncode'] as String?;
-            
+
             if (ncode != null) {
               // Process novel type the same way as in _fetchNovelInfoFromNarou
               if (novelData['novel_type'] is String) {
                 final novelTypeStr = novelData['novel_type'] as String;
-                novelData['novel_type'] = 
+                novelData['novel_type'] =
                     int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
               } else if (novelData['novel_type'] == null) {
                 final generalAllNo = novelData['general_all_no'];
                 var allNo = 0;
-                
+
                 if (generalAllNo is String) {
                   allNo = int.tryParse(generalAllNo) ?? 0;
                 } else if (generalAllNo is int) {
                   allNo = generalAllNo;
                 }
-                
+
                 if (allNo <= 1) {
                   novelData['novel_type'] = 2; // 短編小説
                 } else {
                   novelData['novel_type'] = 1; // 連載小説
                 }
               }
-              
+
               final novelInfo = NovelInfo.fromJson(novelData);
-              
+
               // For short stories, add a single episode with basic info
               if (novelInfo.novelType == 2) {
                 novelInfo.episodes = [
@@ -162,7 +165,7 @@ class ApiService {
                   ),
                 ];
               }
-              
+
               result[ncode] = novelInfo;
             }
           }
@@ -174,7 +177,7 @@ class ApiService {
         // Continue with the next chunk even if this one fails
       }
     }
-    
+
     return result;
   }
 
@@ -209,7 +212,7 @@ class ApiService {
         ),
       ];
     }
-    
+
     return info;
   }
 
@@ -352,6 +355,7 @@ class ApiService {
           '.p-novel__text:not(.p-novel__text--preface):not(.p-novel__text--afterword)',
         )
         .map((el) => el.text)
+        // ignore: avoid_redundant_argument_values
         .join('');
 
     return Episode(

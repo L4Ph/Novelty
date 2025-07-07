@@ -3,13 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:riverpod/src/providers/future_provider.dart';
 
 final apiServiceProvider = Provider<ApiService>((ref) => ApiService());
 
-final episodeProvider = FutureProvider.autoDispose.family<Episode, ({String ncode, int episode})>((ref, params) async {
-  final apiService = ref.read(apiServiceProvider);
-  return apiService.fetchEpisode(params.ncode, params.episode);
-});
+final FutureProviderFamily<Episode, ({int episode, String ncode})>
+episodeProvider = FutureProvider.autoDispose
+    .family<Episode, ({String ncode, int episode})>((ref, params) async {
+      final apiService = ref.read(apiServiceProvider);
+      return apiService.fetchEpisode(params.ncode, params.episode);
+    });
 
 class NovelContent extends ConsumerWidget {
   const NovelContent({
@@ -25,14 +28,16 @@ class NovelContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
-    
+
     return settings.when(
       data: (settings) {
         if (initialData != null) {
           return _buildContent(settings, initialData!);
         }
-        
-        final episodeAsync = ref.watch(episodeProvider((ncode: ncode, episode: episode)));
+
+        final episodeAsync = ref.watch(
+          episodeProvider((ncode: ncode, episode: episode)),
+        );
         return episodeAsync.when(
           data: (episode) => _buildContent(settings, episode),
           loading: () => const Center(child: CircularProgressIndicator()),
