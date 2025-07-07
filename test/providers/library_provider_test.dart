@@ -4,8 +4,9 @@ import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/screens/library_page.dart';
+import 'package:drift/drift.dart';
 
-@GenerateMocks([AppDatabase])
+@GenerateMocks([AppDatabase, SimpleSelectStatement, $NovelsTable])
 import 'library_provider_test.mocks.dart';
 
 void main() {
@@ -13,10 +14,13 @@ void main() {
   
   group('libraryNovelsProvider', () {
     late MockAppDatabase mockDatabase;
+    late Mock$NovelsTable mockNovelsTable;
     late ProviderContainer container;
 
     setUp(() {
       mockDatabase = MockAppDatabase();
+      mockNovelsTable = Mock$NovelsTable();
+      when(mockDatabase.novels).thenReturn(mockNovelsTable);
       container = ProviderContainer(
         overrides: [
           appDatabaseProvider.overrideWithValue(mockDatabase),
@@ -38,7 +42,10 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getAllNovels()).thenAnswer((_) async => testNovels);
+      final mockSelectStatement = MockSimpleSelectStatement<$NovelsTable, Novel>();
+      when(mockDatabase.select(mockNovelsTable)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.where(any)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.get()).thenAnswer((_) async => testNovels);
 
       container.read(libraryNovelsProvider);
       
@@ -58,7 +65,10 @@ void main() {
     });
 
     test('should handle database errors gracefully', () async {
-      when(mockDatabase.getAllNovels()).thenThrow(Exception('Database error'));
+      final mockSelectStatement = MockSimpleSelectStatement<$NovelsTable, Novel>();
+      when(mockDatabase.select(mockNovelsTable)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.where(any)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.get()).thenThrow(Exception('Database error'));
 
       expect(
         () => container.read(libraryNovelsProvider.future),
@@ -82,12 +92,15 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getAllNovels()).thenAnswer((_) async => testNovels);
+      // Mock the select query chain used in libraryNovelsProvider
+      final mockSelectStatement = MockSimpleSelectStatement<$NovelsTable, Novel>();
+      when(mockDatabase.select(mockNovelsTable)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.where(any)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.get()).thenAnswer((_) async => testNovels);
 
       final result = await container.read(libraryNovelsProvider.future);
       
       expect(result, equals(testNovels));
-      verify(mockDatabase.getAllNovels()).called(1);
     });
 
     test('should handle refresh correctly', () async {
@@ -100,7 +113,10 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getAllNovels()).thenAnswer((_) async => testNovels);
+      final mockSelectStatement = MockSimpleSelectStatement<$NovelsTable, Novel>();
+      when(mockDatabase.select(mockNovelsTable)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.where(any)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.get()).thenAnswer((_) async => testNovels);
 
       await container.read(libraryNovelsProvider.future);
       
@@ -120,7 +136,10 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getAllNovels()).thenAnswer((_) async => testNovels);
+      final mockSelectStatement = MockSimpleSelectStatement<$NovelsTable, Novel>();
+      when(mockDatabase.select(mockNovelsTable)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.where(any)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.get()).thenAnswer((_) async => testNovels);
 
       final asyncValue1 = container.read(libraryNovelsProvider);
       final asyncValue2 = container.read(libraryNovelsProvider);
@@ -138,7 +157,10 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getAllNovels()).thenAnswer((_) async => testNovels);
+      final mockSelectStatement = MockSimpleSelectStatement<$NovelsTable, Novel>();
+      when(mockDatabase.select(mockNovelsTable)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.where(any)).thenReturn(mockSelectStatement);
+      when(mockSelectStatement.get()).thenAnswer((_) async => testNovels);
 
       // Wait for initial state to load
       await container.read(libraryNovelsProvider.future);

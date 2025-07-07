@@ -4,9 +4,11 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i5;
+import 'dart:typed_data' as _i7;
 
 import 'package:drift/drift.dart' as _i2;
 import 'package:drift/src/runtime/executor/stream_queries.dart' as _i4;
+import 'package:drift/src/runtime/types/mapping.dart' as _i8;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
 import 'package:novelty/database/database.dart' as _i3;
@@ -156,6 +158,35 @@ class _FakeSelectable_21<T> extends _i1.SmartFake implements _i2.Selectable<T> {
 class _FakeGenerationContext_22 extends _i1.SmartFake
     implements _i2.GenerationContext {
   _FakeGenerationContext_22(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeResultSetImplementation_23<Tbl, Row> extends _i1.SmartFake
+    implements _i2.ResultSetImplementation<Tbl, Row> {
+  _FakeResultSetImplementation_23(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeGeneratedColumn_24<T extends Object> extends _i1.SmartFake
+    implements _i2.GeneratedColumn<T> {
+  _FakeGeneratedColumn_24(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeVerificationContext_25 extends _i1.SmartFake
+    implements _i2.VerificationContext {
+  _FakeVerificationContext_25(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeNovel_26 extends _i1.SmartFake implements _i3.Novel {
+  _FakeNovel_26(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeColumnBuilder_27<T extends Object> extends _i1.SmartFake
+    implements _i2.ColumnBuilder<T> {
+  _FakeColumnBuilder_27(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -879,4 +910,862 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
             ),
           )
           as String);
+}
+
+/// A class which mocks [SimpleSelectStatement].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockSimpleSelectStatement<T extends _i2.HasResultSet, D> extends _i1.Mock
+    implements _i2.SimpleSelectStatement<T, D> {
+  MockSimpleSelectStatement() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  bool get distinct =>
+      (super.noSuchMethod(Invocation.getter(#distinct), returnValue: false)
+          as bool);
+
+  @override
+  Set<_i2.ResultSetImplementation<dynamic, dynamic>> get watchedTables =>
+      (super.noSuchMethod(
+            Invocation.getter(#watchedTables),
+            returnValue: <_i2.ResultSetImplementation<dynamic, dynamic>>{},
+          )
+          as Set<_i2.ResultSetImplementation<dynamic, dynamic>>);
+
+  @override
+  _i2.DatabaseConnectionUser get database =>
+      (super.noSuchMethod(
+            Invocation.getter(#database),
+            returnValue: _FakeDatabaseConnectionUser_12(
+              this,
+              Invocation.getter(#database),
+            ),
+          )
+          as _i2.DatabaseConnectionUser);
+
+  @override
+  _i2.ResultSetImplementation<T, D> get table =>
+      (super.noSuchMethod(
+            Invocation.getter(#table),
+            returnValue: _FakeResultSetImplementation_23<T, D>(
+              this,
+              Invocation.getter(#table),
+            ),
+          )
+          as _i2.ResultSetImplementation<T, D>);
+
+  @override
+  bool get writeReturningClause =>
+      (super.noSuchMethod(
+            Invocation.getter(#writeReturningClause),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  set database(_i2.DatabaseConnectionUser? _database) => super.noSuchMethod(
+    Invocation.setter(#database, _database),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set table(_i2.ResultSetImplementation<T, D>? _table) => super.noSuchMethod(
+    Invocation.setter(#table, _table),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set whereExpr(_i2.Where? _whereExpr) => super.noSuchMethod(
+    Invocation.setter(#whereExpr, _whereExpr),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set orderByExpr(_i2.OrderBy? _orderByExpr) => super.noSuchMethod(
+    Invocation.setter(#orderByExpr, _orderByExpr),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set limitExpr(_i2.Limit? _limitExpr) => super.noSuchMethod(
+    Invocation.setter(#limitExpr, _limitExpr),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  set writeReturningClause(bool? _writeReturningClause) => super.noSuchMethod(
+    Invocation.setter(#writeReturningClause, _writeReturningClause),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void writeStartPart(_i2.GenerationContext? ctx) => super.noSuchMethod(
+    Invocation.method(#writeStartPart, [ctx]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i5.Future<List<D>> get() =>
+      (super.noSuchMethod(
+            Invocation.method(#get, []),
+            returnValue: _i5.Future<List<D>>.value(<D>[]),
+          )
+          as _i5.Future<List<D>>);
+
+  @override
+  _i5.Stream<List<D>> watch() =>
+      (super.noSuchMethod(
+            Invocation.method(#watch, []),
+            returnValue: _i5.Stream<List<D>>.empty(),
+          )
+          as _i5.Stream<List<D>>);
+
+  @override
+  _i2.JoinedSelectStatement<_i2.HasResultSet, dynamic> join(
+    List<_i2.Join<_i2.HasResultSet, dynamic>>? joins,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#join, [joins]),
+            returnValue:
+                _FakeJoinedSelectStatement_18<_i2.HasResultSet, dynamic>(
+                  this,
+                  Invocation.method(#join, [joins]),
+                ),
+          )
+          as _i2.JoinedSelectStatement<_i2.HasResultSet, dynamic>);
+
+  @override
+  _i2.JoinedSelectStatement<_i2.HasResultSet, dynamic> addColumns(
+    List<_i2.Expression<Object>>? expressions,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#addColumns, [expressions]),
+            returnValue:
+                _FakeJoinedSelectStatement_18<_i2.HasResultSet, dynamic>(
+                  this,
+                  Invocation.method(#addColumns, [expressions]),
+                ),
+          )
+          as _i2.JoinedSelectStatement<_i2.HasResultSet, dynamic>);
+
+  @override
+  void orderBy(List<_i2.OrderClauseGenerator<T>>? clauses) =>
+      super.noSuchMethod(
+        Invocation.method(#orderBy, [clauses]),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void writeInto(_i2.GenerationContext? context) => super.noSuchMethod(
+    Invocation.method(#writeInto, [context]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i2.GenerationContext constructQuery() =>
+      (super.noSuchMethod(
+            Invocation.method(#constructQuery, []),
+            returnValue: _FakeGenerationContext_22(
+              this,
+              Invocation.method(#constructQuery, []),
+            ),
+          )
+          as _i2.GenerationContext);
+
+  @override
+  void where(_i2.Expression<bool> Function(T)? filter) => super.noSuchMethod(
+    Invocation.method(#where, [filter]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void limit(int? limit, {int? offset}) => super.noSuchMethod(
+    Invocation.method(#limit, [limit], {#offset: offset}),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i5.Future<D> getSingle() =>
+      (super.noSuchMethod(
+            Invocation.method(#getSingle, []),
+            returnValue:
+                _i6.ifNotNull(
+                  _i6.dummyValueOrNull<D>(
+                    this,
+                    Invocation.method(#getSingle, []),
+                  ),
+                  (D v) => _i5.Future<D>.value(v),
+                ) ??
+                _FakeFuture_14<D>(this, Invocation.method(#getSingle, [])),
+          )
+          as _i5.Future<D>);
+
+  @override
+  _i5.Stream<D> watchSingle() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchSingle, []),
+            returnValue: _i5.Stream<D>.empty(),
+          )
+          as _i5.Stream<D>);
+
+  @override
+  _i5.Future<D?> getSingleOrNull() =>
+      (super.noSuchMethod(
+            Invocation.method(#getSingleOrNull, []),
+            returnValue: _i5.Future<D?>.value(),
+          )
+          as _i5.Future<D?>);
+
+  @override
+  _i5.Stream<D?> watchSingleOrNull() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchSingleOrNull, []),
+            returnValue: _i5.Stream<D?>.empty(),
+          )
+          as _i5.Stream<D?>);
+
+  @override
+  _i2.Selectable<N> map<N>(N Function(D)? mapper) =>
+      (super.noSuchMethod(
+            Invocation.method(#map, [mapper]),
+            returnValue: _FakeSelectable_21<N>(
+              this,
+              Invocation.method(#map, [mapper]),
+            ),
+          )
+          as _i2.Selectable<N>);
+
+  @override
+  _i2.Selectable<N> asyncMap<N>(_i5.FutureOr<N> Function(D)? mapper) =>
+      (super.noSuchMethod(
+            Invocation.method(#asyncMap, [mapper]),
+            returnValue: _FakeSelectable_21<N>(
+              this,
+              Invocation.method(#asyncMap, [mapper]),
+            ),
+          )
+          as _i2.Selectable<N>);
+}
+
+/// A class which mocks [$NovelsTable].
+///
+/// See the documentation for Mockito's code generation for more information.
+class Mock$NovelsTable extends _i1.Mock implements _i3.$NovelsTable {
+  Mock$NovelsTable() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i2.GeneratedDatabase get attachedDatabase =>
+      (super.noSuchMethod(
+            Invocation.getter(#attachedDatabase),
+            returnValue: _FakeGeneratedDatabase_6(
+              this,
+              Invocation.getter(#attachedDatabase),
+            ),
+          )
+          as _i2.GeneratedDatabase);
+
+  @override
+  _i2.GeneratedColumn<String> get ncode =>
+      (super.noSuchMethod(
+            Invocation.getter(#ncode),
+            returnValue: _FakeGeneratedColumn_24<String>(
+              this,
+              Invocation.getter(#ncode),
+            ),
+          )
+          as _i2.GeneratedColumn<String>);
+
+  @override
+  _i2.GeneratedColumn<String> get title =>
+      (super.noSuchMethod(
+            Invocation.getter(#title),
+            returnValue: _FakeGeneratedColumn_24<String>(
+              this,
+              Invocation.getter(#title),
+            ),
+          )
+          as _i2.GeneratedColumn<String>);
+
+  @override
+  _i2.GeneratedColumn<String> get writer =>
+      (super.noSuchMethod(
+            Invocation.getter(#writer),
+            returnValue: _FakeGeneratedColumn_24<String>(
+              this,
+              Invocation.getter(#writer),
+            ),
+          )
+          as _i2.GeneratedColumn<String>);
+
+  @override
+  _i2.GeneratedColumn<String> get story =>
+      (super.noSuchMethod(
+            Invocation.getter(#story),
+            returnValue: _FakeGeneratedColumn_24<String>(
+              this,
+              Invocation.getter(#story),
+            ),
+          )
+          as _i2.GeneratedColumn<String>);
+
+  @override
+  _i2.GeneratedColumn<int> get novelType =>
+      (super.noSuchMethod(
+            Invocation.getter(#novelType),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#novelType),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get end =>
+      (super.noSuchMethod(
+            Invocation.getter(#end),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#end),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get isr15 =>
+      (super.noSuchMethod(
+            Invocation.getter(#isr15),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#isr15),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get isbl =>
+      (super.noSuchMethod(
+            Invocation.getter(#isbl),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#isbl),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get isgl =>
+      (super.noSuchMethod(
+            Invocation.getter(#isgl),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#isgl),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get iszankoku =>
+      (super.noSuchMethod(
+            Invocation.getter(#iszankoku),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#iszankoku),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get istensei =>
+      (super.noSuchMethod(
+            Invocation.getter(#istensei),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#istensei),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get istenni =>
+      (super.noSuchMethod(
+            Invocation.getter(#istenni),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#istenni),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<String> get keyword =>
+      (super.noSuchMethod(
+            Invocation.getter(#keyword),
+            returnValue: _FakeGeneratedColumn_24<String>(
+              this,
+              Invocation.getter(#keyword),
+            ),
+          )
+          as _i2.GeneratedColumn<String>);
+
+  @override
+  _i2.GeneratedColumn<int> get generalFirstup =>
+      (super.noSuchMethod(
+            Invocation.getter(#generalFirstup),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#generalFirstup),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get generalLastup =>
+      (super.noSuchMethod(
+            Invocation.getter(#generalLastup),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#generalLastup),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get globalPoint =>
+      (super.noSuchMethod(
+            Invocation.getter(#globalPoint),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#globalPoint),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get fav =>
+      (super.noSuchMethod(
+            Invocation.getter(#fav),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#fav),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get reviewCount =>
+      (super.noSuchMethod(
+            Invocation.getter(#reviewCount),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#reviewCount),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get rateCount =>
+      (super.noSuchMethod(
+            Invocation.getter(#rateCount),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#rateCount),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get allPoint =>
+      (super.noSuchMethod(
+            Invocation.getter(#allPoint),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#allPoint),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get poinCount =>
+      (super.noSuchMethod(
+            Invocation.getter(#poinCount),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#poinCount),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get weeklyPoint =>
+      (super.noSuchMethod(
+            Invocation.getter(#weeklyPoint),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#weeklyPoint),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get monthlyPoint =>
+      (super.noSuchMethod(
+            Invocation.getter(#monthlyPoint),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#monthlyPoint),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get quarterPoint =>
+      (super.noSuchMethod(
+            Invocation.getter(#quarterPoint),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#quarterPoint),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get yearlyPoint =>
+      (super.noSuchMethod(
+            Invocation.getter(#yearlyPoint),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#yearlyPoint),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get generalAllNo =>
+      (super.noSuchMethod(
+            Invocation.getter(#generalAllNo),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#generalAllNo),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<String> get novelUpdatedAt =>
+      (super.noSuchMethod(
+            Invocation.getter(#novelUpdatedAt),
+            returnValue: _FakeGeneratedColumn_24<String>(
+              this,
+              Invocation.getter(#novelUpdatedAt),
+            ),
+          )
+          as _i2.GeneratedColumn<String>);
+
+  @override
+  _i2.GeneratedColumn<int> get cachedAt =>
+      (super.noSuchMethod(
+            Invocation.getter(#cachedAt),
+            returnValue: _FakeGeneratedColumn_24<int>(
+              this,
+              Invocation.getter(#cachedAt),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  List<_i2.GeneratedColumn<Object>> get $columns =>
+      (super.noSuchMethod(
+            Invocation.getter(#$columns),
+            returnValue: <_i2.GeneratedColumn<Object>>[],
+          )
+          as List<_i2.GeneratedColumn<Object>>);
+
+  @override
+  String get aliasedName =>
+      (super.noSuchMethod(
+            Invocation.getter(#aliasedName),
+            returnValue: _i6.dummyValue<String>(
+              this,
+              Invocation.getter(#aliasedName),
+            ),
+          )
+          as String);
+
+  @override
+  String get actualTableName =>
+      (super.noSuchMethod(
+            Invocation.getter(#actualTableName),
+            returnValue: _i6.dummyValue<String>(
+              this,
+              Invocation.getter(#actualTableName),
+            ),
+          )
+          as String);
+
+  @override
+  Set<_i2.GeneratedColumn<Object>> get $primaryKey =>
+      (super.noSuchMethod(
+            Invocation.getter(#$primaryKey),
+            returnValue: <_i2.GeneratedColumn<Object>>{},
+          )
+          as Set<_i2.GeneratedColumn<Object>>);
+
+  @override
+  Set<_i2.Column<Object>> get primaryKey =>
+      (super.noSuchMethod(
+            Invocation.getter(#primaryKey),
+            returnValue: <_i2.Column<Object>>{},
+          )
+          as Set<_i2.Column<Object>>);
+
+  @override
+  bool get withoutRowId =>
+      (super.noSuchMethod(Invocation.getter(#withoutRowId), returnValue: false)
+          as bool);
+
+  @override
+  bool get dontWriteConstraints =>
+      (super.noSuchMethod(
+            Invocation.getter(#dontWriteConstraints),
+            returnValue: false,
+          )
+          as bool);
+
+  @override
+  bool get isStrict =>
+      (super.noSuchMethod(Invocation.getter(#isStrict), returnValue: false)
+          as bool);
+
+  @override
+  List<Set<_i2.GeneratedColumn<Object>>> get uniqueKeys =>
+      (super.noSuchMethod(
+            Invocation.getter(#uniqueKeys),
+            returnValue: <Set<_i2.GeneratedColumn<Object>>>[],
+          )
+          as List<Set<_i2.GeneratedColumn<Object>>>);
+
+  @override
+  List<String> get customConstraints =>
+      (super.noSuchMethod(
+            Invocation.getter(#customConstraints),
+            returnValue: <String>[],
+          )
+          as List<String>);
+
+  @override
+  _i3.$NovelsTable get asDslTable =>
+      (super.noSuchMethod(
+            Invocation.getter(#asDslTable),
+            returnValue: _Fake$NovelsTable_1(
+              this,
+              Invocation.getter(#asDslTable),
+            ),
+          )
+          as _i3.$NovelsTable);
+
+  @override
+  String get entityName =>
+      (super.noSuchMethod(
+            Invocation.getter(#entityName),
+            returnValue: _i6.dummyValue<String>(
+              this,
+              Invocation.getter(#entityName),
+            ),
+          )
+          as String);
+
+  @override
+  Map<String, _i2.GeneratedColumn<Object>> get columnsByName =>
+      (super.noSuchMethod(
+            Invocation.getter(#columnsByName),
+            returnValue: <String, _i2.GeneratedColumn<Object>>{},
+          )
+          as Map<String, _i2.GeneratedColumn<Object>>);
+
+  @override
+  _i2.VerificationContext validateIntegrity(
+    _i2.Insertable<_i3.Novel>? instance, {
+    bool? isInserting = false,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #validateIntegrity,
+              [instance],
+              {#isInserting: isInserting},
+            ),
+            returnValue: _FakeVerificationContext_25(
+              this,
+              Invocation.method(
+                #validateIntegrity,
+                [instance],
+                {#isInserting: isInserting},
+              ),
+            ),
+          )
+          as _i2.VerificationContext);
+
+  @override
+  _i3.Novel map(Map<String, dynamic>? data, {String? tablePrefix}) =>
+      (super.noSuchMethod(
+            Invocation.method(#map, [data], {#tablePrefix: tablePrefix}),
+            returnValue: _FakeNovel_26(
+              this,
+              Invocation.method(#map, [data], {#tablePrefix: tablePrefix}),
+            ),
+          )
+          as _i3.Novel);
+
+  @override
+  _i3.$NovelsTable createAlias(String? alias) =>
+      (super.noSuchMethod(
+            Invocation.method(#createAlias, [alias]),
+            returnValue: _Fake$NovelsTable_1(
+              this,
+              Invocation.method(#createAlias, [alias]),
+            ),
+          )
+          as _i3.$NovelsTable);
+
+  @override
+  _i2.ColumnBuilder<int> integer() =>
+      (super.noSuchMethod(
+            Invocation.method(#integer, []),
+            returnValue: _FakeColumnBuilder_27<int>(
+              this,
+              Invocation.method(#integer, []),
+            ),
+          )
+          as _i2.ColumnBuilder<int>);
+
+  @override
+  _i2.ColumnBuilder<BigInt> int64() =>
+      (super.noSuchMethod(
+            Invocation.method(#int64, []),
+            returnValue: _FakeColumnBuilder_27<BigInt>(
+              this,
+              Invocation.method(#int64, []),
+            ),
+          )
+          as _i2.ColumnBuilder<BigInt>);
+
+  @override
+  _i2.ColumnBuilder<int> intEnum<T extends Enum>() =>
+      (super.noSuchMethod(
+            Invocation.method(#intEnum, []),
+            returnValue: _FakeColumnBuilder_27<int>(
+              this,
+              Invocation.method(#intEnum, []),
+            ),
+          )
+          as _i2.ColumnBuilder<int>);
+
+  @override
+  _i2.ColumnBuilder<String> text() =>
+      (super.noSuchMethod(
+            Invocation.method(#text, []),
+            returnValue: _FakeColumnBuilder_27<String>(
+              this,
+              Invocation.method(#text, []),
+            ),
+          )
+          as _i2.ColumnBuilder<String>);
+
+  @override
+  _i2.ColumnBuilder<String> textEnum<T extends Enum>() =>
+      (super.noSuchMethod(
+            Invocation.method(#textEnum, []),
+            returnValue: _FakeColumnBuilder_27<String>(
+              this,
+              Invocation.method(#textEnum, []),
+            ),
+          )
+          as _i2.ColumnBuilder<String>);
+
+  @override
+  _i2.ColumnBuilder<bool> boolean() =>
+      (super.noSuchMethod(
+            Invocation.method(#boolean, []),
+            returnValue: _FakeColumnBuilder_27<bool>(
+              this,
+              Invocation.method(#boolean, []),
+            ),
+          )
+          as _i2.ColumnBuilder<bool>);
+
+  @override
+  _i2.ColumnBuilder<DateTime> dateTime() =>
+      (super.noSuchMethod(
+            Invocation.method(#dateTime, []),
+            returnValue: _FakeColumnBuilder_27<DateTime>(
+              this,
+              Invocation.method(#dateTime, []),
+            ),
+          )
+          as _i2.ColumnBuilder<DateTime>);
+
+  @override
+  _i2.ColumnBuilder<_i7.Uint8List> blob() =>
+      (super.noSuchMethod(
+            Invocation.method(#blob, []),
+            returnValue: _FakeColumnBuilder_27<_i7.Uint8List>(
+              this,
+              Invocation.method(#blob, []),
+            ),
+          )
+          as _i2.ColumnBuilder<_i7.Uint8List>);
+
+  @override
+  _i2.ColumnBuilder<double> real() =>
+      (super.noSuchMethod(
+            Invocation.method(#real, []),
+            returnValue: _FakeColumnBuilder_27<double>(
+              this,
+              Invocation.method(#real, []),
+            ),
+          )
+          as _i2.ColumnBuilder<double>);
+
+  @override
+  _i2.ColumnBuilder<_i2.DriftAny> sqliteAny() =>
+      (super.noSuchMethod(
+            Invocation.method(#sqliteAny, []),
+            returnValue: _FakeColumnBuilder_27<_i2.DriftAny>(
+              this,
+              Invocation.method(#sqliteAny, []),
+            ),
+          )
+          as _i2.ColumnBuilder<_i2.DriftAny>);
+
+  @override
+  _i2.ColumnBuilder<T> customType<T extends Object>(
+    _i8.UserDefinedSqlType<T>? type,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#customType, [type]),
+            returnValue: _FakeColumnBuilder_27<T>(
+              this,
+              Invocation.method(#customType, [type]),
+            ),
+          )
+          as _i2.ColumnBuilder<T>);
+
+  @override
+  _i5.Future<_i3.Novel> mapFromCompanion(
+    _i2.Insertable<_i3.Novel>? companion,
+    _i2.DatabaseConnectionUser? database,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#mapFromCompanion, [companion, database]),
+            returnValue: _i5.Future<_i3.Novel>.value(
+              _FakeNovel_26(
+                this,
+                Invocation.method(#mapFromCompanion, [companion, database]),
+              ),
+            ),
+          )
+          as _i5.Future<_i3.Novel>);
 }
