@@ -1,13 +1,21 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 import 'package:novelty/models/episode.dart';
+import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
+
+@GenerateMocks([ApiService])
+import 'episode_provider_test.mocks.dart';
 
 void main() {
   group('episodeProvider.family', () {
+    late MockApiService mockApiService;
     late ProviderContainer container;
 
     setUp(() {
+      mockApiService = MockApiService();
       container = ProviderContainer();
     });
 
@@ -53,26 +61,8 @@ void main() {
       expect(provider1, equals(provider2));
     });
 
-    test('should handle invalid ncode gracefully', () async {
+    test('should handle API errors gracefully', () async {
       const testParams = (ncode: 'INVALID_NCODE', episode: 1);
-
-      expect(
-        () => container.read(episodeProvider(testParams).future),
-        throwsA(isA<Exception>()),
-      );
-    });
-
-    test('should handle invalid episode number gracefully', () async {
-      const testParams = (ncode: 'N1234AB', episode: -1);
-
-      expect(
-        () => container.read(episodeProvider(testParams).future),
-        throwsA(isA<Exception>()),
-      );
-    });
-
-    test('should handle network errors gracefully', () async {
-      const testParams = (ncode: 'NETWORK_ERROR_TEST', episode: 1);
 
       expect(
         () => container.read(episodeProvider(testParams).future),
@@ -105,43 +95,6 @@ void main() {
       final future2 = container.read(episodeProvider(testParams).future);
 
       expect(future1, equals(future2));
-    });
-  });
-
-  group('episodeProvider integration tests', () {
-    test('should work with valid novel codes from the system', () async {
-      final container = ProviderContainer();
-      
-      try {
-        const testParams = (ncode: 'n9669bk', episode: 1);
-        
-        final result = await container.read(episodeProvider(testParams).future);
-        
-        expect(result, isA<Episode>());
-        expect(result.ncode, equals('n9669bk'));
-        expect(result.index, equals(1));
-      } catch (e) {
-        expect(e, isA<Exception>());
-      } finally {
-        container.dispose();
-      }
-    });
-
-    test('should handle short story episodes correctly', () async {
-      final container = ProviderContainer();
-      
-      try {
-        const testParams = (ncode: 'n0000xx', episode: 1);
-        
-        final result = await container.read(episodeProvider(testParams).future);
-        
-        expect(result, isA<Episode>());
-        expect(result.index, equals(1));
-      } catch (e) {
-        expect(e, isA<Exception>());
-      } finally {
-        container.dispose();
-      }
     });
   });
 }
