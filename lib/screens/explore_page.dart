@@ -213,7 +213,7 @@ class _ExplorePageState extends State<ExplorePage>
   Widget build(BuildContext context) {
     return PopScope(
       canPop: !_isSearching,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, _) {
         if (didPop) {
           return;
         }

@@ -69,7 +69,7 @@ class ApiService {
         // novelTypeがnullの場合、general_all_noを使って判断
         // general_all_noが1または0の場合は短編小説、それ以外は連載小説
         final generalAllNo = novelData['general_all_no'];
-        int allNo = 0;
+        var allNo = 0;
 
         if (generalAllNo is String) {
           allNo = int.tryParse(generalAllNo) ?? 0;
@@ -88,6 +88,129 @@ class ApiService {
     } else {
       throw Exception('Novel not found');
     }
+  }
+  
+  /// Fetches multiple novels' basic information in a single API request
+  /// This is more efficient than making individual requests for each novel
+  Future<Map<String, NovelInfo>> fetchMultipleNovelsInfo(List<String> ncodes) async {
+    if (ncodes.isEmpty) {
+      return {};
+    }
+    
+    // API allows fetching up to 20 novels at once, so we'll chunk the requests
+    const chunkSize = 20;
+    final result = <String, NovelInfo>{};
+    
+    for (var i = 0; i < ncodes.length; i += chunkSize) {
+      final chunk = ncodes.sublist(
+        i,
+        i + chunkSize > ncodes.length ? ncodes.length : i + chunkSize,
+      );
+      
+      final ncodesParam = chunk.join('-');
+      final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
+        'ncode': ncodesParam,
+        'out': 'json',
+        'gzip': '5',
+        'of': 't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua',
+      });
+      
+      try {
+        final data = await _fetchData(uri.toString());
+        if (data.isNotEmpty &&
+            (data[0] as Map<String, dynamic>?)?['allcount'] != null &&
+            ((data[0] as Map<String, dynamic>?)?['allcount'] as int? ?? 0) > 0) {
+          
+          // Skip the first item which contains metadata
+          for (final item in data.sublist(1)) {
+            final novelData = item as Map<String, dynamic>;
+            final ncode = novelData['ncode'] as String?;
+            
+            if (ncode != null) {
+              // Process novel type the same way as in _fetchNovelInfoFromNarou
+              if (novelData['novel_type'] is String) {
+                final novelTypeStr = novelData['novel_type'] as String;
+                novelData['novel_type'] = 
+                    int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
+              } else if (novelData['novel_type'] == null) {
+                final generalAllNo = novelData['general_all_no'];
+                var allNo = 0;
+                
+                if (generalAllNo is String) {
+                  allNo = int.tryParse(generalAllNo) ?? 0;
+                } else if (generalAllNo is int) {
+                  allNo = generalAllNo;
+                }
+                
+                if (allNo <= 1) {
+                  novelData['novel_type'] = 2; // 短編小説
+                } else {
+                  novelData['novel_type'] = 1; // 連載小説
+                }
+              }
+              
+              final novelInfo = NovelInfo.fromJson(novelData);
+              
+              // For short stories, add a single episode with basic info
+              if (novelInfo.novelType == 2) {
+                novelInfo.episodes = [
+                  Episode(
+                    subtitle: novelInfo.title,
+                    url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
+                    ncode: ncode,
+                    index: 1,
+                  ),
+                ];
+              }
+              
+              result[ncode] = novelInfo;
+            }
+          }
+        }
+      } on Exception catch (e) {
+        if (kDebugMode) {
+          print('Error fetching multiple novels: $e');
+        }
+        // Continue with the next chunk even if this one fails
+      }
+    }
+    
+    return result;
+  }
+
+  /// Fetches basic novel information without episodes
+  /// This is a lightweight version of fetchNovelInfo that doesn't fetch episodes
+  /// Suitable for list views like history where full episode data isn't needed
+  Future<NovelInfo> fetchBasicNovelInfo(String ncode) async {
+    final info = await _fetchNovelInfoFromNarou(ncode);
+
+    // novelTypeがnullの場合、general_all_noを使って判断
+    if (info.novelType == null) {
+      if (info.generalAllNo != null && info.generalAllNo! <= 1) {
+        info.novelType = 2; // 短編小説
+      } else {
+        info.novelType = 1; // 連載小説
+      }
+    }
+
+    if (kDebugMode) {
+      print('Novel type after processing: ${info.novelType}');
+      print('General all no: ${info.generalAllNo}');
+    }
+
+    // For short stories, add a single episode with basic info
+    if (info.novelType == 2) {
+      info.episodes = [
+        Episode(
+          subtitle: info.title,
+          url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
+          ncode: ncode,
+          index: 1,
+        ),
+      ];
+    }
+    
+    return info;
   }
 
   Future<NovelInfo> fetchNovelInfo(String ncode) async {

@@ -1,218 +1,149 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/services/database_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-class NovelPage extends StatefulWidget {
+part 'novel_page.g.dart';
+
+@riverpod
+Future<NovelInfo> novelInfo(Ref ref, String ncode) {
+  return ApiService().fetchNovelInfo(ncode);
+}
+
+@riverpod
+Future<Episode> episode(Ref ref, {required String ncode, required int episode}) {
+  final apiService = ApiService();
+  return apiService.fetchEpisode(ncode, episode);
+}
+
+@riverpod
+class CurrentEpisode extends _$CurrentEpisode {
+  @override
+  int build() => 1;
+
+  void set(int value) => state = value;
+}
+
+class NovelPage extends ConsumerWidget {
   const NovelPage({super.key, required this.ncode, this.episode});
   final String ncode;
   final int? episode;
 
   @override
-  State<NovelPage> createState() => _NovelPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final novelInfoAsync = ref.watch(novelInfoProvider(ncode));
+    final initialEpisode = episode ?? 1;
 
-class _NovelPageState extends State<NovelPage> {
-  final _apiService = ApiService();
-  final _databaseService = DatabaseService();
-  PageController? _pageController;
-  late int _currentEpisode;
-  var _episodeSubtitle = '';
-  var _novelTitle = '';
-  var _errorMessage = '';
-  int? _totalEpisodes;
-  int? _novelType;
+    // initialEpisodeをproviderに設定
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(currentEpisodeProvider.notifier).set(initialEpisode);
+    });
 
-  final LruMap<int, Future<Episode>> _episodeCache = LruMap(maximumSize: 5);
+    return novelInfoAsync.when(
+      data: (novelInfo) {
+        final totalEpisodes = novelInfo.generalAllNo ?? 1;
+        final pageController =
+            PageController(initialPage: initialEpisode - 1);
 
-  @override
-  void initState() {
-    super.initState();
-    _currentEpisode = widget.episode ?? 1;
-    _pageController = PageController(initialPage: _currentEpisode - 1);
-    _fetchNovelInfo();
-    _addHistory();
-  }
-
-  @override
-  void dispose() {
-    _pageController?.dispose();
-    super.dispose();
-  }
-
-  Future<void> _addHistory() async {
-    await _databaseService.addNovelToHistory(widget.ncode);
-  }
-
-  Future<void> _fetchNovelInfo() async {
-    try {
-      final novelInfo = await _apiService.fetchNovelInfo(widget.ncode);
-      if (!mounted) {
-        return;
-      }
-
-      // 短編小説の場合は、エピソード番号を1として扱う
-      if (novelInfo.novelType == 2) {
-        setState(() {
-          _currentEpisode = 1;
-          _novelTitle = novelInfo.title ?? '';
-          _totalEpisodes = 1;
-          _novelType = novelInfo.novelType;
-        });
-        await _fetchEpisodeData(1);
-        return;
-      }
-
-      setState(() {
-        _novelTitle = novelInfo.title ?? '';
-        _totalEpisodes = novelInfo.generalAllNo ?? 1;
-        _novelType = novelInfo.novelType;
-      });
-      await _fetchEpisodeData(_currentEpisode);
-    } on Exception catch (e) {
-      setState(() {
-        _errorMessage = 'エラーが発生しました: $e';
-      });
-    }
-  }
-
-  Future<Episode> _fetchEpisodeData(int episode) {
-    if (_episodeCache.containsKey(episode)) {
-      return _episodeCache[episode]!;
-    }
-    final future = _apiService.fetchEpisode(widget.ncode, episode);
-    _episodeCache[episode] = future;
-    future
-        .then((data) {
-          if (!mounted) {
-            return;
-          }
-          if (_currentEpisode == episode) {
-            setState(() {
-              _episodeSubtitle = data.subtitle ?? '';
-            });
-          }
-        })
-        .catchError((Object e) {
-          if (mounted) {
-            _episodeCache.remove(episode);
-          }
-          throw Exception(e);
+        // 最初の履歴追加
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _updateHistory(ref, novelInfo, initialEpisode);
         });
 
-    // Prefetch next and previous episodes
-    _prefetchEpisode(episode + 1);
-    _prefetchEpisode(episode - 1);
-
-    return future;
-  }
-
-  void _prefetchEpisode(int episode) {
-    if (episode > 0 && (_totalEpisodes == null || episode <= _totalEpisodes!)) {
-      if (!_episodeCache.containsKey(episode)) {
-        _apiService
-            .fetchEpisode(widget.ncode, episode)
-            .then((ep) {
-              _episodeCache[episode] = Future.value(ep);
-            })
-            .catchError((_) {
-              // Prefetch failed, ignore.
-            });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final appBarTitle = _episodeSubtitle.isEmpty
-        ? _novelTitle
-        : (_novelType == 2
-              ? _episodeSubtitle
-              : '$_novelTitle - $_episodeSubtitle');
-
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(appBarTitle),
-      ),
-      body: _errorMessage.isNotEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(_errorMessage),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('戻る'),
-                  ),
-                ],
-              ),
-            )
-          : _totalEpisodes == null
-              ? const Center(child: CircularProgressIndicator())
-              : PageView.builder(
-              controller: _pageController,
-              itemCount: _totalEpisodes,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentEpisode = index + 1;
-                });
-                _fetchEpisodeData(_currentEpisode);
-              },
-              itemBuilder: (context, index) {
-                return FutureBuilder<Episode>(
-                  future: _fetchEpisodeData(index + 1),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else if (!snapshot.hasData) {
-                      return const Center(child: Text('No content available.'));
-                    } else {
-                      return NovelContent(
-                        ncode: widget.ncode,
-                        episode: index + 1,
-                        initialData: snapshot.data,
-                      );
-                    }
+        return Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: Consumer(
+              builder: (context, ref, child) {
+                final currentEpisode = ref.watch(currentEpisodeProvider);
+                final episodeAsync = ref.watch(
+                  episodeProvider(ncode: ncode, episode: currentEpisode),
+                );
+                return episodeAsync.when(
+                  data: (ep) {
+                    final subtitle = ep.subtitle ?? '';
+                    return Text(
+                      novelInfo.novelType == 2
+                          ? (subtitle.isNotEmpty
+                              ? subtitle
+                              : novelInfo.title ?? '')
+                          : '${novelInfo.title} - $subtitle',
+                      overflow: TextOverflow.ellipsis,
+                    );
                   },
+                  loading: () => Text(novelInfo.title ?? ''),
+                  error: (e, s) => Text(novelInfo.title ?? ''),
                 );
               },
             ),
+          ),
+          body: PageView.builder(
+            controller: pageController,
+            itemCount: totalEpisodes,
+            onPageChanged: (index) {
+              final newEpisode = index + 1;
+              ref.read(currentEpisodeProvider.notifier).set(newEpisode);
+              _updateHistory(ref, novelInfo, newEpisode);
+            },
+            itemBuilder: (context, index) {
+              final episodeNum = index + 1;
+              final episodeAsync =
+                  ref.watch(episodeProvider(ncode: ncode, episode: episodeNum));
+              return episodeAsync.when(
+                data: (ep) => NovelContent(
+                  ncode: ncode,
+                  episode: episodeNum,
+                  initialData: ep,
+                ),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, s) => Center(child: Text('Error: $e')),
+              );
+            },
+          ),
+        );
+      },
+      loading: () => Scaffold(
+        appBar: AppBar(),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, s) => Scaffold(
+        appBar: AppBar(),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('エラーが発生しました: $e'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('戻る'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _updateHistory(WidgetRef ref, NovelInfo novelInfo, int episode) {
+    final db = ref.read(appDatabaseProvider);
+    db.addToHistory(
+      HistoryCompanion(
+        ncode: drift.Value(ncode),
+        title: drift.Value(novelInfo.title),
+        writer: drift.Value(novelInfo.writer),
+        lastEpisode: drift.Value(episode),
+        viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
+      ),
     );
   }
 }
 
-class LruMap<K, V> {
-  LruMap({required int maximumSize}) : _maximumSize = maximumSize;
-  final int _maximumSize;
-  final _map = <K, V>{};
-
-  V? operator [](K key) {
-    final value = _map.remove(key);
-    if (value != null) {
-      _map[key] = value;
-    }
-    return value;
-  }
-
-  void operator []=(K key, V value) {
-    _map.remove(key);
-    _map[key] = value;
-    if (_map.length > _maximumSize) {
-      _map.remove(_map.keys.first);
-    }
-  }
-
-  bool containsKey(K key) => _map.containsKey(key);
-
-  V? remove(K key) => _map.remove(key);
-
-  void clear() => _map.clear();
-}
