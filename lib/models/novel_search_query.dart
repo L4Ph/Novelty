@@ -1,50 +1,201 @@
 // ignore_for_file: omit_obvious_property_types
 
+/// なろう小説APIの検索クエリを表すクラス。
+///
+/// [なろう小説API](https://dev.syosetu.com/man/api/) のGETパラメータを表現する。
 class NovelSearchQuery {
+  /// [NovelSearchQuery]のコンストラクタ
   NovelSearchQuery({this.ncode});
+
+  /// 検索単語。
+  ///
+  /// 半角または全角スペースで区切るとAND抽出になる。
   String? word;
+
+  /// 除外単語。
+  ///
+  /// スペースで区切ることにより除外単語を増やせる。
   String? notword;
+
+  /// タイトルを検索対象にするか。
   bool title = false;
+
+  /// あらすじを検索対象にするか。
   bool ex = false;
+
+  /// キーワードを検索対象にするか。
   bool keyword = false;
+
+  /// 作者名を検索対象にするか。
   bool wname = false;
+
+  /// 大ジャンル。
+  ///
+  /// [大ジャンル一覧](https://dev.syosetu.com/man/api/#biggenre)
   List<int>? biggenre;
+
+  /// 除外大ジャンル。
+  ///
+  /// [大ジャンル一覧](https://dev.syosetu.com/man/api/#biggenre)
   List<int>? notbiggenre;
+
+  /// ジャンル。
+  ///
+  /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
   List<int>? genre;
+
+  /// 除外ジャンル。
+  ///
+  /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
   List<int>? notgenre;
+
+  /// ユーザID。
   List<int>? userid;
+
+  /// R15作品のみを対象とするか。
   bool isr15 = false;
+
+  /// ボーイズラブ作品のみを対象とするか。
   bool isbl = false;
+
+  /// ガールズラブ作品のみを対象とするか。
   bool isgl = false;
+
+  /// 残酷な描写あり作品のみを対象とするか。
   bool iszankoku = false;
+
+  /// 異世界転生作品のみを対象とするか。
   bool istensei = false;
+
+  /// 異世界転移作品のみを対象とするか。
   bool istenni = false;
+
+  /// 異世界転生・転移作品のみを対象とするか。
   bool istt = false;
+
+  /// R15作品を除外するか。
   bool notr15 = false;
+
+  /// ボーイズラブ作品を除外するか。
   bool notbl = false;
+
+  /// ガールズラブ作品を除外するか。
   bool notgl = false;
+
+  /// 残酷な描写あり作品を除外するか。
   bool notzankoku = false;
+
+  /// 異世界転生作品を除外するか。
   bool nottensei = false;
+
+  /// 異世界転移作品を除外するか。
   bool nottenni = false;
+
+  /// 最小文字数。
   int? minlen;
+
+  /// 最大文字数。
   int? maxlen;
+
+  /// 文字数範囲。
+  ///
+  /// `minlen` または `maxlen` と併用はできない。
+  /// 範囲指定する場合は、最小文字数と最大文字数をハイフン(-)記号で区切る。
   String? length;
+
+  /// 会話率範囲。
+  ///
+  /// 範囲指定する場合は、最低数と最大数をハイフン(-)記号で区切る。
   String? kaiwaritu;
+
+  /// 挿絵数範囲。
+  ///
+  /// 範囲指定する場合は、最小数と最大数をハイフン(-)記号で区切る。
   String? sasie;
+
+  /// 最小読了時間(分単位)。
   int? mintime;
+
+  /// 最大読了時間(分単位)。
   int? maxtime;
+
+  /// 読了時間範囲。
+  ///
+  /// `mintime` または `maxtime` と併用はできない。
+  /// 範囲指定する場合は、最小読了時間と最大読了時間をハイフン(-)記号で区切る。
   String? time;
+
+  /// Nコード。
+  ///
+  /// ハイフン(-)記号で区切ればOR検索ができる。
   List<String>? ncode;
+
+  /// 作品タイプ。
+  ///
+  /// * `t` - 短編
+  /// * `r` - 連載中
+  /// * `er` - 完結済連載作品
+  /// * `re` - すべての連載作品(連載中および完結済)
+  /// * `ter` - 短編と完結済連載作品
   String? type;
+
+  /// 文体。
+  ///
+  /// ハイフン(-)記号で区切ればOR検索ができる。
+  /// * `1` - 字下げされておらず、連続改行が多い作品
+  /// * `2` - 字下げされていないが、改行数は平均な作品
+  /// * `4` - 字下げが適切だが、連続改行が多い作品
+  /// * `6` - 字下げが適切でかつ改行数も平均な作品
   List<int>? buntai;
+
+  /// 長期連載停止中作品に関する指定。
+  ///
+  /// * `1` - 長期連載停止中を除きます
+  /// * `2` - 長期連載停止中のみ取得します
   int? stop;
+
+  /// 最終掲載日で抽出。
+  ///
+  /// * `thisweek` - 今週
+  /// * `lastweek` - 先週
+  /// * `sevenday` - 過去7日間
+  /// * `thismonth` - 今月
+  /// * `lastmonth` - 先月
+  /// * `unixtime-unixtime` - UNIXタイムスタンプで範囲指定
   String? lastup;
+
+  /// 最終更新日で抽出。
+  ///
+  /// * `thisweek` - 今週
+  /// * `lastweek` - 先週
+  /// * `sevenday` - 過去7日間
+  /// * `thismonth` - 今月
+  /// * `lastmonth` - 先月
+  /// * `unixtime-unixtime` - UNIXタイムスタンプで範囲指定
   String? lastupdate;
+
+  /// ピックアップ作品のみを対象とするか。
   bool ispickup = false;
+
+  /// 出力順序。
+  ///
+  /// デフォルトは `new` (新着更新順)。
+  /// [出力順序一覧](https://dev.syosetu.com/man/api/#order)
   String order = 'new';
+
+  /// 最大出力数。
+  ///
+  /// 1～500。デフォルトは20。
   int lim = 20;
+
+  /// 表示開始位置。
+  ///
+  /// 1～2000。デフォルトは1。
   int st = 1;
 
+  /// [NovelSearchQuery]をMapに変換するメソッド。
+  ///
+  /// なろう小説APIのGETパラメータ形式に変換する。
   Map<String, dynamic> toMap() {
     return {
       'word': word,
