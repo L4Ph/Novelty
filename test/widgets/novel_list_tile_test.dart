@@ -235,7 +235,7 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             home: Scaffold(
-              body: NovelListTile(item: item, isRanking: false),
+              body: NovelListTile(item: item),
             ),
           ),
         );

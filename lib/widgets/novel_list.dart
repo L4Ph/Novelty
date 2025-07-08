@@ -62,4 +62,3 @@ class NovelList extends ConsumerWidget {
     );
   }
 }
-

@@ -15,7 +15,8 @@ class Episode {
     this.novelUpdatedAt,
   });
 
-  factory Episode.fromJson(Map<String, dynamic> json) => _$EpisodeFromJson(json);
+  factory Episode.fromJson(Map<String, dynamic> json) =>
+      _$EpisodeFromJson(json);
   final String? subtitle;
   final String? url;
   final String? update;

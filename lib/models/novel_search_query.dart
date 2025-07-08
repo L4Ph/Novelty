@@ -1,3 +1,5 @@
+// ignore_for_file: omit_obvious_property_types
+
 class NovelSearchQuery {
   NovelSearchQuery({this.ncode});
   String? word;
