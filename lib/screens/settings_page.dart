@@ -16,12 +16,26 @@ class SettingsPage extends ConsumerWidget {
           children: [
             _buildFontSetting(context, ref, settings),
             _buildFontSizeSetting(context, ref, settings),
+            _buildVerticalSetting(context, ref, settings),
             // _buildThemeColorSetting(context, ref, settings),
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
+    );
+  }
+
+  Widget _buildVerticalSetting(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettings settings,
+  ) {
+    return SwitchListTile(
+      title: const Text('縦書き'),
+      value: settings.isVertical,
+      onChanged: (value) =>
+          ref.read(settingsProvider.notifier).setIsVertical(value),
     );
   }
 
