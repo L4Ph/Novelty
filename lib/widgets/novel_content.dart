@@ -3,16 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:novelty/widgets/tategaki.dart';
 import 'package:riverpod/src/providers/future_provider.dart';
 
 final apiServiceProvider = Provider<ApiService>((ref) => ApiService());
 
 final FutureProviderFamily<Episode, ({int episode, String ncode})>
-episodeProvider = FutureProvider.autoDispose
-    .family<Episode, ({String ncode, int episode})>((ref, params) async {
-      final apiService = ref.read(apiServiceProvider);
-      return apiService.fetchEpisode(params.ncode, params.episode);
-    });
+    episodeProvider = FutureProvider.autoDispose
+        .family<Episode, ({String ncode, int episode})>((ref, params) async {
+  final apiService = ref.read(apiServiceProvider);
+  return apiService.fetchEpisode(params.ncode, params.episode);
+});
 
 class NovelContent extends ConsumerWidget {
   const NovelContent({
@@ -32,14 +33,14 @@ class NovelContent extends ConsumerWidget {
     return settings.when(
       data: (settings) {
         if (initialData != null) {
-          return _buildContent(settings, initialData!);
+          return _buildContent(context, settings, initialData!);
         }
 
         final episodeAsync = ref.watch(
           episodeProvider((ncode: ncode, episode: episode)),
         );
         return episodeAsync.when(
-          data: (episode) => _buildContent(settings, episode),
+          data: (episode) => _buildContent(context, settings, episode),
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Center(child: Text('Error: $err')),
         );
@@ -49,15 +50,40 @@ class NovelContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(AppSettings settings, Episode episode) {
-    final content = episode.body;
+  Widget _buildContent(
+    BuildContext context,
+    AppSettings settings,
+    Episode episode,
+  ) {
+    final content = episode.body?.replaceAll(RegExp(r'<br>'), '\n') ?? '';
+    final textStyle = settings.selectedFontTheme.copyWith(
+      fontSize: settings.fontSize,
+    );
+
+    if (settings.isVertical) {
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.all(16),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Tategaki(
+                content,
+                style: textStyle,
+                maxHeight: constraints.maxHeight,
+              );
+            },
+          ),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Text(
-        content?.replaceAll(RegExp(r'<br>'), '\n') ?? '',
-        style: settings.selectedFontTheme.copyWith(
-          fontSize: settings.fontSize,
-        ),
+        content,
+        style: textStyle,
       ),
     );
   }

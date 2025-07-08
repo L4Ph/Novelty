@@ -75,6 +75,21 @@ void main() {
       expect(settings.fontSize, equals(20.0));
     });
 
+    test('should update isVertical setting', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      // Wait for initial state to load
+      await container.read(settingsProvider.future);
+
+      final settingsNotifier = container.read(settingsProvider.notifier);
+      await settingsNotifier.setIsVertical(true);
+
+      final asyncValue = container.read(settingsProvider);
+      expect(asyncValue.hasValue, isTrue);
+      final settings = asyncValue.value!;
+      expect(settings.isVertical, isTrue);
+    });
+
     test('should handle invalid font gracefully', () async {
       SharedPreferences.setMockInitialValues({});
 
@@ -110,25 +125,30 @@ void main() {
       const settings = AppSettings(
         selectedFont: 'Noto Sans JP',
         fontSize: 16,
+        isVertical: false,
       );
 
       expect(settings.selectedFont, equals('Noto Sans JP'));
       expect(settings.fontSize, equals(16.0));
+      expect(settings.isVertical, isFalse);
     });
 
     test('should create copy with updated values', () {
       const originalSettings = AppSettings(
         selectedFont: 'Noto Sans JP',
         fontSize: 16,
+        isVertical: false,
       );
 
       final updatedSettings = originalSettings.copyWith(
         selectedFont: 'IBM Plex Sans JP',
         fontSize: 18,
+        isVertical: true,
       );
 
       expect(updatedSettings.selectedFont, equals('IBM Plex Sans JP'));
       expect(updatedSettings.fontSize, equals(18.0));
+      expect(updatedSettings.isVertical, isTrue);
     });
 
     test('should return correct text style for each font', () {
@@ -146,6 +166,7 @@ void main() {
         final settings = AppSettings(
           selectedFont: font,
           fontSize: 16,
+          isVertical: false,
         );
 
         final textStyle = settings.selectedFontTheme;
