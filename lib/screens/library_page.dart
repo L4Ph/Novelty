@@ -49,10 +49,12 @@ class LibraryPage extends ConsumerWidget {
                                 .read(appDatabaseProvider)
                                 .deleteNovel(novel.ncode);
                             ref.invalidate(libraryNovelsProvider);
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('ライブラリから削除しました')),
-                            );
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('ライブラリから削除しました')),
+                              );
+                            }
                           },
                           child: const Text('削除'),
                         ),

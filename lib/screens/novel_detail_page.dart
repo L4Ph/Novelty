@@ -9,51 +9,55 @@ import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/widgets/novel_content.dart';
 import 'package:riverpod/src/providers/future_provider.dart';
 
-final FutureProviderFamily<NovelInfo, String> novelInfoProvider = FutureProvider.autoDispose.family<NovelInfo, String>((
-  ref,
-  ncode,
-) async {
-  final apiService = ref.read(apiServiceProvider);
-  final db = ref.watch(appDatabaseProvider);
+final FutureProviderFamily<NovelInfo, String> novelInfoProvider = FutureProvider
+    .autoDispose
+    .family<NovelInfo, String>((
+      ref,
+      ncode,
+    ) async {
+      final apiService = ref.read(apiServiceProvider);
+      final db = ref.watch(appDatabaseProvider);
 
-  // まずDBから取得試行
-  final cachedNovel = await db.getNovel(ncode);
-  if (cachedNovel != null) {
-    // TODO: キャッシュ有効期限チェック
-    // return NovelInfo.fromDb(cachedNovel);
-  }
+      // まずDBから取得試行
+      final cachedNovel = await db.getNovel(ncode);
+      if (cachedNovel != null) {
+        // TODO: キャッシュ有効期限チェック
+        // return NovelInfo.fromDb(cachedNovel);
+      }
 
-  // なければAPIから取得
-  final novelInfo = await apiService.fetchNovelInfo(ncode);
-  await db.insertNovel(novelInfo.toDbCompanion());
+      // なければAPIから取得
+      final novelInfo = await apiService.fetchNovelInfo(ncode);
+      await db.insertNovel(novelInfo.toDbCompanion());
 
-  // 履歴に追加
-  await db.addToHistory(
-    HistoryCompanion(
-      ncode: drift.Value(ncode),
-      title: drift.Value(novelInfo.title),
-      writer: drift.Value(novelInfo.writer),
-      viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
-    ),
-  );
+      // 履歴に追加
+      await db.addToHistory(
+        HistoryCompanion(
+          ncode: drift.Value(ncode),
+          title: drift.Value(novelInfo.title),
+          writer: drift.Value(novelInfo.writer),
+          viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
+        ),
+      );
 
-  return novelInfo;
-});
+      return novelInfo;
+    });
 
-final FutureProviderFamily<Episode, String> shortStoryEpisodeProvider = FutureProvider.autoDispose
-    .family<Episode, String>((ref, ncode) async {
+final FutureProviderFamily<Episode, String> shortStoryEpisodeProvider =
+    FutureProvider.autoDispose.family<Episode, String>((ref, ncode) async {
       final apiService = ref.read(apiServiceProvider);
       return apiService.fetchEpisode(ncode, 1);
     });
 
-final FutureProviderFamily<bool, String> isInLibraryProvider = FutureProvider.autoDispose.family<bool, String>((
-  ref,
-  ncode,
-) async {
-  final db = ref.watch(appDatabaseProvider);
-  final novel = await db.getNovel(ncode);
-  return novel != null;
-});
+final FutureProviderFamily<bool, String> isInLibraryProvider = FutureProvider
+    .autoDispose
+    .family<bool, String>((
+      ref,
+      ncode,
+    ) async {
+      final db = ref.watch(appDatabaseProvider);
+      final novel = await db.getNovel(ncode);
+      return novel != null;
+    });
 
 class NovelDetailPage extends ConsumerWidget {
   const NovelDetailPage({super.key, required this.ncode});
@@ -231,7 +235,8 @@ class NovelDetailPage extends ConsumerWidget {
         );
       }
     }
-    ref.invalidate(isInLibraryProvider(ncode));
-    ref.invalidate(libraryNovelsProvider);
+    ref
+      ..invalidate(isInLibraryProvider(ncode))
+      ..invalidate(libraryNovelsProvider);
   }
 }

@@ -31,21 +31,18 @@ void main() {
 
       expect(settings.selectedFont, equals('Noto Sans JP'));
       expect(settings.fontSize, equals(16.0));
-      expect(settings.seedColor.value, equals(Colors.blue.value));
     });
 
     test('should load saved preferences', () async {
       SharedPreferences.setMockInitialValues({
         'selected_font': 'IBM Plex Sans JP',
         'font_size': 18.0,
-        'seed_color': Colors.red.value,
       });
 
       final settings = await container.read(settingsProvider.future);
 
       expect(settings.selectedFont, equals('IBM Plex Sans JP'));
       expect(settings.fontSize, equals(18.0));
-      expect(settings.seedColor.value, equals(Colors.red.value));
     });
 
     test('should update font setting', () async {
@@ -53,7 +50,7 @@ void main() {
 
       // Wait for initial state to load
       await container.read(settingsProvider.future);
-      
+
       final settingsNotifier = container.read(settingsProvider.notifier);
       await settingsNotifier.setSelectedFont('M PLUS 1p');
 
@@ -68,7 +65,7 @@ void main() {
 
       // Wait for initial state to load
       await container.read(settingsProvider.future);
-      
+
       final settingsNotifier = container.read(settingsProvider.notifier);
       await settingsNotifier.setFontSize(20);
 
@@ -78,43 +75,16 @@ void main() {
       expect(settings.fontSize, equals(20.0));
     });
 
-    test('should update seed color setting', () async {
-      SharedPreferences.setMockInitialValues({});
-
-      // Wait for initial state to load
-      await container.read(settingsProvider.future);
-      
-      final settingsNotifier = container.read(settingsProvider.notifier);
-      await settingsNotifier.setAndSaveSeedColor(Colors.green);
-
-      final asyncValue = container.read(settingsProvider);
-      expect(asyncValue.hasValue, isTrue);
-      final settings = asyncValue.value!;
-      expect(settings.seedColor.value, equals(Colors.green.value));
-    });
-
     test('should handle invalid font gracefully', () async {
       SharedPreferences.setMockInitialValues({});
 
       final settingsNotifier = container.read(settingsProvider.notifier);
-      
+
       // Test that invalid font doesn't crash the app
       expect(
         () => settingsNotifier.setSelectedFont('Invalid Font'),
         returnsNormally,
       );
-    });
-
-    test('should generate correct color scheme', () async {
-      SharedPreferences.setMockInitialValues({
-        'seed_color': Colors.purple.value,
-      });
-
-      final settings = await container.read(settingsProvider.future);
-      final colorScheme = settings.colorScheme;
-
-      expect(colorScheme, isA<ColorScheme>());
-      expect(colorScheme.primary.value, isNot(equals(Colors.purple.value)));
     });
 
     test('should generate correct text style for each font', () async {
@@ -140,19 +110,16 @@ void main() {
       const settings = AppSettings(
         selectedFont: 'Noto Sans JP',
         fontSize: 16,
-        seedColor: Colors.blue,
       );
 
       expect(settings.selectedFont, equals('Noto Sans JP'));
       expect(settings.fontSize, equals(16.0));
-      expect(settings.seedColor, equals(Colors.blue));
     });
 
     test('should create copy with updated values', () {
       const originalSettings = AppSettings(
         selectedFont: 'Noto Sans JP',
         fontSize: 16,
-        seedColor: Colors.blue,
       );
 
       final updatedSettings = originalSettings.copyWith(
@@ -162,7 +129,6 @@ void main() {
 
       expect(updatedSettings.selectedFont, equals('IBM Plex Sans JP'));
       expect(updatedSettings.fontSize, equals(18.0));
-      expect(updatedSettings.seedColor, equals(Colors.blue));
     });
 
     test('should return correct text style for each font', () {
@@ -180,7 +146,6 @@ void main() {
         final settings = AppSettings(
           selectedFont: font,
           fontSize: 16,
-          seedColor: Colors.blue,
         );
 
         final textStyle = settings.selectedFontTheme;
