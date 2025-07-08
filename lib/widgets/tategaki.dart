@@ -17,6 +17,7 @@ class Tategaki extends StatelessWidget {
   Widget build(BuildContext context) {
     final splitText = text.split('\n');
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final s in splitText) _textBox(s.runes),
       ],
