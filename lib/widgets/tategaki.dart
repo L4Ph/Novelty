@@ -3,16 +3,17 @@ import 'package:novelty/utils/vertical_rotated.dart';
 
 class Tategaki extends StatelessWidget {
   const Tategaki(
-    this.text,
-    {
+    this.text, {
     super.key,
     this.style,
     this.space = 12,
+    required this.maxHeight,
   });
 
   final String text;
   final TextStyle? style;
   final double space;
+  final double maxHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +26,7 @@ class Tategaki extends StatelessWidget {
       text: text,
       textStyle: effectiveTextStyle,
       space: space,
+      maxHeight: maxHeight,
     );
 
     return CustomPaint(
@@ -39,6 +41,7 @@ class _TategakiPainter extends CustomPainter {
     required this.text,
     required this.textStyle,
     required this.space,
+    required this.maxHeight,
   }) {
     _calculateMetrics();
   }
@@ -46,29 +49,30 @@ class _TategakiPainter extends CustomPainter {
   final String text;
   final TextStyle textStyle;
   final double space;
+  final double maxHeight;
 
-  late final List<List<TextPainter>> _linesPainters;
-  late final List<double> _lineWidths;
+  late final List<List<TextPainter>> _painters;
+  late final List<double> _columnWidths;
   late final Size size;
 
   void _calculateMetrics() {
-    _linesPainters = [];
-    _lineWidths = [];
+    _painters = [];
+    _columnWidths = [];
     var totalWidth = 0.0;
-    var maxHeight = 0.0;
 
     final lines = text.split('\n');
 
     for (final line in lines) {
       if (line.isEmpty) {
-        _lineWidths.add(0);
-        _linesPainters.add([]);
+        _painters.add([]);
+        _columnWidths.add(0);
+        totalWidth += space;
         continue;
       }
 
-      final charPainters = <TextPainter>[];
-      var maxCharWidth = 0.0;
-      var currentHeight = 0.0;
+      var currentColumnPainters = <TextPainter>[];
+      var currentColumnHeight = 0.0;
+      var currentColumnWidth = 0.0;
 
       for (final char in line.runes) {
         final character = String.fromCharCode(char);
@@ -78,19 +82,29 @@ class _TategakiPainter extends CustomPainter {
           text: TextSpan(text: rotatedChar, style: textStyle),
           textDirection: TextDirection.ltr,
         )..layout();
-        charPainters.add(textPainter);
 
-        if (textPainter.width > maxCharWidth) {
-          maxCharWidth = textPainter.width;
+        if (currentColumnHeight + textPainter.height > maxHeight &&
+            currentColumnPainters.isNotEmpty) {
+          _painters.add(currentColumnPainters);
+          _columnWidths.add(currentColumnWidth);
+          totalWidth += currentColumnWidth + space;
+
+          currentColumnPainters = [];
+          currentColumnHeight = 0.0;
+          currentColumnWidth = 0.0;
         }
-        currentHeight += textPainter.height;
+
+        currentColumnPainters.add(textPainter);
+        currentColumnHeight += textPainter.height;
+        if (textPainter.width > currentColumnWidth) {
+          currentColumnWidth = textPainter.width;
+        }
       }
 
-      _lineWidths.add(maxCharWidth);
-      _linesPainters.add(charPainters);
-      totalWidth += maxCharWidth + space;
-      if (currentHeight > maxHeight) {
-        maxHeight = currentHeight;
+      if (currentColumnPainters.isNotEmpty) {
+        _painters.add(currentColumnPainters);
+        _columnWidths.add(currentColumnWidth);
+        totalWidth += currentColumnWidth + space;
       }
     }
 
@@ -99,24 +113,26 @@ class _TategakiPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    var nextLineLeftBoundary = size.width;
+    var nextColumnX = size.width;
 
-    for (var i = 0; i < _linesPainters.length; i++) {
-      final charPainters = _linesPainters[i];
-      final lineWidth = _lineWidths[i];
+    for (var i = 0; i < _painters.length; i++) {
+      final charPainters = _painters[i];
+      final columnWidth = _columnWidths[i];
 
-      final lineTotalWidth = charPainters.isEmpty ? 0 : lineWidth + space;
-      final currentLineLeftBoundary = nextLineLeftBoundary - lineTotalWidth;
+      final columnTotalWidth = columnWidth + space;
+      final currentColumnX = nextColumnX - columnTotalWidth;
 
       if (charPainters.isNotEmpty) {
         var dy = 0.0;
         for (final textPainter in charPainters) {
-          textPainter.paint(canvas, Offset(currentLineLeftBoundary + space, dy));
+          final dx =
+              currentColumnX + space + (columnWidth - textPainter.width) / 2;
+          textPainter.paint(canvas, Offset(dx, dy));
           dy += textPainter.height;
         }
       }
 
-      nextLineLeftBoundary = currentLineLeftBoundary;
+      nextColumnX = currentColumnX;
     }
   }
 
@@ -124,6 +140,7 @@ class _TategakiPainter extends CustomPainter {
   bool shouldRepaint(covariant _TategakiPainter oldDelegate) {
     return text != oldDelegate.text ||
         textStyle != oldDelegate.textStyle ||
-        space != oldDelegate.space;
+        space != oldDelegate.space ||
+        maxHeight != oldDelegate.maxHeight;
   }
 }

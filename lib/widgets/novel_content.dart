@@ -66,9 +66,14 @@ class NovelContent extends ConsumerWidget {
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.all(16),
-          child: Tategaki(
-            content,
-            style: textStyle,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Tategaki(
+                content,
+                style: textStyle,
+                maxHeight: constraints.maxHeight,
+              );
+            },
           ),
         ),
       );
