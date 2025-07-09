@@ -110,15 +110,17 @@ class NovelPage extends ConsumerWidget {
                   final episodeAsync = ref.watch(
                     episodeProvider(ncode: ncode, episode: episodeNum),
                   );
-                  return episodeAsync.when(
-                    data: (ep) => NovelContent(
-                      ncode: ncode,
-                      episode: episodeNum,
-                      initialData: ep,
+                  return RepaintBoundary(
+                    child: episodeAsync.when(
+                      data: (ep) => NovelContent(
+                        ncode: ncode,
+                        episode: episodeNum,
+                        initialData: ep,
+                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, s) => Center(child: Text('Error: $e')),
                     ),
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, s) => Center(child: Text('Error: $e')),
                   );
                 },
               ),

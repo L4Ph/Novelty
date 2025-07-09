@@ -68,10 +68,12 @@ class NovelContent extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              return Tategaki(
-                content,
-                style: textStyle,
-                maxHeight: constraints.maxHeight,
+              return RepaintBoundary(
+                child: Tategaki(
+                  content,
+                  style: textStyle,
+                  maxHeight: constraints.maxHeight,
+                ),
               );
             },
           ),
@@ -81,9 +83,11 @@ class NovelContent extends ConsumerWidget {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Text(
-        content,
-        style: textStyle,
+      child: RepaintBoundary(
+        child: Text(
+          content,
+          style: textStyle,
+        ),
       ),
     );
   }

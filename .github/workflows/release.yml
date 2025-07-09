@@ -24,12 +24,33 @@ jobs:
       # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-tags: true
 
-      # 2. Determine new version
+      # 2. Generate GitHub App token
+      - name: Generate GitHub App token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      # 3. Get GitHub App info
+      - name: Get GitHub App info
+        id: app_info
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          APP_SLUG=$(gh api /app --jq .slug)
+          USER_ID=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
+          echo "app_slug=${APP_SLUG}" >> $GITHUB_OUTPUT
+          echo "user_id=${USER_ID}" >> $GITHUB_OUTPUT
+
+      # 4. Determine new version
       - name: Determine new version
         id: versions
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
           PREVIOUS_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || echo "v0.0.0")
           VERSION=${PREVIOUS_TAG#v}
@@ -57,11 +78,11 @@ jobs:
           echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
           echo "VERSION_NAME=$NEW_VERSION" >> $GITHUB_ENV
 
-      # 3. Update version in pubspec.yaml
+      # 5. Update version in pubspec.yaml
       - name: Update version in pubspec.yaml
         run: yq -i '.version = "${{ steps.versions.outputs.new_version }}+${{ github.run_number }}"' pubspec.yaml
 
-      # 4. Set up Flutter environment and build
+      # 6. Set up Flutter environment and build
       - name: Set up Flutter
         run: |
           curl -fsSL https://fvm.app/install.sh | bash
@@ -86,19 +107,28 @@ jobs:
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          
-      # 5. Tag and Push
-      - name: Tag and Push
-        run: |
-          git config --global user.name "${{ github.actor }}"
-          git config --global user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
-          git tag ${{ steps.versions.outputs.new_tag }}
-          git push origin ${{ steps.versions.outputs.new_tag }}
 
-      # 6. Create GitHub Release (as a draft)
+      # 7. Commit and push version update
+      - name: Commit and push version update
+        run: |
+          git config user.name "${{ steps.app_info.outputs.app_slug }}[bot]"
+          git config user.email "${{ steps.app_info.outputs.user_id }}+${{ steps.app_info.outputs.app_slug }}[bot]@users.noreply.github.com"
+          git add pubspec.yaml
+          git commit -m "chore(release): bump version to ${{ steps.versions.outputs.new_version }}"
+          git push https://x-access-token:${{ steps.generate_token.outputs.token }}@github.com/${{ github.repository }} HEAD:main
+
+      # 8. Tag and Push Tag
+      - name: Tag and Push Tag
+        run: |
+          git config user.name "${{ steps.app_info.outputs.app_slug }}[bot]"
+          git config user.email "${{ steps.app_info.outputs.user_id }}+${{ steps.app_info.outputs.app_slug }}[bot]@users.noreply.github.com"
+          git tag ${{ steps.versions.outputs.new_tag }} -m "Release ${{ steps.versions.outputs.new_tag }}"
+          git push https://x-access-token:${{ steps.generate_token.outputs.token }}@github.com/${{ github.repository }} ${{ steps.versions.outputs.new_tag }}
+
+      # 9. Create GitHub Release (as a draft)
       - name: Create GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
           gh release create "${{ steps.versions.outputs.new_tag }}" \
             --title "Release ${{ steps.versions.outputs.new_tag }}" \

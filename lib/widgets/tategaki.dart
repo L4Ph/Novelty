@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:novelty/utils/vertical_rotated.dart';
 
-class Tategaki extends StatelessWidget {
+class _TategakiMetrics {
+  const _TategakiMetrics({
+    required this.painters,
+    required this.columnWidths,
+    required this.size,
+  });
+
+  final List<List<TextPainter>> painters;
+  final List<double> columnWidths;
+  final Size size;
+}
+
+class Tategaki extends StatefulWidget {
   const Tategaki(
     this.text, {
     super.key,
@@ -16,57 +28,44 @@ class Tategaki extends StatelessWidget {
   final double maxHeight;
 
   @override
-  Widget build(BuildContext context) {
-    if (text.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final effectiveTextStyle = style ?? DefaultTextStyle.of(context).style;
-    final painter = _TategakiPainter(
-      text: text,
-      textStyle: effectiveTextStyle,
-      space: space,
-      maxHeight: maxHeight,
-    );
-
-    return CustomPaint(
-      size: painter.size,
-      painter: painter,
-    );
-  }
+  State<Tategaki> createState() => _TategakiState();
 }
 
-class _TategakiPainter extends CustomPainter {
-  _TategakiPainter({
-    required this.text,
-    required this.textStyle,
-    required this.space,
-    required this.maxHeight,
-  }) {
+class _TategakiState extends State<Tategaki> {
+  _TategakiMetrics? _metrics;
+
+  @override
+  void initState() {
+    super.initState();
     _calculateMetrics();
   }
 
-  final String text;
-  final TextStyle textStyle;
-  final double space;
-  final double maxHeight;
-
-  late final List<List<TextPainter>> _painters;
-  late final List<double> _columnWidths;
-  late final Size size;
+  @override
+  void didUpdateWidget(Tategaki oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.text != oldWidget.text ||
+        widget.style != oldWidget.style ||
+        widget.space != oldWidget.space ||
+        widget.maxHeight != oldWidget.maxHeight) {
+      _calculateMetrics();
+    }
+  }
 
   void _calculateMetrics() {
-    _painters = [];
-    _columnWidths = [];
+    final effectiveTextStyle =
+        widget.style ?? DefaultTextStyle.of(context).style;
+
+    final painters = <List<TextPainter>>[];
+    final columnWidths = <double>[];
     var totalWidth = 0.0;
 
-    final lines = text.split('\n');
+    final lines = widget.text.split('\n');
 
     for (final line in lines) {
       if (line.isEmpty) {
-        _painters.add([]);
-        _columnWidths.add(0);
-        totalWidth += space;
+        painters.add([]);
+        columnWidths.add(0);
+        totalWidth += widget.space;
         continue;
       }
 
@@ -79,15 +78,15 @@ class _TategakiPainter extends CustomPainter {
         final rotatedChar = VerticalRotated.map[character] ?? character;
 
         final textPainter = TextPainter(
-          text: TextSpan(text: rotatedChar, style: textStyle),
+          text: TextSpan(text: rotatedChar, style: effectiveTextStyle),
           textDirection: TextDirection.ltr,
         )..layout();
 
-        if (currentColumnHeight + textPainter.height > maxHeight &&
+        if (currentColumnHeight + textPainter.height > widget.maxHeight &&
             currentColumnPainters.isNotEmpty) {
-          _painters.add(currentColumnPainters);
-          _columnWidths.add(currentColumnWidth);
-          totalWidth += currentColumnWidth + space;
+          painters.add(currentColumnPainters);
+          columnWidths.add(currentColumnWidth);
+          totalWidth += currentColumnWidth + widget.space;
 
           currentColumnPainters = [];
           currentColumnHeight = 0.0;
@@ -102,22 +101,53 @@ class _TategakiPainter extends CustomPainter {
       }
 
       if (currentColumnPainters.isNotEmpty) {
-        _painters.add(currentColumnPainters);
-        _columnWidths.add(currentColumnWidth);
-        totalWidth += currentColumnWidth + space;
+        painters.add(currentColumnPainters);
+        columnWidths.add(currentColumnWidth);
+        totalWidth += currentColumnWidth + widget.space;
       }
     }
 
-    size = Size(totalWidth, maxHeight);
+    setState(() {
+      _metrics = _TategakiMetrics(
+        painters: painters,
+        columnWidths: columnWidths,
+        size: Size(totalWidth, widget.maxHeight),
+      );
+    });
   }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.text.isEmpty || _metrics == null) {
+      return const SizedBox.shrink();
+    }
+
+    return CustomPaint(
+      size: _metrics!.size,
+      painter: _TategakiPainter(
+        metrics: _metrics!,
+        space: widget.space,
+      ),
+    );
+  }
+}
+
+class _TategakiPainter extends CustomPainter {
+  const _TategakiPainter({
+    required this.metrics,
+    required this.space,
+  });
+
+  final _TategakiMetrics metrics;
+  final double space;
 
   @override
   void paint(Canvas canvas, Size size) {
     var nextColumnX = size.width;
 
-    for (var i = 0; i < _painters.length; i++) {
-      final charPainters = _painters[i];
-      final columnWidth = _columnWidths[i];
+    for (var i = 0; i < metrics.painters.length; i++) {
+      final charPainters = metrics.painters[i];
+      final columnWidth = metrics.columnWidths[i];
 
       final columnTotalWidth = columnWidth + space;
       final currentColumnX = nextColumnX - columnTotalWidth;
@@ -138,9 +168,6 @@ class _TategakiPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _TategakiPainter oldDelegate) {
-    return text != oldDelegate.text ||
-        textStyle != oldDelegate.textStyle ||
-        space != oldDelegate.space ||
-        maxHeight != oldDelegate.maxHeight;
+    return metrics != oldDelegate.metrics || space != oldDelegate.space;
   }
 }
