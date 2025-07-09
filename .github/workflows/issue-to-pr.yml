@@ -1,11 +1,24 @@
 name: Create PR from Issue
 
+
 on:
-  issues:
-    types: [assigned]
+  issue_comment:
+    types: [created]
+  # workflow_dispatch:
+  #   inputs:
+  #     pr_number:
+  #       description: 'PR number to review'
+  #       required: true
+  #       type: number
 
 jobs:
-  create-pr-from-issue:
+  run_on_command:
+    if: >
+      github.event_name == 'issue_comment' &&
+      !github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@gemini-cli /assign') &&
+      github.event.comment.author_association == 'OWNER'
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -52,26 +65,14 @@ jobs:
         with:
           token: ${{ steps.generate_token.outputs.token }}
 
-      # 5. Create Branch (only if the bot is correct)
-      - name: Create Branch
-        if: steps.check_assignee.outputs.proceed == 'true'
-        id: branch
-        run: |
-          # Sanitize the issue title to create a valid branch name
-          ISSUE_TITLE="${{ github.event.issue.title }}"
-          SANITIZED_TITLE=$(echo "$ISSUE_TITLE" | tr -cs 'a-zA-Z0-9' '-' | sed -e 's/--/-/g' -e 's/^-//' -e 's/-$//' | tr '[:upper:]' '[:lower:]')
-          BRANCH_NAME="gemini/issue-${{ github.event.issue.number }}-${SANITIZED_TITLE}"
-          # Truncate branch name to be safe
-          BRANCH_NAME=$(echo $BRANCH_NAME | cut -c 1-60)
-          echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
-          git checkout -b $BRANCH_NAME
-
       - name: Set up Flutter
         run: |
           curl -fsSL https://fvm.app/install.sh | bash
           fvm install
-      - name: Get Flutter packages
-        run: fvm flutter pub get
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       # 6. Create file from issue (only if the bot is correct)
       - name: Create file from issue
@@ -102,8 +103,6 @@ jobs:
 
             **重要: コミットとプッシュ**
             ```sh
-            git config user.name "${{ env.APP_BOT_NAME }}"
-            git config user.email "${{ env.USER_ID }}+${{ env.APP_BOT_NAME }}@users.noreply.github.com"
             git add .
             git commit -m "{ 今回の変更内容を記述してください。 }"
             git push https://x-access-token:${{ env.GITHUB_TOKEN }}@github.com/${{ env.REPOSITORY }} gemini/${{env.ISSUE_NUMBER}}-{branch_name}
