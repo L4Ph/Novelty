@@ -1,0 +1,119 @@
+name: Create PR from Issue
+
+on:
+  issues:
+    types: [assigned]
+
+jobs:
+  create-pr-from-issue:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+
+    steps:
+      # 1. Generate GitHub App token
+      - name: Generate GitHub App token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      # 2. Get GitHub App info
+      - name: Get GitHub App info
+        id: app_info
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          APP_SLUG=$(gh api /app --jq .slug)
+          USER_ID=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
+          echo "app_slug=${APP_SLUG}" >> $GITHUB_OUTPUT
+          echo "app_bot_name=${APP_SLUG}[bot]" >> $GITHUB_OUTPUT
+          echo "user_id=${USER_ID}" >> $GITHUB_OUTPUT
+
+      # 3. Check if the assignee is the app bot
+      - name: Check if assignee is the target app bot
+        id: check_assignee
+        run: |
+          if [[ "${{ github.event.assignee.login }}" == "${{ steps.app_info.outputs.app_bot_name }}" ]]; then
+            echo "Issue was assigned to the correct app bot. Proceeding."
+            echo "proceed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Issue was assigned to another user/bot (${{ github.event.assignee.login }}). Skipping."
+            echo "proceed=false" >> $GITHUB_OUTPUT
+          fi
+
+      # 4. Checkout repository (only if the bot is correct)
+      - name: Checkout repository
+        if: steps.check_assignee.outputs.proceed == 'true'
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+
+      # 5. Create Branch (only if the bot is correct)
+      - name: Create Branch
+        if: steps.check_assignee.outputs.proceed == 'true'
+        id: branch
+        run: |
+          # Sanitize the issue title to create a valid branch name
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          SANITIZED_TITLE=$(echo "$ISSUE_TITLE" | tr -cs 'a-zA-Z0-9' '-' | sed -e 's/--/-/g' -e 's/^-//' -e 's/-$//' | tr '[:upper:]' '[:lower:]')
+          BRANCH_NAME="gemini/issue-${{ github.event.issue.number }}-${SANITIZED_TITLE}"
+          # Truncate branch name to be safe
+          BRANCH_NAME=$(echo $BRANCH_NAME | cut -c 1-60)
+          echo "branch_name=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          git checkout -b $BRANCH_NAME
+
+      - name: Set up Flutter
+        run: |
+          curl -fsSL https://fvm.app/install.sh | bash
+          fvm install
+      - name: Get Flutter packages
+        run: fvm flutter pub get
+
+      # 6. Create file from issue (only if the bot is correct)
+      - name: Create file from issue
+        if: steps.check_assignee.outputs.proceed == 'true'
+        uses: google-gemini/gemini-cli-action@main
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+          APP_BOT_NAME: ${{ steps.app_info.outputs.app_bot_name }}
+          USER_ID: ${{ steps.app_info.outputs.user_id }}
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          prompt: |
+            あなたはこのリポジトリ(`${{env.REPOSITORY}}`)のメンテナです。
+
+            **重要：あなたが行うべき唯一の操作は、${{env.ISSUE_TITLE}}に対する問題の解決と、それが完了した後にコミット、プッシュし、Pull Requestを開くだけです。それ以外の操作は一切行わないでください。**
+            
+            ## タスク
+            1. `git checkout -b gemini/${{env.ISSUE_NUMBER}}-{branch_name}` という名称でブランチを作成してください。{branch_name}は、${{env.ISSUE_TITLE}}から適切な英語のPR名をつけてください。
+            2. `${{env.ISSUE_TITLE}}`というタイトルからどのような問題を解決するべきかを考えてください。${{env.ISSUE_BODY}}がある場合はこれも確認してください。
+            3. 2で確認した事項を元に、実装してください。
+            4. 作業が完了したら、`fvm flutter analyze`を実行し、エラーがないことを確認してください。今回変更したファイルに関係ないInfoについては無視してください。
+            5. コミットとプッシュを実施してください。
+            6. Pull Requestを開いてください。
+
+            **重要: コミットとプッシュ**
+            ```sh
+            git config user.name "${{ env.APP_BOT_NAME }}"
+            git config user.email "${{ env.USER_ID }}+${{ env.APP_BOT_NAME }}@users.noreply.github.com"
+            git add .
+            git commit -m "{ 今回の変更内容を記述してください。 }"
+            git push https://x-access-token:${{ env.GITHUB_TOKEN }}@github.com/${{ env.REPOSITORY }} gemini/${{env.ISSUE_NUMBER}}-{branch_name}
+
+            **重要: Pull Requestの開き方について**
+            ```sh
+            gh pr create \
+              --title "#${{ env.ISSUE_NUMBER }} - { 今回の変更内容の要約をPull Requestのタイトルとして成立するように記述してください。 }" \
+              --body "Closes #${{ env.ISSUE_NUMBER }} \
+              { 今回の変更でなにを実施したのか、その詳細を箇条書きで記述してください。 }" \
+              --base main \
+              --head gemini/${{env.ISSUE_NUMBER}}-{branch_name} \
+              --assignee "@me"

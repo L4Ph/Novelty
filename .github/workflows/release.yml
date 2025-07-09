@@ -29,8 +29,8 @@ jobs:
 
       # 2. Generate GitHub App token
       - name: Generate GitHub App token
-        id: generate_token
-        uses: tibdex/github-app-token@v2
+        id: generate-token
+        uses: actions/create-github-app-token@v2
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
