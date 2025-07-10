@@ -3,15 +3,10 @@ import 'package:html/parser.dart' as parser;
 import '../models/novel_content_element.dart';
 
 List<NovelContentElement> parseNovel(String htmlString) {
-  final document = parser.parse(htmlString);
-  final honbun = document.getElementById('novel_honbun');
-
-  if (honbun == null) {
-    return [];
-  }
+  final document = parser.parseFragment(htmlString);
 
   final elements = <NovelContentElement>[];
-  for (final node in honbun.nodes) {
+  for (final node in document.nodes) {
     _parseNode(node, elements);
   }
 
@@ -37,13 +32,23 @@ void _parseNode(dom.Node node, List<NovelContentElement> elements) {
       case 'br':
         elements.add(const NewLine());
       case 'ruby':
-        final baseText = node.querySelector('rb')?.text ?? '';
+        String baseText;
         final rubyText = node.querySelector('rt')?.text ?? '';
+
+        // <rb>タグがあればそれを優先、なければ<ruby>直下のテキストノードを本文とする
+        final rbElement = node.querySelector('rb');
+        if (rbElement != null) {
+          baseText = rbElement.text;
+        } else {
+          baseText = node.nodes
+              .whereType<dom.Text>()
+              .map((e) => e.text.trim())
+              .join('');
+        }
+
         if (baseText.isNotEmpty) {
           elements.add(RubyText(baseText, rubyText));
         }
-      default:
-        // 他のタグは今のところ無視
         break;
     }
   }

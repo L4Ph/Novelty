@@ -43,11 +43,11 @@ class RubyTextWidget extends StatelessWidget {
         children: [
           Positioned(
             top: rubyPainter.height,
-            child: Text(base, style: style),
+            child: RichText(text: TextSpan(text: base, style: style)),
           ),
           Positioned(
             top: 0,
-            child: Text(ruby, style: rubyStyle),
+            child: RichText(text: TextSpan(text: ruby, style: rubyStyle)),
           ),
         ],
       ),

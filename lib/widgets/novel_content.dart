@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/models/episode.dart';
+import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/novel_parser.dart';
 import 'package:novelty/utils/settings_provider.dart';

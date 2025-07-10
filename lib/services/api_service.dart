@@ -366,7 +366,7 @@ class ApiService {
         .querySelectorAll(
           '.p-novel__text:not(.p-novel__text--preface):not(.p-novel__text--afterword)',
         )
-        .map((el) => el.text)
+        .map((el) => el.innerHtml)
         // ignore: avoid_redundant_argument_values
         .join('');
 

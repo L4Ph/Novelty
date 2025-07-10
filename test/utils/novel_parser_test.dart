@@ -6,14 +6,12 @@ void main() {
   group('NovelParser', () {
     test('基本的なHTMLを正しくパースできるか', () {
       const html = '''
-<div id="novel_honbun">
 <p>
 これはテストです。
 <ruby><rb>山田</rb><rt>やまだ</rt></ruby>太郎。
 <br>
 改行も入ります。
 </p>
-</div>
 ''';
       final result = parseNovel(html);
 
@@ -40,11 +38,9 @@ void main() {
 
     test('複雑なルビタグが混在している場合', () {
       const html = '''
-<div id="novel_honbun">
 <p>
 <ruby><rb>漢字</rb><rt>かんじ</rt></ruby>と<ruby><rb>単語</rb><rt>たんご</rt></ruby>が混在する文章。
 </p>
-</div>
 ''';
       final result = parseNovel(html);
 
@@ -54,6 +50,22 @@ void main() {
       expect(result[2], isA<RubyText>().having((e) => e.base, 'base', '単語'));
       expect(result[3], isA<PlainText>().having((e) => e.text, 'text', 'が混在する文章。'));
       expect(result[4], isA<NewLine>());
+    });
+
+    test('rpタグとrbタグなしのrubyを正しくパースできるか', () {
+      const html =
+          '<p><ruby>解放<rp>(</rp><rt>リリース</rt><rp>)</rp></ruby>する。</p>';
+      final result = parseNovel(html);
+
+      expect(result, hasLength(3));
+      expect(
+        result[0],
+        isA<RubyText>()
+            .having((e) => e.base, 'base', '解放')
+            .having((e) => e.ruby, 'ruby', 'リリース'),
+      );
+      expect(result[1], isA<PlainText>().having((e) => e.text, 'text', 'する。'));
+      expect(result[2], isA<NewLine>());
     });
   });
 }

@@ -13,17 +13,21 @@ class NovelContentView extends StatelessWidget {
     return RichText(
       text: TextSpan(
         style: defaultStyle,
-        children: _buildSpans(context, defaultStyle),
+        children: buildSpans(elements, defaultStyle),
       ),
     );
   }
 
-  List<InlineSpan> _buildSpans(BuildContext context, TextStyle style) {
+  static List<InlineSpan> buildSpans(
+    List<NovelContentElement> elements,
+    TextStyle style,
+  ) {
     final spans = <InlineSpan>[];
     for (final element in elements) {
       switch (element) {
         case PlainText():
           spans.add(TextSpan(text: element.text, style: style));
+          break;
         case RubyText():
           spans.add(
             WidgetSpan(
@@ -35,8 +39,10 @@ class NovelContentView extends StatelessWidget {
               ),
             ),
           );
+          break;
         case NewLine():
           spans.add(const TextSpan(text: '\n'));
+          break;
       }
     }
     return spans;
