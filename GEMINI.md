@@ -70,3 +70,45 @@ fvm dart analyze
 
 ## カクヨム
 (現在未実装 なろうの機能が作成後に実施)
+
+## issue番号を渡された場合
+
+### タスク
+1. GitHub CLIを使用してissueを確認してください。
+
+```sh
+gh issue list -- issueの一覧
+gh issue view $issue_number -- issueの詳細
+```
+2. issueのタイトルとissueの内容を読み込んで、ブランチを作成
+
+```sh
+git branch # mainブランチを元にcheckoutすることを確認する
+git checkout -b gemini/$issue_number-$summary_of_issue
+```
+
+3. issueのタイトルとissueの内容をもとに実装を進める。
+該当のissueをもとに実装を行ってください。
+GEMINI.mdに書いてあることは継続してください。
+
+4. 定期的にcommitを行う
+一定の変更ごとにcommitを行ってください。
+粒度は任せます。
+また、コミットメッセージは日本語で記述してください。
+```sh
+git add .
+git commit -m "$summary_of_commit_message"
+```
+
+5. pushを行う(commitが複数ある場合でもまとめて行う)
+
+```sh
+git push --set-upstream origin $current_branch_name
+```
+
+6. Pull Requestを開く
+pushが完了したら、Pull Requestを作成します。
+titleとbodyは日本語で記述してください。
+```sh
+gh pr create -a @me --base main --head $current_branch_name --title "$summary_of_pr_title" --body "$summary_of_pr"
+```
