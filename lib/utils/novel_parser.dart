@@ -1,11 +1,5 @@
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
-
-import '../models/novel_content_element.dart';
-
-import 'package:html/dom.dart' as dom;
-import 'package:html/parser.dart' as parser;
-
 import '../models/novel_content_element.dart';
 
 List<NovelContentElement> parseNovel(String htmlString) {
@@ -40,21 +34,17 @@ void _parseNode(dom.Node node, List<NovelContentElement> elements) {
         if (elements.isNotEmpty && elements.last is! NewLine) {
           elements.add(const NewLine());
         }
-        break;
       case 'br':
         elements.add(const NewLine());
-        break;
       case 'ruby':
         final baseText = node.querySelector('rb')?.text ?? '';
         final rubyText = node.querySelector('rt')?.text ?? '';
         if (baseText.isNotEmpty) {
           elements.add(RubyText(baseText, rubyText));
         }
-        break;
       default:
         // 他のタグは今のところ無視
         break;
     }
   }
 }
-
