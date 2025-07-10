@@ -200,9 +200,11 @@ void main() {
       when(mockDatabase.watchIsFavorite(testNcode))
           .thenAnswer((_) => Stream.value(true));
 
-      final result = await container.read(isFavoriteProvider(testNcode).future);
+      final listener = container.listen(isFavoriteProvider(testNcode), (previous, next) {});
+      
+      await container.pump();
 
-      expect(result, isTrue);
+      expect(listener.read(), const AsyncData(true));
       verify(mockDatabase.watchIsFavorite(testNcode)).called(1);
     });
 
@@ -212,22 +214,26 @@ void main() {
       when(mockDatabase.watchIsFavorite(testNcode))
           .thenAnswer((_) => Stream.value(false));
 
-      final result = await container.read(isFavoriteProvider(testNcode).future);
+      final listener = container.listen(isFavoriteProvider(testNcode), (previous, next) {});
 
-      expect(result, isFalse);
+      await container.pump();
+
+      expect(listener.read(), const AsyncData(false));
       verify(mockDatabase.watchIsFavorite(testNcode)).called(1);
     });
 
     test('should handle database errors', () async {
       const testNcode = 'N1234AB';
+      final exception = Exception('Database error');
 
       when(mockDatabase.watchIsFavorite(testNcode))
-          .thenAnswer((_) => Stream.error(Exception('Database error')));
+          .thenAnswer((_) => Stream.error(exception));
 
-      expect(
-        () => container.read(isFavoriteProvider(testNcode).future),
-        throwsA(isA<Exception>()),
-      );
+      final listener = container.listen(isFavoriteProvider(testNcode), (previous, next) {});
+
+      await container.pump();
+
+      expect(listener.read(), isA<AsyncError>().having((e) => e.error, 'error', exception));
     });
 
     test('should be auto-disposed when not in use', () {

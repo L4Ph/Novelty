@@ -28,11 +28,10 @@ final FutureProviderFamily<NovelInfo, String> novelInfoProvider = FutureProvider
 
       // なければAPIから取得
       final novelInfo = await apiService.fetchNovelInfo(ncode);
-      final existingNovel = await db.getNovel(ncode);
 
       var companion = novelInfo.toDbCompanion();
-      if (existingNovel?.fav != null) {
-        companion = companion.copyWith(fav: drift.Value(existingNovel!.fav));
+      if (cachedNovel?.fav != null) {
+        companion = companion.copyWith(fav: drift.Value(cachedNovel!.fav));
       }
 
       await db.insertNovel(companion);
