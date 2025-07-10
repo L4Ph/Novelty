@@ -9,11 +9,11 @@ void main() {
     const style = TextStyle(fontSize: 20, fontFamily: 'Roboto');
 
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: DefaultTextStyle(
             style: style,
-            child: RubyTextWidget(
+            child: RubySpan(
               base: base,
               ruby: ruby,
               style: style,
