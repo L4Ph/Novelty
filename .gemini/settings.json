@@ -1,6 +1,3 @@
 {
-  "theme": "ANSI Light",
-  "coreTools": [
-    "run_shell_command(gh pr create)"
-  ]
+  "theme": "ANSI Light"
 }
