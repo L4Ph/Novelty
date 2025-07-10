@@ -15,7 +15,7 @@ void main() {
 </p>
 </div>
 ''';
-      final result = NovelParser.parse(html);
+      final result = parseNovel(html);
 
       expect(result, hasLength(6));
       expect(result[0], isA<PlainText>().having((e) => e.text, 'text', 'これはテストです。'));
@@ -28,13 +28,13 @@ void main() {
 
     test('空のHTMLを渡した場合に空のリストを返すか', () {
       const html = '';
-      final result = NovelParser.parse(html);
+      final result = parseNovel(html);
       expect(result, isEmpty);
     });
 
     test('novel_honbunがない場合に空のリストを返すか', () {
       const html = '<div><p>こんにちは</p></div>';
-      final result = NovelParser.parse(html);
+      final result = parseNovel(html);
       expect(result, isEmpty);
     });
 
@@ -46,7 +46,7 @@ void main() {
 </p>
 </div>
 ''';
-      final result = NovelParser.parse(html);
+      final result = parseNovel(html);
 
       expect(result, hasLength(5));
       expect(result[0], isA<RubyText>().having((e) => e.base, 'base', '漢字'));
