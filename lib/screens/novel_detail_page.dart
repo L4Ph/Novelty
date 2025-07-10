@@ -7,64 +7,75 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/widgets/novel_content.dart';
-import 'package:riverpod/src/providers/future_provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-final FutureProviderFamily<NovelInfo, String> novelInfoProvider = FutureProvider
-    .autoDispose
-    .family<NovelInfo, String>((
-      ref,
-      ncode,
-    ) async {
-      final apiService = ref.read(apiServiceProvider);
-      final db = ref.watch(appDatabaseProvider);
+part 'novel_detail_page.g.dart';
 
-      // まずDBから取得試行
-      final cachedNovel = await db.getNovel(ncode);
-      if (cachedNovel != null) {
-        // TODO: キャッシュ有効期限チェック
-        // return NovelInfo.fromDb(cachedNovel);
-      }
+final novelInfoProvider =
+    FutureProvider.autoDispose.family<NovelInfo, String>((ref, ncode) async {
+  final apiService = ref.read(apiServiceProvider);
+  final db = ref.watch(appDatabaseProvider);
 
-      // なければAPIから取得
-      final novelInfo = await apiService.fetchNovelInfo(ncode);
-      final existingNovel = await db.getNovel(ncode);
+  // まずDBから取得試行
+  final cachedNovel = await db.getNovel(ncode);
+  if (cachedNovel != null) {
+    // TODO: キャッシュ有効期限チェック
+    // return NovelInfo.fromDb(cachedNovel);
+  }
 
-      var companion = novelInfo.toDbCompanion();
-      if (existingNovel?.fav != null) {
-        companion = companion.copyWith(fav: drift.Value(existingNovel!.fav));
-      }
+  // なければAPIから取得
+  final novelInfo = await apiService.fetchNovelInfo(ncode);
+  final existingNovel = await db.getNovel(ncode);
 
-      await db.insertNovel(companion);
+  var companion = novelInfo.toDbCompanion();
+  if (existingNovel?.fav != null) {
+    companion = companion.copyWith(fav: drift.Value(existingNovel!.fav));
+  }
 
-      // 履歴に追加
-      await db.addToHistory(
-        HistoryCompanion(
-          ncode: drift.Value(ncode),
-          title: drift.Value(novelInfo.title),
-          writer: drift.Value(novelInfo.writer),
-          viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
-        ),
-      );
+  await db.insertNovel(companion);
 
-      return novelInfo;
-    });
+  // 履歴に追加
+  await db.addToHistory(
+    HistoryCompanion(
+      ncode: drift.Value(ncode),
+      title: drift.Value(novelInfo.title),
+      writer: drift.Value(novelInfo.writer),
+      viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
+    ),
+  );
 
-final FutureProviderFamily<Episode, String> shortStoryEpisodeProvider =
+  return novelInfo;
+});
+
+final shortStoryEpisodeProvider =
     FutureProvider.autoDispose.family<Episode, String>((ref, ncode) async {
-      final apiService = ref.read(apiServiceProvider);
-      return apiService.fetchEpisode(ncode, 1);
-    });
+  final apiService = ref.read(apiServiceProvider);
+  return apiService.fetchEpisode(ncode, 1);
+});
 
-final FutureProviderFamily<bool, String> isInLibraryProvider = FutureProvider
-    .autoDispose
-    .family<bool, String>((
-      ref,
-      ncode,
-    ) async {
-      final db = ref.watch(appDatabaseProvider);
-      final novel = await db.getNovel(ncode);
-      return novel?.fav == 1 ?? false;
-    });
+@riverpod
+class IsInLibrary extends _$IsInLibrary {
+  @override
+  Future<bool> build(String ncode) async {
+    final db = ref.watch(appDatabaseProvider);
+    final novel = await db.getNovel(ncode);
+    return novel?.fav == 1;
+  }
+
+  Future<void> toggle(NovelInfo novelInfo) async {
+    final db = ref.read(appDatabaseProvider);
+    final currentStatus = await future;
+    final newStatus = !currentStatus;
+
+    final companion = novelInfo.toDbCompanion().copyWith(
+          fav: drift.Value(newStatus ? 1 : 0),
+        );
+    await db.insertNovel(companion);
+
+    ref.invalidateSelf();
+    ref.invalidate(libraryNovelsProvider);
+  }
+}
 
 class NovelDetailPage extends ConsumerWidget {
   const NovelDetailPage({super.key, required this.ncode});
@@ -94,7 +105,31 @@ class NovelDetailPage extends ConsumerWidget {
   ) {
     final isShortStory =
         novelInfo.novelType == 2 || (novelInfo.episodes?.isEmpty ?? true);
-    final isInLibrary = ref.watch(isInLibraryProvider(ncode));
+    final isInLibraryAsync = ref.watch(isInLibraryProvider(ncode));
+
+    final favoriteIcon = isInLibraryAsync.when(
+      data: (inLibrary) => IconButton(
+        icon: Icon(inLibrary ? Icons.favorite : Icons.favorite_border),
+        onPressed: () async {
+          await ref.read(isInLibraryProvider(ncode).notifier).toggle(novelInfo);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(!inLibrary ? 'ライブラリに追加しました' : 'ライブラリから削除しました'),
+              ),
+            );
+          }
+        },
+      ),
+      loading: () => const IconButton(
+        icon: Icon(Icons.favorite_border),
+        onPressed: null,
+      ),
+      error: (e, s) => const IconButton(
+        icon: Icon(Icons.error),
+        onPressed: null,
+      ),
+    );
 
     if (isShortStory) {
       final shortStoryEpisodeAsync = ref.watch(
@@ -107,22 +142,7 @@ class NovelDetailPage extends ConsumerWidget {
             onPressed: () => context.pop(),
           ),
           title: Text(novelInfo.title ?? ''),
-          actions: [
-            isInLibrary.when(
-              data: (inLibrary) => IconButton(
-                icon: Icon(inLibrary ? Icons.favorite : Icons.favorite_border),
-                onPressed: () => _toggleLibraryStatus(ref, novelInfo),
-              ),
-              loading: () => const IconButton(
-                icon: Icon(Icons.favorite_border),
-                onPressed: null,
-              ),
-              error: (e, s) => const IconButton(
-                icon: Icon(Icons.error),
-                onPressed: null,
-              ),
-            ),
-          ],
+          actions: [favoriteIcon],
         ),
         body: shortStoryEpisodeAsync.when(
           data: (episode) => NovelContent(
@@ -143,22 +163,7 @@ class NovelDetailPage extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
         title: Text(novelInfo.title ?? '目次'),
-        actions: [
-          isInLibrary.when(
-            data: (inLibrary) => IconButton(
-              icon: Icon(inLibrary ? Icons.favorite : Icons.favorite_border),
-              onPressed: () => _toggleLibraryStatus(ref, novelInfo),
-            ),
-            loading: () => const IconButton(
-              icon: Icon(Icons.favorite_border),
-              onPressed: null,
-            ),
-            error: (e, s) => const IconButton(
-              icon: Icon(Icons.error),
-              onPressed: null,
-            ),
-          ),
-        ],
+        actions: [favoriteIcon],
       ),
       body: Column(
         children: [
@@ -221,25 +226,5 @@ class NovelDetailPage extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  Future<void> _toggleLibraryStatus(WidgetRef ref, NovelInfo novelInfo) async {
-    final db = ref.read(appDatabaseProvider);
-    final inLibrary = await ref.read(isInLibraryProvider(ncode).future);
-
-    await (db.update(db.novels)..where((tbl) => tbl.ncode.equals(ncode))).write(
-      NovelsCompanion(
-        fav: drift.Value(inLibrary ? 0 : 1),
-      ),
-    );
-
-    if (ref.context.mounted) {
-      ScaffoldMessenger.of(ref.context).showSnackBar(
-        SnackBar(content: Text(inLibrary ? 'ライブラリから削除しました' : 'ライブラリに追加しました')),
-      );
-    }
-    ref
-      ..invalidate(isInLibraryProvider(ncode))
-      ..invalidate(libraryNovelsProvider);
   }
 }
