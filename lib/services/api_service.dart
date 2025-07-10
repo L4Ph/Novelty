@@ -1,14 +1,26 @@
 import 'dart:convert';
+
 import 'package:archive/archive.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
-
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
+import 'package:riverpod/src/providers/future_provider.dart';
+
+final Provider<ApiService> apiServiceProvider = Provider((ref) => ApiService());
+
+final FutureProviderFamily<List<RankingResponse>, String> rankingDataProvider =
+    FutureProvider.autoDispose.family<List<RankingResponse>, String>(
+      (ref, rankingType) {
+        final apiService = ref.watch(apiServiceProvider);
+        return apiService.fetchRankingAndDetails(rankingType);
+      },
+    );
 
 class ApiService {
   Future<http.Response> _fetchWithCache(String url) async {

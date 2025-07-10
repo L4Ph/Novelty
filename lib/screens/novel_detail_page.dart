@@ -6,6 +6,7 @@ import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/screens/library_page.dart';
+import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
 import 'package:riverpod/src/providers/future_provider.dart';
 
@@ -225,13 +226,23 @@ class NovelDetailPage extends ConsumerWidget {
 
   Future<void> _toggleLibraryStatus(WidgetRef ref, NovelInfo novelInfo) async {
     final db = ref.read(appDatabaseProvider);
-    final inLibrary = await ref.read(isInLibraryProvider(ncode).future);
+    final existingNovel = await db.getNovel(ncode);
+    final inLibrary = existingNovel?.fav == 1;
 
-    await (db.update(db.novels)..where((tbl) => tbl.ncode.equals(ncode))).write(
-      NovelsCompanion(
-        fav: drift.Value(inLibrary ? 0 : 1),
-      ),
-    );
+    if (existingNovel != null) {
+      await (db.update(
+        db.novels,
+      )..where((tbl) => tbl.ncode.equals(ncode))).write(
+        NovelsCompanion(
+          fav: drift.Value(inLibrary ? 0 : 1),
+        ),
+      );
+    } else {
+      final companion = novelInfo.toDbCompanion().copyWith(
+        fav: const drift.Value(1),
+      );
+      await db.insertNovel(companion);
+    }
 
     if (ref.context.mounted) {
       ScaffoldMessenger.of(ref.context).showSnackBar(
@@ -241,5 +252,11 @@ class NovelDetailPage extends ConsumerWidget {
     ref
       ..invalidate(isInLibraryProvider(ncode))
       ..invalidate(libraryNovelsProvider);
+    // Invalidate all ranking data providers
+    ref.invalidate(rankingDataProvider('d'));
+    ref.invalidate(rankingDataProvider('w'));
+    ref.invalidate(rankingDataProvider('m'));
+    ref.invalidate(rankingDataProvider('q'));
+    ref.invalidate(rankingDataProvider('all'));
   }
 }
