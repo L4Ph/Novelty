@@ -348,6 +348,14 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<_i3.Novel?>);
 
   @override
+  _i5.Stream<_i3.Novel?> watchNovel(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#watchNovel, [ncode]),
+            returnValue: _i5.Stream<_i3.Novel?>.empty(),
+          )
+          as _i5.Stream<_i3.Novel?>);
+
+  @override
   _i5.Future<int> insertNovel(_i3.NovelsCompanion? novel) =>
       (super.noSuchMethod(
             Invocation.method(#insertNovel, [novel]),

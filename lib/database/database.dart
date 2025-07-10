@@ -107,6 +107,13 @@ class AppDatabase extends _$AppDatabase {
     )..where((t) => t.ncode.equals(ncode))).getSingleOrNull();
   }
 
+  // 小説情報の監視
+  Stream<Novel?> watchNovel(String ncode) {
+    return (select(
+      novels,
+    )..where((t) => t.ncode.equals(ncode))).watchSingleOrNull();
+  }
+
   // 小説情報の保存
   Future<int> insertNovel(NovelsCompanion novel) {
     return into(novels).insert(
