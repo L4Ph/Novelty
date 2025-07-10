@@ -26,7 +26,7 @@ void main() {
     expect(widgetSpan, isA<WidgetSpan>());
     expect(
       (widgetSpan as WidgetSpan).child,
-      isA<RubyTextWidget>()
+      isA<RubySpan>()
           .having((w) => w.base, 'base', 'テスト')
           .having((w) => w.ruby, 'ruby', 'てすと'),
     );

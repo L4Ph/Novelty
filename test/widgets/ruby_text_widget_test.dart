@@ -24,19 +24,28 @@ void main() {
     );
 
     // RichTextウィジェットを直接探す
-    final richTextWidgets = tester.widgetList<RichText>(find.byType(RichText)).toList();
+    final richTextWidgets = tester
+        .widgetList<RichText>(find.byType(RichText))
+        .toList();
 
     // ベーステキストとルビテキストのRichTextがそれぞれ1つずつ存在することを確認
     expect(richTextWidgets, hasLength(2));
 
     // 順番が不定なので、テキスト内容でソートする
-    richTextWidgets.sort((a, b) => (a.text as TextSpan).text!.compareTo((b.text as TextSpan).text!));
+    richTextWidgets.sort(
+      (a, b) =>
+          (a.text as TextSpan).text!.compareTo((b.text as TextSpan).text!),
+    );
 
-    final baseRichText = richTextWidgets.firstWhere((w) => (w.text as TextSpan).text == base);
-    final rubyRichText = richTextWidgets.firstWhere((w) => (w.text as TextSpan).text == ruby);
+    final baseRichText = richTextWidgets.firstWhere(
+      (w) => (w.text as TextSpan).text == base,
+    );
+    final rubyRichText = richTextWidgets.firstWhere(
+      (w) => (w.text as TextSpan).text == ruby,
+    );
 
     // スタイルが適用されていることを確認
     expect(baseRichText.text.style?.fontSize, style.fontSize);
-    expect(rubyRichText.text.style?.fontSize, style.fontSize! * 0.6);
+    expect(rubyRichText.text.style?.fontSize, style.fontSize! * 0.5);
   });
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-class RubyTextWidget extends StatelessWidget {
-  const RubyTextWidget({
+// WidgetSpanの中で、Stackを使ってルビをベーステキストの上に重ねる
+class RubySpan extends StatelessWidget {
+  const RubySpan({
     super.key,
     required this.base,
     required this.ruby,
@@ -15,42 +16,26 @@ class RubyTextWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rubyStyle = style.copyWith(
-      fontSize: style.fontSize != null ? style.fontSize! * 0.6 : null,
+      fontSize: style.fontSize != null ? style.fontSize! * 0.5 : null,
+      height: 1.0,
     );
 
-    // TextPainterを使って、ルビと本文の実際の幅を計算する
-    final basePainter = TextPainter(
-      text: TextSpan(text: base, style: style),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    final rubyPainter = TextPainter(
-      text: TextSpan(text: ruby, style: rubyStyle),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    // ルビと本文のうち、幅が広い方に合わせる
-    final width = basePainter.width > rubyPainter.width
-        ? basePainter.width
-        : rubyPainter.width;
-    final height = basePainter.height + rubyPainter.height;
-
-    return SizedBox(
-      width: width,
-      height: height,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            top: rubyPainter.height,
-            child: RichText(text: TextSpan(text: base, style: style)),
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        // ベーステキスト
+        RichText(
+          text: TextSpan(text: base, style: style),
+        ),
+        // ルビテキスト
+        Positioned(
+          top: -(rubyStyle.fontSize ?? 10) * 0.5,
+          child: RichText(
+            text: TextSpan(text: ruby, style: rubyStyle),
           ),
-          Positioned(
-            top: 0,
-            child: RichText(text: TextSpan(text: ruby, style: rubyStyle)),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
