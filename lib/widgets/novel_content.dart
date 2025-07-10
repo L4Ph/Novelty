@@ -6,14 +6,12 @@ import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/tategaki.dart';
 import 'package:riverpod/src/providers/future_provider.dart';
 
-final apiServiceProvider = Provider<ApiService>((ref) => ApiService());
-
 final FutureProviderFamily<Episode, ({int episode, String ncode})>
-    episodeProvider = FutureProvider.autoDispose
-        .family<Episode, ({String ncode, int episode})>((ref, params) async {
-  final apiService = ref.read(apiServiceProvider);
-  return apiService.fetchEpisode(params.ncode, params.episode);
-});
+episodeProvider = FutureProvider.autoDispose
+    .family<Episode, ({String ncode, int episode})>((ref, params) async {
+      final apiService = ref.read(apiServiceProvider);
+      return apiService.fetchEpisode(params.ncode, params.episode);
+    });
 
 class NovelContent extends ConsumerWidget {
   const NovelContent({

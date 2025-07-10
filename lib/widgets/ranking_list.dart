@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
-class RankingList extends StatefulWidget {
+class RankingList extends ConsumerStatefulWidget {
   const RankingList({super.key, required this.rankingType});
   final String rankingType;
 
   @override
-  State<RankingList> createState() => _RankingListState();
+  ConsumerState<RankingList> createState() => _RankingListState();
 }
 
-class _RankingListState extends State<RankingList>
+class _RankingListState extends ConsumerState<RankingList>
     with AutomaticKeepAliveClientMixin<RankingList> {
-  final _apiService = ApiService();
   List<RankingResponse> _allNovelData = [];
   List<RankingResponse> _filteredNovelData = [];
-  var _isLoading = true;
-  var _errorMessage = '';
   final _itemsPerPage = 50;
   var _currentPage = 1;
 
@@ -31,32 +29,6 @@ class _RankingListState extends State<RankingList>
   @override
   void initState() {
     super.initState();
-    _fetchData();
-  }
-
-  Future<void> _fetchData() async {
-    try {
-      final allData = await _apiService.fetchRankingAndDetails(
-        widget.rankingType,
-      );
-
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _allNovelData = allData;
-        _applyFilters();
-        _isLoading = false;
-      });
-    } on Exception catch (e) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _errorMessage = 'An error occurred: $e';
-        _isLoading = false;
-      });
-    }
   }
 
   void _applyFilters() {
@@ -158,39 +130,48 @@ class _RankingListState extends State<RankingList>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    final rankingDataAsync = ref.watch(rankingDataProvider(widget.rankingType));
 
-    if (_errorMessage.isNotEmpty) {
-      return Center(child: Text(_errorMessage));
-    }
+    return rankingDataAsync.when<Widget>(
+      data: (allNovelData) {
+        _allNovelData = allNovelData;
+        _applyFilters();
 
-    final totalItems = _filteredNovelData.length;
-    var displayItemCount = _currentPage * _itemsPerPage;
-    if (displayItemCount > totalItems) {
-      displayItemCount = totalItems;
-    }
-    final hasMore = displayItemCount < totalItems;
+        final totalItems = _filteredNovelData.length;
+        var displayItemCount = _currentPage * _itemsPerPage;
+        if (displayItemCount > totalItems) {
+          displayItemCount = totalItems;
+        }
+        final hasMore = displayItemCount < totalItems;
 
-    return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showFilterDialog,
-        child: const Icon(Icons.filter_list),
-      ),
-      body: ListView.builder(
-        itemCount: displayItemCount + (hasMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == displayItemCount) {
-            return TextButton(
-              onPressed: _loadMore,
-              child: const Text('さらに読み込む'),
-            );
-          }
+        return Scaffold(
+          floatingActionButton: FloatingActionButton(
+            onPressed: _showFilterDialog,
+            child: const Icon(Icons.filter_list),
+          ),
+          body: RefreshIndicator(
+            onRefresh: () async =>
+                ref.invalidate(rankingDataProvider(widget.rankingType)),
+            child: ListView.builder(
+              itemCount: displayItemCount + (hasMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == displayItemCount) {
+                  return TextButton(
+                    onPressed: _loadMore,
+                    child: const Text('さらに読み込む'),
+                  );
+                }
 
-          final item = _filteredNovelData[index];
-          return NovelListTile(item: item, isRanking: true);
-        },
+                final item = _filteredNovelData[index];
+                return NovelListTile(item: item, isRanking: true);
+              },
+            ),
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(
+        child: Text('エラーが発生しました: $error'),
       ),
     );
   }
