@@ -7,7 +7,7 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/screens/novel_detail_page.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/widgets/novel_content.dart';
+
 
 @GenerateMocks([AppDatabase, ApiService])
 import 'novel_detail_provider_test.mocks.dart';
@@ -178,7 +178,7 @@ void main() {
     });
   });
 
-  group('isInLibraryProvider', () {
+  group('isFavoriteProvider', () {
     late MockAppDatabase mockDatabase;
     late ProviderContainer container;
 
@@ -195,47 +195,37 @@ void main() {
       container.dispose();
     });
 
-    test('should return true when novel exists in database', () async {
+    test('should return true when novel is favorite', () async {
       const testNcode = 'N1234AB';
-      final testNovel = Novel(
-        ncode: testNcode,
-        title: 'テスト小説',
-        writer: 'テスト作者',
-        cachedAt: DateTime.now().millisecondsSinceEpoch,
-      );
+      when(mockDatabase.watchIsFavorite(testNcode))
+          .thenAnswer((_) => Stream.value(true));
 
-      when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => testNovel);
-
-      final result = await container.read(
-        isInLibraryProvider(testNcode).future,
-      );
+      final result = await container.read(isFavoriteProvider(testNcode).future);
 
       expect(result, isTrue);
-      verify(mockDatabase.getNovel(testNcode)).called(1);
+      verify(mockDatabase.watchIsFavorite(testNcode)).called(1);
     });
 
-    test('should return false when novel does not exist in database', () async {
+    test('should return false when novel is not favorite', () async {
       const testNcode = 'N1234AB';
 
-      when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
+      when(mockDatabase.watchIsFavorite(testNcode))
+          .thenAnswer((_) => Stream.value(false));
 
-      final result = await container.read(
-        isInLibraryProvider(testNcode).future,
-      );
+      final result = await container.read(isFavoriteProvider(testNcode).future);
 
       expect(result, isFalse);
-      verify(mockDatabase.getNovel(testNcode)).called(1);
+      verify(mockDatabase.watchIsFavorite(testNcode)).called(1);
     });
 
     test('should handle database errors', () async {
       const testNcode = 'N1234AB';
 
-      when(
-        mockDatabase.getNovel(testNcode),
-      ).thenThrow(Exception('Database error'));
+      when(mockDatabase.watchIsFavorite(testNcode))
+          .thenAnswer((_) => Stream.error(Exception('Database error')));
 
       expect(
-        () => container.read(isInLibraryProvider(testNcode).future),
+        () => container.read(isFavoriteProvider(testNcode).future),
         throwsA(isA<Exception>()),
       );
     });
@@ -243,9 +233,12 @@ void main() {
     test('should be auto-disposed when not in use', () {
       const testNcode = 'N1234AB';
 
-      container
-        ..read(isInLibraryProvider(testNcode))
-        ..dispose();
+      when(mockDatabase.watchIsFavorite(testNcode))
+          .thenAnswer((_) => Stream.value(false));
+
+      container.read(isFavoriteProvider(testNcode));
+
+      container.dispose();
 
       final newContainer = ProviderContainer(
         overrides: [
@@ -253,7 +246,7 @@ void main() {
         ],
       );
       expect(
-        () => newContainer.read(isInLibraryProvider(testNcode)),
+        () => newContainer.read(isFavoriteProvider(testNcode)),
         returnsNormally,
       );
       newContainer.dispose();

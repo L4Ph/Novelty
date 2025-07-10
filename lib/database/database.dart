@@ -107,6 +107,13 @@ class AppDatabase extends _$AppDatabase {
     )..where((t) => t.ncode.equals(ncode))).getSingleOrNull();
   }
 
+  // ライブラリ登録状態の監視
+  Stream<bool> watchIsFavorite(String ncode) {
+    return (select(novels)..where((t) => t.ncode.equals(ncode)))
+        .watchSingleOrNull()
+        .map((novel) => novel != null && novel.fav == 1);
+  }
+
   // 小説情報の保存
   Future<int> insertNovel(NovelsCompanion novel) {
     return into(novels).insert(

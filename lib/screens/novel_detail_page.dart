@@ -56,16 +56,10 @@ final FutureProviderFamily<Episode, String> shortStoryEpisodeProvider =
       return apiService.fetchEpisode(ncode, 1);
     });
 
-final FutureProviderFamily<bool, String> isInLibraryProvider = FutureProvider
-    .autoDispose
-    .family<bool, String>((
-      ref,
-      ncode,
-    ) async {
-      final db = ref.watch(appDatabaseProvider);
-      final novel = await db.getNovel(ncode);
-      return novel?.fav == 1 ?? false;
-    });
+final isFavoriteProvider = StreamProvider.autoDispose.family<bool, String>((ref, ncode) {
+  final db = ref.watch(appDatabaseProvider);
+  return db.watchIsFavorite(ncode);
+});
 
 class NovelDetailPage extends ConsumerWidget {
   const NovelDetailPage({super.key, required this.ncode});
@@ -95,7 +89,7 @@ class NovelDetailPage extends ConsumerWidget {
   ) {
     final isShortStory =
         novelInfo.novelType == 2 || (novelInfo.episodes?.isEmpty ?? true);
-    final isInLibrary = ref.watch(isInLibraryProvider(ncode));
+    final isInLibrary = ref.watch(isFavoriteProvider(ncode));
 
     if (isShortStory) {
       final shortStoryEpisodeAsync = ref.watch(
@@ -250,7 +244,7 @@ class NovelDetailPage extends ConsumerWidget {
       );
     }
     ref
-      ..invalidate(isInLibraryProvider(ncode))
+      ..invalidate(isFavoriteProvider(ncode))
       ..invalidate(libraryNovelsProvider);
     // Invalidate all ranking data providers
     ref.invalidate(rankingDataProvider('d'));
