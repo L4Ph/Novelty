@@ -27,7 +27,14 @@ final FutureProviderFamily<NovelInfo, String> novelInfoProvider = FutureProvider
 
       // なければAPIから取得
       final novelInfo = await apiService.fetchNovelInfo(ncode);
-      await db.insertNovel(novelInfo.toDbCompanion());
+      final existingNovel = await db.getNovel(ncode);
+
+      var companion = novelInfo.toDbCompanion();
+      if (existingNovel?.fav != null) {
+        companion = companion.copyWith(fav: drift.Value(existingNovel!.fav));
+      }
+
+      await db.insertNovel(companion);
 
       // 履歴に追加
       await db.addToHistory(
@@ -56,7 +63,7 @@ final FutureProviderFamily<bool, String> isInLibraryProvider = FutureProvider
     ) async {
       final db = ref.watch(appDatabaseProvider);
       final novel = await db.getNovel(ncode);
-      return novel != null;
+      return novel?.fav == 1 ?? false;
     });
 
 class NovelDetailPage extends ConsumerWidget {
@@ -220,20 +227,16 @@ class NovelDetailPage extends ConsumerWidget {
     final db = ref.read(appDatabaseProvider);
     final inLibrary = await ref.read(isInLibraryProvider(ncode).future);
 
-    if (inLibrary) {
-      await db.deleteNovel(ncode);
-      if (ref.context.mounted) {
-        ScaffoldMessenger.of(ref.context).showSnackBar(
-          const SnackBar(content: Text('ライブラリから削除しました')),
-        );
-      }
-    } else {
-      await db.insertNovel(novelInfo.toDbCompanion());
-      if (ref.context.mounted) {
-        ScaffoldMessenger.of(ref.context).showSnackBar(
-          const SnackBar(content: Text('ライブラリに追加しました')),
-        );
-      }
+    await (db.update(db.novels)..where((tbl) => tbl.ncode.equals(ncode))).write(
+      NovelsCompanion(
+        fav: drift.Value(inLibrary ? 0 : 1),
+      ),
+    );
+
+    if (ref.context.mounted) {
+      ScaffoldMessenger.of(ref.context).showSnackBar(
+        SnackBar(content: Text(inLibrary ? 'ライブラリから削除しました' : 'ライブラリに追加しました')),
+      );
     }
     ref
       ..invalidate(isInLibraryProvider(ncode))

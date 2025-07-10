@@ -232,7 +232,6 @@ class NovelInfo {
       generalFirstup: Value(int.tryParse(generalFirstup ?? '')),
       generalLastup: Value(int.tryParse(generalLastup ?? '')),
       globalPoint: Value(globalPoint),
-      fav: Value(favNovelCnt),
       reviewCount: Value(reviewCnt),
       rateCount: Value(allHyokaCnt),
       allPoint: Value(allPoint),

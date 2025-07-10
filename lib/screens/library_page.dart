@@ -5,7 +5,7 @@ import 'package:novelty/database/database.dart';
 
 final libraryNovelsProvider = FutureProvider<List<Novel>>((ref) {
   final db = ref.watch(appDatabaseProvider);
-  return (db.select(db.novels)..where((tbl) => tbl.cachedAt.isNotNull())).get();
+  return (db.select(db.novels)..where((tbl) => tbl.fav.equals(1))).get();
 });
 
 class LibraryPage extends ConsumerWidget {
