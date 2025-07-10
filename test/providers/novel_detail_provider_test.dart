@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -86,12 +87,12 @@ void main() {
     test('should handle database errors gracefully', () async {
       const testNcode = 'N1234AB';
 
-      when(
-        mockDatabase.getNovel(testNcode),
-      ).thenThrow(Exception('Database error'));
+      when(mockDatabase.getNovel(testNcode)).thenThrow(Exception('Database error'));
+      when(mockApiService.fetchNovelInfo(any)).thenAnswer((_) async => NovelInfo(ncode: testNcode));
+      when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1); // Add stub for addToHistory
 
-      expect(
-        () => container.read(novelInfoProvider(testNcode).future),
+      await expectLater(
+        container.read(novelInfoProvider(testNcode).future),
         throwsA(isA<Exception>()),
       );
     });
@@ -178,9 +179,11 @@ void main() {
     });
   });
 
-  group('isFavoriteProvider', () {
+  group('FavoriteStatus', () {
     late MockAppDatabase mockDatabase;
     late ProviderContainer container;
+    const ncode = 'N1234AB';
+    final novelInfo = NovelInfo(ncode: ncode, title: 'Test Novel');
 
     setUp(() {
       mockDatabase = MockAppDatabase();
@@ -195,67 +198,87 @@ void main() {
       container.dispose();
     });
 
-    test('should return true when novel is favorite', () async {
-      const testNcode = 'N1234AB';
-      when(mockDatabase.watchIsFavorite(testNcode))
-          .thenAnswer((_) => Stream.value(true));
+    test('initial state is false when novel does not exist', () async {
+      when(mockDatabase.getNovel(ncode)).thenAnswer((_) async => null);
+      await expectLater(
+        container.read(favoriteStatusProvider(ncode).future),
+        completion(isFalse),
+      );
+    });
 
-      final listener = container.listen(isFavoriteProvider(testNcode), (previous, next) {});
+    test('initial state is true when novel is favorite', () async {
+      when(mockDatabase.getNovel(ncode)).thenAnswer(
+        (_) async => Novel(ncode: ncode, fav: 1),
+      );
+      await expectLater(
+        container.read(favoriteStatusProvider(ncode).future),
+        completion(isTrue),
+      );
+    });
+
+    test('toggle adds to favorites and returns true', () async {
+      // Arrange
+      when(mockDatabase.getNovel(ncode)).thenAnswer((_) async => null);
+      when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
+      final notifier = container.read(favoriteStatusProvider(ncode).notifier);
       
-      await container.pump();
+      // Act
+      final result = await notifier.toggle(novelInfo);
 
-      expect(listener.read(), const AsyncData(true));
-      verify(mockDatabase.watchIsFavorite(testNcode)).called(1);
-    });
-
-    test('should return false when novel is not favorite', () async {
-      const testNcode = 'N1234AB';
-
-      when(mockDatabase.watchIsFavorite(testNcode))
-          .thenAnswer((_) => Stream.value(false));
-
-      final listener = container.listen(isFavoriteProvider(testNcode), (previous, next) {});
-
-      await container.pump();
-
-      expect(listener.read(), const AsyncData(false));
-      verify(mockDatabase.watchIsFavorite(testNcode)).called(1);
-    });
-
-    test('should handle database errors', () async {
-      const testNcode = 'N1234AB';
-      final exception = Exception('Database error');
-
-      when(mockDatabase.watchIsFavorite(testNcode))
-          .thenAnswer((_) => Stream.error(exception));
-
-      final listener = container.listen(isFavoriteProvider(testNcode), (previous, next) {});
-
-      await container.pump();
-
-      expect(listener.read(), isA<AsyncError>().having((e) => e.error, 'error', exception));
-    });
-
-    test('should be auto-disposed when not in use', () {
-      const testNcode = 'N1234AB';
-
-      when(mockDatabase.watchIsFavorite(testNcode))
-          .thenAnswer((_) => Stream.value(false));
-
-      container.read(isFavoriteProvider(testNcode));
-
-      container.dispose();
-
-      final newContainer = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(mockDatabase),
-        ],
+      // Assert
+      expect(result, isTrue);
+      final captured = verify(mockDatabase.insertNovel(captureAny)).captured;
+      expect(captured.single.fav.value, 1);
+      await expectLater(
+        container.read(favoriteStatusProvider(ncode).future),
+        completion(isTrue),
       );
+    });
+
+    test('toggle removes from favorites and returns true', () async {
+      // Arrange
+      when(mockDatabase.getNovel(ncode)).thenAnswer((_) async => Novel(ncode: ncode, fav: 1));
+      when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
+      final notifier = container.read(favoriteStatusProvider(ncode).notifier);
+      await container.read(favoriteStatusProvider(ncode).future); // Ensure initial state
+
+      // Act
+      final result = await notifier.toggle(novelInfo);
+
+      // Assert
+      expect(result, isTrue);
+      final captured = verify(mockDatabase.insertNovel(captureAny)).captured;
+      expect(captured.single.fav.value, 0);
+      await expectLater(
+        container.read(favoriteStatusProvider(ncode).future),
+        completion(isFalse),
+      );
+    });
+
+    test('toggle returns false and state is error when db fails', () async {
+      // Arrange
+      final exception = Exception('Database failed');
+      when(mockDatabase.getNovel(ncode)).thenAnswer((_) async => null);
+      when(mockDatabase.insertNovel(any)).thenThrow(exception);
+      final notifier = container.read(favoriteStatusProvider(ncode).notifier);
+
+      final states = <AsyncValue<bool>>[];
+      container.listen<AsyncValue<bool>>(
+        favoriteStatusProvider(ncode),
+        (previous, next) {
+          states.add(next);
+        },
+      );
+
+      // Act
+      final result = await notifier.toggle(novelInfo);
+
+      // Assert
+      expect(result, isFalse);
       expect(
-        () => newContainer.read(isFavoriteProvider(testNcode)),
-        returnsNormally,
+        states,
+        contains(isA<AsyncError>()),
       );
-      newContainer.dispose();
     });
   });
 }
