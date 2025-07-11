@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,11 +12,13 @@ class AppSettings {
     required this.selectedFont,
     required this.fontSize,
     required this.isVertical,
+    required this.novelDownloadPath,
   });
 
   final String selectedFont;
   final double fontSize;
   final bool isVertical;
+  final String novelDownloadPath;
 
   TextStyle get selectedFontTheme => _getTextStyle(selectedFont);
 
@@ -23,11 +26,13 @@ class AppSettings {
     String? selectedFont,
     double? fontSize,
     bool? isVertical,
+    String? novelDownloadPath,
   }) {
     return AppSettings(
       selectedFont: selectedFont ?? this.selectedFont,
       fontSize: fontSize ?? this.fontSize,
       isVertical: isVertical ?? this.isVertical,
+      novelDownloadPath: novelDownloadPath ?? this.novelDownloadPath,
     );
   }
 
@@ -64,6 +69,7 @@ class Settings extends _$Settings {
   static const _fontPreferenceKey = 'selected_font';
   static const _fontSizePreferenceKey = 'font_size';
   static const _isVerticalPreferenceKey = 'is_vertical';
+  static const _novelDownloadPathPreferenceKey = 'novel_download_path';
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
@@ -74,11 +80,14 @@ class Settings extends _$Settings {
         prefs.getString(_fontPreferenceKey) ?? availableFonts.first;
     final fontSize = prefs.getDouble(_fontSizePreferenceKey) ?? 16.0;
     final isVertical = prefs.getBool(_isVerticalPreferenceKey) ?? false;
+    final novelDownloadPath = prefs.getString(_novelDownloadPathPreferenceKey) ??
+        (await getApplicationDocumentsDirectory()).path;
 
     return AppSettings(
       selectedFont: selectedFont,
       fontSize: fontSize,
       isVertical: isVertical,
+      novelDownloadPath: novelDownloadPath,
     );
   }
 
@@ -100,6 +109,13 @@ class Settings extends _$Settings {
     if (state.hasValue) {
       await (await _prefs).setBool(_isVerticalPreferenceKey, isVertical);
       state = AsyncData(state.value!.copyWith(isVertical: isVertical));
+    }
+  }
+
+  Future<void> setNovelDownloadPath(String path) async {
+    if (state.hasValue) {
+      await (await _prefs).setString(_novelDownloadPathPreferenceKey, path);
+      state = AsyncData(state.value!.copyWith(novelDownloadPath: path));
     }
   }
 }

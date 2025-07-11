@@ -1,13 +1,17 @@
+import 'dart:io' show Platform;
+
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:novelty/database/database.dart' hide Episode;
-import 'package:novelty/models/episode.dart';
+import 'package:novelty/database/database.dart';
+import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'novel_detail_page.g.dart';
@@ -41,9 +45,12 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
 }
 
 @riverpod
-Future<Episode> shortStoryEpisode(Ref ref, String ncode) async {
-  final apiService = ref.read(apiServiceProvider);
-  return apiService.fetchEpisode(ncode, 1);
+Future<List<NovelContentElement>> shortStoryContent(
+  Ref ref,
+  String ncode,
+) async {
+  final repo = ref.read(novelRepositoryProvider);
+  return repo.getEpisode(ncode, 1);
 }
 
 @riverpod
@@ -83,6 +90,84 @@ class FavoriteStatus extends _$FavoriteStatus {
   }
 }
 
+@riverpod
+class DownloadStatus extends _$DownloadStatus {
+  @override
+  Stream<bool> build(NovelInfo novelInfo) {
+    final repo = ref.watch(novelRepositoryProvider);
+    return repo.isNovelDownloaded(novelInfo);
+  }
+
+  Future<void> toggle(BuildContext context, NovelInfo novelInfo) async {
+    final repo = ref.read(novelRepositoryProvider);
+    final isDownloaded = state.value ?? false;
+    try {
+      if (isDownloaded) {
+        await repo.deleteDownloadedNovel(novelInfo);
+        return;
+      }
+
+      bool hasPermission = false;
+      if (Platform.isAndroid) {
+        final status = await Permission.manageExternalStorage.status;
+        if (status.isGranted) {
+          hasPermission = true;
+        } else {
+          final result = await Permission.manageExternalStorage.request();
+          if (result.isGranted) {
+            hasPermission = true;
+          }
+        }
+      } else {
+        final status = await Permission.storage.status;
+        if (status.isGranted) {
+          hasPermission = true;
+        } else {
+          final result = await Permission.storage.request();
+          if (result.isGranted) {
+            hasPermission = true;
+          }
+        }
+      }
+
+      if (!hasPermission) {
+        if (context.mounted) {
+          await showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('権限が必要です'),
+              content: const Text('小説をダウンロードするには、ファイルへのアクセス権限を許可してください。'),
+              actions: [
+                TextButton(
+                  child: const Text('キャンセル'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                TextButton(
+                  child: const Text('設定を開く'),
+                  onPressed: () {
+                    openAppSettings();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+
+      // TODO(L4Ph): ダウンロード中の状態をUIに反映する
+      await repo.downloadNovel(novelInfo);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ダウンロードに失敗しました: ${e.toString()}')),
+        );
+      }
+    }
+  }
+}
+
 class NovelDetailPage extends ConsumerWidget {
   const NovelDetailPage({super.key, required this.ncode});
   final String ncode;
@@ -112,10 +197,11 @@ class NovelDetailPage extends ConsumerWidget {
     final isShortStory =
         novelInfo.novelType == 2 || (novelInfo.episodes?.isEmpty ?? true);
     final isFavoriteAsync = ref.watch(favoriteStatusProvider(ncode));
+    final downloadStatusAsync = ref.watch(downloadStatusProvider(novelInfo));
 
     if (isShortStory) {
-      final shortStoryEpisodeAsync = ref.watch(
-        shortStoryEpisodeProvider(ncode),
+      final shortStoryContentAsync = ref.watch(
+        shortStoryContentProvider(ncode),
       );
       return Scaffold(
         appBar: AppBar(
@@ -125,6 +211,22 @@ class NovelDetailPage extends ConsumerWidget {
           ),
           title: Text(novelInfo.title ?? ''),
           actions: [
+            downloadStatusAsync.when(
+              data: (isDownloaded) => IconButton(
+                icon: Icon(isDownloaded ? Icons.download_done : Icons.download),
+                onPressed: () => ref
+                    .read(downloadStatusProvider(novelInfo).notifier)
+                    .toggle(context, novelInfo),
+              ),
+              loading: () => const IconButton(
+                icon: Icon(Icons.download),
+                onPressed: null,
+              ),
+              error: (e, s) => const IconButton(
+                icon: Icon(Icons.error),
+                onPressed: null,
+              ),
+            ),
             isFavoriteAsync.when(
               data: (isFavorite) => IconButton(
                 icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
@@ -143,11 +245,10 @@ class NovelDetailPage extends ConsumerWidget {
             ),
           ],
         ),
-        body: shortStoryEpisodeAsync.when(
-          data: (episode) => NovelContent(
+        body: shortStoryContentAsync.when(
+          data: (content) => NovelContent(
             ncode: ncode,
             episode: 1,
-            initialData: episode,
           ),
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Center(child: Text('Error: $err')),
@@ -163,6 +264,22 @@ class NovelDetailPage extends ConsumerWidget {
         ),
         title: Text(novelInfo.title ?? '目次'),
         actions: [
+          downloadStatusAsync.when(
+            data: (isDownloaded) => IconButton(
+              icon: Icon(isDownloaded ? Icons.download_done : Icons.download),
+              onPressed: () => ref
+                  .read(downloadStatusProvider(novelInfo).notifier)
+                  .toggle(context, novelInfo),
+            ),
+            loading: () => const IconButton(
+              icon: Icon(Icons.download),
+              onPressed: null,
+            ),
+            error: (e, s) => const IconButton(
+              icon: Icon(Icons.error),
+              onPressed: null,
+            ),
+          ),
           isFavoriteAsync.when(
             data: (isFavorite) => IconButton(
               icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),

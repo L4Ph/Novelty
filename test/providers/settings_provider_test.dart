@@ -125,6 +125,7 @@ void main() {
         selectedFont: 'Noto Sans JP',
         fontSize: 16,
         isVertical: false,
+        novelDownloadPath: '',
       );
 
       expect(settings.selectedFont, equals('Noto Sans JP'));
@@ -137,6 +138,7 @@ void main() {
         selectedFont: 'Noto Sans JP',
         fontSize: 16,
         isVertical: false,
+        novelDownloadPath: '',
       );
 
       final updatedSettings = originalSettings.copyWith(
@@ -166,6 +168,7 @@ void main() {
           selectedFont: font,
           fontSize: 16,
           isVertical: false,
+          novelDownloadPath: '',
         );
 
         final textStyle = settings.selectedFontTheme;

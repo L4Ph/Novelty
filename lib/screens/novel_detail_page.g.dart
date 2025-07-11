@@ -60,7 +60,7 @@ final class NovelInfoProvider
   }
 }
 
-String _$novelInfoHash() => r'1d505c4d2d026c01b09ae1c404806ec88077ac9f';
+String _$novelInfoHash() => r'1049b7a53e99a3b1bfba8543c303cef23779e8d5';
 
 final class NovelInfoFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<NovelInfo>, String> {
@@ -80,47 +80,55 @@ final class NovelInfoFamily extends $Family
   String toString() => r'novelInfoProvider';
 }
 
-@ProviderFor(shortStoryEpisode)
-const shortStoryEpisodeProvider = ShortStoryEpisodeFamily._();
+@ProviderFor(shortStoryContent)
+const shortStoryContentProvider = ShortStoryContentFamily._();
 
-final class ShortStoryEpisodeProvider
-    extends $FunctionalProvider<AsyncValue<Episode>, Episode, FutureOr<Episode>>
-    with $FutureModifier<Episode>, $FutureProvider<Episode> {
-  const ShortStoryEpisodeProvider._({
-    required ShortStoryEpisodeFamily super.from,
+final class ShortStoryContentProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<NovelContentElement>>,
+          List<NovelContentElement>,
+          FutureOr<List<NovelContentElement>>
+        >
+    with
+        $FutureModifier<List<NovelContentElement>>,
+        $FutureProvider<List<NovelContentElement>> {
+  const ShortStoryContentProvider._({
+    required ShortStoryContentFamily super.from,
     required String super.argument,
   }) : super(
          retry: null,
-         name: r'shortStoryEpisodeProvider',
+         name: r'shortStoryContentProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$shortStoryEpisodeHash();
+  String debugGetCreateSourceHash() => _$shortStoryContentHash();
 
   @override
   String toString() {
-    return r'shortStoryEpisodeProvider'
+    return r'shortStoryContentProvider'
         ''
         '($argument)';
   }
 
   @$internal
   @override
-  $FutureProviderElement<Episode> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+  $FutureProviderElement<List<NovelContentElement>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<Episode> create(Ref ref) {
+  FutureOr<List<NovelContentElement>> create(Ref ref) {
     final argument = this.argument as String;
-    return shortStoryEpisode(ref, argument);
+    return shortStoryContent(ref, argument);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is ShortStoryEpisodeProvider && other.argument == argument;
+    return other is ShortStoryContentProvider && other.argument == argument;
   }
 
   @override
@@ -129,24 +137,25 @@ final class ShortStoryEpisodeProvider
   }
 }
 
-String _$shortStoryEpisodeHash() => r'af11c5555c9c6a2017c7e09dad08008a8b902d31';
+String _$shortStoryContentHash() => r'db3924c5e837a96bb7c50ec33d450f83bd1127b8';
 
-final class ShortStoryEpisodeFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<Episode>, String> {
-  const ShortStoryEpisodeFamily._()
+final class ShortStoryContentFamily extends $Family
+    with
+        $FunctionalFamilyOverride<FutureOr<List<NovelContentElement>>, String> {
+  const ShortStoryContentFamily._()
     : super(
         retry: null,
-        name: r'shortStoryEpisodeProvider',
+        name: r'shortStoryContentProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
-  ShortStoryEpisodeProvider call(String ncode) =>
-      ShortStoryEpisodeProvider._(argument: ncode, from: this);
+  ShortStoryContentProvider call(String ncode) =>
+      ShortStoryContentProvider._(argument: ncode, from: this);
 
   @override
-  String toString() => r'shortStoryEpisodeProvider';
+  String toString() => r'shortStoryContentProvider';
 }
 
 @ProviderFor(FavoriteStatus)
@@ -190,7 +199,7 @@ final class FavoriteStatusProvider
   }
 }
 
-String _$favoriteStatusHash() => r'6ce3ffffd08cb80ddfd872b9e0cf5654ffb9385c';
+String _$favoriteStatusHash() => r'805f39ffdd62300e9292824a6e4496910ed98585';
 
 final class FavoriteStatusFamily extends $Family
     with
@@ -222,6 +231,96 @@ abstract class _$FavoriteStatus extends $AsyncNotifier<bool> {
   String get ncode => _$args;
 
   FutureOr<bool> build(String ncode);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(_$args);
+    final ref = this.ref as $Ref<AsyncValue<bool>, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<bool>, bool>,
+              AsyncValue<bool>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(DownloadStatus)
+const downloadStatusProvider = DownloadStatusFamily._();
+
+final class DownloadStatusProvider
+    extends $StreamNotifierProvider<DownloadStatus, bool> {
+  const DownloadStatusProvider._({
+    required DownloadStatusFamily super.from,
+    required NovelInfo super.argument,
+  }) : super(
+         retry: null,
+         name: r'downloadStatusProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$downloadStatusHash();
+
+  @override
+  String toString() {
+    return r'downloadStatusProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  DownloadStatus create() => DownloadStatus();
+
+  @override
+  bool operator ==(Object other) {
+    return other is DownloadStatusProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$downloadStatusHash() => r'cdf4684a65906999e83c7d63fb1e9930fb708325';
+
+final class DownloadStatusFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          DownloadStatus,
+          AsyncValue<bool>,
+          bool,
+          Stream<bool>,
+          NovelInfo
+        > {
+  const DownloadStatusFamily._()
+    : super(
+        retry: null,
+        name: r'downloadStatusProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  DownloadStatusProvider call(NovelInfo novelInfo) =>
+      DownloadStatusProvider._(argument: novelInfo, from: this);
+
+  @override
+  String toString() => r'downloadStatusProvider';
+}
+
+abstract class _$DownloadStatus extends $StreamNotifier<bool> {
+  late final _$args = ref.$arg as NovelInfo;
+  NovelInfo get novelInfo => _$args;
+
+  Stream<bool> build(NovelInfo novelInfo);
   @$mustCallSuper
   @override
   void runBuild() {

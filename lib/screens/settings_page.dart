@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/utils/settings_provider.dart';
@@ -17,6 +18,7 @@ class SettingsPage extends ConsumerWidget {
             _buildFontSetting(context, ref, settings),
             _buildFontSizeSetting(context, ref, settings),
             _buildVerticalSetting(context, ref, settings),
+            _buildDownloadPathSetting(context, ref, settings),
             // _buildThemeColorSetting(context, ref, settings),
           ],
         ),
@@ -66,6 +68,23 @@ class SettingsPage extends ConsumerWidget {
         onChanged: (value) =>
             ref.read(settingsProvider.notifier).setFontSize(value),
       ),
+    );
+  }
+
+  Widget _buildDownloadPathSetting(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettings settings,
+  ) {
+    return ListTile(
+      title: const Text('ダウンロード先'),
+      subtitle: Text(settings.novelDownloadPath),
+      onTap: () async {
+        final path = await FilePicker.platform.getDirectoryPath();
+        if (path != null) {
+          await ref.read(settingsProvider.notifier).setNovelDownloadPath(path);
+        }
+      },
     );
   }
 

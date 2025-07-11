@@ -1,28 +1,92 @@
 import 'package:flutter/material.dart';
+import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/utils/vertical_rotated.dart';
+
+abstract class _Paintable {
+  double get height;
+  double get width;
+  void paint(Canvas canvas, Offset offset);
+}
+
+class _PaintableChar extends _Paintable {
+  _PaintableChar(this.painter);
+  final TextPainter painter;
+
+  @override
+  double get height => painter.height;
+  @override
+  double get width => painter.width;
+
+  @override
+  void paint(Canvas canvas, Offset offset) {
+    painter.paint(canvas, offset);
+  }
+}
+
+class _PaintableRuby extends _Paintable {
+  _PaintableRuby(
+    this.basePainters,
+    this.rubyPainters,
+    this.baseWidth,
+    this.rubyWidth,
+    this.rubyHeight,
+  );
+  final List<TextPainter> basePainters;
+  final List<TextPainter> rubyPainters;
+  final double baseWidth;
+  final double rubyWidth;
+  final double rubyHeight;
+
+  @override
+  double get height => basePainters.fold(0.0, (prev, p) => prev + p.height);
+
+  @override
+  double get width => baseWidth + rubyWidth;
+
+  @override
+  void paint(Canvas canvas, Offset offset) {
+    var baseDy = offset.dy;
+    for (final p in basePainters) {
+      final charDx = offset.dx + (baseWidth - p.width) / 2;
+      p.paint(canvas, Offset(charDx, baseDy));
+      baseDy += p.height;
+    }
+
+    var rubyDy = offset.dy + (height - rubyHeight) / 2;
+    for (final p in rubyPainters) {
+      final charDx = offset.dx + baseWidth + (rubyWidth - p.width) / 2;
+      p.paint(canvas, Offset(charDx, rubyDy));
+      rubyDy += p.height;
+    }
+  }
+}
+
+class _TategakiColumn {
+  _TategakiColumn(this.items, this.width);
+  final List<_Paintable> items;
+  final double width;
+}
 
 class _TategakiMetrics {
   const _TategakiMetrics({
-    required this.painters,
-    required this.columnWidths,
+    required this.columns,
     required this.size,
   });
 
-  final List<List<TextPainter>> painters;
-  final List<double> columnWidths;
+  final List<_TategakiColumn> columns;
   final Size size;
 }
 
 class Tategaki extends StatefulWidget {
   const Tategaki(
-    this.text, {
+    this.content, {
     super.key,
     this.style,
     this.space = 12,
     required this.maxHeight,
   });
 
-  final String text;
+  final List<NovelContentElement> content;
   final TextStyle? style;
   final double space;
   final double maxHeight;
@@ -43,7 +107,7 @@ class _TategakiState extends State<Tategaki> {
   @override
   void didUpdateWidget(Tategaki oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.text != oldWidget.text ||
+    if (widget.content != oldWidget.content ||
         widget.style != oldWidget.style ||
         widget.space != oldWidget.space ||
         widget.maxHeight != oldWidget.maxHeight) {
@@ -54,63 +118,106 @@ class _TategakiState extends State<Tategaki> {
   void _calculateMetrics() {
     final effectiveTextStyle =
         widget.style ?? DefaultTextStyle.of(context).style;
+    final rubyTextStyle =
+        effectiveTextStyle.copyWith(fontSize: (effectiveTextStyle.fontSize ?? 14) * 0.6);
 
-    final painters = <List<TextPainter>>[];
-    final columnWidths = <double>[];
+    final columns = <_TategakiColumn>[];
     var totalWidth = 0.0;
 
-    final lines = widget.text.split('\n');
+    var currentColumnItems = <_Paintable>[];
+    var currentColumnHeight = 0.0;
+    var currentColumnWidth = 0.0;
 
-    for (final line in lines) {
-      if (line.isEmpty) {
-        painters.add([]);
-        columnWidths.add(0);
-        totalWidth += widget.space;
-        continue;
+    void endColumn() {
+      if (currentColumnItems.isNotEmpty) {
+        final column = _TategakiColumn(currentColumnItems, currentColumnWidth);
+        columns.add(column);
+        totalWidth += column.width + widget.space;
       }
+      currentColumnItems = [];
+      currentColumnHeight = 0.0;
+      currentColumnWidth = 0.0;
+    }
 
-      var currentColumnPainters = <TextPainter>[];
-      var currentColumnHeight = 0.0;
-      var currentColumnWidth = 0.0;
+    for (final element in widget.content) {
+      switch (element) {
+        case PlainText():
+          for (final char in element.text.runes) {
+            final character = String.fromCharCode(char);
+            final rotatedChar = VerticalRotated.map[character] ?? character;
+            final painter = TextPainter(
+              text: TextSpan(text: rotatedChar, style: effectiveTextStyle),
+              textDirection: TextDirection.ltr,
+            )..layout();
+            final item = _PaintableChar(painter);
 
-      for (final char in line.runes) {
-        final character = String.fromCharCode(char);
-        final rotatedChar = VerticalRotated.map[character] ?? character;
+            if (currentColumnHeight + item.height > widget.maxHeight && currentColumnItems.isNotEmpty) {
+              endColumn();
+            }
+            currentColumnItems.add(item);
+            currentColumnHeight += item.height;
+            if (item.width > currentColumnWidth) {
+              currentColumnWidth = item.width;
+            }
+          }
+        case RubyText():
+          final basePainters = <TextPainter>[];
+          var baseWidth = 0.0;
+          for (final char in element.base.runes) {
+            final character = String.fromCharCode(char);
+            final rotatedChar = VerticalRotated.map[character] ?? character;
+            final painter = TextPainter(
+              text: TextSpan(text: rotatedChar, style: effectiveTextStyle),
+              textDirection: TextDirection.ltr,
+            )..layout();
+            basePainters.add(painter);
+            if (painter.width > baseWidth) baseWidth = painter.width;
+          }
 
-        final textPainter = TextPainter(
-          text: TextSpan(text: rotatedChar, style: effectiveTextStyle),
-          textDirection: TextDirection.ltr,
-        )..layout();
+          final rubyPainters = <TextPainter>[];
+          var rubyWidth = 0.0;
+          var rubyHeight = 0.0;
+          for (final char in element.ruby.runes) {
+            final character = String.fromCharCode(char);
+            final rotatedChar = VerticalRotated.map[character] ?? character;
+            final painter = TextPainter(
+              text: TextSpan(text: rotatedChar, style: rubyTextStyle),
+              textDirection: TextDirection.ltr,
+            )..layout();
+            rubyPainters.add(painter);
+            rubyHeight += painter.height;
+            if (painter.width > rubyWidth) rubyWidth = painter.width;
+          }
 
-        if (currentColumnHeight + textPainter.height > widget.maxHeight &&
-            currentColumnPainters.isNotEmpty) {
-          painters.add(currentColumnPainters);
-          columnWidths.add(currentColumnWidth);
-          totalWidth += currentColumnWidth + widget.space;
+          final item = _PaintableRuby(
+            basePainters,
+            rubyPainters,
+            baseWidth,
+            rubyWidth,
+            rubyHeight,
+          );
 
-          currentColumnPainters = [];
-          currentColumnHeight = 0.0;
-          currentColumnWidth = 0.0;
-        }
-
-        currentColumnPainters.add(textPainter);
-        currentColumnHeight += textPainter.height;
-        if (textPainter.width > currentColumnWidth) {
-          currentColumnWidth = textPainter.width;
-        }
+          if (currentColumnHeight + item.height > widget.maxHeight && currentColumnItems.isNotEmpty) {
+            endColumn();
+          }
+          currentColumnItems.add(item);
+          currentColumnHeight += item.height;
+          if (item.width > currentColumnWidth) {
+            currentColumnWidth = item.width;
+          }
+        case NewLine():
+          endColumn();
+          columns.add(_TategakiColumn([], 0));
+          totalWidth += widget.space;
       }
-
-      if (currentColumnPainters.isNotEmpty) {
-        painters.add(currentColumnPainters);
-        columnWidths.add(currentColumnWidth);
-        totalWidth += currentColumnWidth + widget.space;
-      }
+    }
+    if (currentColumnItems.isNotEmpty) {
+      endColumn();
     }
 
     setState(() {
       _metrics = _TategakiMetrics(
-        painters: painters,
-        columnWidths: columnWidths,
+        columns: columns,
         size: Size(totalWidth, widget.maxHeight),
       );
     });
@@ -118,7 +225,7 @@ class _TategakiState extends State<Tategaki> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.text.isEmpty || _metrics == null) {
+    if (widget.content.isEmpty || _metrics == null) {
       return const SizedBox.shrink();
     }
 
@@ -145,23 +252,18 @@ class _TategakiPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     var nextColumnX = size.width;
 
-    for (var i = 0; i < metrics.painters.length; i++) {
-      final charPainters = metrics.painters[i];
-      final columnWidth = metrics.columnWidths[i];
-
-      final columnTotalWidth = columnWidth + space;
+    for (final column in metrics.columns) {
+      final columnTotalWidth = column.width + space;
       final currentColumnX = nextColumnX - columnTotalWidth;
 
-      if (charPainters.isNotEmpty) {
+      if (column.items.isNotEmpty) {
         var dy = 0.0;
-        for (final textPainter in charPainters) {
-          final dx =
-              currentColumnX + space + (columnWidth - textPainter.width) / 2;
-          textPainter.paint(canvas, Offset(dx, dy));
-          dy += textPainter.height;
+        for (final item in column.items) {
+          final dx = currentColumnX + space + (column.width - item.width) / 2;
+          item.paint(canvas, Offset(dx, dy));
+          dy += item.height;
         }
       }
-
       nextColumnX = currentColumnX;
     }
   }

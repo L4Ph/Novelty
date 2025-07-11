@@ -40,11 +40,20 @@ class ApiService {
       final subtitle = el.querySelector('.p-eplist__subtitle');
       final update = el.querySelector('.p-eplist__update');
       final revisedAttr = update?.querySelector('span')?.attributes['title'];
+      final url = subtitle?.attributes['href'];
+      int? index;
+      if (url != null) {
+        final match = RegExp(r'/(\d+)/').firstMatch(url);
+        if (match != null) {
+          index = int.tryParse(match.group(1)!);
+        }
+      }
       return Episode(
         subtitle: subtitle?.text.trim(),
-        url: subtitle?.attributes['href'],
+        url: url,
         update: update?.text.trim().replaceAll(RegExp(r'（.+）'), '').trim(),
         revised: revisedAttr?.replaceAll(' 改稿', '').trim(),
+        index: index,
       );
     }).toList();
   }
