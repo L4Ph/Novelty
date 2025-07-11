@@ -95,14 +95,22 @@ class DownloadStatus extends _$DownloadStatus {
     return repo.isNovelDownloaded(novelInfo);
   }
 
-  Future<void> toggle(NovelInfo novelInfo) async {
+  Future<void> toggle(BuildContext context, NovelInfo novelInfo) async {
     final repo = ref.read(novelRepositoryProvider);
     final isDownloaded = state.value ?? false;
-    if (isDownloaded) {
-      await repo.deleteDownloadedNovel(novelInfo);
-    } else {
-      // TODO(L4Ph): ダウンロード中の状態をUIに反映する
-      await repo.downloadNovel(novelInfo);
+    try {
+      if (isDownloaded) {
+        await repo.deleteDownloadedNovel(novelInfo);
+      } else {
+        // TODO(L4Ph): ダウンロード中の状態をUIに反映する
+        await repo.downloadNovel(novelInfo);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ダウンロードに失敗しました: ${e.toString()}')),
+        );
+      }
     }
   }
 }
@@ -155,7 +163,7 @@ class NovelDetailPage extends ConsumerWidget {
                 icon: Icon(isDownloaded ? Icons.download_done : Icons.download),
                 onPressed: () => ref
                     .read(downloadStatusProvider(novelInfo).notifier)
-                    .toggle(novelInfo),
+                    .toggle(context, novelInfo),
               ),
               loading: () => const IconButton(
                 icon: Icon(Icons.download),
@@ -208,7 +216,7 @@ class NovelDetailPage extends ConsumerWidget {
               icon: Icon(isDownloaded ? Icons.download_done : Icons.download),
               onPressed: () => ref
                   .read(downloadStatusProvider(novelInfo).notifier)
-                  .toggle(novelInfo),
+                  .toggle(context, novelInfo),
             ),
             loading: () => const IconButton(
               icon: Icon(Icons.download),
