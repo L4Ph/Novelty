@@ -41,7 +41,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
-          APP_SLUG=$(gh api /app --jq .slug)
+          APP_SLUG=$(gh api /repos/${{ github.repository }}/installation --jq .app_slug)
           USER_ID=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
           echo "app_slug=${APP_SLUG}" >> $GITHUB_OUTPUT
           echo "user_id=${USER_ID}" >> $GITHUB_OUTPUT
