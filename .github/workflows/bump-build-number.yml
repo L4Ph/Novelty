@@ -1,0 +1,49 @@
+name: Bump build number
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-tags: true
+
+      - name: Get latest tag as base version
+        id: get_latest_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.1")
+          BASE_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
+          echo "base_version=$BASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Detected base version from latest tag: $BASE_VERSION"
+
+      - name: Calculate new version
+        id: calculate_version
+        run: |
+          BASE_VERSION="${{ steps.get_latest_tag.outputs.base_version }}"
+          NEW_VERSION="${BASE_VERSION}+${{ github.run_number }}"
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Generated new version: $NEW_VERSION"
+
+      - name: Update pubspec.yaml version
+        run: |
+          yq -i '.version = "${{ steps.calculate_version.outputs.new_version }}"' pubspec.yaml
+          echo "Updated pubspec.yaml with version: ${{ steps.calculate_version.outputs.new_version }}"
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pubspec.yaml
+          git diff --staged --quiet || git commit -m "chore: Update pubspec.yaml version to ${{ steps.calculate_version.outputs.new_version }} [skip ci]"
+          git push origin ${{ github.head_ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
