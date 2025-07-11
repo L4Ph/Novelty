@@ -2269,6 +2269,380 @@ class EpisodesCompanion extends UpdateCompanion<Episode> {
   }
 }
 
+class $DownloadedEpisodesTable extends DownloadedEpisodes
+    with TableInfo<$DownloadedEpisodesTable, DownloadedEpisode> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DownloadedEpisodesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ncodeMeta = const VerificationMeta('ncode');
+  @override
+  late final GeneratedColumn<String> ncode = GeneratedColumn<String>(
+    'ncode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _episodeMeta = const VerificationMeta(
+    'episode',
+  );
+  @override
+  late final GeneratedColumn<int> episode = GeneratedColumn<int>(
+    'episode',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<List<NovelContentElement>, String>
+  content =
+      GeneratedColumn<String>(
+        'content',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<List<NovelContentElement>>(
+        $DownloadedEpisodesTable.$convertercontent,
+      );
+  static const VerificationMeta _downloadedAtMeta = const VerificationMeta(
+    'downloadedAt',
+  );
+  @override
+  late final GeneratedColumn<int> downloadedAt = GeneratedColumn<int>(
+    'downloaded_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ncode,
+    episode,
+    title,
+    content,
+    downloadedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'downloaded_episodes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DownloadedEpisode> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('ncode')) {
+      context.handle(
+        _ncodeMeta,
+        ncode.isAcceptableOrUnknown(data['ncode']!, _ncodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ncodeMeta);
+    }
+    if (data.containsKey('episode')) {
+      context.handle(
+        _episodeMeta,
+        episode.isAcceptableOrUnknown(data['episode']!, _episodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_episodeMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    }
+    if (data.containsKey('downloaded_at')) {
+      context.handle(
+        _downloadedAtMeta,
+        downloadedAt.isAcceptableOrUnknown(
+          data['downloaded_at']!,
+          _downloadedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_downloadedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {ncode, episode};
+  @override
+  DownloadedEpisode map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DownloadedEpisode(
+      ncode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ncode'],
+      )!,
+      episode: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}episode'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      ),
+      content: $DownloadedEpisodesTable.$convertercontent.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}content'],
+        )!,
+      ),
+      downloadedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}downloaded_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DownloadedEpisodesTable createAlias(String alias) {
+    return $DownloadedEpisodesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<List<NovelContentElement>, String> $convertercontent =
+      const ContentConverter();
+}
+
+class DownloadedEpisode extends DataClass
+    implements Insertable<DownloadedEpisode> {
+  final String ncode;
+  final int episode;
+  final String? title;
+  final List<NovelContentElement> content;
+  final int downloadedAt;
+  const DownloadedEpisode({
+    required this.ncode,
+    required this.episode,
+    this.title,
+    required this.content,
+    required this.downloadedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['ncode'] = Variable<String>(ncode);
+    map['episode'] = Variable<int>(episode);
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
+    {
+      map['content'] = Variable<String>(
+        $DownloadedEpisodesTable.$convertercontent.toSql(content),
+      );
+    }
+    map['downloaded_at'] = Variable<int>(downloadedAt);
+    return map;
+  }
+
+  DownloadedEpisodesCompanion toCompanion(bool nullToAbsent) {
+    return DownloadedEpisodesCompanion(
+      ncode: Value(ncode),
+      episode: Value(episode),
+      title: title == null && nullToAbsent
+          ? const Value.absent()
+          : Value(title),
+      content: Value(content),
+      downloadedAt: Value(downloadedAt),
+    );
+  }
+
+  factory DownloadedEpisode.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DownloadedEpisode(
+      ncode: serializer.fromJson<String>(json['ncode']),
+      episode: serializer.fromJson<int>(json['episode']),
+      title: serializer.fromJson<String?>(json['title']),
+      content: serializer.fromJson<List<NovelContentElement>>(json['content']),
+      downloadedAt: serializer.fromJson<int>(json['downloadedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ncode': serializer.toJson<String>(ncode),
+      'episode': serializer.toJson<int>(episode),
+      'title': serializer.toJson<String?>(title),
+      'content': serializer.toJson<List<NovelContentElement>>(content),
+      'downloadedAt': serializer.toJson<int>(downloadedAt),
+    };
+  }
+
+  DownloadedEpisode copyWith({
+    String? ncode,
+    int? episode,
+    Value<String?> title = const Value.absent(),
+    List<NovelContentElement>? content,
+    int? downloadedAt,
+  }) => DownloadedEpisode(
+    ncode: ncode ?? this.ncode,
+    episode: episode ?? this.episode,
+    title: title.present ? title.value : this.title,
+    content: content ?? this.content,
+    downloadedAt: downloadedAt ?? this.downloadedAt,
+  );
+  DownloadedEpisode copyWithCompanion(DownloadedEpisodesCompanion data) {
+    return DownloadedEpisode(
+      ncode: data.ncode.present ? data.ncode.value : this.ncode,
+      episode: data.episode.present ? data.episode.value : this.episode,
+      title: data.title.present ? data.title.value : this.title,
+      content: data.content.present ? data.content.value : this.content,
+      downloadedAt: data.downloadedAt.present
+          ? data.downloadedAt.value
+          : this.downloadedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DownloadedEpisode(')
+          ..write('ncode: $ncode, ')
+          ..write('episode: $episode, ')
+          ..write('title: $title, ')
+          ..write('content: $content, ')
+          ..write('downloadedAt: $downloadedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(ncode, episode, title, content, downloadedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DownloadedEpisode &&
+          other.ncode == this.ncode &&
+          other.episode == this.episode &&
+          other.title == this.title &&
+          other.content == this.content &&
+          other.downloadedAt == this.downloadedAt);
+}
+
+class DownloadedEpisodesCompanion extends UpdateCompanion<DownloadedEpisode> {
+  final Value<String> ncode;
+  final Value<int> episode;
+  final Value<String?> title;
+  final Value<List<NovelContentElement>> content;
+  final Value<int> downloadedAt;
+  final Value<int> rowid;
+  const DownloadedEpisodesCompanion({
+    this.ncode = const Value.absent(),
+    this.episode = const Value.absent(),
+    this.title = const Value.absent(),
+    this.content = const Value.absent(),
+    this.downloadedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DownloadedEpisodesCompanion.insert({
+    required String ncode,
+    required int episode,
+    this.title = const Value.absent(),
+    required List<NovelContentElement> content,
+    required int downloadedAt,
+    this.rowid = const Value.absent(),
+  }) : ncode = Value(ncode),
+       episode = Value(episode),
+       content = Value(content),
+       downloadedAt = Value(downloadedAt);
+  static Insertable<DownloadedEpisode> custom({
+    Expression<String>? ncode,
+    Expression<int>? episode,
+    Expression<String>? title,
+    Expression<String>? content,
+    Expression<int>? downloadedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ncode != null) 'ncode': ncode,
+      if (episode != null) 'episode': episode,
+      if (title != null) 'title': title,
+      if (content != null) 'content': content,
+      if (downloadedAt != null) 'downloaded_at': downloadedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DownloadedEpisodesCompanion copyWith({
+    Value<String>? ncode,
+    Value<int>? episode,
+    Value<String?>? title,
+    Value<List<NovelContentElement>>? content,
+    Value<int>? downloadedAt,
+    Value<int>? rowid,
+  }) {
+    return DownloadedEpisodesCompanion(
+      ncode: ncode ?? this.ncode,
+      episode: episode ?? this.episode,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      downloadedAt: downloadedAt ?? this.downloadedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ncode.present) {
+      map['ncode'] = Variable<String>(ncode.value);
+    }
+    if (episode.present) {
+      map['episode'] = Variable<int>(episode.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (content.present) {
+      map['content'] = Variable<String>(
+        $DownloadedEpisodesTable.$convertercontent.toSql(content.value),
+      );
+    }
+    if (downloadedAt.present) {
+      map['downloaded_at'] = Variable<int>(downloadedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DownloadedEpisodesCompanion(')
+          ..write('ncode: $ncode, ')
+          ..write('episode: $episode, ')
+          ..write('title: $title, ')
+          ..write('content: $content, ')
+          ..write('downloadedAt: $downloadedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $BookmarksTable extends Bookmarks
     with TableInfo<$BookmarksTable, Bookmark> {
   @override
@@ -2641,6 +3015,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $NovelsTable novels = $NovelsTable(this);
   late final $HistoryTable history = $HistoryTable(this);
   late final $EpisodesTable episodes = $EpisodesTable(this);
+  late final $DownloadedEpisodesTable downloadedEpisodes =
+      $DownloadedEpisodesTable(this);
   late final $BookmarksTable bookmarks = $BookmarksTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -2650,6 +3026,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     novels,
     history,
     episodes,
+    downloadedEpisodes,
     bookmarks,
   ];
 }
@@ -3698,6 +4075,227 @@ typedef $$EpisodesTableProcessedTableManager =
       Episode,
       PrefetchHooks Function()
     >;
+typedef $$DownloadedEpisodesTableCreateCompanionBuilder =
+    DownloadedEpisodesCompanion Function({
+      required String ncode,
+      required int episode,
+      Value<String?> title,
+      required List<NovelContentElement> content,
+      required int downloadedAt,
+      Value<int> rowid,
+    });
+typedef $$DownloadedEpisodesTableUpdateCompanionBuilder =
+    DownloadedEpisodesCompanion Function({
+      Value<String> ncode,
+      Value<int> episode,
+      Value<String?> title,
+      Value<List<NovelContentElement>> content,
+      Value<int> downloadedAt,
+      Value<int> rowid,
+    });
+
+class $$DownloadedEpisodesTableFilterComposer
+    extends Composer<_$AppDatabase, $DownloadedEpisodesTable> {
+  $$DownloadedEpisodesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ncode => $composableBuilder(
+    column: $table.ncode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get episode => $composableBuilder(
+    column: $table.episode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<
+    List<NovelContentElement>,
+    List<NovelContentElement>,
+    String
+  >
+  get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$DownloadedEpisodesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DownloadedEpisodesTable> {
+  $$DownloadedEpisodesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ncode => $composableBuilder(
+    column: $table.ncode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get episode => $composableBuilder(
+    column: $table.episode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DownloadedEpisodesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DownloadedEpisodesTable> {
+  $$DownloadedEpisodesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ncode =>
+      $composableBuilder(column: $table.ncode, builder: (column) => column);
+
+  GeneratedColumn<int> get episode =>
+      $composableBuilder(column: $table.episode, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<List<NovelContentElement>, String>
+  get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<int> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$DownloadedEpisodesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DownloadedEpisodesTable,
+          DownloadedEpisode,
+          $$DownloadedEpisodesTableFilterComposer,
+          $$DownloadedEpisodesTableOrderingComposer,
+          $$DownloadedEpisodesTableAnnotationComposer,
+          $$DownloadedEpisodesTableCreateCompanionBuilder,
+          $$DownloadedEpisodesTableUpdateCompanionBuilder,
+          (
+            DownloadedEpisode,
+            BaseReferences<
+              _$AppDatabase,
+              $DownloadedEpisodesTable,
+              DownloadedEpisode
+            >,
+          ),
+          DownloadedEpisode,
+          PrefetchHooks Function()
+        > {
+  $$DownloadedEpisodesTableTableManager(
+    _$AppDatabase db,
+    $DownloadedEpisodesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DownloadedEpisodesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DownloadedEpisodesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DownloadedEpisodesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ncode = const Value.absent(),
+                Value<int> episode = const Value.absent(),
+                Value<String?> title = const Value.absent(),
+                Value<List<NovelContentElement>> content = const Value.absent(),
+                Value<int> downloadedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DownloadedEpisodesCompanion(
+                ncode: ncode,
+                episode: episode,
+                title: title,
+                content: content,
+                downloadedAt: downloadedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ncode,
+                required int episode,
+                Value<String?> title = const Value.absent(),
+                required List<NovelContentElement> content,
+                required int downloadedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => DownloadedEpisodesCompanion.insert(
+                ncode: ncode,
+                episode: episode,
+                title: title,
+                content: content,
+                downloadedAt: downloadedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DownloadedEpisodesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DownloadedEpisodesTable,
+      DownloadedEpisode,
+      $$DownloadedEpisodesTableFilterComposer,
+      $$DownloadedEpisodesTableOrderingComposer,
+      $$DownloadedEpisodesTableAnnotationComposer,
+      $$DownloadedEpisodesTableCreateCompanionBuilder,
+      $$DownloadedEpisodesTableUpdateCompanionBuilder,
+      (
+        DownloadedEpisode,
+        BaseReferences<
+          _$AppDatabase,
+          $DownloadedEpisodesTable,
+          DownloadedEpisode
+        >,
+      ),
+      DownloadedEpisode,
+      PrefetchHooks Function()
+    >;
 typedef $$BookmarksTableCreateCompanionBuilder =
     BookmarksCompanion Function({
       required String ncode,
@@ -3902,6 +4500,8 @@ class $AppDatabaseManager {
       $$HistoryTableTableManager(_db, _db.history);
   $$EpisodesTableTableManager get episodes =>
       $$EpisodesTableTableManager(_db, _db.episodes);
+  $$DownloadedEpisodesTableTableManager get downloadedEpisodes =>
+      $$DownloadedEpisodesTableTableManager(_db, _db.downloadedEpisodes);
   $$BookmarksTableTableManager get bookmarks =>
       $$BookmarksTableTableManager(_db, _db.bookmarks);
 }

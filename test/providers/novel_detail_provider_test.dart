@@ -5,10 +5,11 @@ import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/novel_detail_page.dart';
 import 'package:novelty/services/api_service.dart';
 
-@GenerateMocks([AppDatabase, ApiService])
+@GenerateMocks([AppDatabase, ApiService, NovelRepository])
 import 'novel_detail_provider_test.mocks.dart';
 
 void main() {
@@ -121,15 +122,18 @@ void main() {
     });
   });
 
-  group('shortStoryEpisodeProvider', () {
+  group('shortStoryContentProvider', () {
     late MockApiService mockApiService;
+    late MockNovelRepository mockNovelRepository;
     late ProviderContainer container;
 
     setUp(() {
       mockApiService = MockApiService();
+      mockNovelRepository = MockNovelRepository();
       container = ProviderContainer(
         overrides: [
           apiServiceProvider.overrideWithValue(mockApiService),
+          novelRepositoryProvider.overrideWithValue(mockNovelRepository),
         ],
       );
     });
@@ -141,29 +145,22 @@ void main() {
     test('should be auto-disposed when not in use', () {
       const testNcode = 'N1234AB';
 
-      final testEpisode = Episode(
-        ncode: testNcode,
-        index: 1,
-        subtitle: 'テストエピソード',
-        body: 'テスト本文',
-      );
-
       when(
-        mockApiService.fetchEpisode(testNcode, 1),
-      ).thenAnswer((_) async => testEpisode);
+        mockNovelRepository.getEpisode(testNcode, 1),
+      ).thenAnswer((_) async => []);
 
       container
-        ..read(shortStoryEpisodeProvider(testNcode))
+        ..read(shortStoryContentProvider(testNcode))
         ..dispose();
 
-      final newMockApiService = MockApiService();
+      final newMockNovelRepository = MockNovelRepository();
       final newContainer = ProviderContainer(
         overrides: [
-          apiServiceProvider.overrideWithValue(newMockApiService),
+          novelRepositoryProvider.overrideWithValue(newMockNovelRepository),
         ],
       );
       expect(
-        () => newContainer.read(shortStoryEpisodeProvider(testNcode)),
+        () => newContainer.read(shortStoryContentProvider(testNcode)),
         returnsNormally,
       );
       newContainer.dispose();
@@ -173,11 +170,11 @@ void main() {
       const testNcode = 'INVALID_NCODE';
 
       when(
-        mockApiService.fetchEpisode(testNcode, 1),
+        mockNovelRepository.getEpisode(testNcode, 1),
       ).thenThrow(Exception('API error'));
 
       expect(
-        () => container.read(shortStoryEpisodeProvider(testNcode).future),
+        () => container.read(shortStoryContentProvider(testNcode).future),
         throwsA(isA<Exception>()),
       );
     });
