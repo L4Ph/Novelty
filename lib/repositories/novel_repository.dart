@@ -56,7 +56,7 @@ class NovelRepository {
 
     if (await contentFile.exists()) {
       final content = await contentFile.readAsString();
-      final List<dynamic> decoded = jsonDecode(content);
+      final List<dynamic> decoded = jsonDecode(content) as List<dynamic>;
       return decoded
           .map((e) => NovelContentElement.fromJson(e as Map<String, dynamic>))
           .toList();
