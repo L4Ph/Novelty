@@ -76,11 +76,12 @@ jobs:
           NEW_TAG="v${NEW_VERSION}"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
-          echo "VERSION_NAME=$NEW_VERSION" >> $GITHUB_ENV
 
       # 5. Update version in pubspec.yaml
       - name: Update version in pubspec.yaml
-        run: yq -i '.version = "${{ steps.versions.outputs.new_version }}+${{ github.run_number }}"' pubspec.yaml
+        run: |
+          BUILD_NUMBER=$(yq '.version' pubspec.yaml | cut -d'+' -f2)
+          yq -i '.version = "${{ steps.versions.outputs.new_version }}+${BUILD_NUMBER}"' pubspec.yaml
 
       # 6. Set up Flutter environment and build
       - name: Set up Flutter
@@ -97,11 +98,9 @@ jobs:
         run: |
           fvm flutter build apk --release --split-per-abi \
             --build-name=${{ env.VERSION_NAME }} \
-            --build-number=${{ github.run_number }} \
             --dart-define=NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}
           fvm flutter build appbundle --release \
-            --build-name=${{ env.VERSION_NAME }} \
-            --build-number=${{ github.run_number }} \
+            --build-name=${{ env.VERSION_NAME }} \  
             --dart-define=NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}
         env:
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}

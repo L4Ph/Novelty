@@ -29,7 +29,14 @@ jobs:
         id: calculate_version
         run: |
           BASE_VERSION="${{ steps.get_latest_tag.outputs.base_version }}"
-          NEW_VERSION="${BASE_VERSION}+${{ github.run_number }}"
+          CURRENT_VERSION=$(yq '.version' pubspec.yaml)
+          if [[ "$CURRENT_VERSION" == *"+"* ]]; then
+            BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
+          else
+            BUILD_NUMBER=0
+          fi
+          NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
+          NEW_VERSION="${BASE_VERSION}+${NEW_BUILD_NUMBER}"
           echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           echo "Generated new version: $NEW_VERSION"
 
