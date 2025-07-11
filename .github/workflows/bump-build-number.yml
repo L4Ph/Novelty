@@ -18,19 +18,11 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-tags: true
 
-      - name: Get latest tag as base version
-        id: get_latest_tag
-        run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.1")
-          BASE_VERSION=$(echo "$LATEST_TAG" | sed 's/^v//')
-          echo "base_version=$BASE_VERSION" >> "$GITHUB_OUTPUT"
-          echo "Detected base version from latest tag: $BASE_VERSION"
-
       - name: Calculate new version
         id: calculate_version
         run: |
-          BASE_VERSION="${{ steps.get_latest_tag.outputs.base_version }}"
           CURRENT_VERSION=$(yq '.version' pubspec.yaml)
+          BASE_VERSION=$(echo "$CURRENT_VERSION" | cut -d'+' -f1)
           if [[ "$CURRENT_VERSION" == *"+"* ]]; then
             BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
           else
