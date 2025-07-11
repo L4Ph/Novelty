@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_content.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'novel_detail_page.g.dart';
@@ -101,10 +104,60 @@ class DownloadStatus extends _$DownloadStatus {
     try {
       if (isDownloaded) {
         await repo.deleteDownloadedNovel(novelInfo);
-      } else {
-        // TODO(L4Ph): ダウンロード中の状態をUIに反映する
-        await repo.downloadNovel(novelInfo);
+        return;
       }
+
+      bool hasPermission = false;
+      if (Platform.isAndroid) {
+        final status = await Permission.manageExternalStorage.status;
+        if (status.isGranted) {
+          hasPermission = true;
+        } else {
+          final result = await Permission.manageExternalStorage.request();
+          if (result.isGranted) {
+            hasPermission = true;
+          }
+        }
+      } else {
+        final status = await Permission.storage.status;
+        if (status.isGranted) {
+          hasPermission = true;
+        } else {
+          final result = await Permission.storage.request();
+          if (result.isGranted) {
+            hasPermission = true;
+          }
+        }
+      }
+
+      if (!hasPermission) {
+        if (context.mounted) {
+          await showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('権限が必要です'),
+              content: const Text('小説をダウンロードするには、ファイルへのアクセス権限を許可してください。'),
+              actions: [
+                TextButton(
+                  child: const Text('キャンセル'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                TextButton(
+                  child: const Text('設定を開く'),
+                  onPressed: () {
+                    openAppSettings();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+
+      // TODO(L4Ph): ダウンロード中の状態をUIに反映する
+      await repo.downloadNovel(novelInfo);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

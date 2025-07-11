@@ -8,7 +8,6 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/novel_parser.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:permission_handler/permission_handler.dart';
 
 final novelRepositoryProvider = Provider<NovelRepository>((ref) {
   final apiService = ref.watch(apiServiceProvider);
@@ -34,20 +33,24 @@ class NovelRepository {
   String _getNovelDirectory(String downloadPath, String ncode) =>
       p.join(downloadPath, ncode);
 
-  String _getEpisodeDirectory(
-          String downloadPath, String ncode, int episode) =>
+  String _getEpisodeDirectory(String downloadPath, String ncode, int episode) =>
       p.join(_getNovelDirectory(downloadPath, ncode), episode.toString());
 
-  File _getEpisodeContentFile(
-          String downloadPath, String ncode, int episode) =>
-      File(p.join(
-          _getEpisodeDirectory(downloadPath, ncode, episode), 'content.json'));
+  File _getEpisodeContentFile(String downloadPath, String ncode, int episode) =>
+      File(
+        p.join(
+          _getEpisodeDirectory(downloadPath, ncode, episode),
+          'content.json',
+        ),
+      );
 
   File _getNovelInfoFile(String downloadPath, String ncode) =>
       File(p.join(_getNovelDirectory(downloadPath, ncode), 'info.json'));
 
   Future<List<NovelContentElement>> getEpisode(
-      String ncode, int episode) async {
+    String ncode,
+    int episode,
+  ) async {
     final downloadPath = await _getDownloadPath();
     final contentFile = _getEpisodeContentFile(downloadPath, ncode, episode);
 
@@ -70,8 +73,9 @@ class NovelRepository {
 
   Future<void> downloadEpisode(String ncode, int episode) async {
     final downloadPath = await _getDownloadPath();
-    final episodeDir =
-        Directory(_getEpisodeDirectory(downloadPath, ncode, episode));
+    final episodeDir = Directory(
+      _getEpisodeDirectory(downloadPath, ncode, episode),
+    );
     if (!await episodeDir.exists()) {
       await episodeDir.create(recursive: true);
     }
@@ -87,38 +91,13 @@ class NovelRepository {
     }
 
     final parsedContent = parseNovel(episodeData.body!);
-    final encodedContent =
-        jsonEncode(parsedContent.map((e) => e.toJson()).toList());
+    final encodedContent = jsonEncode(
+      parsedContent.map((e) => e.toJson()).toList(),
+    );
     await contentFile.writeAsString(encodedContent);
   }
 
-  Future<bool> _requestPermissions() async {
-    final status = await Permission.storage.status;
-    if (!status.isGranted) {
-      final result = await Permission.storage.request();
-      if (!result.isGranted) {
-        return false;
-      }
-    }
-
-    if (Platform.isAndroid) {
-      final manageStatus = await Permission.manageExternalStorage.status;
-      if (!manageStatus.isGranted) {
-        final result = await Permission.manageExternalStorage.request();
-        if (!result.isGranted) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
   Future<void> downloadNovel(NovelInfo novelInfo) async {
-    final hasPermission = await _requestPermissions();
-    if (!hasPermission) {
-      throw Exception('Storage permission not granted');
-    }
-
     final ncode = novelInfo.ncode!;
     final downloadPath = await _getDownloadPath();
 
@@ -147,8 +126,9 @@ class NovelRepository {
 
   Future<void> deleteDownloadedEpisode(String ncode, int episode) async {
     final downloadPath = await _getDownloadPath();
-    final episodeDir =
-        Directory(_getEpisodeDirectory(downloadPath, ncode, episode));
+    final episodeDir = Directory(
+      _getEpisodeDirectory(downloadPath, ncode, episode),
+    );
     if (await episodeDir.exists()) {
       await episodeDir.delete(recursive: true);
     }
@@ -191,8 +171,11 @@ class NovelRepository {
 
     for (final episode in novelInfo.episodes!) {
       if (episode.index != null) {
-        final contentFile =
-            _getEpisodeContentFile(downloadPath, ncode, episode.index!);
+        final contentFile = _getEpisodeContentFile(
+          downloadPath,
+          ncode,
+          episode.index!,
+        );
         if (!await contentFile.exists()) {
           yield false;
           return;
@@ -211,4 +194,3 @@ class NovelRepository {
     );
   }
 }
-
