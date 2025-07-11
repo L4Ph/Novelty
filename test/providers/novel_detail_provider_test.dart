@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -8,7 +7,6 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/screens/novel_detail_page.dart';
 import 'package:novelty/services/api_service.dart';
-
 
 @GenerateMocks([AppDatabase, ApiService])
 import 'novel_detail_provider_test.mocks.dart';
@@ -87,9 +85,15 @@ void main() {
     test('should handle database errors gracefully', () async {
       const testNcode = 'N1234AB';
 
-      when(mockDatabase.getNovel(testNcode)).thenThrow(Exception('Database error'));
-      when(mockApiService.fetchNovelInfo(any)).thenAnswer((_) async => NovelInfo(ncode: testNcode));
-      when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1); // Add stub for addToHistory
+      when(
+        mockDatabase.getNovel(testNcode),
+      ).thenThrow(Exception('Database error'));
+      when(
+        mockApiService.fetchNovelInfo(any),
+      ).thenAnswer((_) async => NovelInfo(ncode: testNcode));
+      when(
+        mockDatabase.addToHistory(any),
+      ).thenAnswer((_) async => 1); // Add stub for addToHistory
 
       await expectLater(
         container.read(novelInfoProvider(testNcode).future),
@@ -100,9 +104,9 @@ void main() {
     test('should be auto-disposed when not in use', () {
       const testNcode = 'N1234AB';
 
-      container.read(novelInfoProvider(testNcode));
-
-      container.dispose();
+      container
+        ..read(novelInfoProvider(testNcode))
+        ..dispose();
 
       final newContainer = ProviderContainer(
         overrides: [
@@ -208,7 +212,7 @@ void main() {
 
     test('initial state is true when novel is favorite', () async {
       when(mockDatabase.getNovel(ncode)).thenAnswer(
-        (_) async => Novel(ncode: ncode, fav: 1),
+        (_) async => const Novel(ncode: ncode, fav: 1),
       );
       await expectLater(
         container.read(favoriteStatusProvider(ncode).future),
@@ -221,7 +225,7 @@ void main() {
       when(mockDatabase.getNovel(ncode)).thenAnswer((_) async => null);
       when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
       final notifier = container.read(favoriteStatusProvider(ncode).notifier);
-      
+
       // Act
       final result = await notifier.toggle(novelInfo);
 
@@ -237,10 +241,14 @@ void main() {
 
     test('toggle removes from favorites and returns true', () async {
       // Arrange
-      when(mockDatabase.getNovel(ncode)).thenAnswer((_) async => Novel(ncode: ncode, fav: 1));
+      when(
+        mockDatabase.getNovel(ncode),
+      ).thenAnswer((_) async => Novel(ncode: ncode, fav: 1));
       when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
       final notifier = container.read(favoriteStatusProvider(ncode).notifier);
-      await container.read(favoriteStatusProvider(ncode).future); // Ensure initial state
+      await container.read(
+        favoriteStatusProvider(ncode).future,
+      ); // Ensure initial state
 
       // Act
       final result = await notifier.toggle(novelInfo);

@@ -26,11 +26,6 @@ class _RankingListState extends ConsumerState<RankingList>
   @override
   bool get wantKeepAlive => true;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
   void _applyFilters() {
     var filtered = List<RankingResponse>.from(_allNovelData);
 

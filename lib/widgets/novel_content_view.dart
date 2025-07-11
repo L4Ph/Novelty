@@ -35,7 +35,6 @@ class NovelContentView extends StatelessWidget {
       switch (element) {
         case PlainText():
           spans.add(TextSpan(text: element.text, style: style));
-          break;
         case RubyText():
           spans.add(
             WidgetSpan(
@@ -46,10 +45,8 @@ class NovelContentView extends StatelessWidget {
               ),
             ),
           );
-          break;
         case NewLine():
           spans.add(const TextSpan(text: '\n'));
-          break;
       }
     }
     return spans;
