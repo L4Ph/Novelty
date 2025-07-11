@@ -37,6 +37,10 @@ tasks:
           exit 1
         fi
 
+        # 環境構築
+        curl -fsSL https://fvm.app/install.sh | bash
+        fvm install
+
         # 1. バージョン計算
         FULL_VERSION=$(yq '.version' pubspec.yaml)
         CURRENT_VERSION=$(echo $FULL_VERSION | cut -d'+' -f1)
