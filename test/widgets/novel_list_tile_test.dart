@@ -107,6 +107,7 @@ void main() {
           ncode: 'N1234AB',
           title: 'テスト小説',
           novelType: 1,
+          // ignore: avoid_redundant_argument_values
           end: null,
           genre: 1,
           writer: 'テスト作者',
@@ -152,6 +153,7 @@ void main() {
         final item = RankingResponse(
           ncode: 'N1234AB',
           title: 'テスト小説',
+          // ignore: avoid_redundant_argument_values
           novelType: null,
           end: 0,
           genre: 1,

@@ -1,33 +1,30 @@
 name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      semver:
-        description: 'Semantic version increment'
-        required: true
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
+  push:
+    tags:
+      - 'v*' # e.g. v1.2.3
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      id-token: write
-      pull-requests: read
+      contents: write # to create release
+      id-token: write # for auth
 
     steps:
-      # 1. Checkout repository
+      # 1. Checkout repository at the specific tag
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-tags: true
+          ref: ${{ github.ref }} # Checkout the tag that triggered the workflow
 
-      # 2. Generate GitHub App token
+      # 2. Get version from tag
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      # 3. Generate GitHub App token
       - name: Generate GitHub App token
         id: generate-token
         uses: actions/create-github-app-token@v2
@@ -35,54 +32,7 @@ jobs:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
 
-      # 3. Get GitHub App info
-      - name: Get GitHub App info
-        id: app_info
-        env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
-        run: |
-          APP_SLUG=$(gh api /app --jq .slug)
-          USER_ID=$(gh api "/users/${APP_SLUG}[bot]" --jq .id)
-          echo "app_slug=${APP_SLUG}" >> $GITHUB_OUTPUT
-          echo "user_id=${USER_ID}" >> $GITHUB_OUTPUT
-
-      # 4. Determine new version
-      - name: Determine new version
-        id: versions
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-        run: |
-          PREVIOUS_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName' 2>/dev/null || echo "v0.0.0")
-          VERSION=${PREVIOUS_TAG#v}
-          IFS='.' read -r -a V_PARTS <<< "$VERSION"
-
-          SEMVER_TYPE="${{ github.event.inputs.semver }}"
-
-          if [ "$SEMVER_TYPE" == "major" ]; then
-            echo "Bumping major version"
-            V_PARTS[0]=$((V_PARTS[0] + 1))
-            V_PARTS[1]=0
-            V_PARTS[2]=0
-          elif [ "$SEMVER_TYPE" == "minor" ]; then
-            echo "Bumping minor version"
-            V_PARTS[1]=$((V_PARTS[1] + 1))
-            V_PARTS[2]=0
-          else # Default to patch
-            echo "Bumping patch version"
-            V_PARTS[2]=$((V_PARTS[2] + 1))
-          fi
-
-          NEW_VERSION="${V_PARTS[0]}.${V_PARTS[1]}.${V_PARTS[2]}"
-          NEW_TAG="v${NEW_VERSION}"
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
-          echo "VERSION_NAME=$NEW_VERSION" >> $GITHUB_ENV
-
-      # 5. Update version in pubspec.yaml
-      - name: Update version in pubspec.yaml
-        run: yq -i '.version = "${{ steps.versions.outputs.new_version }}+${{ github.run_number }}"' pubspec.yaml
-
-      # 6. Set up Flutter environment and build
+      # 4. Set up Flutter environment and build
       - name: Set up Flutter
         run: |
           curl -fsSL https://fvm.app/install.sh | bash
@@ -95,44 +45,27 @@ jobs:
           echo "STORE_FILE=upload-keystore.jks" >> $GITHUB_ENV
       - name: Build Android Release Files
         run: |
+          # The version name is derived from the tag
+          VERSION_NAME=$(echo "${{ steps.get_version.outputs.VERSION }}" | sed 's/^v//')
           fvm flutter build apk --release --split-per-abi \
-            --build-name=${{ env.VERSION_NAME }} \
-            --build-number=${{ github.run_number }} \
+            --build-name=$VERSION_NAME \
             --dart-define=NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}
           fvm flutter build appbundle --release \
-            --build-name=${{ env.VERSION_NAME }} \
-            --build-number=${{ github.run_number }} \
+            --build-name=$VERSION_NAME \
             --dart-define=NOVELTY_API_URL=${{ secrets.NOVELTY_API_URL }}
         env:
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-      # 7. Commit and push version update
-      - name: Commit and push version update
-        run: |
-          git config user.name "${{ steps.app_info.outputs.app_slug }}[bot]"
-          git config user.email "${{ steps.app_info.outputs.user_id }}+${{ steps.app_info.outputs.app_slug }}[bot]@users.noreply.github.com"
-          git add pubspec.yaml
-          git commit -m "chore(release): bump version to ${{ steps.versions.outputs.new_version }}"
-          git push https://x-access-token:${{ steps.generate_token.outputs.token }}@github.com/${{ github.repository }} HEAD:main
-
-      # 8. Tag and Push Tag
-      - name: Tag and Push Tag
-        run: |
-          git config user.name "${{ steps.app_info.outputs.app_slug }}[bot]"
-          git config user.email "${{ steps.app_info.outputs.user_id }}+${{ steps.app_info.outputs.app_slug }}[bot]@users.noreply.github.com"
-          git tag ${{ steps.versions.outputs.new_tag }} -m "Release ${{ steps.versions.outputs.new_tag }}"
-          git push https://x-access-token:${{ steps.generate_token.outputs.token }}@github.com/${{ github.repository }} ${{ steps.versions.outputs.new_tag }}
-
-      # 9. Create GitHub Release (as a draft)
+      # 5. Create GitHub Release
       - name: Create GitHub Release
         env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
-          gh release create "${{ steps.versions.outputs.new_tag }}" \
-            --title "Release ${{ steps.versions.outputs.new_tag }}" \
-            --draft \
+          gh release create "${{ steps.get_version.outputs.VERSION }}" \
+            --title "Release ${{ steps.get_version.outputs.VERSION }}" \
+            --notes "New release version." \
             build/app/outputs/bundle/release/app-release.aab \
             build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
             build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \

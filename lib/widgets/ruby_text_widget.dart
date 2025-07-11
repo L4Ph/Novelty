@@ -17,7 +17,7 @@ class RubySpan extends StatelessWidget {
   Widget build(BuildContext context) {
     final rubyStyle = style.copyWith(
       fontSize: style.fontSize != null ? style.fontSize! * 0.5 : null,
-      height: 1.0,
+      height: 1,
     );
 
     return Stack(

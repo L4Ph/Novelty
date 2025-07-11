@@ -97,7 +97,7 @@ GEMINI.mdに書いてあることは継続してください。
 また、コミットメッセージは日本語で記述してください。
 ```sh
 git add .
-git commit -m "$summary_of_commit_message"
+git commit -m $summary_of_commit_message
 ```
 
 5. pushを行う(commitが複数ある場合でもまとめて行う)
@@ -110,5 +110,5 @@ git push --set-upstream origin $current_branch_name
 pushが完了したら、Pull Requestを作成します。
 titleとbodyは日本語で記述してください。
 ```sh
-gh pr create -a @me --base main --head $current_branch_name --title "$summary_of_pr_title" --body "$summary_of_pr"
+gh pr create -a @me --base main --head $current_branch_name --title $summary_of_pr_title --body $summary_of_pr
 ```

@@ -6,16 +6,15 @@ import 'package:novelty/utils/settings_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 @GenerateMocks([SharedPreferences])
+// ignore: unused_import
 import 'settings_provider_test.mocks.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   group('Settings Provider', () {
-    late MockSharedPreferences mockPrefs;
     late ProviderContainer container;
 
     setUp(() {
-      mockPrefs = MockSharedPreferences();
       SharedPreferences.setMockInitialValues({});
       container = ProviderContainer();
     });

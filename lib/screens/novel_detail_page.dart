@@ -33,8 +33,8 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   final existing = await db.getNovel(ncode);
   await db.insertNovel(
     novelInfo.toDbCompanion().copyWith(
-          fav: drift.Value(existing?.fav ?? 0),
-        ),
+      fav: drift.Value(existing?.fav ?? 0),
+    ),
   );
 
   return novelInfo;
@@ -52,7 +52,7 @@ class FavoriteStatus extends _$FavoriteStatus {
   Future<bool> build(String ncode) async {
     final db = ref.watch(appDatabaseProvider);
     final novel = await db.getNovel(ncode);
-    return novel?.fav == 1 ?? false;
+    return novel?.fav == 1;
   }
 
   Future<bool> toggle(NovelInfo novelInfo) async {
@@ -63,17 +63,18 @@ class FavoriteStatus extends _$FavoriteStatus {
     state = const AsyncValue.loading();
     try {
       final companion = novelInfo.toDbCompanion().copyWith(
-            fav: drift.Value(newStatus ? 1 : 0),
-          );
+        fav: drift.Value(newStatus ? 1 : 0),
+      );
       await db.insertNovel(companion);
       state = AsyncValue.data(newStatus);
 
-      ref.invalidate(libraryNovelsProvider);
-      ref.invalidate(rankingDataProvider('d'));
-      ref.invalidate(rankingDataProvider('w'));
-      ref.invalidate(rankingDataProvider('m'));
-      ref.invalidate(rankingDataProvider('q'));
-      ref.invalidate(rankingDataProvider('all'));
+      ref
+        ..invalidate(libraryNovelsProvider)
+        ..invalidate(rankingDataProvider('d'))
+        ..invalidate(rankingDataProvider('w'))
+        ..invalidate(rankingDataProvider('m'))
+        ..invalidate(rankingDataProvider('q'))
+        ..invalidate(rankingDataProvider('all'));
       return true;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
