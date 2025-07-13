@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
 import 'package:novelty/widgets/tategaki.dart';
-import 'package:riverpod/src/providers/future_provider.dart';
 
 final FutureProviderFamily<
   List<NovelContentElement>,

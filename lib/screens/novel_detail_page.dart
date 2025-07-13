@@ -107,7 +107,7 @@ class DownloadStatus extends _$DownloadStatus {
         return;
       }
 
-      bool hasPermission = false;
+      var hasPermission = false;
       if (Platform.isAndroid) {
         final status = await Permission.manageExternalStorage.status;
         if (status.isGranted) {
@@ -161,7 +161,7 @@ class DownloadStatus extends _$DownloadStatus {
     } on Exception catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ダウンロードに失敗しました: ${e.toString()}')),
+          SnackBar(content: Text('ダウンロードに失敗しました: $e')),
         );
       }
     }

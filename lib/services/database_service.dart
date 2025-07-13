@@ -9,5 +9,6 @@ DatabaseService databaseService(Ref ref) {
 }
 
 class DatabaseService {
+  // ignore: avoid_unused_constructor_parameters
   DatabaseService(AppDatabase db);
 }
