@@ -17,7 +17,7 @@ class _ExplorePageState extends State<ExplorePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _apiService = ApiService();
-  final _searchQuery = NovelSearchQuery();
+  var _searchQuery = NovelSearchQuery();
   List<RankingResponse> _searchResults = [];
   var _isLoading = false;
   var _isSearching = false;
@@ -79,13 +79,13 @@ class _ExplorePageState extends State<ExplorePage>
                     TextField(
                       decoration: const InputDecoration(labelText: 'キーワード'),
                       onChanged: (value) {
-                        _searchQuery.word = value;
+                        _searchQuery = _searchQuery.copyWith(word: value);
                       },
                     ),
                     TextField(
                       decoration: const InputDecoration(labelText: '除外キーワード'),
                       onChanged: (value) {
-                        _searchQuery.notword = value;
+                        _searchQuery = _searchQuery.copyWith(notword: value);
                       },
                     ),
                     CheckboxListTile(
@@ -93,7 +93,8 @@ class _ExplorePageState extends State<ExplorePage>
                       value: _searchQuery.title,
                       onChanged: (bool? value) {
                         setState(() {
-                          _searchQuery.title = value ?? false;
+                          _searchQuery =
+                              _searchQuery.copyWith(title: value ?? false);
                         });
                       },
                     ),
@@ -102,7 +103,8 @@ class _ExplorePageState extends State<ExplorePage>
                       value: _searchQuery.ex,
                       onChanged: (bool? value) {
                         setState(() {
-                          _searchQuery.ex = value ?? false;
+                          _searchQuery =
+                              _searchQuery.copyWith(ex: value ?? false);
                         });
                       },
                     ),
@@ -111,7 +113,8 @@ class _ExplorePageState extends State<ExplorePage>
                       value: _searchQuery.keyword,
                       onChanged: (bool? value) {
                         setState(() {
-                          _searchQuery.keyword = value ?? false;
+                          _searchQuery =
+                              _searchQuery.copyWith(keyword: value ?? false);
                         });
                       },
                     ),
@@ -120,7 +123,8 @@ class _ExplorePageState extends State<ExplorePage>
                       value: _searchQuery.wname,
                       onChanged: (bool? value) {
                         setState(() {
-                          _searchQuery.wname = value ?? false;
+                          _searchQuery =
+                              _searchQuery.copyWith(wname: value ?? false);
                         });
                       },
                     ),
@@ -141,7 +145,7 @@ class _ExplorePageState extends State<ExplorePage>
                       ],
                       onChanged: (String? newValue) {
                         setState(() {
-                          _searchQuery.type = newValue;
+                          _searchQuery = _searchQuery.copyWith(type: newValue);
                         });
                       },
                     ),
@@ -162,9 +166,9 @@ class _ExplorePageState extends State<ExplorePage>
                       ],
                       onChanged: (int? newValue) {
                         setState(() {
-                          _searchQuery.genre = newValue == null
-                              ? null
-                              : [newValue];
+                          _searchQuery = _searchQuery.copyWith(
+                            genre: newValue == null ? null : [newValue],
+                          );
                         });
                       },
                     ),
@@ -180,7 +184,8 @@ class _ExplorePageState extends State<ExplorePage>
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          _searchQuery.order = newValue ?? 'new';
+                          _searchQuery =
+                              _searchQuery.copyWith(order: newValue ?? 'new');
                         });
                       },
                     ),

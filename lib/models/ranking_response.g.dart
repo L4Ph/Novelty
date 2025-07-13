@@ -6,8 +6,8 @@ part of 'ranking_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-RankingResponse _$RankingResponseFromJson(Map<String, dynamic> json) =>
-    RankingResponse(
+_RankingResponse _$RankingResponseFromJson(Map<String, dynamic> json) =>
+    _RankingResponse(
       rank: (json['rank'] as num?)?.toInt(),
       pt: (json['pt'] as num?)?.toInt(),
       allPoint: (json['all_point'] as num?)?.toInt(),
@@ -23,7 +23,7 @@ RankingResponse _$RankingResponseFromJson(Map<String, dynamic> json) =>
       keyword: json['keyword'] as String?,
     );
 
-Map<String, dynamic> _$RankingResponseToJson(RankingResponse instance) =>
+Map<String, dynamic> _$RankingResponseToJson(_RankingResponse instance) =>
     <String, dynamic>{
       'rank': instance.rank,
       'pt': instance.pt,
