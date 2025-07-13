@@ -7,9 +7,9 @@ part 'episode.g.dart';
 ///
 /// なろう小説のHTMLからパースした情報を格納する。
 @freezed
-class Episode with _$Episode {
+abstract class Episode with _$Episode {
   /// [Episode]のコンストラクタ
-  factory Episode({
+  const factory Episode({
     /// サブタイトル。
     String? subtitle,
 

@@ -9,9 +9,9 @@ part 'novel_search_query.g.dart';
 ///
 /// [なろう小説API](https://dev.syosetu.com/man/api/) のGETパラメータを表現する。
 @freezed
-class NovelSearchQuery with _$NovelSearchQuery {
+abstract class NovelSearchQuery with _$NovelSearchQuery {
   /// [NovelSearchQuery]のコンストラクタ
-  factory NovelSearchQuery({
+  const factory NovelSearchQuery({
     /// 検索単語。
     ///
     /// 半角または全角スペースで区切るとAND抽出になる。

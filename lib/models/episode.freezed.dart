@@ -232,7 +232,7 @@ return $default(_that.subtitle,_that.url,_that.update,_that.revised,_that.ncode,
 @JsonSerializable()
 
 class _Episode implements Episode {
-   _Episode({this.subtitle, this.url, this.update, this.revised, this.ncode, this.index, this.body, this.novelUpdatedAt});
+  const _Episode({this.subtitle, this.url, this.update, this.revised, this.ncode, this.index, this.body, this.novelUpdatedAt});
   factory _Episode.fromJson(Map<String, dynamic> json) => _$EpisodeFromJson(json);
 
 /// サブタイトル。

@@ -23,17 +23,17 @@ mixin _$NovelInfo {
 ///
 /// [1] 連載
 /// [2] 短編
-@JsonKey(fromJson: _toInt) int? get novelType;/// 連載状態。
+ int? get novelType;/// 連載状態。
 ///
 /// [0] 短編作品と��結済作品
 /// [1] 連載中
-@JsonKey(fromJson: _toInt) int? get end;/// 全掲載エピソード数。
+ int? get end;/// 全掲載エピソード数。
 ///
 /// 短編の場合は 1。
-@JsonKey(fromJson: _toInt) int? get generalAllNo;/// ジャンル。
+ int? get generalAllNo;/// ジャンル。
 ///
 /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
-@JsonKey(fromJson: _toInt) int? get genre;/// キーワード。
+ int? get genre;/// キーワード。
  String? get keyword;/// 初回掲載日。
 ///
 /// `YYYY-MM-DD HH:MM:SS` の形式。
@@ -43,48 +43,48 @@ mixin _$NovelInfo {
  String? get generalLastup;/// 総合評価ポイント。
 ///
 /// (ブックマーク数×2)+評価ポイント。
-@JsonKey(fromJson: _toInt) int? get globalPoint;/// 日間ポイント。
-@JsonKey(fromJson: _toInt) int? get dailyPoint;/// 週間ポイント。
-@JsonKey(fromJson: _toInt) int? get weeklyPoint;/// 月間ポイント。
-@JsonKey(fromJson: _toInt) int? get monthlyPoint;/// 四半期ポイント。
-@JsonKey(fromJson: _toInt) int? get quarterPoint;/// 年間ポイント。
-@JsonKey(fromJson: _toInt) int? get yearlyPoint;/// ブックマーク数。
-@JsonKey(fromJson: _toInt) int? get favNovelCnt;/// 感想数。
-@JsonKey(fromJson: _toInt) int? get impressionCnt;/// レビュー数。
-@JsonKey(fromJson: _toInt) int? get reviewCnt;/// 評価ポイント。
-@JsonKey(fromJson: _toInt) int? get allPoint;/// 評価者数。
-@JsonKey(fromJson: _toInt) int? get allHyokaCnt;/// 挿絵の数。
-@JsonKey(fromJson: _toInt) int? get sasieCnt;/// 会話率。
-@JsonKey(fromJson: _toInt) int? get kaiwaritu;/// 作品の更新日時。
-@JsonKey(name: 'novelupdated_at', fromJson: _toInt) int? get novelupdatedAt;/// 最終更新日時。
+ int? get globalPoint;/// 日間ポイント。
+ int? get dailyPoint;/// 週間ポイント。
+ int? get weeklyPoint;/// 月間ポイント。
+ int? get monthlyPoint;/// 四半期ポイント。
+ int? get quarterPoint;/// 年間ポイント。
+ int? get yearlyPoint;/// ブックマーク数。
+ int? get favNovelCnt;/// 感想数。
+ int? get impressionCnt;/// レビュー数。
+ int? get reviewCnt;/// 評価ポイント。
+ int? get allPoint;/// 評価者数。
+ int? get allHyokaCnt;/// 挿絵の数。
+ int? get sasieCnt;/// 会話率。
+ int? get kaiwaritu;/// 作品の更新日時。
+ int? get novelupdatedAt;/// 最終更新日時。
 ///
 /// システム用で作品更新時とは関係ない。
-@JsonKey(fromJson: _toInt) int? get updatedAt;/// エピソードのリスト。
+ int? get updatedAt;/// エピソードのリスト。
  List<Episode>? get episodes;/// R15作品か。
 ///
 /// [1] R15
 /// [0] それ以外
-@JsonKey(fromJson: _toInt) int? get isr15;/// ボーイズラブ作品か。
+ int? get isr15;/// ボーイズラブ作品か。
 ///
 /// [1] ボーイズラブ
 /// [0] それ以外
-@JsonKey(fromJson: _toInt) int? get isbl;/// ガールズラブ作品か。
+ int? get isbl;/// ガールズラブ作品か。
 ///
 /// [1] ガールズラブ
 /// [0] それ以外
-@JsonKey(fromJson: _toInt) int? get isgl;/// 残酷な描写あり作品か。
+ int? get isgl;/// 残酷な描写あり作品か。
 ///
 /// [1] 残酷な描写あり
 /// [0] それ以外
-@JsonKey(fromJson: _toInt) int? get iszankoku;/// 異世界転生作品か。
+ int? get iszankoku;/// 異世界転生作品か。
 ///
 /// [1] 異世界転生
 /// [0] それ以外
-@JsonKey(fromJson: _toInt) int? get istensei;/// 異世界転移作品か。
+ int? get istensei;/// 異世界転移作品か。
 ///
 /// [1] 異世界転移
 /// [0] それ以外
-@JsonKey(fromJson: _toInt) int? get istenni;
+ int? get istenni;
 /// Create a copy of NovelInfo
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -117,7 +117,7 @@ abstract mixin class $NovelInfoCopyWith<$Res>  {
   factory $NovelInfoCopyWith(NovelInfo value, $Res Function(NovelInfo) _then) = _$NovelInfoCopyWithImpl;
 @useResult
 $Res call({
- String? title, String? ncode, String? writer, String? story,@JsonKey(fromJson: _toInt) int? novelType,@JsonKey(fromJson: _toInt) int? end,@JsonKey(fromJson: _toInt) int? generalAllNo,@JsonKey(fromJson: _toInt) int? genre, String? keyword, String? generalFirstup, String? generalLastup,@JsonKey(fromJson: _toInt) int? globalPoint,@JsonKey(fromJson: _toInt) int? dailyPoint,@JsonKey(fromJson: _toInt) int? weeklyPoint,@JsonKey(fromJson: _toInt) int? monthlyPoint,@JsonKey(fromJson: _toInt) int? quarterPoint,@JsonKey(fromJson: _toInt) int? yearlyPoint,@JsonKey(fromJson: _toInt) int? favNovelCnt,@JsonKey(fromJson: _toInt) int? impressionCnt,@JsonKey(fromJson: _toInt) int? reviewCnt,@JsonKey(fromJson: _toInt) int? allPoint,@JsonKey(fromJson: _toInt) int? allHyokaCnt,@JsonKey(fromJson: _toInt) int? sasieCnt,@JsonKey(fromJson: _toInt) int? kaiwaritu,@JsonKey(name: 'novelupdated_at', fromJson: _toInt) int? novelupdatedAt,@JsonKey(fromJson: _toInt) int? updatedAt, List<Episode>? episodes,@JsonKey(fromJson: _toInt) int? isr15,@JsonKey(fromJson: _toInt) int? isbl,@JsonKey(fromJson: _toInt) int? isgl,@JsonKey(fromJson: _toInt) int? iszankoku,@JsonKey(fromJson: _toInt) int? istensei,@JsonKey(fromJson: _toInt) int? istenni
+ String? title, String? ncode, String? writer, String? story, int? novelType, int? end, int? generalAllNo, int? genre, String? keyword, String? generalFirstup, String? generalLastup, int? globalPoint, int? dailyPoint, int? weeklyPoint, int? monthlyPoint, int? quarterPoint, int? yearlyPoint, int? favNovelCnt, int? impressionCnt, int? reviewCnt, int? allPoint, int? allHyokaCnt, int? sasieCnt, int? kaiwaritu, int? novelupdatedAt, int? updatedAt, List<Episode>? episodes, int? isr15, int? isbl, int? isgl, int? iszankoku, int? istensei, int? istenni
 });
 
 
@@ -254,7 +254,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? title,  String? ncode,  String? writer,  String? story, @JsonKey(fromJson: _toInt)  int? novelType, @JsonKey(fromJson: _toInt)  int? end, @JsonKey(fromJson: _toInt)  int? generalAllNo, @JsonKey(fromJson: _toInt)  int? genre,  String? keyword,  String? generalFirstup,  String? generalLastup, @JsonKey(fromJson: _toInt)  int? globalPoint, @JsonKey(fromJson: _toInt)  int? dailyPoint, @JsonKey(fromJson: _toInt)  int? weeklyPoint, @JsonKey(fromJson: _toInt)  int? monthlyPoint, @JsonKey(fromJson: _toInt)  int? quarterPoint, @JsonKey(fromJson: _toInt)  int? yearlyPoint, @JsonKey(fromJson: _toInt)  int? favNovelCnt, @JsonKey(fromJson: _toInt)  int? impressionCnt, @JsonKey(fromJson: _toInt)  int? reviewCnt, @JsonKey(fromJson: _toInt)  int? allPoint, @JsonKey(fromJson: _toInt)  int? allHyokaCnt, @JsonKey(fromJson: _toInt)  int? sasieCnt, @JsonKey(fromJson: _toInt)  int? kaiwaritu, @JsonKey(name: 'novelupdated_at', fromJson: _toInt)  int? novelupdatedAt, @JsonKey(fromJson: _toInt)  int? updatedAt,  List<Episode>? episodes, @JsonKey(fromJson: _toInt)  int? isr15, @JsonKey(fromJson: _toInt)  int? isbl, @JsonKey(fromJson: _toInt)  int? isgl, @JsonKey(fromJson: _toInt)  int? iszankoku, @JsonKey(fromJson: _toInt)  int? istensei, @JsonKey(fromJson: _toInt)  int? istenni)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? title,  String? ncode,  String? writer,  String? story,  int? novelType,  int? end,  int? generalAllNo,  int? genre,  String? keyword,  String? generalFirstup,  String? generalLastup,  int? globalPoint,  int? dailyPoint,  int? weeklyPoint,  int? monthlyPoint,  int? quarterPoint,  int? yearlyPoint,  int? favNovelCnt,  int? impressionCnt,  int? reviewCnt,  int? allPoint,  int? allHyokaCnt,  int? sasieCnt,  int? kaiwaritu,  int? novelupdatedAt,  int? updatedAt,  List<Episode>? episodes,  int? isr15,  int? isbl,  int? isgl,  int? iszankoku,  int? istensei,  int? istenni)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NovelInfo() when $default != null:
 return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType,_that.end,_that.generalAllNo,_that.genre,_that.keyword,_that.generalFirstup,_that.generalLastup,_that.globalPoint,_that.dailyPoint,_that.weeklyPoint,_that.monthlyPoint,_that.quarterPoint,_that.yearlyPoint,_that.favNovelCnt,_that.impressionCnt,_that.reviewCnt,_that.allPoint,_that.allHyokaCnt,_that.sasieCnt,_that.kaiwaritu,_that.novelupdatedAt,_that.updatedAt,_that.episodes,_that.isr15,_that.isbl,_that.isgl,_that.iszankoku,_that.istensei,_that.istenni);case _:
@@ -275,7 +275,7 @@ return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? title,  String? ncode,  String? writer,  String? story, @JsonKey(fromJson: _toInt)  int? novelType, @JsonKey(fromJson: _toInt)  int? end, @JsonKey(fromJson: _toInt)  int? generalAllNo, @JsonKey(fromJson: _toInt)  int? genre,  String? keyword,  String? generalFirstup,  String? generalLastup, @JsonKey(fromJson: _toInt)  int? globalPoint, @JsonKey(fromJson: _toInt)  int? dailyPoint, @JsonKey(fromJson: _toInt)  int? weeklyPoint, @JsonKey(fromJson: _toInt)  int? monthlyPoint, @JsonKey(fromJson: _toInt)  int? quarterPoint, @JsonKey(fromJson: _toInt)  int? yearlyPoint, @JsonKey(fromJson: _toInt)  int? favNovelCnt, @JsonKey(fromJson: _toInt)  int? impressionCnt, @JsonKey(fromJson: _toInt)  int? reviewCnt, @JsonKey(fromJson: _toInt)  int? allPoint, @JsonKey(fromJson: _toInt)  int? allHyokaCnt, @JsonKey(fromJson: _toInt)  int? sasieCnt, @JsonKey(fromJson: _toInt)  int? kaiwaritu, @JsonKey(name: 'novelupdated_at', fromJson: _toInt)  int? novelupdatedAt, @JsonKey(fromJson: _toInt)  int? updatedAt,  List<Episode>? episodes, @JsonKey(fromJson: _toInt)  int? isr15, @JsonKey(fromJson: _toInt)  int? isbl, @JsonKey(fromJson: _toInt)  int? isgl, @JsonKey(fromJson: _toInt)  int? iszankoku, @JsonKey(fromJson: _toInt)  int? istensei, @JsonKey(fromJson: _toInt)  int? istenni)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? title,  String? ncode,  String? writer,  String? story,  int? novelType,  int? end,  int? generalAllNo,  int? genre,  String? keyword,  String? generalFirstup,  String? generalLastup,  int? globalPoint,  int? dailyPoint,  int? weeklyPoint,  int? monthlyPoint,  int? quarterPoint,  int? yearlyPoint,  int? favNovelCnt,  int? impressionCnt,  int? reviewCnt,  int? allPoint,  int? allHyokaCnt,  int? sasieCnt,  int? kaiwaritu,  int? novelupdatedAt,  int? updatedAt,  List<Episode>? episodes,  int? isr15,  int? isbl,  int? isgl,  int? iszankoku,  int? istensei,  int? istenni)  $default,) {final _that = this;
 switch (_that) {
 case _NovelInfo():
 return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType,_that.end,_that.generalAllNo,_that.genre,_that.keyword,_that.generalFirstup,_that.generalLastup,_that.globalPoint,_that.dailyPoint,_that.weeklyPoint,_that.monthlyPoint,_that.quarterPoint,_that.yearlyPoint,_that.favNovelCnt,_that.impressionCnt,_that.reviewCnt,_that.allPoint,_that.allHyokaCnt,_that.sasieCnt,_that.kaiwaritu,_that.novelupdatedAt,_that.updatedAt,_that.episodes,_that.isr15,_that.isbl,_that.isgl,_that.iszankoku,_that.istensei,_that.istenni);case _:
@@ -295,7 +295,7 @@ return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? title,  String? ncode,  String? writer,  String? story, @JsonKey(fromJson: _toInt)  int? novelType, @JsonKey(fromJson: _toInt)  int? end, @JsonKey(fromJson: _toInt)  int? generalAllNo, @JsonKey(fromJson: _toInt)  int? genre,  String? keyword,  String? generalFirstup,  String? generalLastup, @JsonKey(fromJson: _toInt)  int? globalPoint, @JsonKey(fromJson: _toInt)  int? dailyPoint, @JsonKey(fromJson: _toInt)  int? weeklyPoint, @JsonKey(fromJson: _toInt)  int? monthlyPoint, @JsonKey(fromJson: _toInt)  int? quarterPoint, @JsonKey(fromJson: _toInt)  int? yearlyPoint, @JsonKey(fromJson: _toInt)  int? favNovelCnt, @JsonKey(fromJson: _toInt)  int? impressionCnt, @JsonKey(fromJson: _toInt)  int? reviewCnt, @JsonKey(fromJson: _toInt)  int? allPoint, @JsonKey(fromJson: _toInt)  int? allHyokaCnt, @JsonKey(fromJson: _toInt)  int? sasieCnt, @JsonKey(fromJson: _toInt)  int? kaiwaritu, @JsonKey(name: 'novelupdated_at', fromJson: _toInt)  int? novelupdatedAt, @JsonKey(fromJson: _toInt)  int? updatedAt,  List<Episode>? episodes, @JsonKey(fromJson: _toInt)  int? isr15, @JsonKey(fromJson: _toInt)  int? isbl, @JsonKey(fromJson: _toInt)  int? isgl, @JsonKey(fromJson: _toInt)  int? iszankoku, @JsonKey(fromJson: _toInt)  int? istensei, @JsonKey(fromJson: _toInt)  int? istenni)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? title,  String? ncode,  String? writer,  String? story,  int? novelType,  int? end,  int? generalAllNo,  int? genre,  String? keyword,  String? generalFirstup,  String? generalLastup,  int? globalPoint,  int? dailyPoint,  int? weeklyPoint,  int? monthlyPoint,  int? quarterPoint,  int? yearlyPoint,  int? favNovelCnt,  int? impressionCnt,  int? reviewCnt,  int? allPoint,  int? allHyokaCnt,  int? sasieCnt,  int? kaiwaritu,  int? novelupdatedAt,  int? updatedAt,  List<Episode>? episodes,  int? isr15,  int? isbl,  int? isgl,  int? iszankoku,  int? istensei,  int? istenni)?  $default,) {final _that = this;
 switch (_that) {
 case _NovelInfo() when $default != null:
 return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType,_that.end,_that.generalAllNo,_that.genre,_that.keyword,_that.generalFirstup,_that.generalLastup,_that.globalPoint,_that.dailyPoint,_that.weeklyPoint,_that.monthlyPoint,_that.quarterPoint,_that.yearlyPoint,_that.favNovelCnt,_that.impressionCnt,_that.reviewCnt,_that.allPoint,_that.allHyokaCnt,_that.sasieCnt,_that.kaiwaritu,_that.novelupdatedAt,_that.updatedAt,_that.episodes,_that.isr15,_that.isbl,_that.isgl,_that.iszankoku,_that.istensei,_that.istenni);case _:
@@ -310,7 +310,7 @@ return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType
 @JsonSerializable()
 
 class _NovelInfo implements NovelInfo {
-   _NovelInfo({this.title, this.ncode, this.writer, this.story, @JsonKey(fromJson: _toInt) this.novelType, @JsonKey(fromJson: _toInt) this.end, @JsonKey(fromJson: _toInt) this.generalAllNo, @JsonKey(fromJson: _toInt) this.genre, this.keyword, this.generalFirstup, this.generalLastup, @JsonKey(fromJson: _toInt) this.globalPoint, @JsonKey(fromJson: _toInt) this.dailyPoint, @JsonKey(fromJson: _toInt) this.weeklyPoint, @JsonKey(fromJson: _toInt) this.monthlyPoint, @JsonKey(fromJson: _toInt) this.quarterPoint, @JsonKey(fromJson: _toInt) this.yearlyPoint, @JsonKey(fromJson: _toInt) this.favNovelCnt, @JsonKey(fromJson: _toInt) this.impressionCnt, @JsonKey(fromJson: _toInt) this.reviewCnt, @JsonKey(fromJson: _toInt) this.allPoint, @JsonKey(fromJson: _toInt) this.allHyokaCnt, @JsonKey(fromJson: _toInt) this.sasieCnt, @JsonKey(fromJson: _toInt) this.kaiwaritu, @JsonKey(name: 'novelupdated_at', fromJson: _toInt) this.novelupdatedAt, @JsonKey(fromJson: _toInt) this.updatedAt, final  List<Episode>? episodes, @JsonKey(fromJson: _toInt) this.isr15, @JsonKey(fromJson: _toInt) this.isbl, @JsonKey(fromJson: _toInt) this.isgl, @JsonKey(fromJson: _toInt) this.iszankoku, @JsonKey(fromJson: _toInt) this.istensei, @JsonKey(fromJson: _toInt) this.istenni}): _episodes = episodes;
+  const _NovelInfo({this.title, this.ncode, this.writer, this.story, this.novelType, this.end, this.generalAllNo, this.genre, this.keyword, this.generalFirstup, this.generalLastup, this.globalPoint, this.dailyPoint, this.weeklyPoint, this.monthlyPoint, this.quarterPoint, this.yearlyPoint, this.favNovelCnt, this.impressionCnt, this.reviewCnt, this.allPoint, this.allHyokaCnt, this.sasieCnt, this.kaiwaritu, this.novelupdatedAt, this.updatedAt, final  List<Episode>? episodes, this.isr15, this.isbl, this.isgl, this.iszankoku, this.istensei, this.istenni}): _episodes = episodes;
   factory _NovelInfo.fromJson(Map<String, dynamic> json) => _$NovelInfoFromJson(json);
 
 /// 作品名。
@@ -325,20 +325,20 @@ class _NovelInfo implements NovelInfo {
 ///
 /// [1] 連載
 /// [2] 短編
-@override@JsonKey(fromJson: _toInt) final  int? novelType;
+@override final  int? novelType;
 /// 連載状態。
 ///
 /// [0] 短編作品と��結済作品
 /// [1] 連載中
-@override@JsonKey(fromJson: _toInt) final  int? end;
+@override final  int? end;
 /// 全掲載エピソード数。
 ///
 /// 短編の場合は 1。
-@override@JsonKey(fromJson: _toInt) final  int? generalAllNo;
+@override final  int? generalAllNo;
 /// ジャンル。
 ///
 /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
-@override@JsonKey(fromJson: _toInt) final  int? genre;
+@override final  int? genre;
 /// キーワード。
 @override final  String? keyword;
 /// 初回掲載日。
@@ -352,37 +352,37 @@ class _NovelInfo implements NovelInfo {
 /// 総合評価ポイント。
 ///
 /// (ブックマーク数×2)+評価ポイント。
-@override@JsonKey(fromJson: _toInt) final  int? globalPoint;
+@override final  int? globalPoint;
 /// 日間ポイント。
-@override@JsonKey(fromJson: _toInt) final  int? dailyPoint;
+@override final  int? dailyPoint;
 /// 週間ポイント。
-@override@JsonKey(fromJson: _toInt) final  int? weeklyPoint;
+@override final  int? weeklyPoint;
 /// 月間ポイント。
-@override@JsonKey(fromJson: _toInt) final  int? monthlyPoint;
+@override final  int? monthlyPoint;
 /// 四半期ポイント。
-@override@JsonKey(fromJson: _toInt) final  int? quarterPoint;
+@override final  int? quarterPoint;
 /// 年間ポイント。
-@override@JsonKey(fromJson: _toInt) final  int? yearlyPoint;
+@override final  int? yearlyPoint;
 /// ブックマーク数。
-@override@JsonKey(fromJson: _toInt) final  int? favNovelCnt;
+@override final  int? favNovelCnt;
 /// 感想数。
-@override@JsonKey(fromJson: _toInt) final  int? impressionCnt;
+@override final  int? impressionCnt;
 /// レビュー数。
-@override@JsonKey(fromJson: _toInt) final  int? reviewCnt;
+@override final  int? reviewCnt;
 /// 評価ポイント。
-@override@JsonKey(fromJson: _toInt) final  int? allPoint;
+@override final  int? allPoint;
 /// 評価者数。
-@override@JsonKey(fromJson: _toInt) final  int? allHyokaCnt;
+@override final  int? allHyokaCnt;
 /// 挿絵の数。
-@override@JsonKey(fromJson: _toInt) final  int? sasieCnt;
+@override final  int? sasieCnt;
 /// 会話率。
-@override@JsonKey(fromJson: _toInt) final  int? kaiwaritu;
+@override final  int? kaiwaritu;
 /// 作品の更新日時。
-@override@JsonKey(name: 'novelupdated_at', fromJson: _toInt) final  int? novelupdatedAt;
+@override final  int? novelupdatedAt;
 /// 最終更新日時。
 ///
 /// システム用で作品更新時とは関係ない。
-@override@JsonKey(fromJson: _toInt) final  int? updatedAt;
+@override final  int? updatedAt;
 /// エピソードのリスト。
  final  List<Episode>? _episodes;
 /// エピソードのリスト。
@@ -398,32 +398,32 @@ class _NovelInfo implements NovelInfo {
 ///
 /// [1] R15
 /// [0] それ以外
-@override@JsonKey(fromJson: _toInt) final  int? isr15;
+@override final  int? isr15;
 /// ボーイズラブ作品か。
 ///
 /// [1] ボーイズラブ
 /// [0] それ以外
-@override@JsonKey(fromJson: _toInt) final  int? isbl;
+@override final  int? isbl;
 /// ガールズラブ作品か。
 ///
 /// [1] ガールズラブ
 /// [0] それ以外
-@override@JsonKey(fromJson: _toInt) final  int? isgl;
+@override final  int? isgl;
 /// 残酷な描写あり作品か。
 ///
 /// [1] 残酷な描写あり
 /// [0] それ以外
-@override@JsonKey(fromJson: _toInt) final  int? iszankoku;
+@override final  int? iszankoku;
 /// 異世界転生作品か。
 ///
 /// [1] 異世界転生
 /// [0] それ以外
-@override@JsonKey(fromJson: _toInt) final  int? istensei;
+@override final  int? istensei;
 /// 異世界転移作品か。
 ///
 /// [1] 異世界転移
 /// [0] それ以外
-@override@JsonKey(fromJson: _toInt) final  int? istenni;
+@override final  int? istenni;
 
 /// Create a copy of NovelInfo
 /// with the given fields replaced by the non-null parameter values.
@@ -458,7 +458,7 @@ abstract mixin class _$NovelInfoCopyWith<$Res> implements $NovelInfoCopyWith<$Re
   factory _$NovelInfoCopyWith(_NovelInfo value, $Res Function(_NovelInfo) _then) = __$NovelInfoCopyWithImpl;
 @override @useResult
 $Res call({
- String? title, String? ncode, String? writer, String? story,@JsonKey(fromJson: _toInt) int? novelType,@JsonKey(fromJson: _toInt) int? end,@JsonKey(fromJson: _toInt) int? generalAllNo,@JsonKey(fromJson: _toInt) int? genre, String? keyword, String? generalFirstup, String? generalLastup,@JsonKey(fromJson: _toInt) int? globalPoint,@JsonKey(fromJson: _toInt) int? dailyPoint,@JsonKey(fromJson: _toInt) int? weeklyPoint,@JsonKey(fromJson: _toInt) int? monthlyPoint,@JsonKey(fromJson: _toInt) int? quarterPoint,@JsonKey(fromJson: _toInt) int? yearlyPoint,@JsonKey(fromJson: _toInt) int? favNovelCnt,@JsonKey(fromJson: _toInt) int? impressionCnt,@JsonKey(fromJson: _toInt) int? reviewCnt,@JsonKey(fromJson: _toInt) int? allPoint,@JsonKey(fromJson: _toInt) int? allHyokaCnt,@JsonKey(fromJson: _toInt) int? sasieCnt,@JsonKey(fromJson: _toInt) int? kaiwaritu,@JsonKey(name: 'novelupdated_at', fromJson: _toInt) int? novelupdatedAt,@JsonKey(fromJson: _toInt) int? updatedAt, List<Episode>? episodes,@JsonKey(fromJson: _toInt) int? isr15,@JsonKey(fromJson: _toInt) int? isbl,@JsonKey(fromJson: _toInt) int? isgl,@JsonKey(fromJson: _toInt) int? iszankoku,@JsonKey(fromJson: _toInt) int? istensei,@JsonKey(fromJson: _toInt) int? istenni
+ String? title, String? ncode, String? writer, String? story, int? novelType, int? end, int? generalAllNo, int? genre, String? keyword, String? generalFirstup, String? generalLastup, int? globalPoint, int? dailyPoint, int? weeklyPoint, int? monthlyPoint, int? quarterPoint, int? yearlyPoint, int? favNovelCnt, int? impressionCnt, int? reviewCnt, int? allPoint, int? allHyokaCnt, int? sasieCnt, int? kaiwaritu, int? novelupdatedAt, int? updatedAt, List<Episode>? episodes, int? isr15, int? isbl, int? isgl, int? iszankoku, int? istensei, int? istenni
 });
 
 

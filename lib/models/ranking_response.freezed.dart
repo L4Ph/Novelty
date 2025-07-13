@@ -26,13 +26,13 @@ mixin _$RankingResponse {
 ///
 /// (ブックマーク数×2)+評価ポイント。
 /// 小説APIで取得。
-@JsonKey(name: 'all_point') int? get allPoint;/// Nコード。
+ int? get allPoint;/// Nコード。
  String get ncode;/// 作品名。
  String? get title;/// 小説タイプ。
 ///
 /// [1] 連載
 /// [2] 短編
-@JsonKey(name: 'noveltype') int? get novelType;/// 連載状態。
+ int? get novelType;/// 連載状態。
 ///
 /// [0] 短編作品と完結済作品
 /// [1] 連載中
@@ -42,10 +42,10 @@ mixin _$RankingResponse {
  int? get genre;/// 作者名。
  String? get writer;/// 作品のあらすじ。
  String? get story;/// 作者のユーザID(数値)。
-@JsonKey(name: 'userid') int? get userId;/// 全掲載エピソード数。
+ int? get userId;/// 全掲載エピソード数。
 ///
 /// 短編の場合は 1。
-@JsonKey(name: 'general_all_no') int? get generalAllNo;/// キーワード。
+ int? get generalAllNo;/// キーワード。
  String? get keyword;
 /// Create a copy of RankingResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -79,7 +79,7 @@ abstract mixin class $RankingResponseCopyWith<$Res>  {
   factory $RankingResponseCopyWith(RankingResponse value, $Res Function(RankingResponse) _then) = _$RankingResponseCopyWithImpl;
 @useResult
 $Res call({
- int? rank, int? pt,@JsonKey(name: 'all_point') int? allPoint, String ncode, String? title,@JsonKey(name: 'noveltype') int? novelType, int? end, int? genre, String? writer, String? story,@JsonKey(name: 'userid') int? userId,@JsonKey(name: 'general_all_no') int? generalAllNo, String? keyword
+ int? rank, int? pt, int? allPoint, String ncode, String? title, int? novelType, int? end, int? genre, String? writer, String? story, int? userId, int? generalAllNo, String? keyword
 });
 
 
@@ -196,7 +196,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? rank,  int? pt, @JsonKey(name: 'all_point')  int? allPoint,  String ncode,  String? title, @JsonKey(name: 'noveltype')  int? novelType,  int? end,  int? genre,  String? writer,  String? story, @JsonKey(name: 'userid')  int? userId, @JsonKey(name: 'general_all_no')  int? generalAllNo,  String? keyword)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int? rank,  int? pt,  int? allPoint,  String ncode,  String? title,  int? novelType,  int? end,  int? genre,  String? writer,  String? story,  int? userId,  int? generalAllNo,  String? keyword)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RankingResponse() when $default != null:
 return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that.novelType,_that.end,_that.genre,_that.writer,_that.story,_that.userId,_that.generalAllNo,_that.keyword);case _:
@@ -217,7 +217,7 @@ return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? rank,  int? pt, @JsonKey(name: 'all_point')  int? allPoint,  String ncode,  String? title, @JsonKey(name: 'noveltype')  int? novelType,  int? end,  int? genre,  String? writer,  String? story, @JsonKey(name: 'userid')  int? userId, @JsonKey(name: 'general_all_no')  int? generalAllNo,  String? keyword)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int? rank,  int? pt,  int? allPoint,  String ncode,  String? title,  int? novelType,  int? end,  int? genre,  String? writer,  String? story,  int? userId,  int? generalAllNo,  String? keyword)  $default,) {final _that = this;
 switch (_that) {
 case _RankingResponse():
 return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that.novelType,_that.end,_that.genre,_that.writer,_that.story,_that.userId,_that.generalAllNo,_that.keyword);case _:
@@ -237,7 +237,7 @@ return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? rank,  int? pt, @JsonKey(name: 'all_point')  int? allPoint,  String ncode,  String? title, @JsonKey(name: 'noveltype')  int? novelType,  int? end,  int? genre,  String? writer,  String? story, @JsonKey(name: 'userid')  int? userId, @JsonKey(name: 'general_all_no')  int? generalAllNo,  String? keyword)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int? rank,  int? pt,  int? allPoint,  String ncode,  String? title,  int? novelType,  int? end,  int? genre,  String? writer,  String? story,  int? userId,  int? generalAllNo,  String? keyword)?  $default,) {final _that = this;
 switch (_that) {
 case _RankingResponse() when $default != null:
 return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that.novelType,_that.end,_that.genre,_that.writer,_that.story,_that.userId,_that.generalAllNo,_that.keyword);case _:
@@ -252,7 +252,7 @@ return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that
 @JsonSerializable()
 
 class _RankingResponse implements RankingResponse {
-   _RankingResponse({this.rank, this.pt, @JsonKey(name: 'all_point') this.allPoint, required this.ncode, this.title, @JsonKey(name: 'noveltype') this.novelType, this.end, this.genre, this.writer, this.story, @JsonKey(name: 'userid') this.userId, @JsonKey(name: 'general_all_no') this.generalAllNo, this.keyword});
+  const _RankingResponse({this.rank, this.pt, this.allPoint, required this.ncode, this.title, this.novelType, this.end, this.genre, this.writer, this.story, this.userId, this.generalAllNo, this.keyword});
   factory _RankingResponse.fromJson(Map<String, dynamic> json) => _$RankingResponseFromJson(json);
 
 /// 順位。
@@ -268,7 +268,7 @@ class _RankingResponse implements RankingResponse {
 ///
 /// (ブックマーク数×2)+評価ポイント。
 /// 小説APIで取得。
-@override@JsonKey(name: 'all_point') final  int? allPoint;
+@override final  int? allPoint;
 /// Nコード。
 @override final  String ncode;
 /// 作品名。
@@ -277,7 +277,7 @@ class _RankingResponse implements RankingResponse {
 ///
 /// [1] 連載
 /// [2] 短編
-@override@JsonKey(name: 'noveltype') final  int? novelType;
+@override final  int? novelType;
 /// 連載状態。
 ///
 /// [0] 短編作品と完結済作品
@@ -292,11 +292,11 @@ class _RankingResponse implements RankingResponse {
 /// 作品のあらすじ。
 @override final  String? story;
 /// 作者のユーザID(数値)。
-@override@JsonKey(name: 'userid') final  int? userId;
+@override final  int? userId;
 /// 全掲載エピソード数。
 ///
 /// 短編の場合は 1。
-@override@JsonKey(name: 'general_all_no') final  int? generalAllNo;
+@override final  int? generalAllNo;
 /// キーワード。
 @override final  String? keyword;
 
@@ -333,7 +333,7 @@ abstract mixin class _$RankingResponseCopyWith<$Res> implements $RankingResponse
   factory _$RankingResponseCopyWith(_RankingResponse value, $Res Function(_RankingResponse) _then) = __$RankingResponseCopyWithImpl;
 @override @useResult
 $Res call({
- int? rank, int? pt,@JsonKey(name: 'all_point') int? allPoint, String ncode, String? title,@JsonKey(name: 'noveltype') int? novelType, int? end, int? genre, String? writer, String? story,@JsonKey(name: 'userid') int? userId,@JsonKey(name: 'general_all_no') int? generalAllNo, String? keyword
+ int? rank, int? pt, int? allPoint, String ncode, String? title, int? novelType, int? end, int? genre, String? writer, String? story, int? userId, int? generalAllNo, String? keyword
 });
 
 

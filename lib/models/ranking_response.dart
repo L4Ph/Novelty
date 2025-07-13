@@ -8,9 +8,9 @@ part 'ranking_response.g.dart';
 /// [なろう小説ランキングAPI](https://dev.syosetu.com/man/rankapi/) と
 /// [なろう小説API](https://dev.syosetu.com/man/api/) のレスポンスを組み合わせたモデル。
 @freezed
-class RankingResponse with _$RankingResponse {
+abstract class RankingResponse with _$RankingResponse {
   /// [RankingResponse]のコンストラクタ
-  factory RankingResponse({
+  const factory RankingResponse({
     /// 順位。
     ///
     /// 1～300位。

@@ -113,7 +113,7 @@ mixin _$NovelSearchQuery {
 /// [出力順序一覧](https://dev.syosetu.com/man/api/#order)
  String get order;/// 最大出力数。
 ///
-/// 1～500。デフォルトは20。
+/// 1～500。���フォルトは20。
  int get lim;/// 表示開始位置。
 ///
 /// 1～2000。デフォルトは1。
@@ -352,7 +352,7 @@ return $default(_that.word,_that.notword,_that.title,_that.ex,_that.keyword,_tha
 @JsonSerializable()
 
 class _NovelSearchQuery implements NovelSearchQuery {
-   _NovelSearchQuery({this.word, this.notword, this.title = false, this.ex = false, this.keyword = false, this.wname = false, final  List<int>? biggenre, final  List<int>? notbiggenre, final  List<int>? genre, final  List<int>? notgenre, final  List<int>? userid, this.isr15 = false, this.isbl = false, this.isgl = false, this.iszankoku = false, this.istensei = false, this.istenni = false, this.istt = false, this.notr15 = false, this.notbl = false, this.notgl = false, this.notzankoku = false, this.nottensei = false, this.nottenni = false, this.minlen, this.maxlen, this.length, this.kaiwaritu, this.sasie, this.mintime, this.maxtime, this.time, final  List<String>? ncode, this.type, final  List<int>? buntai, this.stop, this.lastup, this.lastupdate, this.ispickup = false, this.order = 'new', this.lim = 20, this.st = 1}): _biggenre = biggenre,_notbiggenre = notbiggenre,_genre = genre,_notgenre = notgenre,_userid = userid,_ncode = ncode,_buntai = buntai;
+  const _NovelSearchQuery({this.word, this.notword, this.title = false, this.ex = false, this.keyword = false, this.wname = false, final  List<int>? biggenre, final  List<int>? notbiggenre, final  List<int>? genre, final  List<int>? notgenre, final  List<int>? userid, this.isr15 = false, this.isbl = false, this.isgl = false, this.iszankoku = false, this.istensei = false, this.istenni = false, this.istt = false, this.notr15 = false, this.notbl = false, this.notgl = false, this.notzankoku = false, this.nottensei = false, this.nottenni = false, this.minlen, this.maxlen, this.length, this.kaiwaritu, this.sasie, this.mintime, this.maxtime, this.time, final  List<String>? ncode, this.type, final  List<int>? buntai, this.stop, this.lastup, this.lastupdate, this.ispickup = false, this.order = 'new', this.lim = 20, this.st = 1}): _biggenre = biggenre,_notbiggenre = notbiggenre,_genre = genre,_notgenre = notgenre,_userid = userid,_ncode = ncode,_buntai = buntai;
   factory _NovelSearchQuery.fromJson(Map<String, dynamic> json) => _$NovelSearchQueryFromJson(json);
 
 /// 検索単語。
@@ -572,7 +572,7 @@ class _NovelSearchQuery implements NovelSearchQuery {
 @override@JsonKey() final  String order;
 /// 最大出力数。
 ///
-/// 1～500。デフォルトは20。
+/// 1～500。���フォルトは20。
 @override@JsonKey() final  int lim;
 /// 表示開始位置。
 ///

@@ -6,17 +6,16 @@ import 'package:novelty/models/episode.dart';
 part 'novel_info.freezed.dart';
 part 'novel_info.g.dart';
 
-int? _toInt(dynamic val) =>
-    val is int ? val : int.tryParse(val as String? ?? '');
+
 
 /// なろう小説の作品情報を表すクラス。
 ///
 /// [なろう小説API](https://dev.syosetu.com/man/api/) のレスポンスや、
 /// なろう小説のHTMLからパースした情報を格納する。
 @freezed
-class NovelInfo with _$NovelInfo {
+abstract class NovelInfo with _$NovelInfo {
   /// [NovelInfo]のコンストラクタ
-  factory NovelInfo({
+  const factory NovelInfo({
     /// 作品名。
     String? title,
 
