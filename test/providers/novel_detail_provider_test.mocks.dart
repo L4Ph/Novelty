@@ -11,12 +11,14 @@ import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i9;
 import 'package:novelty/database/database.dart' as _i3;
 import 'package:novelty/models/episode.dart' as _i7;
-import 'package:novelty/models/novel_content_element.dart' as _i13;
+import 'package:novelty/models/novel_content_element.dart' as _i15;
 import 'package:novelty/models/novel_info.dart' as _i6;
 import 'package:novelty/models/novel_search_query.dart' as _i11;
 import 'package:novelty/models/ranking_response.dart' as _i10;
 import 'package:novelty/repositories/novel_repository.dart' as _i12;
 import 'package:novelty/services/api_service.dart' as _i8;
+import 'package:novelty/utils/settings_provider.dart' as _i14;
+import 'package:riverpod_annotation/riverpod_annotation.dart' as _i13;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -184,11 +186,6 @@ class _FakeEpisode_25 extends _i1.SmartFake implements _i7.Episode {
 
 class _FakeApiService_26 extends _i1.SmartFake implements _i8.ApiService {
   _FakeApiService_26(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
-}
-
-class _FakeAppDatabase_27 extends _i1.SmartFake implements _i3.AppDatabase {
-  _FakeAppDatabase_27(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -1055,6 +1052,17 @@ class MockNovelRepository extends _i1.Mock implements _i12.NovelRepository {
   }
 
   @override
+  _i13.Ref get ref =>
+      (super.noSuchMethod(
+            Invocation.getter(#ref),
+            returnValue: _i9.dummyValue<_i13.Ref>(
+              this,
+              Invocation.getter(#ref),
+            ),
+          )
+          as _i13.Ref);
+
+  @override
   _i8.ApiService get apiService =>
       (super.noSuchMethod(
             Invocation.getter(#apiService),
@@ -1066,28 +1074,28 @@ class MockNovelRepository extends _i1.Mock implements _i12.NovelRepository {
           as _i8.ApiService);
 
   @override
-  _i3.AppDatabase get database =>
+  _i13.AsyncValue<_i14.AppSettings> get settings =>
       (super.noSuchMethod(
-            Invocation.getter(#database),
-            returnValue: _FakeAppDatabase_27(
+            Invocation.getter(#settings),
+            returnValue: _i9.dummyValue<_i13.AsyncValue<_i14.AppSettings>>(
               this,
-              Invocation.getter(#database),
+              Invocation.getter(#settings),
             ),
           )
-          as _i3.AppDatabase);
+          as _i13.AsyncValue<_i14.AppSettings>);
 
   @override
-  _i5.Future<List<_i13.NovelContentElement>> getEpisode(
+  _i5.Future<List<_i15.NovelContentElement>> getEpisode(
     String? ncode,
     int? episode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getEpisode, [ncode, episode]),
-            returnValue: _i5.Future<List<_i13.NovelContentElement>>.value(
-              <_i13.NovelContentElement>[],
+            returnValue: _i5.Future<List<_i15.NovelContentElement>>.value(
+              <_i15.NovelContentElement>[],
             ),
           )
-          as _i5.Future<List<_i13.NovelContentElement>>);
+          as _i5.Future<List<_i15.NovelContentElement>>);
 
   @override
   _i5.Future<void> downloadEpisode(String? ncode, int? episode) =>

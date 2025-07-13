@@ -6,7 +6,7 @@ part of 'episode.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Episode _$EpisodeFromJson(Map<String, dynamic> json) => Episode(
+_Episode _$EpisodeFromJson(Map<String, dynamic> json) => _Episode(
   subtitle: json['subtitle'] as String?,
   url: json['url'] as String?,
   update: json['update'] as String?,
@@ -14,10 +14,10 @@ Episode _$EpisodeFromJson(Map<String, dynamic> json) => Episode(
   ncode: json['ncode'] as String?,
   index: (json['index'] as num?)?.toInt(),
   body: json['body'] as String?,
-  novelUpdatedAt: json['novel_updated_at'] as String?,
+  novelUpdatedAt: json['novelUpdatedAt'] as String?,
 );
 
-Map<String, dynamic> _$EpisodeToJson(Episode instance) => <String, dynamic>{
+Map<String, dynamic> _$EpisodeToJson(_Episode instance) => <String, dynamic>{
   'subtitle': instance.subtitle,
   'url': instance.url,
   'update': instance.update,
@@ -25,5 +25,5 @@ Map<String, dynamic> _$EpisodeToJson(Episode instance) => <String, dynamic>{
   'ncode': instance.ncode,
   'index': instance.index,
   'body': instance.body,
-  'novel_updated_at': instance.novelUpdatedAt,
+  'novelUpdatedAt': instance.novelUpdatedAt,
 };

@@ -7,10 +7,10 @@ import 'package:novelty/widgets/ruby_text_widget.dart';
 void main() {
   test('NovelContentView.buildSpansが正しくInlineSpanを生成するか', () {
     final elements = <NovelContentElement>[
-      const PlainText('これは'),
-      const RubyText('テスト', 'てすと'),
-      const PlainText('です。'),
-      const NewLine(),
+      PlainText('これは'),
+      RubyText('テスト', 'てすと'),
+      PlainText('です。'),
+      NewLine(),
     ];
 
     const style = TextStyle(fontSize: 16);

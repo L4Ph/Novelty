@@ -17,7 +17,7 @@ void _parseNode(dom.Node node, List<NovelContentElement> elements) {
   if (node is dom.Text) {
     final text = node.text.trim();
     if (text.isNotEmpty) {
-      elements.add(PlainText(text));
+      elements.add(NovelContentElement.plainText(text));
     }
   } else if (node is dom.Element) {
     switch (node.localName) {
@@ -27,10 +27,10 @@ void _parseNode(dom.Node node, List<NovelContentElement> elements) {
         }
         // <p>タグの終わりで改行を追加
         if (elements.isNotEmpty && elements.last is! NewLine) {
-          elements.add(const NewLine());
+          elements.add(NovelContentElement.newLine());
         }
       case 'br':
-        elements.add(const NewLine());
+        elements.add(NovelContentElement.newLine());
       case 'ruby':
         String baseText;
         final rubyText = node.querySelector('rt')?.text ?? '';
@@ -47,9 +47,8 @@ void _parseNode(dom.Node node, List<NovelContentElement> elements) {
         }
 
         if (baseText.isNotEmpty) {
-          elements.add(RubyText(baseText, rubyText));
+          elements.add(NovelContentElement.rubyText(baseText, rubyText));
         }
-        break;
     }
   }
 }

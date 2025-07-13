@@ -289,7 +289,7 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'cdf4684a65906999e83c7d63fb1e9930fb708325';
+String _$downloadStatusHash() => r'68e370d929dc14cbba69f0d0645f0e2614ddee63';
 
 final class DownloadStatusFamily extends $Family
     with

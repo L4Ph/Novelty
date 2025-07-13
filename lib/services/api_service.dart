@@ -81,31 +81,8 @@ class ApiService {
         print('General all no: ${novelData['general_all_no']}');
       }
 
-      // novelTypeが文字列の場合、整数に変換
-      if (novelData['novel_type'] is String) {
-        final novelTypeStr = novelData['novel_type'] as String;
-        novelData['novel_type'] =
-            int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
-      } else if (novelData['novel_type'] == null) {
-        // novelTypeがnullの場合、general_all_noを使って判断
-        // general_all_noが1または0の場合は短編小説、それ以外は連載小説
-        final generalAllNo = novelData['general_all_no'];
-        var allNo = 0;
-
-        if (generalAllNo is String) {
-          allNo = int.tryParse(generalAllNo) ?? 0;
-        } else if (generalAllNo is int) {
-          allNo = generalAllNo;
-        }
-
-        if (allNo <= 1) {
-          novelData['novel_type'] = 2; // 短編小説
-        } else {
-          novelData['novel_type'] = 1; // 連載小説
-        }
-      }
-
-      return NovelInfo.fromJson(novelData);
+      final processedData = _processNovelType(novelData);
+      return NovelInfo.fromJson(processedData);
     } else {
       throw Exception('Novel not found');
     }
@@ -151,40 +128,21 @@ class ApiService {
             final ncode = novelData['ncode'] as String?;
 
             if (ncode != null) {
-              // Process novel type the same way as in _fetchNovelInfoFromNarou
-              if (novelData['novel_type'] is String) {
-                final novelTypeStr = novelData['novel_type'] as String;
-                novelData['novel_type'] =
-                    int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
-              } else if (novelData['novel_type'] == null) {
-                final generalAllNo = novelData['general_all_no'];
-                var allNo = 0;
-
-                if (generalAllNo is String) {
-                  allNo = int.tryParse(generalAllNo) ?? 0;
-                } else if (generalAllNo is int) {
-                  allNo = generalAllNo;
-                }
-
-                if (allNo <= 1) {
-                  novelData['novel_type'] = 2; // 短編小説
-                } else {
-                  novelData['novel_type'] = 1; // 連載小説
-                }
-              }
-
-              final novelInfo = NovelInfo.fromJson(novelData);
+              final processedData = _processNovelType(novelData);
+              var novelInfo = NovelInfo.fromJson(processedData);
 
               // For short stories, add a single episode with basic info
               if (novelInfo.novelType == 2) {
-                novelInfo.episodes = [
-                  Episode(
-                    subtitle: novelInfo.title,
-                    url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
-                    ncode: ncode,
-                    index: 1,
-                  ),
-                ];
+                novelInfo = novelInfo.copyWith(
+                  episodes: [
+                    Episode(
+                      subtitle: novelInfo.title,
+                      url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
+                      ncode: ncode,
+                      index: 1,
+                    ),
+                  ],
+                );
               }
 
               result[ncode] = novelInfo;
@@ -206,14 +164,14 @@ class ApiService {
   /// This is a lightweight version of fetchNovelInfo that doesn't fetch episodes
   /// Suitable for list views like history where full episode data isn't needed
   Future<NovelInfo> fetchBasicNovelInfo(String ncode) async {
-    final info = await _fetchNovelInfoFromNarou(ncode);
+    var info = await _fetchNovelInfoFromNarou(ncode);
 
     // novelTypeがnullの場合、general_all_noを使って判断
     if (info.novelType == null) {
       if (info.generalAllNo != null && info.generalAllNo! <= 1) {
-        info.novelType = 2; // 短編小説
+        info = info.copyWith(novelType: 2); // 短編小説
       } else {
-        info.novelType = 1; // 連載小説
+        info = info.copyWith(novelType: 1); // 連載小説
       }
     }
 
@@ -224,28 +182,30 @@ class ApiService {
 
     // For short stories, add a single episode with basic info
     if (info.novelType == 2) {
-      info.episodes = [
-        Episode(
-          subtitle: info.title,
-          url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
-          ncode: ncode,
-          index: 1,
-        ),
-      ];
+      info = info.copyWith(
+        episodes: [
+          Episode(
+            subtitle: info.title,
+            url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
+            ncode: ncode,
+            index: 1,
+          ),
+        ],
+      );
     }
 
     return info;
   }
 
   Future<NovelInfo> fetchNovelInfo(String ncode) async {
-    final info = await _fetchNovelInfoFromNarou(ncode);
+    var info = await _fetchNovelInfoFromNarou(ncode);
 
     // novelTypeがnullの場合、general_all_noを使って判断
     if (info.novelType == null) {
       if (info.generalAllNo != null && info.generalAllNo! <= 1) {
-        info.novelType = 2; // 短編小説
+        info = info.copyWith(novelType: 2); // 短編小説
       } else {
-        info.novelType = 1; // 連載小説
+        info = info.copyWith(novelType: 1); // 連載小説
       }
     }
 
@@ -257,14 +217,16 @@ class ApiService {
     // 短編小説の場合は、単一のエピソードとして扱う
     if (info.novelType == 2) {
       // 短編小説の場合は、単一のエピソードとして扱う
-      info.episodes = [
-        Episode(
-          subtitle: info.title,
-          url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
-          ncode: ncode,
-          index: 1,
-        ),
-      ];
+      info = info.copyWith(
+        episodes: [
+          Episode(
+            subtitle: info.title,
+            url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
+            ncode: ncode,
+            index: 1,
+          ),
+        ],
+      );
       return info;
     }
 
@@ -301,9 +263,8 @@ class ApiService {
         break;
       }
 
-      final newEpisodes = episodesOnPage
-          .where((e) => !episodeUrls.contains(e.url))
-          .toList();
+      final newEpisodes =
+          episodesOnPage.where((e) => !episodeUrls.contains(e.url)).toList();
       if (newEpisodes.isEmpty) {
         break;
       }
@@ -315,19 +276,19 @@ class ApiService {
 
       currentPage++;
     }
-    info.episodes = allEpisodes;
+    info = info.copyWith(episodes: allEpisodes);
     return info;
   }
 
   Future<Episode> fetchEpisode(String ncode, int episode) async {
-    final info = await _fetchNovelInfoFromNarou(ncode);
+    var info = await _fetchNovelInfoFromNarou(ncode);
 
     // novelTypeがnullの場合、general_all_noを使って判断
     if (info.novelType == null) {
       if (info.generalAllNo != null && info.generalAllNo! <= 1) {
-        info.novelType = 2; // 短編小説
+        info = info.copyWith(novelType: 2); // 短編小説
       } else {
-        info.novelType = 1; // 連載小説
+        info = info.copyWith(novelType: 1); // 連載小説
       }
     }
 
@@ -450,7 +411,9 @@ class ApiService {
         return data
             .sublist(1)
             .map(
-              (item) => RankingResponse.fromJson(item as Map<String, dynamic>),
+              (item) => RankingResponse.fromJson(
+                _processNovelType(item as Map<String, dynamic>),
+              ),
             )
             .toList();
       }
@@ -593,7 +556,7 @@ class ApiService {
           for (final item in detailsData.sublist(1)) {
             final ncode = (item as Map<String, dynamic>)['ncode'] as String?;
             if (ncode != null) {
-              novelDetails[ncode] = item;
+              novelDetails[ncode] = _processNovelType(item);
             }
           }
         }
@@ -627,18 +590,12 @@ class ApiService {
           allData.add(RankingResponse.fromJson(details));
         } else {
           allData.add(
-            RankingResponse.fromJson({
-              'ncode': ncode,
-              'title': 'タイトル取得失敗',
-              'rank': rankItem['rank'],
-              'pt': rankItem['pt'],
-              'novel_type': null,
-              'end': null,
-              'genre': null,
-              'writer': null,
-              'story': null,
-              'userid': null,
-            }),
+            RankingResponse(
+              ncode: ncode,
+              title: 'タイトル取得失敗',
+              rank: rankItem['rank'] as int?,
+              pt: rankItem['pt'] as int?,
+            ),
           );
         }
       } on Exception catch (e) {
@@ -656,12 +613,10 @@ class ApiService {
       print('Fetching all-time ranking using novel search API');
     }
 
-    final query = NovelSearchQuery()
-      ..order = 'hyoka'
-      ..lim = 300;
+    final query = NovelSearchQuery(order: 'hyoka', lim: 300);
 
     try {
-      final results = await searchNovels(query);
+      var results = await searchNovels(query);
       if (kDebugMode) {
         print(
           'Successfully fetched all-time ranking, count: ${results.length}',
@@ -669,26 +624,10 @@ class ApiService {
       }
 
       // ランキング順位を追加
-      for (var i = 0; i < results.length; i++) {
-        // RankingResponseは不変オブジェクトなので、新しいインスタンスを作成
-        final item = results[i];
-        final newItem = RankingResponse(
-          rank: i + 1,
-          pt: item.allPoint,
-          allPoint: item.allPoint,
-          ncode: item.ncode,
-          title: item.title,
-          novelType: item.novelType,
-          end: item.end,
-          genre: item.genre,
-          writer: item.writer,
-          story: item.story,
-          userId: item.userId,
-          generalAllNo: item.generalAllNo,
-          keyword: item.keyword,
-        );
-        results[i] = newItem;
-      }
+      results = [
+        for (var i = 0; i < results.length; i++)
+          results[i].copyWith(rank: i + 1, pt: results[i].allPoint),
+      ];
 
       return results;
     } on Exception catch (e) {
@@ -697,5 +636,31 @@ class ApiService {
       }
       return [];
     }
+  }
+
+  Map<String, dynamic> _processNovelType(Map<String, dynamic> novelData) {
+    // novelTypeが文字列の場合、整数に変換
+    if (novelData['novel_type'] is String) {
+      final novelTypeStr = novelData['novel_type'] as String;
+      novelData['novel_type'] = int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
+    } else if (novelData['novel_type'] == null) {
+      // novelTypeがnullの場合、general_all_noを使って判断
+      // general_all_noが1または0の場合は短編小説、それ以外は連載小説
+      final generalAllNo = novelData['general_all_no'];
+      var allNo = 0;
+
+      if (generalAllNo is String) {
+        allNo = int.tryParse(generalAllNo) ?? 0;
+      } else if (generalAllNo is int) {
+        allNo = generalAllNo;
+      }
+
+      if (allNo <= 1) {
+        novelData['novel_type'] = 2; // 短編小説
+      } else {
+        novelData['novel_type'] = 1; // 連載小説
+      }
+    }
+    return novelData;
   }
 }
