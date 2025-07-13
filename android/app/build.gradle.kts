@@ -15,6 +15,12 @@ if (localPropertiesFile.exists()) {
     }
 }
 
+val keystoreProperties = Properties()
+val keystorePropertiesFile = file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(keystorePropertiesFile.inputStream())
+}
+
 android {
     namespace = "moe.l4ph.novelty"
     compileSdk = flutter.compileSdkVersion
@@ -31,10 +37,12 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = System.getenv("KEY_ALIAS") ?: localProperties.getProperty("keyAlias")
-            keyPassword = System.getenv("KEY_PASSWORD") ?: localProperties.getProperty("keyPassword")
-            storeFile = System.getenv("STORE_FILE")?.let { file(it) } ?: file(localProperties.getProperty("storeFile") ?: "upload-keystore.jks")
-            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: localProperties.getProperty("storePassword")
+            if (keystorePropertiesFile.exists()) {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
         }
     }
 
@@ -50,7 +58,7 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("release")
