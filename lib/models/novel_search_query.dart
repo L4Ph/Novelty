@@ -1,5 +1,3 @@
-// ignore_for_file: omit_obvious_property_types
-
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'novel_search_query.freezed.dart';

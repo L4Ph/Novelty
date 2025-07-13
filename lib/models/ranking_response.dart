@@ -26,7 +26,7 @@ abstract class RankingResponse with _$RankingResponse {
     ///
     /// (ブックマーク数×2)+評価ポイント。
     /// 小説APIで取得。
-    int? allPoint,
+    @JsonKey(name: 'all_point') int? allPoint,
 
     /// Nコード。
     required String ncode,
@@ -38,7 +38,7 @@ abstract class RankingResponse with _$RankingResponse {
     ///
     /// [1] 連載
     /// [2] 短編
-    int? novelType,
+    @JsonKey(name: 'novel_type') int? novelType,
 
     /// 連載状態。
     ///
@@ -58,12 +58,12 @@ abstract class RankingResponse with _$RankingResponse {
     String? story,
 
     /// 作者のユーザID(数値)。
-    int? userId,
+    @JsonKey(name: 'userid') int? userId,
 
-    /// 全掲載エピソード数。
+    /// 全掲���エピソード数。
     ///
     /// 短編の場合は 1。
-    int? generalAllNo,
+    @JsonKey(name: 'general_all_no') int? generalAllNo,
 
     /// キーワード。
     String? keyword,

@@ -34,7 +34,7 @@ void main() {
 
     test('should fetch novel info from API when not cached', () async {
       const testNcode = 'N1234AB';
-      final testNovelInfo = NovelInfo(
+      const testNovelInfo = NovelInfo(
         ncode: testNcode,
         title: 'テスト小説',
         writer: 'テスト作者',
@@ -61,7 +61,7 @@ void main() {
 
     test('should add novel to history when fetched', () async {
       const testNcode = 'N1234AB';
-      final testNovelInfo = NovelInfo(
+      const testNovelInfo = NovelInfo(
         ncode: testNcode,
         title: 'テスト小説',
         writer: 'テスト作者',
@@ -90,7 +90,7 @@ void main() {
       ).thenThrow(Exception('Database error'));
       when(
         mockApiService.fetchNovelInfo(any),
-      ).thenAnswer((_) async => NovelInfo(ncode: testNcode));
+      ).thenAnswer((_) async => const NovelInfo(ncode: testNcode));
       when(
         mockDatabase.addToHistory(any),
       ).thenAnswer((_) async => 1); // Add stub for addToHistory
@@ -183,7 +183,7 @@ void main() {
     late MockAppDatabase mockDatabase;
     late ProviderContainer container;
     const ncode = 'N1234AB';
-    final novelInfo = NovelInfo(ncode: ncode, title: 'Test Novel');
+    const novelInfo = NovelInfo(ncode: ncode, title: 'Test Novel');
 
     setUp(() {
       mockDatabase = MockAppDatabase();
@@ -239,7 +239,7 @@ void main() {
       // Arrange
       when(
         mockDatabase.getNovel(ncode),
-      ).thenAnswer((_) async => Novel(ncode: ncode, fav: 1));
+      ).thenAnswer((_) async => const Novel(ncode: ncode, fav: 1));
       when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
       final notifier = container.read(favoriteStatusProvider(ncode).notifier);
       await container.read(

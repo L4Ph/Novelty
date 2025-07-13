@@ -5,13 +5,20 @@ import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
 import 'package:novelty/widgets/tategaki.dart';
+import 'package:riverpod/src/providers/future_provider.dart';
 
-final novelContentProvider = FutureProvider.autoDispose.family<
-    List<NovelContentElement>,
-    ({String ncode, int episode})>((ref, params) async {
-  final repository = ref.read(novelRepositoryProvider);
-  return repository.getEpisode(params.ncode, params.episode);
-});
+final FutureProviderFamily<
+  List<NovelContentElement>,
+  ({int episode, String ncode})
+>
+novelContentProvider = FutureProvider.autoDispose
+    .family<List<NovelContentElement>, ({String ncode, int episode})>((
+      ref,
+      params,
+    ) async {
+      final repository = ref.read(novelRepositoryProvider);
+      return repository.getEpisode(params.ncode, params.episode);
+    });
 
 class NovelContent extends ConsumerWidget {
   const NovelContent({

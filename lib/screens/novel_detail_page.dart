@@ -158,7 +158,7 @@ class DownloadStatus extends _$DownloadStatus {
 
       // TODO(L4Ph): ダウンロード中の状態をUIに反映する
       await repo.downloadNovel(novelInfo);
-    } catch (e) {
+    } on Exception catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('ダウンロードに失敗しました: ${e.toString()}')),

@@ -15,7 +15,8 @@ AppDatabase appDatabase(Ref ref) {
   return AppDatabase();
 }
 
-class ContentConverter extends TypeConverter<List<NovelContentElement>, String> {
+class ContentConverter
+    extends TypeConverter<List<NovelContentElement>, String> {
   const ContentConverter();
 
   @override
@@ -23,7 +24,7 @@ class ContentConverter extends TypeConverter<List<NovelContentElement>, String> 
     if (fromDb.isEmpty) {
       return [];
     }
-    final List<dynamic> decoded = json.decode(fromDb) as List;
+    final decoded = json.decode(fromDb) as List;
     return decoded
         .map(
           (dynamic e) =>
@@ -142,8 +143,7 @@ class AppDatabase extends _$AppDatabase {
   Future<Novel?> getNovel(String ncode) {
     return (select(
       novels,
-    )..where((t) => t.ncode.equals(ncode)))
-        .getSingleOrNull();
+    )..where((t) => t.ncode.equals(ncode))).getSingleOrNull();
   }
 
   // ライブラリ登録状態の監視
@@ -223,9 +223,9 @@ class AppDatabase extends _$AppDatabase {
 
   // ダウンロード済みエピソードの削除
   Future<int> deleteDownloadedEpisode(String ncode, int episode) {
-    return (delete(downloadedEpisodes)
-          ..where((t) => t.ncode.equals(ncode) & t.episode.equals(episode)))
-        .go();
+    return (delete(
+      downloadedEpisodes,
+    )..where((t) => t.ncode.equals(ncode) & t.episode.equals(episode))).go();
   }
 
   // ブックマークの追加
@@ -246,13 +246,12 @@ class AppDatabase extends _$AppDatabase {
 
   // ブックマークの削除
   Future<int> deleteBookmark(String ncode, int episode, int position) {
-    return (delete(bookmarks)
-          ..where(
-            (t) =>
-                t.ncode.equals(ncode) &
-                t.episode.equals(episode) &
-                t.position.equals(position),
-          ))
+    return (delete(bookmarks)..where(
+          (t) =>
+              t.ncode.equals(ncode) &
+              t.episode.equals(episode) &
+              t.position.equals(position),
+        ))
         .go();
   }
 }

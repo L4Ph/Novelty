@@ -6,8 +6,6 @@ import 'package:novelty/models/episode.dart';
 part 'novel_info.freezed.dart';
 part 'novel_info.g.dart';
 
-
-
 /// なろう小説の作品情報を表すクラス。
 ///
 /// [なろう小説API](https://dev.syosetu.com/man/api/) のレスポンスや、
@@ -32,18 +30,18 @@ abstract class NovelInfo with _$NovelInfo {
     ///
     /// [1] 連載
     /// [2] 短編
-    int? novelType,
+    @JsonKey(name: 'novel_type') int? novelType,
 
     /// 連載状態。
     ///
-    /// [0] 短編作品と��結済作品
+    /// [0] 短編作品と完結済作品
     /// [1] 連載中
     int? end,
 
-    /// 全掲載エピソード数。
+    /// 全掲��エピソード数。
     ///
     /// 短編の場合は 1。
-    int? generalAllNo,
+    @JsonKey(name: 'general_all_no') int? generalAllNo,
 
     /// ジャンル。
     ///
@@ -56,61 +54,61 @@ abstract class NovelInfo with _$NovelInfo {
     /// 初回掲載日。
     ///
     /// `YYYY-MM-DD HH:MM:SS` の形式。
-    String? generalFirstup,
+    @JsonKey(name: 'general_firstup') String? generalFirstup,
 
     /// 最終掲載日。
     ///
     /// `YYYY-MM-DD HH:MM:SS` の形式。
-    String? generalLastup,
+    @JsonKey(name: 'general_lastup') String? generalLastup,
 
     /// 総合評価ポイント。
     ///
     /// (ブックマーク数×2)+評価ポイント。
-    int? globalPoint,
+    @JsonKey(name: 'global_point') int? globalPoint,
 
     /// 日間ポイント。
-    int? dailyPoint,
+    @JsonKey(name: 'daily_point') int? dailyPoint,
 
     /// 週間ポイント。
-    int? weeklyPoint,
+    @JsonKey(name: 'weekly_point') int? weeklyPoint,
 
     /// 月間ポイント。
-    int? monthlyPoint,
+    @JsonKey(name: 'monthly_point') int? monthlyPoint,
 
     /// 四半期ポイント。
-    int? quarterPoint,
+    @JsonKey(name: 'quarter_point') int? quarterPoint,
 
     /// 年間ポイント。
-    int? yearlyPoint,
+    @JsonKey(name: 'yearly_point') int? yearlyPoint,
 
     /// ブックマーク数。
-    int? favNovelCnt,
+    @JsonKey(name: 'fav_novel_cnt') int? favNovelCnt,
 
     /// 感想数。
-    int? impressionCnt,
+    @JsonKey(name: 'impression_cnt') int? impressionCnt,
 
     /// レビュー数。
-    int? reviewCnt,
+    @JsonKey(name: 'review_cnt') int? reviewCnt,
 
     /// 評価ポイント。
-    int? allPoint,
+    @JsonKey(name: 'all_point') int? allPoint,
 
     /// 評価者数。
-    int? allHyokaCnt,
+    @JsonKey(name: 'all_hyoka_cnt') int? allHyokaCnt,
 
     /// 挿絵の数。
-    int? sasieCnt,
+    @JsonKey(name: 'sasie_cnt') int? sasieCnt,
 
     /// 会話率。
     int? kaiwaritu,
 
     /// 作品の更新日時。
-    int? novelupdatedAt,
+    @JsonKey(name: 'novelupdated_at') int? novelupdatedAt,
 
     /// 最終更新日時。
     ///
     /// システム用で作品更新時とは関係ない。
-    int? updatedAt,
+    @JsonKey(name: 'updated_at') int? updatedAt,
 
     /// エピソードのリスト。
     List<Episode>? episodes,

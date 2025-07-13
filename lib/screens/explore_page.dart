@@ -17,7 +17,7 @@ class _ExplorePageState extends State<ExplorePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _apiService = ApiService();
-  var _searchQuery = NovelSearchQuery();
+  var _searchQuery = const NovelSearchQuery();
   List<RankingResponse> _searchResults = [];
   var _isLoading = false;
   var _isSearching = false;
@@ -93,8 +93,9 @@ class _ExplorePageState extends State<ExplorePage>
                       value: _searchQuery.title,
                       onChanged: (bool? value) {
                         setState(() {
-                          _searchQuery =
-                              _searchQuery.copyWith(title: value ?? false);
+                          _searchQuery = _searchQuery.copyWith(
+                            title: value ?? false,
+                          );
                         });
                       },
                     ),
@@ -103,8 +104,9 @@ class _ExplorePageState extends State<ExplorePage>
                       value: _searchQuery.ex,
                       onChanged: (bool? value) {
                         setState(() {
-                          _searchQuery =
-                              _searchQuery.copyWith(ex: value ?? false);
+                          _searchQuery = _searchQuery.copyWith(
+                            ex: value ?? false,
+                          );
                         });
                       },
                     ),
@@ -113,8 +115,9 @@ class _ExplorePageState extends State<ExplorePage>
                       value: _searchQuery.keyword,
                       onChanged: (bool? value) {
                         setState(() {
-                          _searchQuery =
-                              _searchQuery.copyWith(keyword: value ?? false);
+                          _searchQuery = _searchQuery.copyWith(
+                            keyword: value ?? false,
+                          );
                         });
                       },
                     ),
@@ -123,8 +126,9 @@ class _ExplorePageState extends State<ExplorePage>
                       value: _searchQuery.wname,
                       onChanged: (bool? value) {
                         setState(() {
-                          _searchQuery =
-                              _searchQuery.copyWith(wname: value ?? false);
+                          _searchQuery = _searchQuery.copyWith(
+                            wname: value ?? false,
+                          );
                         });
                       },
                     ),
@@ -184,8 +188,9 @@ class _ExplorePageState extends State<ExplorePage>
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          _searchQuery =
-                              _searchQuery.copyWith(order: newValue ?? 'new');
+                          _searchQuery = _searchQuery.copyWith(
+                            order: newValue ?? 'new',
+                          );
                         });
                       },
                     ),

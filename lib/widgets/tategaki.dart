@@ -38,7 +38,7 @@ class _PaintableRuby extends _Paintable {
   final double rubyHeight;
 
   @override
-  double get height => basePainters.fold(0.0, (prev, p) => prev + p.height);
+  double get height => basePainters.fold(0, (prev, p) => prev + p.height);
 
   @override
   double get width => baseWidth + rubyWidth;
@@ -118,8 +118,9 @@ class _TategakiState extends State<Tategaki> {
   void _calculateMetrics() {
     final effectiveTextStyle =
         widget.style ?? DefaultTextStyle.of(context).style;
-    final rubyTextStyle =
-        effectiveTextStyle.copyWith(fontSize: (effectiveTextStyle.fontSize ?? 14) * 0.6);
+    final rubyTextStyle = effectiveTextStyle.copyWith(
+      fontSize: (effectiveTextStyle.fontSize ?? 14) * 0.6,
+    );
 
     final columns = <_TategakiColumn>[];
     var totalWidth = 0.0;
@@ -151,7 +152,8 @@ class _TategakiState extends State<Tategaki> {
             )..layout();
             final item = _PaintableChar(painter);
 
-            if (currentColumnHeight + item.height > widget.maxHeight && currentColumnItems.isNotEmpty) {
+            if (currentColumnHeight + item.height > widget.maxHeight &&
+                currentColumnItems.isNotEmpty) {
               endColumn();
             }
             currentColumnItems.add(item);
@@ -171,7 +173,9 @@ class _TategakiState extends State<Tategaki> {
               textDirection: TextDirection.ltr,
             )..layout();
             basePainters.add(painter);
-            if (painter.width > baseWidth) baseWidth = painter.width;
+            if (painter.width > baseWidth) {
+              baseWidth = painter.width;
+            }
           }
 
           final rubyPainters = <TextPainter>[];
@@ -186,7 +190,9 @@ class _TategakiState extends State<Tategaki> {
             )..layout();
             rubyPainters.add(painter);
             rubyHeight += painter.height;
-            if (painter.width > rubyWidth) rubyWidth = painter.width;
+            if (painter.width > rubyWidth) {
+              rubyWidth = painter.width;
+            }
           }
 
           final item = _PaintableRuby(
@@ -197,7 +203,8 @@ class _TategakiState extends State<Tategaki> {
             rubyHeight,
           );
 
-          if (currentColumnHeight + item.height > widget.maxHeight && currentColumnItems.isNotEmpty) {
+          if (currentColumnHeight + item.height > widget.maxHeight &&
+              currentColumnItems.isNotEmpty) {
             endColumn();
           }
           currentColumnItems.add(item);

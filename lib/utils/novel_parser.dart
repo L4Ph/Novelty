@@ -49,7 +49,6 @@ void _parseNode(dom.Node node, List<NovelContentElement> elements) {
         if (baseText.isNotEmpty) {
           elements.add(NovelContentElement.rubyText(baseText, rubyText));
         }
-        break;
     }
   }
 }
