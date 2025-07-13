@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:novelty/models/string_to_int_converter.dart';
 
 part 'ranking_response.freezed.dart';
 part 'ranking_response.g.dart';
@@ -15,18 +16,18 @@ abstract class RankingResponse with _$RankingResponse {
     ///
     /// 1～300位。
     /// ランキングAPIで取得。
-    int? rank,
+    @StringToIntConverter() int? rank,
 
     /// ポイント。
     ///
     /// ランキングAPIで取得。
-    int? pt,
+    @StringToIntConverter() int? pt,
 
     /// 総合評価ポイント。
     ///
     /// (ブックマーク数×2)+評価ポイント。
     /// 小説APIで取得。
-    @JsonKey(name: 'all_point') int? allPoint,
+    @StringToIntConverter() @JsonKey(name: 'all_point') int? allPoint,
 
     /// Nコード。
     required String ncode,
@@ -38,18 +39,18 @@ abstract class RankingResponse with _$RankingResponse {
     ///
     /// [1] 連載
     /// [2] 短編
-    @JsonKey(name: 'novel_type') int? novelType,
+    @StringToIntConverter() @JsonKey(name: 'novel_type') int? novelType,
 
     /// 連載状態。
     ///
     /// [0] 短編作品と完結済作品
     /// [1] 連載中
-    int? end,
+    @StringToIntConverter() int? end,
 
     /// ジャンル。
     ///
     /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
-    int? genre,
+    @StringToIntConverter() int? genre,
 
     /// 作者名。
     String? writer,
@@ -58,12 +59,14 @@ abstract class RankingResponse with _$RankingResponse {
     String? story,
 
     /// 作者のユーザID(数値)。
-    @JsonKey(name: 'userid') int? userId,
+    @StringToIntConverter() @JsonKey(name: 'userid') int? userId,
 
-    /// 全掲���エピソード数。
+    /// 全掲載エピソード数。
     ///
     /// 短編の場合は 1。
-    @JsonKey(name: 'general_all_no') int? generalAllNo,
+    @StringToIntConverter()
+    @JsonKey(name: 'general_all_no')
+    int? generalAllNo,
 
     /// キーワード。
     String? keyword,

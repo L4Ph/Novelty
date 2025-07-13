@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
+import 'package:novelty/models/string_to_int_converter.dart';
 
 part 'novel_info.freezed.dart';
 part 'novel_info.g.dart';
@@ -30,23 +31,23 @@ abstract class NovelInfo with _$NovelInfo {
     ///
     /// [1] 連載
     /// [2] 短編
-    @JsonKey(name: 'novel_type') int? novelType,
+    @StringToIntConverter() @JsonKey(name: 'novel_type') int? novelType,
 
     /// 連載状態。
     ///
     /// [0] 短編作品と完結済作品
     /// [1] 連載中
-    int? end,
+    @StringToIntConverter() int? end,
 
-    /// 全掲��エピソード数。
+    /// 全掲載エピソード数。
     ///
     /// 短編の場合は 1。
-    @JsonKey(name: 'general_all_no') int? generalAllNo,
+    @StringToIntConverter() @JsonKey(name: 'general_all_no') int? generalAllNo,
 
     /// ジャンル。
     ///
     /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
-    int? genre,
+    @StringToIntConverter() int? genre,
 
     /// キーワード。
     String? keyword,
@@ -64,51 +65,53 @@ abstract class NovelInfo with _$NovelInfo {
     /// 総合評価ポイント。
     ///
     /// (ブックマーク数×2)+評価ポイント。
-    @JsonKey(name: 'global_point') int? globalPoint,
+    @StringToIntConverter() @JsonKey(name: 'global_point') int? globalPoint,
 
     /// 日間ポイント。
-    @JsonKey(name: 'daily_point') int? dailyPoint,
+    @StringToIntConverter() @JsonKey(name: 'daily_point') int? dailyPoint,
 
     /// 週間ポイント。
-    @JsonKey(name: 'weekly_point') int? weeklyPoint,
+    @StringToIntConverter() @JsonKey(name: 'weekly_point') int? weeklyPoint,
 
     /// 月間ポイント。
-    @JsonKey(name: 'monthly_point') int? monthlyPoint,
+    @StringToIntConverter() @JsonKey(name: 'monthly_point') int? monthlyPoint,
 
     /// 四半期ポイント。
-    @JsonKey(name: 'quarter_point') int? quarterPoint,
+    @StringToIntConverter() @JsonKey(name: 'quarter_point') int? quarterPoint,
 
     /// 年間ポイント。
-    @JsonKey(name: 'yearly_point') int? yearlyPoint,
+    @StringToIntConverter() @JsonKey(name: 'yearly_point') int? yearlyPoint,
 
     /// ブックマーク数。
-    @JsonKey(name: 'fav_novel_cnt') int? favNovelCnt,
+    @StringToIntConverter() @JsonKey(name: 'fav_novel_cnt') int? favNovelCnt,
 
     /// 感想数。
-    @JsonKey(name: 'impression_cnt') int? impressionCnt,
+    @StringToIntConverter()
+    @JsonKey(name: 'impression_cnt')
+    int? impressionCnt,
 
     /// レビュー数。
-    @JsonKey(name: 'review_cnt') int? reviewCnt,
+    @StringToIntConverter() @JsonKey(name: 'review_cnt') int? reviewCnt,
 
     /// 評価ポイント。
-    @JsonKey(name: 'all_point') int? allPoint,
+    @StringToIntConverter() @JsonKey(name: 'all_point') int? allPoint,
 
     /// 評価者数。
-    @JsonKey(name: 'all_hyoka_cnt') int? allHyokaCnt,
+    @StringToIntConverter() @JsonKey(name: 'all_hyoka_cnt') int? allHyokaCnt,
 
     /// 挿絵の数。
-    @JsonKey(name: 'sasie_cnt') int? sasieCnt,
+    @StringToIntConverter() @JsonKey(name: 'sasie_cnt') int? sasieCnt,
 
     /// 会話率。
-    int? kaiwaritu,
+    @StringToIntConverter() int? kaiwaritu,
 
     /// 作品の更新日時。
-    @JsonKey(name: 'novelupdated_at') int? novelupdatedAt,
+    @StringToIntConverter() @JsonKey(name: 'novelupdated_at') int? novelupdatedAt,
 
     /// 最終更新日時。
     ///
     /// システム用で作品更新時とは関係ない。
-    @JsonKey(name: 'updated_at') int? updatedAt,
+    @StringToIntConverter() @JsonKey(name: 'updated_at') int? updatedAt,
 
     /// エピソードのリスト。
     List<Episode>? episodes,
@@ -117,40 +120,40 @@ abstract class NovelInfo with _$NovelInfo {
     ///
     /// [1] R15
     /// [0] それ以外
-    int? isr15,
+    @StringToIntConverter() int? isr15,
 
     /// ボーイズラブ作品か。
     ///
     /// [1] ボーイズラブ
     /// [0] それ以外
-    int? isbl,
+    @StringToIntConverter() int? isbl,
 
     /// ガールズラブ作品か。
     ///
     /// [1] ガールズラブ
     /// [0] それ以外
-    int? isgl,
+    @StringToIntConverter() int? isgl,
 
     /// 残酷な描写あり作品か。
     ///
     /// [1] 残酷な描写あり
     /// [0] それ以外
-    int? iszankoku,
+    @StringToIntConverter() int? iszankoku,
 
     /// 異世界転生作品か。
     ///
     /// [1] 異世界転生
     /// [0] それ以外
-    int? istensei,
+    @StringToIntConverter() int? istensei,
 
     /// 異世界転移作品か。
     ///
     /// [1] 異世界転移
     /// [0] それ以外
-    int? istenni,
+    @StringToIntConverter() int? istenni,
   }) = _NovelInfo;
 
-  /// JSONから[NovelInfo]を生成するファクトリコンストラクタ
+  /// JSONから[NovelInfo]を��成するファクトリコンストラクタ
   factory NovelInfo.fromJson(Map<String, dynamic> json) =>
       _$NovelInfoFromJson(json);
 }

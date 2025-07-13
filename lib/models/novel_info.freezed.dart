@@ -23,17 +23,17 @@ mixin _$NovelInfo {
 ///
 /// [1] 連載
 /// [2] 短編
-@JsonKey(name: 'novel_type') int? get novelType;/// 連載状態。
+@StringToIntConverter()@JsonKey(name: 'novel_type') int? get novelType;/// 連載状態。
 ///
 /// [0] 短編作品と完結済作品
 /// [1] 連載中
- int? get end;/// 全掲��エピソード数。
+@StringToIntConverter() int? get end;/// 全掲載エピソード数。
 ///
 /// 短編の場合は 1。
-@JsonKey(name: 'general_all_no') int? get generalAllNo;/// ジャンル。
+@StringToIntConverter()@JsonKey(name: 'general_all_no') int? get generalAllNo;/// ジャンル。
 ///
 /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
- int? get genre;/// キーワード。
+@StringToIntConverter() int? get genre;/// キーワード。
  String? get keyword;/// 初回掲載日。
 ///
 /// `YYYY-MM-DD HH:MM:SS` の形式。
@@ -43,48 +43,48 @@ mixin _$NovelInfo {
 @JsonKey(name: 'general_lastup') String? get generalLastup;/// 総合評価ポイント。
 ///
 /// (ブックマーク数×2)+評価ポイント。
-@JsonKey(name: 'global_point') int? get globalPoint;/// 日間ポイント。
-@JsonKey(name: 'daily_point') int? get dailyPoint;/// 週間ポイント。
-@JsonKey(name: 'weekly_point') int? get weeklyPoint;/// 月間ポイント。
-@JsonKey(name: 'monthly_point') int? get monthlyPoint;/// 四半期ポイント。
-@JsonKey(name: 'quarter_point') int? get quarterPoint;/// 年間ポイント。
-@JsonKey(name: 'yearly_point') int? get yearlyPoint;/// ブックマーク数。
-@JsonKey(name: 'fav_novel_cnt') int? get favNovelCnt;/// 感想数。
-@JsonKey(name: 'impression_cnt') int? get impressionCnt;/// レビュー数。
-@JsonKey(name: 'review_cnt') int? get reviewCnt;/// 評価ポイント。
-@JsonKey(name: 'all_point') int? get allPoint;/// 評価者数。
-@JsonKey(name: 'all_hyoka_cnt') int? get allHyokaCnt;/// 挿絵の数。
-@JsonKey(name: 'sasie_cnt') int? get sasieCnt;/// 会話率。
- int? get kaiwaritu;/// 作品の更新日時。
-@JsonKey(name: 'novelupdated_at') int? get novelupdatedAt;/// 最終更新日時。
+@StringToIntConverter()@JsonKey(name: 'global_point') int? get globalPoint;/// 日間ポイント。
+@StringToIntConverter()@JsonKey(name: 'daily_point') int? get dailyPoint;/// 週間ポイント。
+@StringToIntConverter()@JsonKey(name: 'weekly_point') int? get weeklyPoint;/// 月間ポイント。
+@StringToIntConverter()@JsonKey(name: 'monthly_point') int? get monthlyPoint;/// 四半期ポイント。
+@StringToIntConverter()@JsonKey(name: 'quarter_point') int? get quarterPoint;/// 年間ポイント。
+@StringToIntConverter()@JsonKey(name: 'yearly_point') int? get yearlyPoint;/// ブックマーク数。
+@StringToIntConverter()@JsonKey(name: 'fav_novel_cnt') int? get favNovelCnt;/// 感想数。
+@StringToIntConverter()@JsonKey(name: 'impression_cnt') int? get impressionCnt;/// レビュー数。
+@StringToIntConverter()@JsonKey(name: 'review_cnt') int? get reviewCnt;/// 評価ポイント。
+@StringToIntConverter()@JsonKey(name: 'all_point') int? get allPoint;/// 評価者数。
+@StringToIntConverter()@JsonKey(name: 'all_hyoka_cnt') int? get allHyokaCnt;/// 挿絵の数。
+@StringToIntConverter()@JsonKey(name: 'sasie_cnt') int? get sasieCnt;/// 会話率。
+@StringToIntConverter() int? get kaiwaritu;/// 作品の更新日時。
+@StringToIntConverter()@JsonKey(name: 'novelupdated_at') int? get novelupdatedAt;/// 最終更新日時。
 ///
 /// システム用で作品更新時とは関係ない。
-@JsonKey(name: 'updated_at') int? get updatedAt;/// エピソードのリスト。
+@StringToIntConverter()@JsonKey(name: 'updated_at') int? get updatedAt;/// エピソードのリスト。
  List<Episode>? get episodes;/// R15作品か。
 ///
 /// [1] R15
 /// [0] それ以外
- int? get isr15;/// ボーイズラブ作品か。
+@StringToIntConverter() int? get isr15;/// ボーイズラブ作品か。
 ///
 /// [1] ボーイズラブ
 /// [0] それ以外
- int? get isbl;/// ガールズラブ作品か。
+@StringToIntConverter() int? get isbl;/// ガールズラブ作品か。
 ///
 /// [1] ガールズラブ
 /// [0] それ以外
- int? get isgl;/// 残酷な描写あり作品か。
+@StringToIntConverter() int? get isgl;/// 残酷な描写あり作品か。
 ///
 /// [1] 残酷な描写あり
 /// [0] それ以外
- int? get iszankoku;/// 異世界転生作品か。
+@StringToIntConverter() int? get iszankoku;/// 異世界転生作品か。
 ///
 /// [1] 異世界転生
 /// [0] それ以外
- int? get istensei;/// 異世界転移作品か。
+@StringToIntConverter() int? get istensei;/// 異世界転移作品か。
 ///
 /// [1] 異世界転移
 /// [0] それ以外
- int? get istenni;
+@StringToIntConverter() int? get istenni;
 /// Create a copy of NovelInfo
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -117,7 +117,7 @@ abstract mixin class $NovelInfoCopyWith<$Res>  {
   factory $NovelInfoCopyWith(NovelInfo value, $Res Function(NovelInfo) _then) = _$NovelInfoCopyWithImpl;
 @useResult
 $Res call({
- String? title, String? ncode, String? writer, String? story,@JsonKey(name: 'novel_type') int? novelType, int? end,@JsonKey(name: 'general_all_no') int? generalAllNo, int? genre, String? keyword,@JsonKey(name: 'general_firstup') String? generalFirstup,@JsonKey(name: 'general_lastup') String? generalLastup,@JsonKey(name: 'global_point') int? globalPoint,@JsonKey(name: 'daily_point') int? dailyPoint,@JsonKey(name: 'weekly_point') int? weeklyPoint,@JsonKey(name: 'monthly_point') int? monthlyPoint,@JsonKey(name: 'quarter_point') int? quarterPoint,@JsonKey(name: 'yearly_point') int? yearlyPoint,@JsonKey(name: 'fav_novel_cnt') int? favNovelCnt,@JsonKey(name: 'impression_cnt') int? impressionCnt,@JsonKey(name: 'review_cnt') int? reviewCnt,@JsonKey(name: 'all_point') int? allPoint,@JsonKey(name: 'all_hyoka_cnt') int? allHyokaCnt,@JsonKey(name: 'sasie_cnt') int? sasieCnt, int? kaiwaritu,@JsonKey(name: 'novelupdated_at') int? novelupdatedAt,@JsonKey(name: 'updated_at') int? updatedAt, List<Episode>? episodes, int? isr15, int? isbl, int? isgl, int? iszankoku, int? istensei, int? istenni
+ String? title, String? ncode, String? writer, String? story,@StringToIntConverter()@JsonKey(name: 'novel_type') int? novelType,@StringToIntConverter() int? end,@StringToIntConverter()@JsonKey(name: 'general_all_no') int? generalAllNo,@StringToIntConverter() int? genre, String? keyword,@JsonKey(name: 'general_firstup') String? generalFirstup,@JsonKey(name: 'general_lastup') String? generalLastup,@StringToIntConverter()@JsonKey(name: 'global_point') int? globalPoint,@StringToIntConverter()@JsonKey(name: 'daily_point') int? dailyPoint,@StringToIntConverter()@JsonKey(name: 'weekly_point') int? weeklyPoint,@StringToIntConverter()@JsonKey(name: 'monthly_point') int? monthlyPoint,@StringToIntConverter()@JsonKey(name: 'quarter_point') int? quarterPoint,@StringToIntConverter()@JsonKey(name: 'yearly_point') int? yearlyPoint,@StringToIntConverter()@JsonKey(name: 'fav_novel_cnt') int? favNovelCnt,@StringToIntConverter()@JsonKey(name: 'impression_cnt') int? impressionCnt,@StringToIntConverter()@JsonKey(name: 'review_cnt') int? reviewCnt,@StringToIntConverter()@JsonKey(name: 'all_point') int? allPoint,@StringToIntConverter()@JsonKey(name: 'all_hyoka_cnt') int? allHyokaCnt,@StringToIntConverter()@JsonKey(name: 'sasie_cnt') int? sasieCnt,@StringToIntConverter() int? kaiwaritu,@StringToIntConverter()@JsonKey(name: 'novelupdated_at') int? novelupdatedAt,@StringToIntConverter()@JsonKey(name: 'updated_at') int? updatedAt, List<Episode>? episodes,@StringToIntConverter() int? isr15,@StringToIntConverter() int? isbl,@StringToIntConverter() int? isgl,@StringToIntConverter() int? iszankoku,@StringToIntConverter() int? istensei,@StringToIntConverter() int? istenni
 });
 
 
@@ -254,7 +254,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? title,  String? ncode,  String? writer,  String? story, @JsonKey(name: 'novel_type')  int? novelType,  int? end, @JsonKey(name: 'general_all_no')  int? generalAllNo,  int? genre,  String? keyword, @JsonKey(name: 'general_firstup')  String? generalFirstup, @JsonKey(name: 'general_lastup')  String? generalLastup, @JsonKey(name: 'global_point')  int? globalPoint, @JsonKey(name: 'daily_point')  int? dailyPoint, @JsonKey(name: 'weekly_point')  int? weeklyPoint, @JsonKey(name: 'monthly_point')  int? monthlyPoint, @JsonKey(name: 'quarter_point')  int? quarterPoint, @JsonKey(name: 'yearly_point')  int? yearlyPoint, @JsonKey(name: 'fav_novel_cnt')  int? favNovelCnt, @JsonKey(name: 'impression_cnt')  int? impressionCnt, @JsonKey(name: 'review_cnt')  int? reviewCnt, @JsonKey(name: 'all_point')  int? allPoint, @JsonKey(name: 'all_hyoka_cnt')  int? allHyokaCnt, @JsonKey(name: 'sasie_cnt')  int? sasieCnt,  int? kaiwaritu, @JsonKey(name: 'novelupdated_at')  int? novelupdatedAt, @JsonKey(name: 'updated_at')  int? updatedAt,  List<Episode>? episodes,  int? isr15,  int? isbl,  int? isgl,  int? iszankoku,  int? istensei,  int? istenni)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? title,  String? ncode,  String? writer,  String? story, @StringToIntConverter()@JsonKey(name: 'novel_type')  int? novelType, @StringToIntConverter()  int? end, @StringToIntConverter()@JsonKey(name: 'general_all_no')  int? generalAllNo, @StringToIntConverter()  int? genre,  String? keyword, @JsonKey(name: 'general_firstup')  String? generalFirstup, @JsonKey(name: 'general_lastup')  String? generalLastup, @StringToIntConverter()@JsonKey(name: 'global_point')  int? globalPoint, @StringToIntConverter()@JsonKey(name: 'daily_point')  int? dailyPoint, @StringToIntConverter()@JsonKey(name: 'weekly_point')  int? weeklyPoint, @StringToIntConverter()@JsonKey(name: 'monthly_point')  int? monthlyPoint, @StringToIntConverter()@JsonKey(name: 'quarter_point')  int? quarterPoint, @StringToIntConverter()@JsonKey(name: 'yearly_point')  int? yearlyPoint, @StringToIntConverter()@JsonKey(name: 'fav_novel_cnt')  int? favNovelCnt, @StringToIntConverter()@JsonKey(name: 'impression_cnt')  int? impressionCnt, @StringToIntConverter()@JsonKey(name: 'review_cnt')  int? reviewCnt, @StringToIntConverter()@JsonKey(name: 'all_point')  int? allPoint, @StringToIntConverter()@JsonKey(name: 'all_hyoka_cnt')  int? allHyokaCnt, @StringToIntConverter()@JsonKey(name: 'sasie_cnt')  int? sasieCnt, @StringToIntConverter()  int? kaiwaritu, @StringToIntConverter()@JsonKey(name: 'novelupdated_at')  int? novelupdatedAt, @StringToIntConverter()@JsonKey(name: 'updated_at')  int? updatedAt,  List<Episode>? episodes, @StringToIntConverter()  int? isr15, @StringToIntConverter()  int? isbl, @StringToIntConverter()  int? isgl, @StringToIntConverter()  int? iszankoku, @StringToIntConverter()  int? istensei, @StringToIntConverter()  int? istenni)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NovelInfo() when $default != null:
 return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType,_that.end,_that.generalAllNo,_that.genre,_that.keyword,_that.generalFirstup,_that.generalLastup,_that.globalPoint,_that.dailyPoint,_that.weeklyPoint,_that.monthlyPoint,_that.quarterPoint,_that.yearlyPoint,_that.favNovelCnt,_that.impressionCnt,_that.reviewCnt,_that.allPoint,_that.allHyokaCnt,_that.sasieCnt,_that.kaiwaritu,_that.novelupdatedAt,_that.updatedAt,_that.episodes,_that.isr15,_that.isbl,_that.isgl,_that.iszankoku,_that.istensei,_that.istenni);case _:
@@ -275,7 +275,7 @@ return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? title,  String? ncode,  String? writer,  String? story, @JsonKey(name: 'novel_type')  int? novelType,  int? end, @JsonKey(name: 'general_all_no')  int? generalAllNo,  int? genre,  String? keyword, @JsonKey(name: 'general_firstup')  String? generalFirstup, @JsonKey(name: 'general_lastup')  String? generalLastup, @JsonKey(name: 'global_point')  int? globalPoint, @JsonKey(name: 'daily_point')  int? dailyPoint, @JsonKey(name: 'weekly_point')  int? weeklyPoint, @JsonKey(name: 'monthly_point')  int? monthlyPoint, @JsonKey(name: 'quarter_point')  int? quarterPoint, @JsonKey(name: 'yearly_point')  int? yearlyPoint, @JsonKey(name: 'fav_novel_cnt')  int? favNovelCnt, @JsonKey(name: 'impression_cnt')  int? impressionCnt, @JsonKey(name: 'review_cnt')  int? reviewCnt, @JsonKey(name: 'all_point')  int? allPoint, @JsonKey(name: 'all_hyoka_cnt')  int? allHyokaCnt, @JsonKey(name: 'sasie_cnt')  int? sasieCnt,  int? kaiwaritu, @JsonKey(name: 'novelupdated_at')  int? novelupdatedAt, @JsonKey(name: 'updated_at')  int? updatedAt,  List<Episode>? episodes,  int? isr15,  int? isbl,  int? isgl,  int? iszankoku,  int? istensei,  int? istenni)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? title,  String? ncode,  String? writer,  String? story, @StringToIntConverter()@JsonKey(name: 'novel_type')  int? novelType, @StringToIntConverter()  int? end, @StringToIntConverter()@JsonKey(name: 'general_all_no')  int? generalAllNo, @StringToIntConverter()  int? genre,  String? keyword, @JsonKey(name: 'general_firstup')  String? generalFirstup, @JsonKey(name: 'general_lastup')  String? generalLastup, @StringToIntConverter()@JsonKey(name: 'global_point')  int? globalPoint, @StringToIntConverter()@JsonKey(name: 'daily_point')  int? dailyPoint, @StringToIntConverter()@JsonKey(name: 'weekly_point')  int? weeklyPoint, @StringToIntConverter()@JsonKey(name: 'monthly_point')  int? monthlyPoint, @StringToIntConverter()@JsonKey(name: 'quarter_point')  int? quarterPoint, @StringToIntConverter()@JsonKey(name: 'yearly_point')  int? yearlyPoint, @StringToIntConverter()@JsonKey(name: 'fav_novel_cnt')  int? favNovelCnt, @StringToIntConverter()@JsonKey(name: 'impression_cnt')  int? impressionCnt, @StringToIntConverter()@JsonKey(name: 'review_cnt')  int? reviewCnt, @StringToIntConverter()@JsonKey(name: 'all_point')  int? allPoint, @StringToIntConverter()@JsonKey(name: 'all_hyoka_cnt')  int? allHyokaCnt, @StringToIntConverter()@JsonKey(name: 'sasie_cnt')  int? sasieCnt, @StringToIntConverter()  int? kaiwaritu, @StringToIntConverter()@JsonKey(name: 'novelupdated_at')  int? novelupdatedAt, @StringToIntConverter()@JsonKey(name: 'updated_at')  int? updatedAt,  List<Episode>? episodes, @StringToIntConverter()  int? isr15, @StringToIntConverter()  int? isbl, @StringToIntConverter()  int? isgl, @StringToIntConverter()  int? iszankoku, @StringToIntConverter()  int? istensei, @StringToIntConverter()  int? istenni)  $default,) {final _that = this;
 switch (_that) {
 case _NovelInfo():
 return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType,_that.end,_that.generalAllNo,_that.genre,_that.keyword,_that.generalFirstup,_that.generalLastup,_that.globalPoint,_that.dailyPoint,_that.weeklyPoint,_that.monthlyPoint,_that.quarterPoint,_that.yearlyPoint,_that.favNovelCnt,_that.impressionCnt,_that.reviewCnt,_that.allPoint,_that.allHyokaCnt,_that.sasieCnt,_that.kaiwaritu,_that.novelupdatedAt,_that.updatedAt,_that.episodes,_that.isr15,_that.isbl,_that.isgl,_that.iszankoku,_that.istensei,_that.istenni);case _:
@@ -295,7 +295,7 @@ return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? title,  String? ncode,  String? writer,  String? story, @JsonKey(name: 'novel_type')  int? novelType,  int? end, @JsonKey(name: 'general_all_no')  int? generalAllNo,  int? genre,  String? keyword, @JsonKey(name: 'general_firstup')  String? generalFirstup, @JsonKey(name: 'general_lastup')  String? generalLastup, @JsonKey(name: 'global_point')  int? globalPoint, @JsonKey(name: 'daily_point')  int? dailyPoint, @JsonKey(name: 'weekly_point')  int? weeklyPoint, @JsonKey(name: 'monthly_point')  int? monthlyPoint, @JsonKey(name: 'quarter_point')  int? quarterPoint, @JsonKey(name: 'yearly_point')  int? yearlyPoint, @JsonKey(name: 'fav_novel_cnt')  int? favNovelCnt, @JsonKey(name: 'impression_cnt')  int? impressionCnt, @JsonKey(name: 'review_cnt')  int? reviewCnt, @JsonKey(name: 'all_point')  int? allPoint, @JsonKey(name: 'all_hyoka_cnt')  int? allHyokaCnt, @JsonKey(name: 'sasie_cnt')  int? sasieCnt,  int? kaiwaritu, @JsonKey(name: 'novelupdated_at')  int? novelupdatedAt, @JsonKey(name: 'updated_at')  int? updatedAt,  List<Episode>? episodes,  int? isr15,  int? isbl,  int? isgl,  int? iszankoku,  int? istensei,  int? istenni)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? title,  String? ncode,  String? writer,  String? story, @StringToIntConverter()@JsonKey(name: 'novel_type')  int? novelType, @StringToIntConverter()  int? end, @StringToIntConverter()@JsonKey(name: 'general_all_no')  int? generalAllNo, @StringToIntConverter()  int? genre,  String? keyword, @JsonKey(name: 'general_firstup')  String? generalFirstup, @JsonKey(name: 'general_lastup')  String? generalLastup, @StringToIntConverter()@JsonKey(name: 'global_point')  int? globalPoint, @StringToIntConverter()@JsonKey(name: 'daily_point')  int? dailyPoint, @StringToIntConverter()@JsonKey(name: 'weekly_point')  int? weeklyPoint, @StringToIntConverter()@JsonKey(name: 'monthly_point')  int? monthlyPoint, @StringToIntConverter()@JsonKey(name: 'quarter_point')  int? quarterPoint, @StringToIntConverter()@JsonKey(name: 'yearly_point')  int? yearlyPoint, @StringToIntConverter()@JsonKey(name: 'fav_novel_cnt')  int? favNovelCnt, @StringToIntConverter()@JsonKey(name: 'impression_cnt')  int? impressionCnt, @StringToIntConverter()@JsonKey(name: 'review_cnt')  int? reviewCnt, @StringToIntConverter()@JsonKey(name: 'all_point')  int? allPoint, @StringToIntConverter()@JsonKey(name: 'all_hyoka_cnt')  int? allHyokaCnt, @StringToIntConverter()@JsonKey(name: 'sasie_cnt')  int? sasieCnt, @StringToIntConverter()  int? kaiwaritu, @StringToIntConverter()@JsonKey(name: 'novelupdated_at')  int? novelupdatedAt, @StringToIntConverter()@JsonKey(name: 'updated_at')  int? updatedAt,  List<Episode>? episodes, @StringToIntConverter()  int? isr15, @StringToIntConverter()  int? isbl, @StringToIntConverter()  int? isgl, @StringToIntConverter()  int? iszankoku, @StringToIntConverter()  int? istensei, @StringToIntConverter()  int? istenni)?  $default,) {final _that = this;
 switch (_that) {
 case _NovelInfo() when $default != null:
 return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType,_that.end,_that.generalAllNo,_that.genre,_that.keyword,_that.generalFirstup,_that.generalLastup,_that.globalPoint,_that.dailyPoint,_that.weeklyPoint,_that.monthlyPoint,_that.quarterPoint,_that.yearlyPoint,_that.favNovelCnt,_that.impressionCnt,_that.reviewCnt,_that.allPoint,_that.allHyokaCnt,_that.sasieCnt,_that.kaiwaritu,_that.novelupdatedAt,_that.updatedAt,_that.episodes,_that.isr15,_that.isbl,_that.isgl,_that.iszankoku,_that.istensei,_that.istenni);case _:
@@ -310,7 +310,7 @@ return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType
 @JsonSerializable()
 
 class _NovelInfo implements NovelInfo {
-  const _NovelInfo({this.title, this.ncode, this.writer, this.story, @JsonKey(name: 'novel_type') this.novelType, this.end, @JsonKey(name: 'general_all_no') this.generalAllNo, this.genre, this.keyword, @JsonKey(name: 'general_firstup') this.generalFirstup, @JsonKey(name: 'general_lastup') this.generalLastup, @JsonKey(name: 'global_point') this.globalPoint, @JsonKey(name: 'daily_point') this.dailyPoint, @JsonKey(name: 'weekly_point') this.weeklyPoint, @JsonKey(name: 'monthly_point') this.monthlyPoint, @JsonKey(name: 'quarter_point') this.quarterPoint, @JsonKey(name: 'yearly_point') this.yearlyPoint, @JsonKey(name: 'fav_novel_cnt') this.favNovelCnt, @JsonKey(name: 'impression_cnt') this.impressionCnt, @JsonKey(name: 'review_cnt') this.reviewCnt, @JsonKey(name: 'all_point') this.allPoint, @JsonKey(name: 'all_hyoka_cnt') this.allHyokaCnt, @JsonKey(name: 'sasie_cnt') this.sasieCnt, this.kaiwaritu, @JsonKey(name: 'novelupdated_at') this.novelupdatedAt, @JsonKey(name: 'updated_at') this.updatedAt, final  List<Episode>? episodes, this.isr15, this.isbl, this.isgl, this.iszankoku, this.istensei, this.istenni}): _episodes = episodes;
+  const _NovelInfo({this.title, this.ncode, this.writer, this.story, @StringToIntConverter()@JsonKey(name: 'novel_type') this.novelType, @StringToIntConverter() this.end, @StringToIntConverter()@JsonKey(name: 'general_all_no') this.generalAllNo, @StringToIntConverter() this.genre, this.keyword, @JsonKey(name: 'general_firstup') this.generalFirstup, @JsonKey(name: 'general_lastup') this.generalLastup, @StringToIntConverter()@JsonKey(name: 'global_point') this.globalPoint, @StringToIntConverter()@JsonKey(name: 'daily_point') this.dailyPoint, @StringToIntConverter()@JsonKey(name: 'weekly_point') this.weeklyPoint, @StringToIntConverter()@JsonKey(name: 'monthly_point') this.monthlyPoint, @StringToIntConverter()@JsonKey(name: 'quarter_point') this.quarterPoint, @StringToIntConverter()@JsonKey(name: 'yearly_point') this.yearlyPoint, @StringToIntConverter()@JsonKey(name: 'fav_novel_cnt') this.favNovelCnt, @StringToIntConverter()@JsonKey(name: 'impression_cnt') this.impressionCnt, @StringToIntConverter()@JsonKey(name: 'review_cnt') this.reviewCnt, @StringToIntConverter()@JsonKey(name: 'all_point') this.allPoint, @StringToIntConverter()@JsonKey(name: 'all_hyoka_cnt') this.allHyokaCnt, @StringToIntConverter()@JsonKey(name: 'sasie_cnt') this.sasieCnt, @StringToIntConverter() this.kaiwaritu, @StringToIntConverter()@JsonKey(name: 'novelupdated_at') this.novelupdatedAt, @StringToIntConverter()@JsonKey(name: 'updated_at') this.updatedAt, final  List<Episode>? episodes, @StringToIntConverter() this.isr15, @StringToIntConverter() this.isbl, @StringToIntConverter() this.isgl, @StringToIntConverter() this.iszankoku, @StringToIntConverter() this.istensei, @StringToIntConverter() this.istenni}): _episodes = episodes;
   factory _NovelInfo.fromJson(Map<String, dynamic> json) => _$NovelInfoFromJson(json);
 
 /// 作品名。
@@ -325,20 +325,20 @@ class _NovelInfo implements NovelInfo {
 ///
 /// [1] 連載
 /// [2] 短編
-@override@JsonKey(name: 'novel_type') final  int? novelType;
+@override@StringToIntConverter()@JsonKey(name: 'novel_type') final  int? novelType;
 /// 連載状態。
 ///
 /// [0] 短編作品と完結済作品
 /// [1] 連載中
-@override final  int? end;
-/// 全掲��エピソード数。
+@override@StringToIntConverter() final  int? end;
+/// 全掲載エピソード数。
 ///
 /// 短編の場合は 1。
-@override@JsonKey(name: 'general_all_no') final  int? generalAllNo;
+@override@StringToIntConverter()@JsonKey(name: 'general_all_no') final  int? generalAllNo;
 /// ジャンル。
 ///
 /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
-@override final  int? genre;
+@override@StringToIntConverter() final  int? genre;
 /// キーワード。
 @override final  String? keyword;
 /// 初回掲載日。
@@ -352,37 +352,37 @@ class _NovelInfo implements NovelInfo {
 /// 総合評価ポイント。
 ///
 /// (ブックマーク数×2)+評価ポイント。
-@override@JsonKey(name: 'global_point') final  int? globalPoint;
+@override@StringToIntConverter()@JsonKey(name: 'global_point') final  int? globalPoint;
 /// 日間ポイント。
-@override@JsonKey(name: 'daily_point') final  int? dailyPoint;
+@override@StringToIntConverter()@JsonKey(name: 'daily_point') final  int? dailyPoint;
 /// 週間ポイント。
-@override@JsonKey(name: 'weekly_point') final  int? weeklyPoint;
+@override@StringToIntConverter()@JsonKey(name: 'weekly_point') final  int? weeklyPoint;
 /// 月間ポイント。
-@override@JsonKey(name: 'monthly_point') final  int? monthlyPoint;
+@override@StringToIntConverter()@JsonKey(name: 'monthly_point') final  int? monthlyPoint;
 /// 四半期ポイント。
-@override@JsonKey(name: 'quarter_point') final  int? quarterPoint;
+@override@StringToIntConverter()@JsonKey(name: 'quarter_point') final  int? quarterPoint;
 /// 年間ポイント。
-@override@JsonKey(name: 'yearly_point') final  int? yearlyPoint;
+@override@StringToIntConverter()@JsonKey(name: 'yearly_point') final  int? yearlyPoint;
 /// ブックマーク数。
-@override@JsonKey(name: 'fav_novel_cnt') final  int? favNovelCnt;
+@override@StringToIntConverter()@JsonKey(name: 'fav_novel_cnt') final  int? favNovelCnt;
 /// 感想数。
-@override@JsonKey(name: 'impression_cnt') final  int? impressionCnt;
+@override@StringToIntConverter()@JsonKey(name: 'impression_cnt') final  int? impressionCnt;
 /// レビュー数。
-@override@JsonKey(name: 'review_cnt') final  int? reviewCnt;
+@override@StringToIntConverter()@JsonKey(name: 'review_cnt') final  int? reviewCnt;
 /// 評価ポイント。
-@override@JsonKey(name: 'all_point') final  int? allPoint;
+@override@StringToIntConverter()@JsonKey(name: 'all_point') final  int? allPoint;
 /// 評価者数。
-@override@JsonKey(name: 'all_hyoka_cnt') final  int? allHyokaCnt;
+@override@StringToIntConverter()@JsonKey(name: 'all_hyoka_cnt') final  int? allHyokaCnt;
 /// 挿絵の数。
-@override@JsonKey(name: 'sasie_cnt') final  int? sasieCnt;
+@override@StringToIntConverter()@JsonKey(name: 'sasie_cnt') final  int? sasieCnt;
 /// 会話率。
-@override final  int? kaiwaritu;
+@override@StringToIntConverter() final  int? kaiwaritu;
 /// 作品の更新日時。
-@override@JsonKey(name: 'novelupdated_at') final  int? novelupdatedAt;
+@override@StringToIntConverter()@JsonKey(name: 'novelupdated_at') final  int? novelupdatedAt;
 /// 最終更新日時。
 ///
 /// システム用で作品更新時とは関係ない。
-@override@JsonKey(name: 'updated_at') final  int? updatedAt;
+@override@StringToIntConverter()@JsonKey(name: 'updated_at') final  int? updatedAt;
 /// エピソードのリスト。
  final  List<Episode>? _episodes;
 /// エピソードのリスト。
@@ -398,32 +398,32 @@ class _NovelInfo implements NovelInfo {
 ///
 /// [1] R15
 /// [0] それ以外
-@override final  int? isr15;
+@override@StringToIntConverter() final  int? isr15;
 /// ボーイズラブ作品か。
 ///
 /// [1] ボーイズラブ
 /// [0] それ以外
-@override final  int? isbl;
+@override@StringToIntConverter() final  int? isbl;
 /// ガールズラブ作品か。
 ///
 /// [1] ガールズラブ
 /// [0] それ以外
-@override final  int? isgl;
+@override@StringToIntConverter() final  int? isgl;
 /// 残酷な描写あり作品か。
 ///
 /// [1] 残酷な描写あり
 /// [0] それ以外
-@override final  int? iszankoku;
+@override@StringToIntConverter() final  int? iszankoku;
 /// 異世界転生作品か。
 ///
 /// [1] 異世界転生
 /// [0] それ以外
-@override final  int? istensei;
+@override@StringToIntConverter() final  int? istensei;
 /// 異世界転移作品か。
 ///
 /// [1] 異世界転移
 /// [0] それ以外
-@override final  int? istenni;
+@override@StringToIntConverter() final  int? istenni;
 
 /// Create a copy of NovelInfo
 /// with the given fields replaced by the non-null parameter values.
@@ -458,7 +458,7 @@ abstract mixin class _$NovelInfoCopyWith<$Res> implements $NovelInfoCopyWith<$Re
   factory _$NovelInfoCopyWith(_NovelInfo value, $Res Function(_NovelInfo) _then) = __$NovelInfoCopyWithImpl;
 @override @useResult
 $Res call({
- String? title, String? ncode, String? writer, String? story,@JsonKey(name: 'novel_type') int? novelType, int? end,@JsonKey(name: 'general_all_no') int? generalAllNo, int? genre, String? keyword,@JsonKey(name: 'general_firstup') String? generalFirstup,@JsonKey(name: 'general_lastup') String? generalLastup,@JsonKey(name: 'global_point') int? globalPoint,@JsonKey(name: 'daily_point') int? dailyPoint,@JsonKey(name: 'weekly_point') int? weeklyPoint,@JsonKey(name: 'monthly_point') int? monthlyPoint,@JsonKey(name: 'quarter_point') int? quarterPoint,@JsonKey(name: 'yearly_point') int? yearlyPoint,@JsonKey(name: 'fav_novel_cnt') int? favNovelCnt,@JsonKey(name: 'impression_cnt') int? impressionCnt,@JsonKey(name: 'review_cnt') int? reviewCnt,@JsonKey(name: 'all_point') int? allPoint,@JsonKey(name: 'all_hyoka_cnt') int? allHyokaCnt,@JsonKey(name: 'sasie_cnt') int? sasieCnt, int? kaiwaritu,@JsonKey(name: 'novelupdated_at') int? novelupdatedAt,@JsonKey(name: 'updated_at') int? updatedAt, List<Episode>? episodes, int? isr15, int? isbl, int? isgl, int? iszankoku, int? istensei, int? istenni
+ String? title, String? ncode, String? writer, String? story,@StringToIntConverter()@JsonKey(name: 'novel_type') int? novelType,@StringToIntConverter() int? end,@StringToIntConverter()@JsonKey(name: 'general_all_no') int? generalAllNo,@StringToIntConverter() int? genre, String? keyword,@JsonKey(name: 'general_firstup') String? generalFirstup,@JsonKey(name: 'general_lastup') String? generalLastup,@StringToIntConverter()@JsonKey(name: 'global_point') int? globalPoint,@StringToIntConverter()@JsonKey(name: 'daily_point') int? dailyPoint,@StringToIntConverter()@JsonKey(name: 'weekly_point') int? weeklyPoint,@StringToIntConverter()@JsonKey(name: 'monthly_point') int? monthlyPoint,@StringToIntConverter()@JsonKey(name: 'quarter_point') int? quarterPoint,@StringToIntConverter()@JsonKey(name: 'yearly_point') int? yearlyPoint,@StringToIntConverter()@JsonKey(name: 'fav_novel_cnt') int? favNovelCnt,@StringToIntConverter()@JsonKey(name: 'impression_cnt') int? impressionCnt,@StringToIntConverter()@JsonKey(name: 'review_cnt') int? reviewCnt,@StringToIntConverter()@JsonKey(name: 'all_point') int? allPoint,@StringToIntConverter()@JsonKey(name: 'all_hyoka_cnt') int? allHyokaCnt,@StringToIntConverter()@JsonKey(name: 'sasie_cnt') int? sasieCnt,@StringToIntConverter() int? kaiwaritu,@StringToIntConverter()@JsonKey(name: 'novelupdated_at') int? novelupdatedAt,@StringToIntConverter()@JsonKey(name: 'updated_at') int? updatedAt, List<Episode>? episodes,@StringToIntConverter() int? isr15,@StringToIntConverter() int? isbl,@StringToIntConverter() int? isgl,@StringToIntConverter() int? iszankoku,@StringToIntConverter() int? istensei,@StringToIntConverter() int? istenni
 });
 
 

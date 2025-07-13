@@ -81,31 +81,8 @@ class ApiService {
         print('General all no: ${novelData['general_all_no']}');
       }
 
-      // novelTypeが文字列の場合、整数に変換
-      if (novelData['novel_type'] is String) {
-        final novelTypeStr = novelData['novel_type'] as String;
-        novelData['novel_type'] =
-            int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
-      } else if (novelData['novel_type'] == null) {
-        // novelTypeがnullの場合、general_all_noを使って判断
-        // general_all_noが1または0の場合は短編小説、それ以外は連載小説
-        final generalAllNo = novelData['general_all_no'];
-        var allNo = 0;
-
-        if (generalAllNo is String) {
-          allNo = int.tryParse(generalAllNo) ?? 0;
-        } else if (generalAllNo is int) {
-          allNo = generalAllNo;
-        }
-
-        if (allNo <= 1) {
-          novelData['novel_type'] = 2; // 短編小説
-        } else {
-          novelData['novel_type'] = 1; // 連載小説
-        }
-      }
-
-      return NovelInfo.fromJson(novelData);
+      final processedData = _processNovelType(novelData);
+      return NovelInfo.fromJson(processedData);
     } else {
       throw Exception('Novel not found');
     }
@@ -151,29 +128,8 @@ class ApiService {
             final ncode = novelData['ncode'] as String?;
 
             if (ncode != null) {
-              // Process novel type the same way as in _fetchNovelInfoFromNarou
-              if (novelData['novel_type'] is String) {
-                final novelTypeStr = novelData['novel_type'] as String;
-                novelData['novel_type'] =
-                    int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
-              } else if (novelData['novel_type'] == null) {
-                final generalAllNo = novelData['general_all_no'];
-                var allNo = 0;
-
-                if (generalAllNo is String) {
-                  allNo = int.tryParse(generalAllNo) ?? 0;
-                } else if (generalAllNo is int) {
-                  allNo = generalAllNo;
-                }
-
-                if (allNo <= 1) {
-                  novelData['novel_type'] = 2; // 短編小説
-                } else {
-                  novelData['novel_type'] = 1; // 連載小説
-                }
-              }
-
-              var novelInfo = NovelInfo.fromJson(novelData);
+              final processedData = _processNovelType(novelData);
+              var novelInfo = NovelInfo.fromJson(processedData);
 
               // For short stories, add a single episode with basic info
               if (novelInfo.novelType == 2) {
@@ -455,7 +411,9 @@ class ApiService {
         return data
             .sublist(1)
             .map(
-              (item) => RankingResponse.fromJson(item as Map<String, dynamic>),
+              (item) => RankingResponse.fromJson(
+                _processNovelType(item as Map<String, dynamic>),
+              ),
             )
             .toList();
       }
@@ -598,7 +556,7 @@ class ApiService {
           for (final item in detailsData.sublist(1)) {
             final ncode = (item as Map<String, dynamic>)['ncode'] as String?;
             if (ncode != null) {
-              novelDetails[ncode] = item;
+              novelDetails[ncode] = _processNovelType(item);
             }
           }
         }
@@ -678,5 +636,31 @@ class ApiService {
       }
       return [];
     }
+  }
+
+  Map<String, dynamic> _processNovelType(Map<String, dynamic> novelData) {
+    // novelTypeが文字列の場合、整数に変換
+    if (novelData['novel_type'] is String) {
+      final novelTypeStr = novelData['novel_type'] as String;
+      novelData['novel_type'] = int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
+    } else if (novelData['novel_type'] == null) {
+      // novelTypeがnullの場合、general_all_noを使って判断
+      // general_all_noが1または0の場合は短編小説、それ以外は連載小説
+      final generalAllNo = novelData['general_all_no'];
+      var allNo = 0;
+
+      if (generalAllNo is String) {
+        allNo = int.tryParse(generalAllNo) ?? 0;
+      } else if (generalAllNo is int) {
+        allNo = generalAllNo;
+      }
+
+      if (allNo <= 1) {
+        novelData['novel_type'] = 2; // 短編小説
+      } else {
+        novelData['novel_type'] = 1; // 連載小説
+      }
+    }
+    return novelData;
   }
 }
