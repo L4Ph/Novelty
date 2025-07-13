@@ -64,9 +64,7 @@ abstract class RankingResponse with _$RankingResponse {
     /// 全掲載エピソード数。
     ///
     /// 短編の場合は 1。
-    @StringToIntConverter()
-    @JsonKey(name: 'general_all_no')
-    int? generalAllNo,
+    @StringToIntConverter() @JsonKey(name: 'general_all_no') int? generalAllNo,
 
     /// キーワード。
     String? keyword,

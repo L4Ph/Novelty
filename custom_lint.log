@@ -20422,3 +20422,573 @@ at:
 #4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
 <asynchronous suspension>
 
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+The request analysis.updateContent failed with the following error:
+RequestErrorCode.PLUGIN_ERROR
+A request threw the exception:Invalid overlay change: no content to change
+null
+at:
+#0      SocketCustomLintServerToClientChannel.sendCustomLintRequest (package:custom_lint/src/v2/server_to_client_channel.dart:273:11)
+<asynchronous suspension>
+#1      SocketCustomLintServerToClientChannel.sendAnalyzerPluginRequest (package:custom_lint/src/v2/server_to_client_channel.dart:234:22)
+<asynchronous suspension>
+#2      CustomLintServer._handleRequest.<anonymous closure>.<anonymous closure> (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:190:17)
+<asynchronous suspension>
+#3      PendingOperation.run (package:custom_lint/src/async_operation.dart:22:14)
+<asynchronous suspension>
+#4      CustomLintServer._handleRequest (package:custom_lint/src/v2/custom_lint_analyzer_plugin.dart:173:22)
+<asynchronous suspension>
+
+[IgnoreCode] 2025-07-14T08:27:15.512567 Plugin IgnoreCode threw while analyzing C:\Users\L4Ph\Documents\git\Novelty\lib\screens\novel_detail_page.dart:
+[IgnoreCode] 2025-07-14T08:27:15.512567 InconsistentAnalysisException: Requested result might be inconsistent with previously returned results
+[IgnoreCode] 2025-07-14T08:27:15.512567
+[IgnoreCode] 2025-07-14T08:27:15.512567 #0      AnalysisSessionImpl.checkConsistency (package:analyzer/src/dart/analysis/session.dart:59:7)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #1      AnalysisSessionImpl.getResolvedUnit (package:analyzer/src/dart/analysis/session.dart:160:5)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #2      ChangeBuilderImpl._createDartFileEditBuilder (package:analyzer_plugin/src/utilities/change_builder/change_builder_core.dart:321:33)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #3      ChangeBuilderImpl.addDartFileEdit (package:analyzer_plugin/src/utilities/change_builder/change_builder_core.dart:154:23)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #4      ChangeBuilderImpl.addDartFileEdit.<anonymous closure> (package:custom_lint_core/src/change_reporter.dart:241:35)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #5      new Future.<anonymous closure> (dart:async/future.dart:260:40)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #6      _rootRun (dart:async/zone.dart:1517:47)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #7      _CustomZone.run (dart:async/zone.dart:1422:19)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #8      _CustomZone.runGuarded (dart:async/zone.dart:1321:7)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #9      _CustomZone.bindCallbackGuarded.<anonymous closure> (dart:async/zone.dart:1362:23)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #10     _rootRun (dart:async/zone.dart:1525:13)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #11     _CustomZone.run (dart:async/zone.dart:1422:19)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #12     _CustomZone.bindCallback.<anonymous closure> (dart:async/zone.dart:1345:23)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #13     Timer._createTimer.<anonymous closure> (dart:async-patch/timer_patch.dart:18:15)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #14     _Timer._runTimers (dart:isolate-patch/timer_impl.dart:410:19)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #15     _Timer._handleMessage (dart:isolate-patch/timer_impl.dart:441:5)
+[IgnoreCode] 2025-07-14T08:27:15.512567 #16     _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:193:12)
+[IgnoreCode] 2025-07-14T08:27:15.512567
+[IgnoreCode] 2025-07-14T08:27:15.514569 Plugin IgnoreCode threw while analyzing C:\Users\L4Ph\Documents\git\Novelty\lib\screens\novel_detail_page.dart:
+[IgnoreCode] 2025-07-14T08:27:15.514569 InconsistentAnalysisException: Requested result might be inconsistent with previously returned results
+[IgnoreCode] 2025-07-14T08:27:15.514569
+[IgnoreCode] 2025-07-14T08:27:15.514569 #0      AnalysisSessionImpl.checkConsistency (package:analyzer/src/dart/analysis/session.dart:59:7)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #1      AnalysisSessionImpl.getResolvedUnit (package:analyzer/src/dart/analysis/session.dart:160:5)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #2      ChangeBuilderImpl._createDartFileEditBuilder (package:analyzer_plugin/src/utilities/change_builder/change_builder_core.dart:321:33)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #3      ChangeBuilderImpl.addDartFileEdit (package:analyzer_plugin/src/utilities/change_builder/change_builder_core.dart:154:23)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #4      ChangeBuilderImpl.addDartFileEdit.<anonymous closure> (package:custom_lint_core/src/change_reporter.dart:241:35)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #5      new Future.<anonymous closure> (dart:async/future.dart:260:40)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #6      _rootRun (dart:async/zone.dart:1517:47)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #7      _CustomZone.run (dart:async/zone.dart:1422:19)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #8      _CustomZone.runGuarded (dart:async/zone.dart:1321:7)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #9      _CustomZone.bindCallbackGuarded.<anonymous closure> (dart:async/zone.dart:1362:23)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #10     _rootRun (dart:async/zone.dart:1525:13)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #11     _CustomZone.run (dart:async/zone.dart:1422:19)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #12     _CustomZone.bindCallback.<anonymous closure> (dart:async/zone.dart:1345:23)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #13     Timer._createTimer.<anonymous closure> (dart:async-patch/timer_patch.dart:18:15)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #14     _Timer._runTimers (dart:isolate-patch/timer_impl.dart:410:19)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #15     _Timer._handleMessage (dart:isolate-patch/timer_impl.dart:441:5)
+[IgnoreCode] 2025-07-14T08:27:15.514569 #16     _RawReceivePort._handleMessage (dart:isolate-patch/isolate_patch.dart:193:12)
+[IgnoreCode] 2025-07-14T08:27:15.514569

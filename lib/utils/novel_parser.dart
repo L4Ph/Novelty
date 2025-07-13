@@ -43,6 +43,7 @@ void _parseNode(dom.Node node, List<NovelContentElement> elements) {
           baseText = node.nodes
               .whereType<dom.Text>()
               .map((e) => e.text.trim())
+              // ignore: avoid_redundant_argument_values
               .join('');
         }
 

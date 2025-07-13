@@ -86,9 +86,7 @@ abstract class NovelInfo with _$NovelInfo {
     @StringToIntConverter() @JsonKey(name: 'fav_novel_cnt') int? favNovelCnt,
 
     /// 感想数。
-    @StringToIntConverter()
-    @JsonKey(name: 'impression_cnt')
-    int? impressionCnt,
+    @StringToIntConverter() @JsonKey(name: 'impression_cnt') int? impressionCnt,
 
     /// レビュー数。
     @StringToIntConverter() @JsonKey(name: 'review_cnt') int? reviewCnt,
@@ -106,7 +104,9 @@ abstract class NovelInfo with _$NovelInfo {
     @StringToIntConverter() int? kaiwaritu,
 
     /// 作品の更新日時。
-    @StringToIntConverter() @JsonKey(name: 'novelupdated_at') int? novelupdatedAt,
+    @StringToIntConverter()
+    @JsonKey(name: 'novelupdated_at')
+    int? novelupdatedAt,
 
     /// 最終更新日時。
     ///
