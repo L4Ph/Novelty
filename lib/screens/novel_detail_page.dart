@@ -399,7 +399,7 @@ class _StorySection extends StatefulWidget {
 }
 
 class _StorySectionState extends State<_StorySection> {
-  bool _isExpanded = false;
+  var _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
