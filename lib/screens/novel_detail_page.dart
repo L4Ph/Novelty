@@ -256,17 +256,12 @@ class NovelDetailPage extends ConsumerWidget {
             )
           else
             SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  const Divider(thickness: 8),
-                  _buildEpisodeList(
-                    context,
-                    ref,
-                    novelInfo,
-                    ncode,
-                    downloadStatusAsync,
-                  ),
-                ],
+              child: _buildEpisodeList(
+                context,
+                ref,
+                novelInfo,
+                ncode,
+                downloadStatusAsync,
               ),
             ),
         ],
@@ -481,19 +476,16 @@ Widget _buildEpisodeList(
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
-          '${novelInfo.generalAllNo} 章',
+          '${novelInfo.generalAllNo} 話',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
       ),
-      const Divider(height: 24),
-      ListView.separated(
+      ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: episodes.length,
-        separatorBuilder: (context, index) =>
-            const Divider(indent: 16, endIndent: 16),
         itemBuilder: (context, index) {
           final episode = episodes[index];
           final episodeTitle = episode.subtitle ?? 'No Title';
