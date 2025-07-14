@@ -101,6 +101,9 @@ class DownloadStatus extends _$DownloadStatus {
   Future<void> toggle(BuildContext context, NovelInfo novelInfo) async {
     final repo = ref.read(novelRepositoryProvider);
     final isDownloaded = state.value ?? false;
+    final previousState = state;
+    state = const AsyncValue.loading();
+
     try {
       if (isDownloaded) {
         await repo.deleteDownloadedNovel(novelInfo);
@@ -131,6 +134,7 @@ class DownloadStatus extends _$DownloadStatus {
       }
 
       if (!hasPermission) {
+        state = previousState;
         if (context.mounted) {
           await showDialog<void>(
             context: context,
@@ -156,14 +160,16 @@ class DownloadStatus extends _$DownloadStatus {
         return;
       }
 
-      // TODO(L4Ph): ダウンロード中の状態をUIに反映する
       await repo.downloadNovel(novelInfo);
-    } on Exception catch (e) {
+    } on Exception catch (e, st) {
+      state = AsyncValue.error(e, st);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('ダウンロードに失敗しました: $e')),
         );
       }
+      await Future<void>.delayed(const Duration(seconds: 2));
+      state = previousState;
     }
   }
 }
@@ -183,7 +189,7 @@ class NovelDetailPage extends ConsumerWidget {
         body: const Center(child: CircularProgressIndicator()),
       ),
       error: (err, stack) => Scaffold(
-        appBar: AppBar(),
+        appBar: AppBar(title: const Text('Error')),
         body: Center(child: Text('Failed to load novel info: $err')),
       ),
     );
@@ -199,84 +205,25 @@ class NovelDetailPage extends ConsumerWidget {
     final isFavoriteAsync = ref.watch(favoriteStatusProvider(ncode));
     final downloadStatusAsync = ref.watch(downloadStatusProvider(novelInfo));
 
-    if (isShortStory) {
-      final shortStoryContentAsync = ref.watch(
-        shortStoryContentProvider(ncode),
-      );
-      return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.pop(),
-          ),
-          title: Text(novelInfo.title ?? ''),
-          actions: [
-            downloadStatusAsync.when(
-              data: (isDownloaded) => IconButton(
-                icon: Icon(isDownloaded ? Icons.download_done : Icons.download),
-                onPressed: () => ref
-                    .read(downloadStatusProvider(novelInfo).notifier)
-                    .toggle(context, novelInfo),
-              ),
-              loading: () => const IconButton(
-                icon: Icon(Icons.download),
-                onPressed: null,
-              ),
-              error: (e, s) => const IconButton(
-                icon: Icon(Icons.error),
-                onPressed: null,
-              ),
-            ),
-            isFavoriteAsync.when(
-              data: (isFavorite) => IconButton(
-                icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
-                onPressed: () => ref
-                    .read(favoriteStatusProvider(ncode).notifier)
-                    .toggle(novelInfo),
-              ),
-              loading: () => const IconButton(
-                icon: Icon(Icons.favorite_border),
-                onPressed: null,
-              ),
-              error: (e, s) => const IconButton(
-                icon: Icon(Icons.error),
-                onPressed: null,
-              ),
-            ),
-          ],
-        ),
-        body: shortStoryContentAsync.when(
-          data: (content) => NovelContent(
-            ncode: ncode,
-            episode: 1,
-          ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('Error: $err')),
-        ),
-      );
-    }
-
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context, novelInfo),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            title: Text(
+              novelInfo.title ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 16),
+                  _buildHeader(context, novelInfo),
+                  const SizedBox(height: 24),
                   _buildActionButtons(
                     context,
                     ref,
@@ -285,11 +232,33 @@ class NovelDetailPage extends ConsumerWidget {
                     isFavoriteAsync,
                     downloadStatusAsync,
                   ),
-                  const SizedBox(height: 16),
-                  _buildStory(context, novelInfo),
+                  const SizedBox(height: 24),
+                  _StorySection(story: novelInfo.story ?? ''),
                   const SizedBox(height: 16),
                   _buildGenreTags(context, novelInfo),
-                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+          if (isShortStory)
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverToBoxAdapter(
+                child: ref
+                    .watch(shortStoryContentProvider(ncode))
+                    .when(
+                      data: (content) => NovelContent(ncode: ncode, episode: 1),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (err, stack) => Center(child: Text('Error: $err')),
+                    ),
+              ),
+            )
+          else
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const Divider(thickness: 8),
                   _buildEpisodeList(
                     context,
                     ref,
@@ -300,45 +269,35 @@ class NovelDetailPage extends ConsumerWidget {
                 ],
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
 }
 
 Widget _buildHeader(BuildContext context, NovelInfo novelInfo) {
-  return Container(
-    width: double.infinity,
-    padding: EdgeInsets.fromLTRB(
-      16,
-      MediaQuery.of(context).padding.top + kToolbarHeight,
-      16,
-      16,
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          novelInfo.title ?? 'No Title',
-          style: Theme.of(
-            context,
-          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const Icon(Icons.person_outline, size: 16),
-            const SizedBox(width: 4),
-            Text(novelInfo.writer ?? 'Unknown'),
-            const SizedBox(width: 16),
-            const Icon(Icons.star_outline, size: 16),
-            const SizedBox(width: 4),
-            Text('${novelInfo.allPoint ?? 0} pt'),
-          ],
-        ),
-      ],
-    ),
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        novelInfo.title ?? 'No Title',
+        style: Theme.of(
+          context,
+        ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 8),
+      Row(
+        children: [
+          const Icon(Icons.person_outline, size: 16),
+          const SizedBox(width: 4),
+          Text(novelInfo.writer ?? 'Unknown'),
+          const SizedBox(width: 16),
+          const Icon(Icons.star_outline, size: 16),
+          const SizedBox(width: 4),
+          Text('${novelInfo.allPoint ?? 0} pt'),
+        ],
+      ),
+    ],
   );
 }
 
@@ -357,7 +316,7 @@ Widget _buildActionButtons(
         data: (isFavorite) => _buildActionButton(
           context,
           icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-          label: 'In library',
+          label: '追加済',
           color: isFavorite ? Theme.of(context).colorScheme.primary : null,
           onPressed: () => ref
               .read(favoriteStatusProvider(ncode).notifier)
@@ -366,7 +325,7 @@ Widget _buildActionButtons(
         loading: () => _buildActionButton(
           context,
           icon: Icons.favorite_border,
-          label: 'In library',
+          label: '追加済',
         ),
         error: (e, s) =>
             _buildActionButton(context, icon: Icons.error, label: 'Error'),
@@ -377,15 +336,30 @@ Widget _buildActionButtons(
           icon: isDownloaded
               ? Icons.download_done
               : Icons.download_for_offline_outlined,
-          label: isDownloaded ? 'Downloaded' : 'Download',
+          label: isDownloaded ? 'ダウンロード済' : 'ダウンロード',
           onPressed: () => ref
               .read(downloadStatusProvider(novelInfo).notifier)
               .toggle(context, novelInfo),
         ),
-        loading: () => _buildActionButton(
-          context,
-          icon: Icons.download,
-          label: 'Download',
+        loading: () => Column(
+          children: [
+            const SizedBox(
+              height: 44,
+              width: 44,
+              child: Center(
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Processing...',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
         ),
         error: (e, s) =>
             _buildActionButton(context, icon: Icons.error, label: 'Error'),
@@ -420,21 +394,59 @@ Widget _buildActionButton(
   );
 }
 
-Widget _buildStory(BuildContext context, NovelInfo novelInfo) {
-  if (novelInfo.story == null || novelInfo.story!.isEmpty) {
-    return const SizedBox.shrink();
+class _StorySection extends StatefulWidget {
+  const _StorySection({required this.story});
+
+  final String story;
+
+  @override
+  _StorySectionState createState() => _StorySectionState();
+}
+
+class _StorySectionState extends State<_StorySection> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.story.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'あらすじ',
+          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        AnimatedCrossFade(
+          duration: const Duration(milliseconds: 300),
+          firstChild: Text(
+            widget.story,
+            maxLines: 5,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.bodyMedium,
+          ),
+          secondChild: Text(
+            widget.story,
+            style: textTheme.bodyMedium,
+          ),
+          crossFadeState: _isExpanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            child: Text(_isExpanded ? '閉じる' : 'もっと読む'),
+            onPressed: () => setState(() => _isExpanded = !_isExpanded),
+          ),
+        ),
+      ],
+    );
   }
-  return ExpansionTile(
-    title: const Text('あらすじ'),
-    tilePadding: EdgeInsets.zero,
-    childrenPadding: const EdgeInsets.symmetric(vertical: 8),
-    children: [
-      Text(
-        novelInfo.story!,
-        style: Theme.of(context).textTheme.bodyMedium,
-      ),
-    ],
-  );
 }
 
 Widget _buildGenreTags(BuildContext context, NovelInfo novelInfo) {
@@ -466,23 +478,27 @@ Widget _buildEpisodeList(
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
-        '${novelInfo.generalAllNo} chapters',
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Text(
+          '${novelInfo.generalAllNo} 章',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
       ),
       const Divider(height: 24),
       ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: episodes.length,
-        separatorBuilder: (context, index) => const Divider(),
+        separatorBuilder: (context, index) =>
+            const Divider(indent: 16, endIndent: 16),
         itemBuilder: (context, index) {
           final episode = episodes[index];
           final episodeTitle = episode.subtitle ?? 'No Title';
           return ListTile(
-            contentPadding: EdgeInsets.zero,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
             title: Text(episodeTitle),
             subtitle: episode.update != null
                 ? Text('更新日: ${episode.update}')
