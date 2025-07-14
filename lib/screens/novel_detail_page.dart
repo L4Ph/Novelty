@@ -257,107 +257,251 @@ class NovelDetailPage extends ConsumerWidget {
     }
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        title: Text(novelInfo.title ?? '目次'),
-        actions: [
-          downloadStatusAsync.when(
-            data: (isDownloaded) => IconButton(
-              icon: Icon(isDownloaded ? Icons.download_done : Icons.download),
-              onPressed: () => ref
-                  .read(downloadStatusProvider(novelInfo).notifier)
-                  .toggle(context, novelInfo),
-            ),
-            loading: () => const IconButton(
-              icon: Icon(Icons.download),
-              onPressed: null,
-            ),
-            error: (e, s) => const IconButton(
-              icon: Icon(Icons.error),
-              onPressed: null,
-            ),
-          ),
-          isFavoriteAsync.when(
-            data: (isFavorite) => IconButton(
-              icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
-              onPressed: () => ref
-                  .read(favoriteStatusProvider(ncode).notifier)
-                  .toggle(novelInfo),
-            ),
-            loading: () => const IconButton(
-              icon: Icon(Icons.favorite_border),
-              onPressed: null,
-            ),
-            error: (e, s) => const IconButton(
-              icon: Icon(Icons.error),
-              onPressed: null,
-            ),
-          ),
-        ],
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
-      body: Column(
-        children: [
-          if (novelInfo.story != null && novelInfo.story!.isNotEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              child: Card(
-                child: ExpansionTile(
-                  title: Text(
-                    '作品情報',
-                    style: Theme.of(context).textTheme.titleMedium,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(context, novelInfo),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+                  _buildActionButtons(
+                    context,
+                    ref,
+                    novelInfo,
+                    ncode,
+                    isFavoriteAsync,
+                    downloadStatusAsync,
                   ),
-                  childrenPadding: const EdgeInsets.all(16),
-                  children: [
-                    if (novelInfo.writer != null)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          '作者: ${novelInfo.writer}',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-                    Text(
-                      novelInfo.story!,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
+                  const SizedBox(height: 16),
+                  _buildStory(context, novelInfo),
+                  const SizedBox(height: 16),
+                  _buildGenreTags(context, novelInfo),
+                  const SizedBox(height: 24),
+                  _buildEpisodeList(
+                    context,
+                    ref,
+                    novelInfo,
+                    ncode,
+                    downloadStatusAsync,
+                  ),
+                ],
               ),
             ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: novelInfo.episodes?.length ?? 0,
-              itemBuilder: (context, index) {
-                final episode = novelInfo.episodes![index];
-                final episodeTitle = episode.subtitle ?? 'No Title';
-                return ListTile(
-                  title: Text(episodeTitle),
-                  subtitle: episode.update != null
-                      ? Text('更新: ${episode.update}')
-                      : null,
-                  onTap: () {
-                    final episodeUrl = episode.url;
-                    if (episodeUrl != null) {
-                      final match = RegExp(r'/(\d+)/').firstMatch(episodeUrl);
-                      if (match != null) {
-                        final episodeNumber = match.group(1);
-                        if (episodeNumber != null) {
-                          context.push('/novel/$ncode/$episodeNumber');
-                        }
-                      }
-                    }
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
+
+Widget _buildHeader(BuildContext context, NovelInfo novelInfo) {
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.fromLTRB(
+      16,
+      MediaQuery.of(context).padding.top + kToolbarHeight,
+      16,
+      16,
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          novelInfo.title ?? 'No Title',
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const Icon(Icons.person_outline, size: 16),
+            const SizedBox(width: 4),
+            Text(novelInfo.writer ?? 'Unknown'),
+            const SizedBox(width: 16),
+            const Icon(Icons.star_outline, size: 16),
+            const SizedBox(width: 4),
+            Text('${novelInfo.allPoint ?? 0} pt'),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildActionButtons(
+  BuildContext context,
+  WidgetRef ref,
+  NovelInfo novelInfo,
+  String ncode,
+  AsyncValue<bool> isFavoriteAsync,
+  AsyncValue<bool> downloadStatusAsync,
+) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceAround,
+    children: [
+      isFavoriteAsync.when(
+        data: (isFavorite) => _buildActionButton(
+          context,
+          icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+          label: 'In library',
+          color: isFavorite ? Theme.of(context).colorScheme.primary : null,
+          onPressed: () => ref
+              .read(favoriteStatusProvider(ncode).notifier)
+              .toggle(novelInfo),
+        ),
+        loading: () => _buildActionButton(
+          context,
+          icon: Icons.favorite_border,
+          label: 'In library',
+        ),
+        error: (e, s) =>
+            _buildActionButton(context, icon: Icons.error, label: 'Error'),
+      ),
+      downloadStatusAsync.when(
+        data: (isDownloaded) => _buildActionButton(
+          context,
+          icon: isDownloaded
+              ? Icons.download_done
+              : Icons.download_for_offline_outlined,
+          label: isDownloaded ? 'Downloaded' : 'Download',
+          onPressed: () => ref
+              .read(downloadStatusProvider(novelInfo).notifier)
+              .toggle(context, novelInfo),
+        ),
+        loading: () => _buildActionButton(
+          context,
+          icon: Icons.download,
+          label: 'Download',
+        ),
+        error: (e, s) =>
+            _buildActionButton(context, icon: Icons.error, label: 'Error'),
+      ),
+    ],
+  );
+}
+
+Widget _buildActionButton(
+  BuildContext context, {
+  required IconData icon,
+  required String label,
+  VoidCallback? onPressed,
+  Color? color,
+}) {
+  final effectiveColor = color ?? Theme.of(context).textTheme.bodySmall?.color;
+  return Column(
+    children: [
+      IconButton(
+        icon: Icon(icon, color: effectiveColor),
+        onPressed: onPressed,
+        iconSize: 28,
+      ),
+      const SizedBox(height: 4),
+      Text(
+        label,
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: effectiveColor),
+      ),
+    ],
+  );
+}
+
+Widget _buildStory(BuildContext context, NovelInfo novelInfo) {
+  if (novelInfo.story == null || novelInfo.story!.isEmpty) {
+    return const SizedBox.shrink();
+  }
+  return ExpansionTile(
+    title: const Text('あらすじ'),
+    tilePadding: EdgeInsets.zero,
+    childrenPadding: const EdgeInsets.symmetric(vertical: 8),
+    children: [
+      Text(
+        novelInfo.story!,
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
+    ],
+  );
+}
+
+Widget _buildGenreTags(BuildContext context, NovelInfo novelInfo) {
+  final keywords =
+      novelInfo.keyword?.split(' ').where((k) => k.isNotEmpty).toList() ?? [];
+  if (keywords.isEmpty) {
+    return const SizedBox.shrink();
+  }
+
+  return Wrap(
+    spacing: 8,
+    runSpacing: 4,
+    children: keywords.map((keyword) => Chip(label: Text(keyword))).toList(),
+  );
+}
+
+Widget _buildEpisodeList(
+  BuildContext context,
+  WidgetRef ref,
+  NovelInfo novelInfo,
+  String ncode,
+  AsyncValue<bool> downloadStatusAsync,
+) {
+  final episodes = novelInfo.episodes ?? [];
+  if (episodes.isEmpty) {
+    return const SizedBox.shrink();
+  }
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        '${novelInfo.generalAllNo} chapters',
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+      ),
+      const Divider(height: 24),
+      ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: episodes.length,
+        separatorBuilder: (context, index) => const Divider(),
+        itemBuilder: (context, index) {
+          final episode = episodes[index];
+          final episodeTitle = episode.subtitle ?? 'No Title';
+          return ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(episodeTitle),
+            subtitle: episode.update != null
+                ? Text('更新日: ${episode.update}')
+                : null,
+            onTap: () {
+              final episodeUrl = episode.url;
+              if (episodeUrl != null) {
+                final match = RegExp(r'/(\d+)/').firstMatch(episodeUrl);
+                if (match != null) {
+                  final episodeNumber = match.group(1);
+                  if (episodeNumber != null) {
+                    context.push('/novel/$ncode/$episodeNumber');
+                  }
+                }
+              }
+            },
+          );
+        },
+      ),
+    ],
+  );
 }
