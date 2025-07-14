@@ -15,7 +15,7 @@ class ScaffoldPage extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.book), label: 'ライブラリ'),
           BottomNavigationBarItem(
             icon: Icon(Icons.explore),
-            label: '探す',
+            label: '見つける',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: '履歴'),
           BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: 'もっと'),

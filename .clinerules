@@ -96,7 +96,7 @@ fvm flutter pub run build_runner build --delete-conflicting-outputs
  - 目次を開いた段階では対象にならない。
  - 開いた小説のncodeと話数(episodes)を保持する。
 
-- 探す
+- 見つける
   - デフォルトでは、なろう小説のランキングを表示する
     - 日間ランキング
     - 週間ランキング
