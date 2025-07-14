@@ -54,8 +54,14 @@ class NovelContent extends ConsumerWidget {
     AppSettings settings,
     List<NovelContentElement> content,
   ) {
+    // 現在のテーマのbrightnessを取得
+    final brightness = Theme.of(context).brightness;
+    // brightnessに応じてテキストの色を決定
+    final textColor = brightness == Brightness.dark ? Colors.white : Colors.black;
+
     final textStyle = settings.selectedFontTheme.copyWith(
       fontSize: settings.fontSize,
+      color: textColor, // 動的に決定した色を適用
     );
 
     if (settings.isVertical) {
