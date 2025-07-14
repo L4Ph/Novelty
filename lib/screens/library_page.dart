@@ -26,7 +26,7 @@ class LibraryPage extends ConsumerWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.sort),
+            icon: const Icon(Icons.filter_list),
             onPressed: () {
               showModalBottomSheet<void>(
                 context: context,

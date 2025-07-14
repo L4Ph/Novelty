@@ -23,6 +23,9 @@ class _ExplorePageState extends State<ExplorePage>
   var _isSearching = false;
   late final VoidCallback _tabListener;
 
+  var _showOnlyOngoing = false;
+  int? _selectedGenre;
+
   @override
   void initState() {
     super.initState();
@@ -64,7 +67,7 @@ class _ExplorePageState extends State<ExplorePage>
     });
   }
 
-  void _showFilterDialog() {
+  void _showSearchDialog() {
     showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -219,6 +222,77 @@ class _ExplorePageState extends State<ExplorePage>
     );
   }
 
+  void _showRankingFilterDialog() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return SizedBox(
+              height: 300,
+              child: Column(
+                children: <Widget>[
+                  CheckboxListTile(
+                    title: const Text('連載中のみ'),
+                    value: _showOnlyOngoing,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        _showOnlyOngoing = value ?? false;
+                      });
+                    },
+                  ),
+                  DropdownButton<int?>(
+                    value: _selectedGenre,
+                    hint: const Text('ジャンルを選択'),
+                    isExpanded: true,
+                    items: [
+                      const DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text('すべて'),
+                      ),
+                      ...genreList.map((genre) {
+                        return DropdownMenuItem<int?>(
+                          value: genre['id'] as int?,
+                          child: Text(genre['name'] as String),
+                        );
+                      }),
+                    ],
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        _selectedGenre = newValue;
+                      });
+                    },
+                  ),
+                  const Spacer(),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          child: const Text('キャンセル'),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        TextButton(
+                          child: const Text('適用'),
+                          onPressed: () {
+                            this.setState(() {});
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -234,7 +308,7 @@ class _ExplorePageState extends State<ExplorePage>
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('探す'),
+          title: const Text('見つける'),
           actions: [
             if (_isSearching)
               IconButton(
@@ -248,8 +322,13 @@ class _ExplorePageState extends State<ExplorePage>
               ),
             IconButton(
               icon: const Icon(Icons.search),
-              onPressed: _showFilterDialog,
+              onPressed: _showSearchDialog,
             ),
+            if (!_isSearching)
+              IconButton(
+                icon: const Icon(Icons.filter_list),
+                onPressed: _showRankingFilterDialog,
+              ),
           ],
           bottom: _isSearching
               ? null
@@ -270,12 +349,37 @@ class _ExplorePageState extends State<ExplorePage>
                   : NovelList(novels: _searchResults, isRanking: false)
             : TabBarView(
                 controller: _tabController,
-                children: const [
-                  RankingList(rankingType: 'd', key: PageStorageKey('d')),
-                  RankingList(rankingType: 'w', key: PageStorageKey('w')),
-                  RankingList(rankingType: 'm', key: PageStorageKey('m')),
-                  RankingList(rankingType: 'q', key: PageStorageKey('q')),
-                  RankingList(rankingType: 'all', key: PageStorageKey('all')),
+                children: [
+                  RankingList(
+                    rankingType: 'd',
+                    key: const PageStorageKey('d'),
+                    showOnlyOngoing: _showOnlyOngoing,
+                    selectedGenre: _selectedGenre,
+                  ),
+                  RankingList(
+                    rankingType: 'w',
+                    key: const PageStorageKey('w'),
+                    showOnlyOngoing: _showOnlyOngoing,
+                    selectedGenre: _selectedGenre,
+                  ),
+                  RankingList(
+                    rankingType: 'm',
+                    key: const PageStorageKey('m'),
+                    showOnlyOngoing: _showOnlyOngoing,
+                    selectedGenre: _selectedGenre,
+                  ),
+                  RankingList(
+                    rankingType: 'q',
+                    key: const PageStorageKey('q'),
+                    showOnlyOngoing: _showOnlyOngoing,
+                    selectedGenre: _selectedGenre,
+                  ),
+                  RankingList(
+                    rankingType: 'all',
+                    key: const PageStorageKey('all'),
+                    showOnlyOngoing: _showOnlyOngoing,
+                    selectedGenre: _selectedGenre,
+                  ),
                 ],
               ),
       ),
