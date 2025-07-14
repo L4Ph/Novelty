@@ -1,17 +1,10 @@
-import 'dart:io' show Platform;
-
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/repositories/novel_repository.dart';
-import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/widgets/novel_content.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'novel_detail_page.g.dart';
@@ -44,136 +37,6 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   return novelInfo;
 }
 
-@riverpod
-Future<List<NovelContentElement>> shortStoryContent(
-  Ref ref,
-  String ncode,
-) async {
-  final repo = ref.read(novelRepositoryProvider);
-  return repo.getEpisode(ncode, 1);
-}
-
-@riverpod
-class FavoriteStatus extends _$FavoriteStatus {
-  @override
-  Future<bool> build(String ncode) async {
-    final db = ref.watch(appDatabaseProvider);
-    final novel = await db.getNovel(ncode);
-    return novel?.fav == 1;
-  }
-
-  Future<bool> toggle(NovelInfo novelInfo) async {
-    final db = ref.read(appDatabaseProvider);
-    final currentStatus = state.value ?? false;
-    final newStatus = !currentStatus;
-
-    state = const AsyncValue.loading();
-    try {
-      final companion = novelInfo.toDbCompanion().copyWith(
-        fav: drift.Value(newStatus ? 1 : 0),
-      );
-      await db.insertNovel(companion);
-      state = AsyncValue.data(newStatus);
-
-      ref
-        ..invalidate(libraryNovelsProvider)
-        ..invalidate(rankingDataProvider('d'))
-        ..invalidate(rankingDataProvider('w'))
-        ..invalidate(rankingDataProvider('m'))
-        ..invalidate(rankingDataProvider('q'))
-        ..invalidate(rankingDataProvider('all'));
-      return true;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      return false;
-    }
-  }
-}
-
-@riverpod
-class DownloadStatus extends _$DownloadStatus {
-  @override
-  Stream<bool> build(NovelInfo novelInfo) {
-    final repo = ref.watch(novelRepositoryProvider);
-    return repo.isNovelDownloaded(novelInfo);
-  }
-
-  Future<void> toggle(BuildContext context, NovelInfo novelInfo) async {
-    final repo = ref.read(novelRepositoryProvider);
-    final isDownloaded = state.value ?? false;
-    final previousState = state;
-    state = const AsyncValue.loading();
-
-    try {
-      if (isDownloaded) {
-        await repo.deleteDownloadedNovel(novelInfo);
-        return;
-      }
-
-      var hasPermission = false;
-      if (Platform.isAndroid) {
-        final status = await Permission.manageExternalStorage.status;
-        if (status.isGranted) {
-          hasPermission = true;
-        } else {
-          final result = await Permission.manageExternalStorage.request();
-          if (result.isGranted) {
-            hasPermission = true;
-          }
-        }
-      } else {
-        final status = await Permission.storage.status;
-        if (status.isGranted) {
-          hasPermission = true;
-        } else {
-          final result = await Permission.storage.request();
-          if (result.isGranted) {
-            hasPermission = true;
-          }
-        }
-      }
-
-      if (!hasPermission) {
-        state = previousState;
-        if (context.mounted) {
-          await showDialog<void>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('権限が必要です'),
-              content: const Text('小説をダウンロードするには、ファイルへのアクセス権限を許可してください。'),
-              actions: [
-                TextButton(
-                  child: const Text('キャンセル'),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                TextButton(
-                  child: const Text('設定を開く'),
-                  onPressed: () {
-                    openAppSettings();
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
-          );
-        }
-        return;
-      }
-
-      await repo.downloadNovel(novelInfo);
-    } on Exception catch (e, st) {
-      state = AsyncValue.error(e, st);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ダウンロードに失敗しました: $e')),
-        );
-      }
-      await Future<void>.delayed(const Duration(seconds: 2));
-      state = previousState;
-    }
-  }
-}
-
 class NovelDetailPage extends ConsumerWidget {
   const NovelDetailPage({super.key, required this.ncode});
   final String ncode;
@@ -200,10 +63,7 @@ class NovelDetailPage extends ConsumerWidget {
     WidgetRef ref,
     NovelInfo novelInfo,
   ) {
-    final isShortStory =
-        novelInfo.novelType == 2 || (novelInfo.episodes?.isEmpty ?? true);
-    final isFavoriteAsync = ref.watch(favoriteStatusProvider(ncode));
-    final downloadStatusAsync = ref.watch(downloadStatusProvider(novelInfo));
+    final isShortStory = novelInfo.generalAllNo == 1;
 
     return Scaffold(
       body: CustomScrollView(
@@ -224,15 +84,6 @@ class NovelDetailPage extends ConsumerWidget {
                 children: [
                   _buildHeader(context, novelInfo),
                   const SizedBox(height: 24),
-                  _buildActionButtons(
-                    context,
-                    ref,
-                    novelInfo,
-                    ncode,
-                    isFavoriteAsync,
-                    downloadStatusAsync,
-                  ),
-                  const SizedBox(height: 24),
                   _StorySection(story: novelInfo.story ?? ''),
                   const SizedBox(height: 16),
                   _buildGenreTags(context, novelInfo),
@@ -241,17 +92,24 @@ class NovelDetailPage extends ConsumerWidget {
             ),
           ),
           if (isShortStory)
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverToBoxAdapter(
-                child: ref
-                    .watch(shortStoryContentProvider(ncode))
-                    .when(
-                      data: (content) => NovelContent(ncode: ncode, episode: 1),
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (err, stack) => Center(child: Text('Error: $err')),
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.menu_book),
+                    label: const Text('この小説を読む'),
+                    onPressed: () => context.push('/novel/$ncode/1'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      textStyle: Theme.of(context).textTheme.titleMedium,
                     ),
+                  ),
+                ),
               ),
             )
           else
@@ -261,7 +119,6 @@ class NovelDetailPage extends ConsumerWidget {
                 ref,
                 novelInfo,
                 ncode,
-                downloadStatusAsync,
               ),
             ),
         ],
@@ -291,99 +148,6 @@ Widget _buildHeader(BuildContext context, NovelInfo novelInfo) {
           const SizedBox(width: 4),
           Text('${novelInfo.allPoint ?? 0} pt'),
         ],
-      ),
-    ],
-  );
-}
-
-Widget _buildActionButtons(
-  BuildContext context,
-  WidgetRef ref,
-  NovelInfo novelInfo,
-  String ncode,
-  AsyncValue<bool> isFavoriteAsync,
-  AsyncValue<bool> downloadStatusAsync,
-) {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceAround,
-    children: [
-      isFavoriteAsync.when(
-        data: (isFavorite) => _buildActionButton(
-          context,
-          icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-          label: '追加済',
-          color: isFavorite ? Theme.of(context).colorScheme.primary : null,
-          onPressed: () => ref
-              .read(favoriteStatusProvider(ncode).notifier)
-              .toggle(novelInfo),
-        ),
-        loading: () => _buildActionButton(
-          context,
-          icon: Icons.favorite_border,
-          label: '追加済',
-        ),
-        error: (e, s) =>
-            _buildActionButton(context, icon: Icons.error, label: 'Error'),
-      ),
-      downloadStatusAsync.when(
-        data: (isDownloaded) => _buildActionButton(
-          context,
-          icon: isDownloaded
-              ? Icons.download_done
-              : Icons.download_for_offline_outlined,
-          label: isDownloaded ? 'ダウンロード済' : 'ダウンロード',
-          onPressed: () => ref
-              .read(downloadStatusProvider(novelInfo).notifier)
-              .toggle(context, novelInfo),
-        ),
-        loading: () => Column(
-          children: [
-            const SizedBox(
-              height: 44,
-              width: 44,
-              child: Center(
-                child: SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Processing...',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-        error: (e, s) =>
-            _buildActionButton(context, icon: Icons.error, label: 'Error'),
-      ),
-    ],
-  );
-}
-
-Widget _buildActionButton(
-  BuildContext context, {
-  required IconData icon,
-  required String label,
-  VoidCallback? onPressed,
-  Color? color,
-}) {
-  final effectiveColor = color ?? Theme.of(context).textTheme.bodySmall?.color;
-  return Column(
-    children: [
-      IconButton(
-        icon: Icon(icon, color: effectiveColor),
-        onPressed: onPressed,
-        iconSize: 28,
-      ),
-      const SizedBox(height: 4),
-      Text(
-        label,
-        style: Theme.of(
-          context,
-        ).textTheme.bodySmall?.copyWith(color: effectiveColor),
       ),
     ],
   );
@@ -463,7 +227,6 @@ Widget _buildEpisodeList(
   WidgetRef ref,
   NovelInfo novelInfo,
   String ncode,
-  AsyncValue<bool> downloadStatusAsync,
 ) {
   final episodes = novelInfo.episodes ?? [];
   if (episodes.isEmpty) {
