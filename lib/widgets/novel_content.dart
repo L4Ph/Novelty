@@ -36,16 +36,20 @@ class NovelContent extends ConsumerWidget {
       novelContentProvider((ncode: ncode, episode: episode)),
     );
 
-    return settings.when(
-      data: (settings) {
-        return contentAsync.when(
-          data: (content) => _buildContent(context, settings, content),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('Error: $err')),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('Error: $err')),
+    // SafeAreaを適用して、ナビゲーションバーと干渉しないように
+    return SafeArea(
+      top: false, // AppBarがあるので上は不要
+      child: settings.when(
+        data: (settings) {
+          return contentAsync.when(
+            data: (content) => _buildContent(context, settings, content),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text('Error: $err')),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+      ),
     );
   }
 
@@ -57,7 +61,9 @@ class NovelContent extends ConsumerWidget {
     // 現在のテーマのbrightnessを取得
     final brightness = Theme.of(context).brightness;
     // brightnessに応じてテキストの色を決定
-    final textColor = brightness == Brightness.dark ? Colors.white : Colors.black;
+    final textColor = brightness == Brightness.dark
+        ? Colors.white
+        : Colors.black;
 
     final textStyle = settings.selectedFontTheme.copyWith(
       fontSize: settings.fontSize,
