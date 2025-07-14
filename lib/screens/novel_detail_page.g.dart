@@ -80,5 +80,185 @@ final class NovelInfoFamily extends $Family
   String toString() => r'novelInfoProvider';
 }
 
+@ProviderFor(FavoriteStatus)
+const favoriteStatusProvider = FavoriteStatusFamily._();
+
+final class FavoriteStatusProvider
+    extends $AsyncNotifierProvider<FavoriteStatus, bool> {
+  const FavoriteStatusProvider._({
+    required FavoriteStatusFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'favoriteStatusProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$favoriteStatusHash();
+
+  @override
+  String toString() {
+    return r'favoriteStatusProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  FavoriteStatus create() => FavoriteStatus();
+
+  @override
+  bool operator ==(Object other) {
+    return other is FavoriteStatusProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$favoriteStatusHash() => r'38b726baa27e80a796a352be0c7e91a4ec4d7d02';
+
+final class FavoriteStatusFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          FavoriteStatus,
+          AsyncValue<bool>,
+          bool,
+          FutureOr<bool>,
+          String
+        > {
+  const FavoriteStatusFamily._()
+    : super(
+        retry: null,
+        name: r'favoriteStatusProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  FavoriteStatusProvider call(String ncode) =>
+      FavoriteStatusProvider._(argument: ncode, from: this);
+
+  @override
+  String toString() => r'favoriteStatusProvider';
+}
+
+abstract class _$FavoriteStatus extends $AsyncNotifier<bool> {
+  late final _$args = ref.$arg as String;
+  String get ncode => _$args;
+
+  FutureOr<bool> build(String ncode);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(_$args);
+    final ref = this.ref as $Ref<AsyncValue<bool>, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<bool>, bool>,
+              AsyncValue<bool>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
+@ProviderFor(DownloadStatus)
+const downloadStatusProvider = DownloadStatusFamily._();
+
+final class DownloadStatusProvider
+    extends $StreamNotifierProvider<DownloadStatus, bool> {
+  const DownloadStatusProvider._({
+    required DownloadStatusFamily super.from,
+    required NovelInfo super.argument,
+  }) : super(
+         retry: null,
+         name: r'downloadStatusProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$downloadStatusHash();
+
+  @override
+  String toString() {
+    return r'downloadStatusProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  DownloadStatus create() => DownloadStatus();
+
+  @override
+  bool operator ==(Object other) {
+    return other is DownloadStatusProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$downloadStatusHash() => r'802dc20c13f978fe13a721af0783d28fc878012e';
+
+final class DownloadStatusFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          DownloadStatus,
+          AsyncValue<bool>,
+          bool,
+          Stream<bool>,
+          NovelInfo
+        > {
+  const DownloadStatusFamily._()
+    : super(
+        retry: null,
+        name: r'downloadStatusProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  DownloadStatusProvider call(NovelInfo novelInfo) =>
+      DownloadStatusProvider._(argument: novelInfo, from: this);
+
+  @override
+  String toString() => r'downloadStatusProvider';
+}
+
+abstract class _$DownloadStatus extends $StreamNotifier<bool> {
+  late final _$args = ref.$arg as NovelInfo;
+  NovelInfo get novelInfo => _$args;
+
+  Stream<bool> build(NovelInfo novelInfo);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(_$args);
+    final ref = this.ref as $Ref<AsyncValue<bool>, bool>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<bool>, bool>,
+              AsyncValue<bool>,
+              Object?,
+              Object?
+            >;
+    element.handleValue(ref, created);
+  }
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
