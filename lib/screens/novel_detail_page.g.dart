@@ -260,5 +260,79 @@ abstract class _$DownloadStatus extends $StreamNotifier<bool> {
   }
 }
 
+@ProviderFor(episodeList)
+const episodeListProvider = EpisodeListFamily._();
+
+final class EpisodeListProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Episode>>,
+          List<Episode>,
+          FutureOr<List<Episode>>
+        >
+    with $FutureModifier<List<Episode>>, $FutureProvider<List<Episode>> {
+  const EpisodeListProvider._({
+    required EpisodeListFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'episodeListProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$episodeListHash();
+
+  @override
+  String toString() {
+    return r'episodeListProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Episode>> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Episode>> create(Ref ref) {
+    final argument = this.argument as String;
+    return episodeList(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EpisodeListProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$episodeListHash() => r'abcdef1234567890abcdef1234567890abcdef12';
+
+final class EpisodeListFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Episode>>, String> {
+  const EpisodeListFamily._()
+    : super(
+        retry: null,
+        name: r'episodeListProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  EpisodeListProvider call(String key) =>
+      EpisodeListProvider._(argument: key, from: this);
+
+  @override
+  String toString() => r'episodeListProvider';
+}
+
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

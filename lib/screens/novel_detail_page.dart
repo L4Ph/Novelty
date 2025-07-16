@@ -44,7 +44,15 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
 }
 
 @riverpod
-Future<List<Episode>> episodeList(Ref ref, String ncode, int page) async {
+Future<List<Episode>> episodeList(Ref ref, String key) async {
+  final parts = key.split('_');
+  if (parts.length != 2) {
+    throw ArgumentError('Invalid episode list key format: $key');
+  }
+  
+  final ncode = parts[0];
+  final page = int.parse(parts[1]);
+  
   final apiService = ref.read(apiServiceProvider);
   return apiService.fetchEpisodeList(ncode, page);
 }
@@ -332,7 +340,7 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
     });
 
     try {
-      final episodes = await ref.read(episodeListProvider(widget.ncode, _currentPage).future);
+      final episodes = await ref.read(episodeListProvider('${widget.ncode}_$_currentPage').future);
       
       if (episodes.isEmpty) {
         _hasMorePages = false;
