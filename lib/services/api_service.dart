@@ -12,15 +12,18 @@ import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:riverpod/src/providers/future_provider.dart';
 
+/// 定数として使用するランキングのデフォルト制限値
+const int defaultRankingLimit = 100;
+
 final Provider<ApiService> apiServiceProvider = Provider((ref) => ApiService());
 
 final FutureProviderFamily<List<RankingResponse>, String> rankingDataProvider =
     FutureProvider.autoDispose.family<List<RankingResponse>, String>(
-  (ref, rankingType) {
-    final apiService = ref.watch(apiServiceProvider);
-    return apiService.fetchRanking(rankingType);
-  },
-);
+      (ref, rankingType) {
+        final apiService = ref.watch(apiServiceProvider);
+        return apiService.fetchRanking(rankingType);
+      },
+    );
 
 class ApiService {
   Future<http.Response> _fetchWithCache(String url) async {
@@ -567,7 +570,7 @@ class ApiService {
       print('Fetching all-time ranking using novel search API');
     }
 
-    const query = NovelSearchQuery(order: 'hyoka', lim: 300);
+    const query = NovelSearchQuery(order: 'hyoka', lim: defaultRankingLimit);
 
     try {
       var results = await searchNovels(query);
