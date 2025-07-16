@@ -342,15 +342,22 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
     });
 
     try {
-      final episodes = await ref.read(
+      final newEpisodes = await ref.read(
         episodeListProvider('${widget.ncode}_$_currentPage').future,
       );
 
-      if (episodes.isEmpty) {
+      if (newEpisodes.isEmpty) {
         _hasMorePages = false;
       } else {
-        _episodes.addAll(episodes);
-        _currentPage++;
+        // Check for duplicates to prevent infinite loading on single-page novels
+        if (_episodes.isNotEmpty &&
+            newEpisodes.isNotEmpty &&
+            _episodes.any((e) => e.url == newEpisodes.first.url)) {
+          _hasMorePages = false;
+        } else {
+          _episodes.addAll(newEpisodes);
+          _currentPage++;
+        }
       }
     } catch (e) {
       if (mounted) {
