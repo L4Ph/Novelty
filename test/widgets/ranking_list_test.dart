@@ -28,7 +28,9 @@ void main() {
       container.dispose();
     });
 
-    testWidgets('should display infinite scroll ranking list', (WidgetTester tester) async {
+    testWidgets('should display infinite scroll ranking list', (
+      WidgetTester tester,
+    ) async {
       // Mock data for ranking
       final mockRankingData = List.generate(
         100,
@@ -40,13 +42,14 @@ void main() {
         ),
       );
 
-      when(mockApiService.fetchRankingAndDetails('d'))
-          .thenAnswer((_) async => mockRankingData);
+      when(
+        mockApiService.fetchRankingAndDetails('d'),
+      ).thenAnswer((_) async => mockRankingData);
 
       await tester.pumpWidget(
         ProviderScope(
           parent: container,
-          child: MaterialApp(
+          child: const MaterialApp(
             home: Scaffold(
               body: RankingList(
                 rankingType: 'd',
@@ -76,14 +79,17 @@ void main() {
       expect(find.text('Test Novel 51'), findsOneWidget);
     });
 
-    testWidgets('should handle empty ranking data gracefully', (WidgetTester tester) async {
-      when(mockApiService.fetchRankingAndDetails('d'))
-          .thenAnswer((_) async => []);
+    testWidgets('should handle empty ranking data gracefully', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockApiService.fetchRankingAndDetails('d'),
+      ).thenAnswer((_) async => []);
 
       await tester.pumpWidget(
         ProviderScope(
           parent: container,
-          child: MaterialApp(
+          child: const MaterialApp(
             home: Scaffold(
               body: RankingList(
                 rankingType: 'd',
@@ -101,14 +107,17 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsNothing);
     });
 
-    testWidgets('should handle API errors gracefully', (WidgetTester tester) async {
-      when(mockApiService.fetchRankingAndDetails('d'))
-          .thenThrow(Exception('API Error'));
+    testWidgets('should handle API errors gracefully', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockApiService.fetchRankingAndDetails('d'),
+      ).thenThrow(Exception('API Error'));
 
       await tester.pumpWidget(
         ProviderScope(
           parent: container,
-          child: MaterialApp(
+          child: const MaterialApp(
             home: Scaffold(
               body: RankingList(
                 rankingType: 'd',

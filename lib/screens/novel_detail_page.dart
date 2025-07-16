@@ -4,7 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:novelty/database/database.dart';
+import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
@@ -49,10 +49,10 @@ Future<List<Episode>> episodeList(Ref ref, String key) async {
   if (parts.length != 2) {
     throw ArgumentError('Invalid episode list key format: $key');
   }
-  
+
   final ncode = parts[0];
   final page = int.parse(parts[1]);
-  
+
   final apiService = ref.read(apiServiceProvider);
   return apiService.fetchEpisodeList(ncode, page);
 }
@@ -334,14 +334,16 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
 
   Future<void> _loadMoreEpisodes() async {
     if (_isLoading || !_hasMorePages) return;
-    
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final episodes = await ref.read(episodeListProvider('${widget.ncode}_$_currentPage').future);
-      
+      final episodes = await ref.read(
+        episodeListProvider('${widget.ncode}_$_currentPage').future,
+      );
+
       if (episodes.isEmpty) {
         _hasMorePages = false;
       } else {
@@ -410,7 +412,9 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   '${widget.totalEpisodes} 話',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               );
             }
@@ -452,7 +456,8 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
 
             return const SizedBox.shrink();
           },
-          childCount: _episodes.length + 2, // +1 for header, +1 for loading indicator
+          childCount:
+              _episodes.length + 2, // +1 for header, +1 for loading indicator
         ),
       ),
     );

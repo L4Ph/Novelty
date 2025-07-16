@@ -60,7 +60,7 @@ final class NovelInfoProvider
   }
 }
 
-String _$novelInfoHash() => r'1049b7a53e99a3b1bfba8543c303cef23779e8d5';
+String _$novelInfoHash() => r'8a70e4fa7e60d18d2b6f94b97b6cc2f7fd110fc2';
 
 final class NovelInfoFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<NovelInfo>, String> {
@@ -78,6 +78,81 @@ final class NovelInfoFamily extends $Family
 
   @override
   String toString() => r'novelInfoProvider';
+}
+
+@ProviderFor(episodeList)
+const episodeListProvider = EpisodeListFamily._();
+
+final class EpisodeListProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Episode>>,
+          List<Episode>,
+          FutureOr<List<Episode>>
+        >
+    with $FutureModifier<List<Episode>>, $FutureProvider<List<Episode>> {
+  const EpisodeListProvider._({
+    required EpisodeListFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'episodeListProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$episodeListHash();
+
+  @override
+  String toString() {
+    return r'episodeListProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Episode>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Episode>> create(Ref ref) {
+    final argument = this.argument as String;
+    return episodeList(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EpisodeListProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$episodeListHash() => r'db416a99e1efe708c8478e021196c75d03808ffc';
+
+final class EpisodeListFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Episode>>, String> {
+  const EpisodeListFamily._()
+    : super(
+        retry: null,
+        name: r'episodeListProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  EpisodeListProvider call(String key) =>
+      EpisodeListProvider._(argument: key, from: this);
+
+  @override
+  String toString() => r'episodeListProvider';
 }
 
 @ProviderFor(FavoriteStatus)
@@ -121,7 +196,7 @@ final class FavoriteStatusProvider
   }
 }
 
-String _$favoriteStatusHash() => r'38b726baa27e80a796a352be0c7e91a4ec4d7d02';
+String _$favoriteStatusHash() => r'805f39ffdd62300e9292824a6e4496910ed98585';
 
 final class FavoriteStatusFamily extends $Family
     with
@@ -258,80 +333,6 @@ abstract class _$DownloadStatus extends $StreamNotifier<bool> {
             >;
     element.handleValue(ref, created);
   }
-}
-
-@ProviderFor(episodeList)
-const episodeListProvider = EpisodeListFamily._();
-
-final class EpisodeListProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Episode>>,
-          List<Episode>,
-          FutureOr<List<Episode>>
-        >
-    with $FutureModifier<List<Episode>>, $FutureProvider<List<Episode>> {
-  const EpisodeListProvider._({
-    required EpisodeListFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'episodeListProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$episodeListHash();
-
-  @override
-  String toString() {
-    return r'episodeListProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $FutureProviderElement<List<Episode>> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<Episode>> create(Ref ref) {
-    final argument = this.argument as String;
-    return episodeList(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is EpisodeListProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$episodeListHash() => r'abcdef1234567890abcdef1234567890abcdef12';
-
-final class EpisodeListFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<List<Episode>>, String> {
-  const EpisodeListFamily._()
-    : super(
-        retry: null,
-        name: r'episodeListProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  EpisodeListProvider call(String key) =>
-      EpisodeListProvider._(argument: key, from: this);
-
-  @override
-  String toString() => r'episodeListProvider';
 }
 
 // ignore_for_file: type=lint
