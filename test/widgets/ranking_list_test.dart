@@ -58,14 +58,14 @@ void main() {
       // Verify initial items are displayed
       expect(find.text('Test Novel 1'), findsOneWidget);
       // Drag the list to scroll down
-      await tester.drag(find.byType(ListView), const Offset(0.0, -3000.0));
+      await tester.drag(find.byType(ListView), const Offset(0, -3000));
       await tester.pumpAndSettle();
       // The 50th item should be visible now
       expect(find.text('Test Novel 50'), findsOneWidget);
       expect(find.text('Test Novel 51'), findsNothing);
 
       // Drag the list to the bottom to trigger infinite scroll
-      await tester.drag(find.byType(ListView), const Offset(0.0, -5000.0));
+      await tester.drag(find.byType(ListView), const Offset(0, -5000));
       await tester.pumpAndSettle();
 
       // Verify more items are loaded

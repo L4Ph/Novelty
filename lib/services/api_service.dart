@@ -198,10 +198,10 @@ class ApiService {
   }
 
   Future<List<Episode>> fetchEpisodeList(String ncode, int page) async {
-    final pageUrl = page == 1 
+    final pageUrl = page == 1
         ? 'https://ncode.syosetu.com/${ncode.toLowerCase()}/'
         : 'https://ncode.syosetu.com/${ncode.toLowerCase()}/?p=$page';
-    
+
     final response = await _fetchWithCache(pageUrl);
 
     if (response.statusCode != 200) {
@@ -281,8 +281,9 @@ class ApiService {
         break;
       }
 
-      final newEpisodes =
-          episodesOnPage.where((e) => !episodeUrls.contains(e.url)).toList();
+      final newEpisodes = episodesOnPage
+          .where((e) => !episodeUrls.contains(e.url))
+          .toList();
       if (newEpisodes.isEmpty) {
         break;
       }
@@ -631,7 +632,7 @@ class ApiService {
       print('Fetching all-time ranking using novel search API');
     }
 
-    final query = NovelSearchQuery(order: 'hyoka', lim: 300);
+    const query = NovelSearchQuery(order: 'hyoka', lim: 300);
 
     try {
       var results = await searchNovels(query);

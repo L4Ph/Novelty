@@ -332,10 +332,19 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
     _loadMoreEpisodes();
   }
 
-  
-
   Future<void> _loadMoreEpisodes() async {
-    if (_isLoading || !_hasMorePages) return;
+    if (_isLoading || !_hasMorePages) {
+      return;
+    }
+
+    if (widget.totalEpisodes > 0 && _episodes.length >= widget.totalEpisodes) {
+      if (mounted) {
+        setState(() {
+          _hasMorePages = false;
+        });
+      }
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -359,7 +368,7 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
           _currentPage++;
         }
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('エピソードの読み込みに失敗しました: $e')),
@@ -382,7 +391,7 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
       return const SliverToBoxAdapter(
         child: Center(
           child: Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16),
             child: CircularProgressIndicator(),
           ),
         ),
@@ -393,7 +402,7 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
       return const SliverToBoxAdapter(
         child: Center(
           child: Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16),
             child: Text('エピソードがありません'),
           ),
         ),
@@ -410,8 +419,8 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
               child: Text(
                 '${widget.totalEpisodes} 話',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             );
           }
