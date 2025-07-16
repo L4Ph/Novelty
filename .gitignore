@@ -10,4 +10,5 @@ pubspec.lock
 build/
 .env
 
-coverage/
+coverage/flutter/
+flutter.tar.xz
