@@ -123,7 +123,7 @@ fvmを使用しています。
 
 ## Linter
 ### Linter
-[very_good_analYsis](https://pub.dev/packages/very_good_analysis) を使用しています。
+[very_good_analysis](https://pub.dev/packages/very_good_analysis) を使用しています。
 `analysis_options.yaml`を変更しないでください。
 
 ### Linterのエラー
