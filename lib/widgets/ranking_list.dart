@@ -74,7 +74,7 @@ class _RankingListState extends ConsumerState<RankingList>
     var filtered = List<RankingResponse>.from(_allNovelData);
 
     if (widget.showOnlyOngoing) {
-      filtered = filtered.where((novel) => novel.end == 0).toList();
+      filtered = filtered.where((novel) => novel.end == 1).toList();
     }
 
     if (widget.selectedGenre != null) {
