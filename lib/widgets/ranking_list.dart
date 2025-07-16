@@ -74,13 +74,19 @@ class _RankingListState extends ConsumerState<RankingList>
     var filtered = List<RankingResponse>.from(_allNovelData);
 
     if (widget.showOnlyOngoing) {
-      filtered = filtered.where((novel) => novel.end == 1).toList();
+      filtered = filtered.where((novel) {
+        // Allow items with null end status to pass through initially
+        // They will be filtered properly after details are loaded
+        return novel.end == null || novel.end == 1;
+      }).toList();
     }
 
     if (widget.selectedGenre != null) {
-      filtered = filtered
-          .where((novel) => novel.genre == widget.selectedGenre)
-          .toList();
+      filtered = filtered.where((novel) {
+        // Allow items with null genre to pass through initially
+        // They will be filtered properly after details are loaded
+        return novel.genre == null || novel.genre == widget.selectedGenre;
+      }).toList();
     }
 
     if (mounted) {
@@ -141,6 +147,7 @@ class _RankingListState extends ConsumerState<RankingList>
 
     if (!mounted) return;
 
+    // Update both _filteredNovelData and _allNovelData with complete information
     setState(() {
       _filteredNovelData = _filteredNovelData.map((novel) {
         if (novelDetails.containsKey(novel.ncode)) {
@@ -159,8 +166,34 @@ class _RankingListState extends ConsumerState<RankingList>
         }
         return novel;
       }).toList();
+
+      // Also update the source data
+      _allNovelData = _allNovelData.map((novel) {
+        if (novelDetails.containsKey(novel.ncode)) {
+          final details = novelDetails[novel.ncode]!;
+          return novel.copyWith(
+            title: details.title,
+            writer: details.writer,
+            story: details.story,
+            novelType: details.novelType,
+            end: details.end,
+            genre: details.genre,
+            generalAllNo: details.generalAllNo,
+            keyword: details.keyword,
+            allPoint: details.allPoint,
+          );
+        }
+        return novel;
+      }).toList();
+
       _isLoadingMore = false;
     });
+
+    // Reapply filters after loading details if filters are active
+    final hasActiveFilters = widget.showOnlyOngoing || widget.selectedGenre != null;
+    if (hasActiveFilters) {
+      _applyFilters();
+    }
   }
 
   @override
