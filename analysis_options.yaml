@@ -6,7 +6,7 @@
 # invoked from the command line by running `flutter analyze`.
 
 # https://pub.dev/packages/pedantic_mono
-include: package:pedantic_mono/analysis_options.yaml
+include: package:very_good_analysis/analysis_options.yaml
 
 # The following line activates a set of recommended lints for Flutter apps,
 # packages, and plugins designed to encourage good coding practices.
@@ -18,6 +18,7 @@ analyzer:
     invalid_annotation_target: ignore
   exclude: 
     - lib/models/*.g.dart
+    - lib/models/*.freezed.dart
     - 'test/**.mocks.dart'
 
 linter:

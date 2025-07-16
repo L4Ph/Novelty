@@ -23,8 +23,9 @@ class _RankingListState extends ConsumerState<RankingList>
     with AutomaticKeepAliveClientMixin<RankingList> {
   List<RankingResponse> _allNovelData = [];
   List<RankingResponse> _filteredNovelData = [];
-  final _itemsPerPage = 50;
-  var _currentPage = 1;
+  final _scrollController = ScrollController();
+  var _isLoadingMore = false;
+  var _isInitialLoad = true;
 
   @override
   bool get wantKeepAlive => true;
@@ -32,7 +33,13 @@ class _RankingListState extends ConsumerState<RankingList>
   @override
   void initState() {
     super.initState();
-    _applyFilters();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -40,12 +47,27 @@ class _RankingListState extends ConsumerState<RankingList>
     super.didUpdateWidget(oldWidget);
     if (widget.showOnlyOngoing != oldWidget.showOnlyOngoing ||
         widget.selectedGenre != oldWidget.selectedGenre) {
-      _applyFilters();
+      _applyFiltersAndReset();
+    }
+  }
+
+  void _applyFiltersAndReset() {
+    _applyFilters();
+    if (mounted) {
+      setState(() {
+        _isInitialLoad = true;
+      });
+      _loadMore();
     }
   }
 
   void _applyFilters() {
     if (_allNovelData.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _filteredNovelData = [];
+        });
+      }
       return;
     }
 
@@ -56,25 +78,88 @@ class _RankingListState extends ConsumerState<RankingList>
     }
 
     if (widget.selectedGenre != null) {
-      filtered =
-          filtered.where((novel) => novel.genre == widget.selectedGenre).toList();
+      filtered = filtered
+          .where((novel) => novel.genre == widget.selectedGenre)
+          .toList();
     }
 
-    if (!mounted) {
-      return;
+    if (mounted) {
+      setState(() {
+        _filteredNovelData = filtered;
+      });
     }
-    setState(() {
-      _filteredNovelData = filtered;
-      _currentPage = 1;
-    });
   }
 
-  void _loadMore() {
-    if (!mounted) {
+  void _onScroll() {
+    if (_isLoadingMore || !mounted) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    const delta = 200.0;
+
+    if (currentScroll >= maxScroll - delta) {
+      _loadMore();
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || !mounted) return;
+
+    final itemsToLoad = _isInitialLoad ? 20 : 10;
+    final currentLoadedCount = _filteredNovelData
+        .where((n) => n.title != null)
+        .length;
+
+    if (currentLoadedCount >= _filteredNovelData.length) {
+      return; // All items loaded
+    }
+
+    setState(() {
+      _isLoadingMore = true;
+      if (_isInitialLoad) {
+        _isInitialLoad = false;
+      }
+    });
+
+    final nextNcodeSlice = _filteredNovelData
+        .where((n) => n.title == null)
+        .take(itemsToLoad)
+        .map((n) => n.ncode)
+        .toList();
+
+    if (nextNcodeSlice.isEmpty) {
+      setState(() {
+        _isLoadingMore = false;
+      });
       return;
     }
+
+    final apiService = ref.read(apiServiceProvider);
+    final novelDetails = await apiService.fetchMultipleNovelsInfo(
+      nextNcodeSlice,
+    );
+
+    if (!mounted) return;
+
     setState(() {
-      _currentPage++;
+      _filteredNovelData = _filteredNovelData.map((novel) {
+        if (novelDetails.containsKey(novel.ncode)) {
+          final details = novelDetails[novel.ncode]!;
+          return novel.copyWith(
+            title: details.title,
+            writer: details.writer,
+            story: details.story,
+            novelType: details.novelType,
+            end: details.end,
+            genre: details.genre,
+            generalAllNo: details.generalAllNo,
+            keyword: details.keyword,
+            allPoint: details.allPoint,
+          );
+        }
+        return novel;
+      }).toList();
+      _isLoadingMore = false;
     });
   }
 
@@ -84,31 +169,33 @@ class _RankingListState extends ConsumerState<RankingList>
     final rankingDataAsync = ref.watch(rankingDataProvider(widget.rankingType));
 
     return rankingDataAsync.when<Widget>(
-      data: (allNovelData) {
-        _allNovelData = allNovelData;
-        _applyFilters();
-
-        final totalItems = _filteredNovelData.length;
-        var displayItemCount = _currentPage * _itemsPerPage;
-        if (displayItemCount > totalItems) {
-          displayItemCount = totalItems;
+      data: (rankingData) {
+        if (_allNovelData.map((e) => e.ncode).join() !=
+            rankingData.map((e) => e.ncode).join()) {
+          _allNovelData = rankingData;
+          _applyFiltersAndReset();
         }
-        final hasMore = displayItemCount < totalItems;
+
+        final displayData = _filteredNovelData
+            .where((n) => n.title != null)
+            .toList();
+        final hasMore = displayData.length < _filteredNovelData.length;
 
         return RefreshIndicator(
-          onRefresh: () async =>
-              ref.invalidate(rankingDataProvider(widget.rankingType)),
+          onRefresh: () async {
+            ref.invalidate(rankingDataProvider(widget.rankingType));
+          },
           child: ListView.builder(
-            itemCount: displayItemCount + (hasMore ? 1 : 0),
+            controller: _scrollController,
+            itemCount: displayData.length + (hasMore ? 1 : 0),
             itemBuilder: (context, index) {
-              if (index == displayItemCount) {
-                return TextButton(
-                  onPressed: _loadMore,
-                  child: const Text('さらに読み込む'),
+              if (index == displayData.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
                 );
               }
-
-              final item = _filteredNovelData[index];
+              final item = displayData[index];
               return NovelListTile(item: item, isRanking: true);
             },
           ),

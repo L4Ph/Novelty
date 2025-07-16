@@ -123,7 +123,7 @@ fvmを使用しています。
 
 ## Linter
 ### Linter
-[very_good_analysis](https://pub.dev/packages/very_good_analysis) を使用しています。
+[very_good_analYsis](https://pub.dev/packages/very_good_analysis) を使用しています。
 `analysis_options.yaml`を変更しないでください。
 
 ### Linterのエラー
@@ -153,51 +153,9 @@ class C {}
 それぞれのドキュメントは、以下にあります。
 
 ## なろう小説のhtml
-- [{ncode}へのリクエスト](./docs/narou_html/{ncode}.md)
-- [{ncode}/{episodes}へのリクエスト](./docs/narou_html/{ncode}/{episodes}.md)
+- [{ncode}へのリクエスト](../docs/narou_html/{ncode}.md)
+- [{ncode}/{episodes}へのリクエスト](../docs/narou_html/{ncode}/{episodes}.md)
 
 ## なろう小説
-- [なろう小説API](./docs/narou_api/novel_api.md)
-- [なろう小説ランキングAPI](./docs/narou_api/ranking_api.md)
-
-# issue番号を渡された場合
-
-### タスク
-1. GitHub CLIを使用してissueを確認してください。
-
-```sh
-gh issue list -- issueの一覧
-gh issue view $issue_number -- issueの詳細
-```
-2. issueのタイトルとissueの内容を読み込んで、ブランチを作成
-
-```sh
-git branch # mainブランチを元にcheckoutすることを確認する
-git checkout -b gemini/$issue_number-$summary_of_issue
-```
-
-3. issueのタイトルとissueの内容をもとに実装を進める。
-該当のissueをもとに実装を行ってください。
-GEMINI.mdに書いてあることは継続してください。
-
-4. 定期的にcommitを行う
-一定の変更ごとにcommitを行ってください。
-粒度は任せます。
-また、コミットメッセージは日本語で記述してください。
-```sh
-git add .
-git commit -m $summary_of_commit_message
-```
-
-5. pushを行う(commitが複数ある場合でもまとめて行う)
-
-```sh
-git push --set-upstream origin $current_branch_name
-```
-
-6. Pull Requestを開く
-pushが完了したら、Pull Requestを作成します。
-titleとbodyは日本語で記述してください。
-```sh
-gh pr create -a @me --base main --head $current_branch_name --title $summary_of_pr_title --body $summary_of_pr
-```
+- [なろう小説API](../docs/narou_api/novel_api.md)
+- [なろう小説ランキングAPI](../docs/narou_api/ranking_api.md)

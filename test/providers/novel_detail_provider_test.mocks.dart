@@ -993,6 +993,14 @@ class MockApiService extends _i1.Mock implements _i8.ApiService {
           as _i5.Future<_i6.NovelInfo>);
 
   @override
+  _i5.Future<List<_i7.Episode>> fetchEpisodeList(String? ncode, int? page) =>
+      (super.noSuchMethod(
+            Invocation.method(#fetchEpisodeList, [ncode, page]),
+            returnValue: _i5.Future<List<_i7.Episode>>.value(<_i7.Episode>[]),
+          )
+          as _i5.Future<List<_i7.Episode>>);
+
+  @override
   _i5.Future<_i6.NovelInfo> fetchNovelInfo(String? ncode) =>
       (super.noSuchMethod(
             Invocation.method(#fetchNovelInfo, [ncode]),

@@ -12,13 +12,16 @@ import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:riverpod/src/providers/future_provider.dart';
 
+/// 定数として使用するランキングのデフォルト制限値
+const int defaultRankingLimit = 100;
+
 final Provider<ApiService> apiServiceProvider = Provider((ref) => ApiService());
 
 final FutureProviderFamily<List<RankingResponse>, String> rankingDataProvider =
     FutureProvider.autoDispose.family<List<RankingResponse>, String>(
       (ref, rankingType) {
         final apiService = ref.watch(apiServiceProvider);
-        return apiService.fetchRankingAndDetails(rankingType);
+        return apiService.fetchRanking(rankingType);
       },
     );
 
@@ -197,6 +200,24 @@ class ApiService {
     return info;
   }
 
+  Future<List<Episode>> fetchEpisodeList(String ncode, int page) async {
+    final pageUrl = page == 1
+        ? 'https://ncode.syosetu.com/${ncode.toLowerCase()}/'
+        : 'https://ncode.syosetu.com/${ncode.toLowerCase()}/?p=$page';
+
+    final response = await _fetchWithCache(pageUrl);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to fetch episodes page $page: ${response.statusCode} ${response.reasonPhrase}',
+      );
+    }
+
+    final html = response.body;
+    final document = parser.parse(html);
+    return _parseEpisodes(document);
+  }
+
   Future<NovelInfo> fetchNovelInfo(String ncode) async {
     var info = await _fetchNovelInfoFromNarou(ncode);
 
@@ -263,8 +284,9 @@ class ApiService {
         break;
       }
 
-      final newEpisodes =
-          episodesOnPage.where((e) => !episodeUrls.contains(e.url)).toList();
+      final newEpisodes = episodesOnPage
+          .where((e) => !episodeUrls.contains(e.url))
+          .toList();
       if (newEpisodes.isEmpty) {
         break;
       }
@@ -468,7 +490,7 @@ class ApiService {
     return '0$n';
   }
 
-  Future<List<RankingResponse>> fetchRankingAndDetails(
+  Future<List<RankingResponse>> fetchRanking(
     String rankingType,
   ) async {
     // 累計ランキングの場合は小説APIの検索機能を使用
@@ -516,59 +538,6 @@ class ApiService {
       return [];
     }
 
-    final ncodes = <String>[];
-    for (final item in rankingData) {
-      if (item is Map<String, dynamic>) {
-        final ncode = item['ncode'] as String?;
-        if (ncode != null && ncode.isNotEmpty) {
-          ncodes.add(ncode);
-        }
-      }
-    }
-
-    if (ncodes.isEmpty) {
-      if (kDebugMode) {
-        print('No valid ncodes found in ranking data');
-      }
-      return [];
-    }
-
-    if (kDebugMode) {
-      print('Found ${ncodes.length} valid ncodes');
-    }
-
-    final novelDetails = <String, dynamic>{};
-    const chunkSize = 20;
-
-    for (var i = 0; i < ncodes.length; i += chunkSize) {
-      final chunk = ncodes.sublist(
-        i,
-        i + chunkSize > ncodes.length ? ncodes.length : i + chunkSize,
-      );
-      final ncodesParam = chunk.join('-');
-      final detailsUrl =
-          'https://api.syosetu.com/novelapi/api?out=json&of=t-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua&ncode=$ncodesParam&gzip=5';
-
-      try {
-        final detailsData = await _fetchData(detailsUrl);
-        if (detailsData.isNotEmpty &&
-            (detailsData[0] as Map<String, dynamic>?)?['allcount'] != null) {
-          for (final item in detailsData.sublist(1)) {
-            final ncode = (item as Map<String, dynamic>)['ncode'] as String?;
-            if (ncode != null) {
-              novelDetails[ncode] = _processNovelType(item);
-            }
-          }
-        }
-      } on Exception catch (e) {
-        if (kDebugMode) {
-          print(
-            'An error occurred while fetching novel details for ncodes: $ncodesParam. Error: $e',
-          );
-        }
-      }
-    }
-
     final allData = <RankingResponse>[];
     for (final rankItem in rankingData) {
       if (rankItem is! Map<String, dynamic>) {
@@ -581,23 +550,11 @@ class ApiService {
       }
 
       try {
-        if (novelDetails.containsKey(ncode)) {
-          final details = Map<String, dynamic>.from(
-            novelDetails[ncode] as Map<String, dynamic>,
-          );
-          details['rank'] = rankItem['rank'];
-          details['pt'] = rankItem['pt'];
-          allData.add(RankingResponse.fromJson(details));
-        } else {
-          allData.add(
-            RankingResponse(
-              ncode: ncode,
-              title: 'タイトル取得失敗',
-              rank: rankItem['rank'] as int?,
-              pt: rankItem['pt'] as int?,
-            ),
-          );
-        }
+        allData.add(
+          RankingResponse.fromJson(
+            rankItem,
+          ),
+        );
       } on Exception catch (e) {
         if (kDebugMode) {
           print('Error processing ranking item for ncode $ncode: $e');
@@ -613,7 +570,7 @@ class ApiService {
       print('Fetching all-time ranking using novel search API');
     }
 
-    final query = NovelSearchQuery(order: 'hyoka', lim: 300);
+    const query = NovelSearchQuery(order: 'hyoka', lim: defaultRankingLimit);
 
     try {
       var results = await searchNovels(query);
