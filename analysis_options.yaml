@@ -18,6 +18,7 @@ analyzer:
     invalid_annotation_target: ignore
   exclude: 
     - lib/models/*.g.dart
+    - lib/models/*.freezed.dart
     - 'test/**.mocks.dart'
 
 linter:
