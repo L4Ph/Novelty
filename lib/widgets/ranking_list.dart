@@ -21,6 +21,7 @@ class RankingList extends ConsumerStatefulWidget {
 
 class _RankingListState extends ConsumerState<RankingList>
     with AutomaticKeepAliveClientMixin<RankingList> {
+  final _scrollController = ScrollController();
   List<RankingResponse> _allNovelData = [];
   List<RankingResponse> _filteredNovelData = [];
   final _itemsPerPage = 50;
@@ -33,6 +34,12 @@ class _RankingListState extends ConsumerState<RankingList>
   void initState() {
     super.initState();
     _applyFilters();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels ==
+          _scrollController.position.maxScrollExtent) {
+        _loadMore();
+      }
+    });
   }
 
   @override
@@ -99,12 +106,15 @@ class _RankingListState extends ConsumerState<RankingList>
           onRefresh: () async =>
               ref.invalidate(rankingDataProvider(widget.rankingType)),
           child: ListView.builder(
+            controller: _scrollController,
             itemCount: displayItemCount + (hasMore ? 1 : 0),
             itemBuilder: (context, index) {
               if (index == displayItemCount) {
-                return TextButton(
-                  onPressed: _loadMore,
-                  child: const Text('さらに読み込む'),
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: CircularProgressIndicator(),
+                  ),
                 );
               }
 
