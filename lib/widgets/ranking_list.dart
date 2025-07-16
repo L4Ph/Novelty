@@ -78,8 +78,9 @@ class _RankingListState extends ConsumerState<RankingList>
     }
 
     if (widget.selectedGenre != null) {
-      filtered =
-          filtered.where((novel) => novel.genre == widget.selectedGenre).toList();
+      filtered = filtered
+          .where((novel) => novel.genre == widget.selectedGenre)
+          .toList();
     }
 
     if (mounted) {
@@ -105,8 +106,9 @@ class _RankingListState extends ConsumerState<RankingList>
     if (_isLoadingMore || !mounted) return;
 
     final itemsToLoad = _isInitialLoad ? 20 : 10;
-    final currentLoadedCount =
-        _filteredNovelData.where((n) => n.title != null).length;
+    final currentLoadedCount = _filteredNovelData
+        .where((n) => n.title != null)
+        .length;
 
     if (currentLoadedCount >= _filteredNovelData.length) {
       return; // All items loaded
@@ -133,7 +135,9 @@ class _RankingListState extends ConsumerState<RankingList>
     }
 
     final apiService = ref.read(apiServiceProvider);
-    final novelDetails = await apiService.fetchMultipleNovelsInfo(nextNcodeSlice);
+    final novelDetails = await apiService.fetchMultipleNovelsInfo(
+      nextNcodeSlice,
+    );
 
     if (!mounted) return;
 
@@ -166,15 +170,15 @@ class _RankingListState extends ConsumerState<RankingList>
 
     return rankingDataAsync.when<Widget>(
       data: (rankingData) {
-        if (_allNovelData
-            .map((e) => e.ncode)
-            .join() !=
+        if (_allNovelData.map((e) => e.ncode).join() !=
             rankingData.map((e) => e.ncode).join()) {
           _allNovelData = rankingData;
           _applyFiltersAndReset();
         }
 
-        final displayData = _filteredNovelData.where((n) => n.title != null).toList();
+        final displayData = _filteredNovelData
+            .where((n) => n.title != null)
+            .toList();
         final hasMore = displayData.length < _filteredNovelData.length;
 
         return RefreshIndicator(
@@ -204,4 +208,3 @@ class _RankingListState extends ConsumerState<RankingList>
     );
   }
 }
-
