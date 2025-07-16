@@ -332,6 +332,8 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
     _loadMoreEpisodes();
   }
 
+  
+
   Future<void> _loadMoreEpisodes() async {
     if (_isLoading || !_hasMorePages) return;
 
@@ -367,16 +369,6 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
     }
   }
 
-  bool _onScrollNotification(ScrollNotification notification) {
-    if (notification is ScrollEndNotification &&
-        notification.metrics.extentAfter < 200 &&
-        _hasMorePages &&
-        !_isLoading) {
-      _loadMoreEpisodes();
-    }
-    return false;
-  }
-
   @override
   Widget build(BuildContext context) {
     if (!_initialLoadDone) {
@@ -401,64 +393,63 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
       );
     }
 
-    return NotificationListener<ScrollNotification>(
-      onNotification: _onScrollNotification,
-      child: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            if (index == 0) {
-              // Header
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  '${widget.totalEpisodes} 話',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              );
-            }
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          if (index == 0) {
+            // Header
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                '${widget.totalEpisodes} 話',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            );
+          }
 
-            final episodeIndex = index - 1;
-            if (episodeIndex == _episodes.length) {
-              // Loading indicator
-              return _isLoading
-                  ? const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  : const SizedBox.shrink();
+          final episodeIndex = index - 1;
+          if (episodeIndex >= _episodes.length) {
+            if (!_isLoading && _hasMorePages) {
+              Future.microtask(_loadMoreEpisodes);
             }
+            return _isLoading
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : const SizedBox.shrink();
+          }
 
-            if (episodeIndex < _episodes.length) {
-              final episode = _episodes[episodeIndex];
-              final episodeTitle = episode.subtitle ?? 'No Title';
-              return ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                title: Text(episodeTitle),
-                subtitle: episode.update != null
-                    ? Text('更新日: ${episode.update}')
-                    : null,
-                onTap: () {
-                  final episodeUrl = episode.url;
-                  if (episodeUrl != null) {
-                    final match = RegExp(r'/(\d+)/').firstMatch(episodeUrl);
-                    if (match != null) {
-                      final episodeNumber = match.group(1);
-                      if (episodeNumber != null) {
-                        context.push('/novel/${widget.ncode}/$episodeNumber');
-                      }
+          if (episodeIndex < _episodes.length) {
+            final episode = _episodes[episodeIndex];
+            final episodeTitle = episode.subtitle ?? 'No Title';
+            return ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              title: Text(episodeTitle),
+              subtitle: episode.update != null
+                  ? Text('更新日: ${episode.update}')
+                  : null,
+              onTap: () {
+                final episodeUrl = episode.url;
+                if (episodeUrl != null) {
+                  final match = RegExp(r'/(\d+)/').firstMatch(episodeUrl);
+                  if (match != null) {
+                    final episodeNumber = match.group(1);
+                    if (episodeNumber != null) {
+                      context.push('/novel/${widget.ncode}/$episodeNumber');
                     }
                   }
-                },
-              );
-            }
+                }
+              },
+            );
+          }
 
-            return const SizedBox.shrink();
-          },
-          childCount:
-              _episodes.length + 2, // +1 for header, +1 for loading indicator
-        ),
+          return const SizedBox.shrink();
+        },
+        childCount:
+            _episodes.length + 2, // +1 for header, +1 for loading indicator
       ),
     );
   }
