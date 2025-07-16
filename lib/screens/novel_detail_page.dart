@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/library_page.dart';
@@ -19,7 +20,7 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   final apiService = ref.read(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
 
-  final novelInfo = await apiService.fetchNovelInfo(ncode);
+  final novelInfo = await apiService.fetchBasicNovelInfo(ncode);
 
   // Insert into history
   await db.addToHistory(
@@ -40,6 +41,12 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   );
 
   return novelInfo;
+}
+
+@riverpod
+Future<List<Episode>> episodeList(Ref ref, String ncode, int page) async {
+  final apiService = ref.read(apiServiceProvider);
+  return apiService.fetchEpisodeList(ncode, page);
 }
 
 @riverpod
@@ -246,13 +253,9 @@ class NovelDetailPage extends ConsumerWidget {
               ),
             )
           else
-            SliverToBoxAdapter(
-              child: _buildEpisodeList(
-                context,
-                ref,
-                novelInfo,
-                ncode,
-              ),
+            _EpisodeListSliver(
+              ncode: ncode,
+              totalEpisodes: novelInfo.generalAllNo ?? 0,
             ),
         ],
       ),
@@ -293,6 +296,159 @@ class _StorySection extends StatefulWidget {
 
   @override
   _StorySectionState createState() => _StorySectionState();
+}
+
+class _EpisodeListSliver extends ConsumerStatefulWidget {
+  const _EpisodeListSliver({
+    required this.ncode,
+    required this.totalEpisodes,
+  });
+
+  final String ncode;
+  final int totalEpisodes;
+
+  @override
+  ConsumerState<_EpisodeListSliver> createState() => _EpisodeListSliverState();
+}
+
+class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
+  final List<Episode> _episodes = [];
+  var _currentPage = 1;
+  var _isLoading = false;
+  var _hasMorePages = true;
+  var _initialLoadDone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMoreEpisodes();
+  }
+
+  Future<void> _loadMoreEpisodes() async {
+    if (_isLoading || !_hasMorePages) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final episodes = await ref.read(episodeListProvider(widget.ncode, _currentPage).future);
+      
+      if (episodes.isEmpty) {
+        _hasMorePages = false;
+      } else {
+        _episodes.addAll(episodes);
+        _currentPage++;
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エピソードの読み込みに失敗しました: $e')),
+        );
+      }
+      _hasMorePages = false;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _initialLoadDone = true;
+        });
+      }
+    }
+  }
+
+  bool _onScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollEndNotification &&
+        notification.metrics.extentAfter < 200 &&
+        _hasMorePages &&
+        !_isLoading) {
+      _loadMoreEpisodes();
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_initialLoadDone) {
+      return const SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
+    if (_episodes.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('エピソードがありません'),
+          ),
+        ),
+      );
+    }
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: _onScrollNotification,
+      child: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index == 0) {
+              // Header
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  '${widget.totalEpisodes} 話',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              );
+            }
+
+            final episodeIndex = index - 1;
+            if (episodeIndex == _episodes.length) {
+              // Loading indicator
+              return _isLoading
+                  ? const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : const SizedBox.shrink();
+            }
+
+            if (episodeIndex < _episodes.length) {
+              final episode = _episodes[episodeIndex];
+              final episodeTitle = episode.subtitle ?? 'No Title';
+              return ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                title: Text(episodeTitle),
+                subtitle: episode.update != null
+                    ? Text('更新日: ${episode.update}')
+                    : null,
+                onTap: () {
+                  final episodeUrl = episode.url;
+                  if (episodeUrl != null) {
+                    final match = RegExp(r'/(\d+)/').firstMatch(episodeUrl);
+                    if (match != null) {
+                      final episodeNumber = match.group(1);
+                      if (episodeNumber != null) {
+                        context.push('/novel/${widget.ncode}/$episodeNumber');
+                      }
+                    }
+                  }
+                },
+              );
+            }
+
+            return const SizedBox.shrink();
+          },
+          childCount: _episodes.length + 2, // +1 for header, +1 for loading indicator
+        ),
+      ),
+    );
+  }
 }
 
 class _StorySectionState extends State<_StorySection> {
@@ -352,61 +508,6 @@ Widget _buildGenreTags(BuildContext context, NovelInfo novelInfo) {
     spacing: 8,
     runSpacing: 4,
     children: keywords.map((keyword) => Chip(label: Text(keyword))).toList(),
-  );
-}
-
-Widget _buildEpisodeList(
-  BuildContext context,
-  WidgetRef ref,
-  NovelInfo novelInfo,
-  String ncode,
-) {
-  final episodes = novelInfo.episodes ?? [];
-  if (episodes.isEmpty) {
-    return const SizedBox.shrink();
-  }
-
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Text(
-          '${novelInfo.generalAllNo} 話',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-      ),
-      ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: episodes.length,
-        itemBuilder: (context, index) {
-          final episode = episodes[index];
-          final episodeTitle = episode.subtitle ?? 'No Title';
-          return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-            title: Text(episodeTitle),
-            subtitle: episode.update != null
-                ? Text('更新日: ${episode.update}')
-                : null,
-            onTap: () {
-              final episodeUrl = episode.url;
-              if (episodeUrl != null) {
-                final match = RegExp(r'/(\d+)/').firstMatch(episodeUrl);
-                if (match != null) {
-                  final episodeNumber = match.group(1);
-                  if (episodeNumber != null) {
-                    context.push('/novel/$ncode/$episodeNumber');
-                  }
-                }
-              }
-            },
-          );
-        },
-      ),
-    ],
   );
 }
 

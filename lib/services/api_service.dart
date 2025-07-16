@@ -197,6 +197,24 @@ class ApiService {
     return info;
   }
 
+  Future<List<Episode>> fetchEpisodeList(String ncode, int page) async {
+    final pageUrl = page == 1 
+        ? 'https://ncode.syosetu.com/${ncode.toLowerCase()}/'
+        : 'https://ncode.syosetu.com/${ncode.toLowerCase()}/?p=$page';
+    
+    final response = await _fetchWithCache(pageUrl);
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to fetch episodes page $page: ${response.statusCode} ${response.reasonPhrase}',
+      );
+    }
+
+    final html = response.body;
+    final document = parser.parse(html);
+    return _parseEpisodes(document);
+  }
+
   Future<NovelInfo> fetchNovelInfo(String ncode) async {
     var info = await _fetchNovelInfoFromNarou(ncode);
 

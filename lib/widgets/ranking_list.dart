@@ -23,8 +23,11 @@ class _RankingListState extends ConsumerState<RankingList>
     with AutomaticKeepAliveClientMixin<RankingList> {
   List<RankingResponse> _allNovelData = [];
   List<RankingResponse> _filteredNovelData = [];
+  List<RankingResponse> _displayedData = [];
   final _itemsPerPage = 50;
   var _currentPage = 1;
+  final _scrollController = ScrollController();
+  var _isLoadingMore = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -32,7 +35,14 @@ class _RankingListState extends ConsumerState<RankingList>
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _applyFilters();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -66,15 +76,49 @@ class _RankingListState extends ConsumerState<RankingList>
     setState(() {
       _filteredNovelData = filtered;
       _currentPage = 1;
+      _updateDisplayedData();
     });
   }
 
+  void _updateDisplayedData() {
+    final totalItems = _filteredNovelData.length;
+    var displayItemCount = _currentPage * _itemsPerPage;
+    if (displayItemCount > totalItems) {
+      displayItemCount = totalItems;
+    }
+    
+    _displayedData = _filteredNovelData.take(displayItemCount).toList();
+  }
+
+  void _onScroll() {
+    if (_isLoadingMore || !mounted) return;
+    
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    const delta = 200.0; // Load more when within 200 pixels of bottom
+    
+    if (currentScroll >= maxScroll - delta) {
+      _loadMore();
+    }
+  }
+
   void _loadMore() {
-    if (!mounted) {
+    if (_isLoadingMore || !mounted) {
       return;
     }
+    
+    final totalItems = _filteredNovelData.length;
+    final currentDisplayed = _displayedData.length;
+    
+    if (currentDisplayed >= totalItems) {
+      return; // All items are already displayed
+    }
+    
     setState(() {
+      _isLoadingMore = true;
       _currentPage++;
+      _updateDisplayedData();
+      _isLoadingMore = false;
     });
   }
 
@@ -88,27 +132,24 @@ class _RankingListState extends ConsumerState<RankingList>
         _allNovelData = allNovelData;
         _applyFilters();
 
-        final totalItems = _filteredNovelData.length;
-        var displayItemCount = _currentPage * _itemsPerPage;
-        if (displayItemCount > totalItems) {
-          displayItemCount = totalItems;
-        }
-        final hasMore = displayItemCount < totalItems;
+        final hasMore = _displayedData.length < _filteredNovelData.length;
 
         return RefreshIndicator(
           onRefresh: () async =>
               ref.invalidate(rankingDataProvider(widget.rankingType)),
           child: ListView.builder(
-            itemCount: displayItemCount + (hasMore ? 1 : 0),
+            controller: _scrollController,
+            itemCount: _displayedData.length + (hasMore ? 1 : 0),
             itemBuilder: (context, index) {
-              if (index == displayItemCount) {
-                return TextButton(
-                  onPressed: _loadMore,
-                  child: const Text('さらに読み込む'),
+              if (index == _displayedData.length) {
+                // Loading indicator at the bottom
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
                 );
               }
 
-              final item = _filteredNovelData[index];
+              final item = _displayedData[index];
               return NovelListTile(item: item, isRanking: true);
             },
           ),
