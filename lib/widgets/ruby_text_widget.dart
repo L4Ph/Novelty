@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 // WidgetSpanの中で、Stackを使ってルビをベーステキストの上に重ねる
 class RubySpan extends StatelessWidget {
   const RubySpan({
+    super.key,
     required this.base,
     required this.ruby,
     required this.style,
-    super.key,
   });
 
   final String base;
