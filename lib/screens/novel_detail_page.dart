@@ -261,7 +261,8 @@ class NovelDetailPage extends ConsumerWidget {
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.menu_book),
                     label: const Text('この小説を読む'),
-                    onPressed: () => context.push('/novel/$ncode/1'),
+                    onPressed: () =>
+                        context.push('/novel/${ncode.toLowerCase()}/1'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,

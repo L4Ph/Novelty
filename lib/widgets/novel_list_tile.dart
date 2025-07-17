@@ -67,7 +67,7 @@ class NovelListTile extends StatelessWidget {
           onTap ??
           () {
             final ncode = item.ncode.toLowerCase();
-            context.push('/novel/$ncode');
+            context.push('/novel/${ncode.toLowerCase()}');
           },
       onLongPress: onLongPress,
     );
