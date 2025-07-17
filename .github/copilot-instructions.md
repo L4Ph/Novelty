@@ -148,7 +148,7 @@ class C {}
 
 after
 ```dart
-/// Documentation comment.
+/// ドキュメントコメント.
 class C {}
 ```
 
