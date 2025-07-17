@@ -6,8 +6,8 @@ import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/enriched_novel_list.dart';
-import 'package:novelty/widgets/novel_list.dart';
 import 'package:novelty/widgets/ranking_list.dart';
+import 'package:novelty/database/database.dart';
 
 /// "見つける"ページのウィジェット。
 class ExplorePage extends ConsumerStatefulWidget {
@@ -395,9 +395,9 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
 /// Helper widget to display enriched search results
 class _EnrichedSearchResults extends ConsumerWidget {
   const _EnrichedSearchResults({required this.searchResults});
-  
+
   final List<RankingResponse> searchResults;
-  
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return FutureBuilder<List<EnrichedNovelData>>(
@@ -406,11 +406,11 @@ class _EnrichedSearchResults extends ConsumerWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
-        
+
         final enrichedResults = snapshot.data ?? [];
         return EnrichedNovelList(
           enrichedNovels: enrichedResults,
@@ -419,18 +419,19 @@ class _EnrichedSearchResults extends ConsumerWidget {
       },
     );
   }
-  
+
   Future<List<EnrichedNovelData>> _enrichSearchResults(
     WidgetRef ref,
     List<RankingResponse> searchResults,
   ) async {
     final db = ref.read(appDatabaseProvider);
-    
-    // Get all library novels at once for efficient lookup  
-    final libraryNovels = await (db.select(db.novels)
-          ..where((tbl) => tbl.fav.equals(1))).get();
+
+    // Get all library novels at once for efficient lookup
+    final libraryNovels = await (db.select(
+      db.novels,
+    )..where((tbl) => tbl.fav.equals(1))).get();
     final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
-    
+
     // Enrich each novel with library status
     final enrichedData = searchResults.map((novel) {
       final isInLibrary = libraryNcodes.contains(novel.ncode);
@@ -439,7 +440,7 @@ class _EnrichedSearchResults extends ConsumerWidget {
         isInLibrary: isInLibrary,
       );
     }).toList();
-    
+
     return enrichedData;
   }
 }

@@ -6,13 +6,16 @@ part of 'database_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+/// データベースサービスのプロバイダー。
 @ProviderFor(databaseService)
 const databaseServiceProvider = DatabaseServiceProvider._();
 
+/// データベースサービスのプロバイダー。
 final class DatabaseServiceProvider
     extends
         $FunctionalProvider<DatabaseService, DatabaseService, DatabaseService>
     with $Provider<DatabaseService> {
+  /// データベースサービスのプロバイダー。
   const DatabaseServiceProvider._()
     : super(
         from: null,

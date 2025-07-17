@@ -6,9 +6,11 @@ part of 'novel_detail_page.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+/// 小説の情報を取得するプロバイダー。
 @ProviderFor(novelInfo)
 const novelInfoProvider = NovelInfoFamily._();
 
+/// 小説の情報を取得するプロバイダー。
 final class NovelInfoProvider
     extends
         $FunctionalProvider<
@@ -17,6 +19,7 @@ final class NovelInfoProvider
           FutureOr<NovelInfo>
         >
     with $FutureModifier<NovelInfo>, $FutureProvider<NovelInfo> {
+  /// 小説の情報を取得するプロバイダー。
   const NovelInfoProvider._({
     required NovelInfoFamily super.from,
     required String super.argument,
@@ -62,6 +65,7 @@ final class NovelInfoProvider
 
 String _$novelInfoHash() => r'8a70e4fa7e60d18d2b6f94b97b6cc2f7fd110fc2';
 
+/// 小説の情報を取得するプロバイダー。
 final class NovelInfoFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<NovelInfo>, String> {
   const NovelInfoFamily._()
@@ -73,6 +77,7 @@ final class NovelInfoFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// 小説の情報を取得するプロバイダー。
   NovelInfoProvider call(String ncode) =>
       NovelInfoProvider._(argument: ncode, from: this);
 
@@ -80,9 +85,11 @@ final class NovelInfoFamily extends $Family
   String toString() => r'novelInfoProvider';
 }
 
+/// 小説のエピソードを取得するプロバイダー。
 @ProviderFor(episodeList)
 const episodeListProvider = EpisodeListFamily._();
 
+/// 小説のエピソードを取得するプロバイダー。
 final class EpisodeListProvider
     extends
         $FunctionalProvider<
@@ -91,6 +98,7 @@ final class EpisodeListProvider
           FutureOr<List<Episode>>
         >
     with $FutureModifier<List<Episode>>, $FutureProvider<List<Episode>> {
+  /// 小説のエピソードを取得するプロバイダー。
   const EpisodeListProvider._({
     required EpisodeListFamily super.from,
     required String super.argument,
@@ -137,6 +145,7 @@ final class EpisodeListProvider
 
 String _$episodeListHash() => r'db416a99e1efe708c8478e021196c75d03808ffc';
 
+/// 小説のエピソードを取得するプロバイダー。
 final class EpisodeListFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<Episode>>, String> {
   const EpisodeListFamily._()
@@ -148,6 +157,7 @@ final class EpisodeListFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// 小説のエピソードを取得するプロバイダー。
   EpisodeListProvider call(String key) =>
       EpisodeListProvider._(argument: key, from: this);
 
@@ -155,11 +165,14 @@ final class EpisodeListFamily extends $Family
   String toString() => r'episodeListProvider';
 }
 
+/// 小説のお気に入り状態を管理するプロバイダー。
 @ProviderFor(FavoriteStatus)
 const favoriteStatusProvider = FavoriteStatusFamily._();
 
+/// 小説のお気に入り状態を管理するプロバイダー。
 final class FavoriteStatusProvider
     extends $AsyncNotifierProvider<FavoriteStatus, bool> {
+  /// 小説のお気に入り状態を管理するプロバイダー。
   const FavoriteStatusProvider._({
     required FavoriteStatusFamily super.from,
     required String super.argument,
@@ -196,8 +209,9 @@ final class FavoriteStatusProvider
   }
 }
 
-String _$favoriteStatusHash() => r'805f39ffdd62300e9292824a6e4496910ed98585';
+String _$favoriteStatusHash() => r'b0ca148131c21e996980eb29d4bda6e4976f3c42';
 
+/// 小説のお気に入り状態を管理するプロバイダー。
 final class FavoriteStatusFamily extends $Family
     with
         $ClassFamilyOverride<
@@ -216,6 +230,7 @@ final class FavoriteStatusFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// 小説のお気に入り状態を管理するプロバイダー。
   FavoriteStatusProvider call(String ncode) =>
       FavoriteStatusProvider._(argument: ncode, from: this);
 
@@ -245,11 +260,17 @@ abstract class _$FavoriteStatus extends $AsyncNotifier<bool> {
   }
 }
 
+/// 小説のダウンロード状態を管理するプロバイダー。
+/// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
 @ProviderFor(DownloadStatus)
 const downloadStatusProvider = DownloadStatusFamily._();
 
+/// 小説のダウンロード状態を管理するプロバイダー。
+/// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
 final class DownloadStatusProvider
     extends $StreamNotifierProvider<DownloadStatus, bool> {
+  /// 小説のダウンロード状態を管理するプロバイダー。
+  /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
   const DownloadStatusProvider._({
     required DownloadStatusFamily super.from,
     required NovelInfo super.argument,
@@ -288,6 +309,8 @@ final class DownloadStatusProvider
 
 String _$downloadStatusHash() => r'802dc20c13f978fe13a721af0783d28fc878012e';
 
+/// 小説のダウンロード状態を管理するプロバイダー。
+/// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
 final class DownloadStatusFamily extends $Family
     with
         $ClassFamilyOverride<
@@ -306,6 +329,8 @@ final class DownloadStatusFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// 小説のダウンロード状態を管理するプロバイダー。
+  /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
   DownloadStatusProvider call(NovelInfo novelInfo) =>
       DownloadStatusProvider._(argument: novelInfo, from: this);
 

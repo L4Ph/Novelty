@@ -6,11 +6,14 @@ part of 'settings_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+/// アプリケーションの設定を提供するプロバイダー。
 @ProviderFor(Settings)
 const settingsProvider = SettingsProvider._();
 
+/// アプリケーションの設定を提供するプロバイダー。
 final class SettingsProvider
     extends $AsyncNotifierProvider<Settings, AppSettings> {
+  /// アプリケーションの設定を提供するプロバイダー。
   const SettingsProvider._()
     : super(
         from: null,

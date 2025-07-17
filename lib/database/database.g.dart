@@ -750,6 +750,8 @@ class Novel extends DataClass implements Insertable<Novel> {
 
   /// レビュー数
   final int? reviewCount;
+
+  /// レビューの平均評価(?)
   final int? rateCount;
 
   /// 評価ポイント

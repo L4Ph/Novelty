@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/widgets/enriched_novel_list.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 /// ランキングリストを表示するウィジェット。
@@ -220,7 +218,9 @@ class _RankingListState extends ConsumerState<RankingList>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final enrichedRankingDataAsync = ref.watch(enrichedRankingDataProvider(widget.rankingType));
+    final enrichedRankingDataAsync = ref.watch(
+      enrichedRankingDataProvider(widget.rankingType),
+    );
 
     return enrichedRankingDataAsync.when<Widget>(
       data: (enrichedRankingData) {
@@ -251,7 +251,7 @@ class _RankingListState extends ConsumerState<RankingList>
               }
               final enrichedItem = displayData[index];
               return NovelListTile(
-                item: enrichedItem.novel, 
+                item: enrichedItem.novel,
                 enrichedData: enrichedItem,
                 isRanking: true,
               );
