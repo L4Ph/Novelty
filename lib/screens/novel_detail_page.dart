@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
@@ -85,11 +86,11 @@ class FavoriteStatus extends _$FavoriteStatus {
 
       ref
         ..invalidate(libraryNovelsProvider)
-        ..invalidate(rankingDataProvider('d'))
-        ..invalidate(rankingDataProvider('w'))
-        ..invalidate(rankingDataProvider('m'))
-        ..invalidate(rankingDataProvider('q'))
-        ..invalidate(rankingDataProvider('all'));
+        ..invalidate(enrichedRankingDataProvider('d'))
+        ..invalidate(enrichedRankingDataProvider('w'))
+        ..invalidate(enrichedRankingDataProvider('m'))
+        ..invalidate(enrichedRankingDataProvider('q'))
+        ..invalidate(enrichedRankingDataProvider('all'));
       return true;
     } catch (e, st) {
       state = AsyncValue.error(e, st);

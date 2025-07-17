@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/widgets/enriched_novel_list.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 /// ランキングリストを表示するウィジェット。
@@ -29,8 +31,8 @@ class RankingList extends ConsumerStatefulWidget {
 
 class _RankingListState extends ConsumerState<RankingList>
     with AutomaticKeepAliveClientMixin<RankingList> {
-  List<RankingResponse> _allNovelData = [];
-  List<RankingResponse> _filteredNovelData = [];
+  List<EnrichedNovelData> _allNovelData = [];
+  List<EnrichedNovelData> _filteredNovelData = [];
   final _scrollController = ScrollController();
   var _isLoadingMore = false;
   var _isInitialLoad = true;
@@ -79,10 +81,11 @@ class _RankingListState extends ConsumerState<RankingList>
       return;
     }
 
-    var filtered = List<RankingResponse>.from(_allNovelData);
+    var filtered = List<EnrichedNovelData>.from(_allNovelData);
 
     if (widget.showOnlyOngoing) {
-      filtered = filtered.where((novel) {
+      filtered = filtered.where((enrichedNovel) {
+        final novel = enrichedNovel.novel;
         // Allow items with null end status to pass through initially
         // They will be filtered properly after details are loaded
         return novel.end == null || novel.end == 1;
@@ -90,7 +93,8 @@ class _RankingListState extends ConsumerState<RankingList>
     }
 
     if (widget.selectedGenre != null) {
-      filtered = filtered.where((novel) {
+      filtered = filtered.where((enrichedNovel) {
+        final novel = enrichedNovel.novel;
         // Allow items with null genre to pass through initially
         // They will be filtered properly after details are loaded
         return novel.genre == null || novel.genre == widget.selectedGenre;
@@ -121,7 +125,7 @@ class _RankingListState extends ConsumerState<RankingList>
 
     final itemsToLoad = _isInitialLoad ? 20 : 10;
     final currentLoadedCount = _filteredNovelData
-        .where((n) => n.title != null)
+        .where((n) => n.novel.title != null)
         .length;
 
     if (currentLoadedCount >= _filteredNovelData.length) {
@@ -136,9 +140,9 @@ class _RankingListState extends ConsumerState<RankingList>
     });
 
     final nextNcodeSlice = _filteredNovelData
-        .where((n) => n.title == null)
+        .where((n) => n.novel.title == null)
         .take(itemsToLoad)
-        .map((n) => n.ncode)
+        .map((n) => n.novel.ncode)
         .toList();
 
     if (nextNcodeSlice.isEmpty) {
@@ -157,41 +161,49 @@ class _RankingListState extends ConsumerState<RankingList>
 
     // Update both _filteredNovelData and _allNovelData with complete information
     setState(() {
-      _filteredNovelData = _filteredNovelData.map((novel) {
+      _filteredNovelData = _filteredNovelData.map((enrichedNovel) {
+        final novel = enrichedNovel.novel;
         if (novelDetails.containsKey(novel.ncode)) {
           final details = novelDetails[novel.ncode]!;
-          return novel.copyWith(
-            title: details.title,
-            writer: details.writer,
-            story: details.story,
-            novelType: details.novelType,
-            end: details.end,
-            genre: details.genre,
-            generalAllNo: details.generalAllNo,
-            keyword: details.keyword,
-            allPoint: details.allPoint,
+          return EnrichedNovelData(
+            novel: novel.copyWith(
+              title: details.title,
+              writer: details.writer,
+              story: details.story,
+              novelType: details.novelType,
+              end: details.end,
+              genre: details.genre,
+              generalAllNo: details.generalAllNo,
+              keyword: details.keyword,
+              allPoint: details.allPoint,
+            ),
+            isInLibrary: enrichedNovel.isInLibrary,
           );
         }
-        return novel;
+        return enrichedNovel;
       }).toList();
 
       // Also update the source data
-      _allNovelData = _allNovelData.map((novel) {
+      _allNovelData = _allNovelData.map((enrichedNovel) {
+        final novel = enrichedNovel.novel;
         if (novelDetails.containsKey(novel.ncode)) {
           final details = novelDetails[novel.ncode]!;
-          return novel.copyWith(
-            title: details.title,
-            writer: details.writer,
-            story: details.story,
-            novelType: details.novelType,
-            end: details.end,
-            genre: details.genre,
-            generalAllNo: details.generalAllNo,
-            keyword: details.keyword,
-            allPoint: details.allPoint,
+          return EnrichedNovelData(
+            novel: novel.copyWith(
+              title: details.title,
+              writer: details.writer,
+              story: details.story,
+              novelType: details.novelType,
+              end: details.end,
+              genre: details.genre,
+              generalAllNo: details.generalAllNo,
+              keyword: details.keyword,
+              allPoint: details.allPoint,
+            ),
+            isInLibrary: enrichedNovel.isInLibrary,
           );
         }
-        return novel;
+        return enrichedNovel;
       }).toList();
 
       _isLoadingMore = false;
@@ -208,24 +220,24 @@ class _RankingListState extends ConsumerState<RankingList>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final rankingDataAsync = ref.watch(rankingDataProvider(widget.rankingType));
+    final enrichedRankingDataAsync = ref.watch(enrichedRankingDataProvider(widget.rankingType));
 
-    return rankingDataAsync.when<Widget>(
-      data: (rankingData) {
-        if (_allNovelData.map((e) => e.ncode).join() !=
-            rankingData.map((e) => e.ncode).join()) {
-          _allNovelData = rankingData;
+    return enrichedRankingDataAsync.when<Widget>(
+      data: (enrichedRankingData) {
+        if (_allNovelData.map((e) => e.novel.ncode).join() !=
+            enrichedRankingData.map((e) => e.novel.ncode).join()) {
+          _allNovelData = enrichedRankingData;
           _applyFiltersAndReset();
         }
 
         final displayData = _filteredNovelData
-            .where((n) => n.title != null)
+            .where((n) => n.novel.title != null)
             .toList();
         final hasMore = displayData.length < _filteredNovelData.length;
 
         return RefreshIndicator(
           onRefresh: () async {
-            ref.invalidate(rankingDataProvider(widget.rankingType));
+            ref.invalidate(enrichedRankingDataProvider(widget.rankingType));
           },
           child: ListView.builder(
             controller: _scrollController,
@@ -237,8 +249,12 @@ class _RankingListState extends ConsumerState<RankingList>
                   child: Center(child: CircularProgressIndicator()),
                 );
               }
-              final item = displayData[index];
-              return NovelListTile(item: item, isRanking: true);
+              final enrichedItem = displayData[index];
+              return NovelListTile(
+                item: enrichedItem.novel, 
+                enrichedData: enrichedItem,
+                isRanking: true,
+              );
             },
           ),
         );
