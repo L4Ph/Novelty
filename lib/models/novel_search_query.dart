@@ -131,6 +131,7 @@ abstract class NovelSearchQuery with _$NovelSearchQuery {
     /// Nコード。
     ///
     /// ハイフン(-)記号で区切ればOR検索ができる。
+    /// 常に小文字で扱う
     List<String>? ncode,
 
     /// 作品タイプ。

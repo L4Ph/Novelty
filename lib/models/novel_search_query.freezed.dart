@@ -72,6 +72,7 @@ mixin _$NovelSearchQuery {
  String? get time;/// Nコード。
 ///
 /// ハイフン(-)記号で区切ればOR検索ができる。
+/// 常に小文字で扱う
  List<String>? get ncode;/// 作品タイプ。
 ///
 /// * `t` - 短編
@@ -497,10 +498,12 @@ class _NovelSearchQuery implements NovelSearchQuery {
 /// Nコード。
 ///
 /// ハイフン(-)記号で区切ればOR検索ができる。
+/// 常に小文字で扱う
  final  List<String>? _ncode;
 /// Nコード。
 ///
 /// ハイフン(-)記号で区切ればOR検索ができる。
+/// 常に小文字で扱う
 @override List<String>? get ncode {
   final value = _ncode;
   if (value == null) return null;

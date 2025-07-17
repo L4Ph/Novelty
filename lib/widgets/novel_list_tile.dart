@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/utils/app_constants.dart';
 
 /// 小説リストのタイルを表示するウィジェット。
@@ -12,10 +13,14 @@ class NovelListTile extends StatelessWidget {
     this.isRanking = false,
     this.onTap,
     this.onLongPress,
+    this.enrichedData,
   });
 
   /// 小説の情報。
   final RankingResponse item;
+
+  /// 豊富な小説情報（ライブラリ状態を含む）。
+  final EnrichedNovelData? enrichedData;
 
   /// ランキングリストかどうか。
   final bool isRanking;
@@ -42,7 +47,19 @@ class NovelListTile extends StatelessWidget {
 
     return ListTile(
       leading: isRanking ? Text('${item.rank ?? ''}') : null,
-      title: Text(title),
+      title: Row(
+        children: [
+          Expanded(child: Text(title)),
+          if (enrichedData?.isInLibrary == true) ...[
+            const SizedBox(width: 8),
+            Icon(
+              Icons.favorite,
+              color: Theme.of(context).colorScheme.primary,
+              size: 16,
+            ),
+          ],
+        ],
+      ),
       subtitle: Text(
         'Nコード: ${item.ncode} - ${item.allPoint ?? item.pt ?? 0}pt\nジャンル: $genreName - $status',
       ),
@@ -50,7 +67,7 @@ class NovelListTile extends StatelessWidget {
           onTap ??
           () {
             final ncode = item.ncode.toLowerCase();
-            context.push('/novel/$ncode');
+            context.push('/novel/${ncode.toLowerCase()}');
           },
       onLongPress: onLongPress,
     );

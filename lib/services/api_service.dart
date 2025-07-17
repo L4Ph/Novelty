@@ -57,6 +57,7 @@ class ApiService {
       return Episode(
         subtitle: subtitle?.text.trim(),
         url: url,
+        // ignore: unnecessary_raw_strings
         update: update?.text.trim().replaceAll(RegExp(r'（.+）'), '').trim(),
         revised: revisedAttr?.replaceAll(' 改稿', '').trim(),
         index: index,
@@ -497,6 +498,7 @@ class ApiService {
     return '0$n';
   }
 
+  /// ランキングを取得するメソッド。
   Future<List<RankingResponse>> fetchRanking(
     String rankingType,
   ) async {

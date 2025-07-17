@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
-import 'package:novelty/widgets/novel_list.dart';
+import 'package:novelty/widgets/enriched_novel_list.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
+
 /// "見つける"ページのウィジェット。
-class ExplorePage extends StatefulWidget {
+class ExplorePage extends ConsumerStatefulWidget {
   /// コンストラクタ。
   const ExplorePage({super.key});
 
   @override
-  State<ExplorePage> createState() => _ExplorePageState();
+  ConsumerState<ExplorePage> createState() => _ExplorePageState();
 }
 
-class _ExplorePageState extends State<ExplorePage>
+class _ExplorePageState extends ConsumerState<ExplorePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _apiService = ApiService();
@@ -348,7 +351,7 @@ class _ExplorePageState extends State<ExplorePage>
         body: _isSearching
             ? _isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : NovelList(novels: _searchResults, isRanking: false)
+                  : _EnrichedSearchResults(searchResults: _searchResults)
             : TabBarView(
                 controller: _tabController,
                 children: [
@@ -385,6 +388,29 @@ class _ExplorePageState extends State<ExplorePage>
                 ],
               ),
       ),
+    );
+  }
+}
+
+/// Helper widget to display enriched search results
+class _EnrichedSearchResults extends ConsumerWidget {
+  const _EnrichedSearchResults({required this.searchResults});
+
+  final List<RankingResponse> searchResults;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enrichedResults = ref.watch(enrichedSearchDataProvider(searchResults));
+
+    return enrichedResults.when(
+      data: (data) {
+        return EnrichedNovelList(
+          enrichedNovels: data,
+          isRanking: false,
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('Error: $error')),
     );
   }
 }

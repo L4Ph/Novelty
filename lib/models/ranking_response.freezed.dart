@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RankingResponse {
 
-/// Nコード。
+/// Nコード
+///
+/// 常に小文字で扱う
  String get ncode;/// 順位。
 ///
 /// 1～300位。
@@ -255,7 +257,9 @@ class _RankingResponse implements RankingResponse {
   const _RankingResponse({required this.ncode, @StringToIntConverter() this.rank, @StringToIntConverter() this.pt, @StringToIntConverter()@JsonKey(name: 'all_point') this.allPoint, this.title, @StringToIntConverter()@JsonKey(name: 'novel_type') this.novelType, @StringToIntConverter() this.end, @StringToIntConverter() this.genre, this.writer, this.story, @StringToIntConverter()@JsonKey(name: 'userid') this.userId, @StringToIntConverter()@JsonKey(name: 'general_all_no') this.generalAllNo, this.keyword});
   factory _RankingResponse.fromJson(Map<String, dynamic> json) => _$RankingResponseFromJson(json);
 
-/// Nコード。
+/// Nコード
+///
+/// 常に小文字で扱う
 @override final  String ncode;
 /// 順位。
 ///

@@ -26,7 +26,9 @@ abstract class Episode with _$Episode {
     /// `YYYY/MM/DD HH:MM` の形式。
     String? revised,
 
-    /// Nコード。
+    /// Nコード
+    ///
+    /// 常に小文字で扱う
     String? ncode,
 
     /// 話数。

@@ -1,20 +1,24 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
-/// 小説リストを表示するウィジェット。
-class NovelList extends ConsumerWidget {
+/// 豊富な情報（ライブラリ状態を含む）を持つ小説リストを表示するウィジェット。
+class EnrichedNovelList extends ConsumerWidget {
   /// コンストラクタ。
-  const NovelList({required this.novels, super.key, this.isRanking = true});
+  const EnrichedNovelList({
+    required this.enrichedNovels,
+    super.key,
+    this.isRanking = true,
+  });
 
-  /// 小説のリスト。
-  final List<RankingResponse> novels;
+  /// 豊富な情報を持つ小説のリスト。
+  final List<EnrichedNovelData> enrichedNovels;
 
   /// ランキングリストかどうか。
   final bool isRanking;
@@ -25,11 +29,14 @@ class NovelList extends ConsumerWidget {
     final db = ref.watch(appDatabaseProvider);
 
     return ListView.builder(
-      itemCount: novels.length,
+      itemCount: enrichedNovels.length,
       itemBuilder: (context, index) {
-        final item = novels[index];
+        final enrichedItem = enrichedNovels[index];
+        final item = enrichedItem.novel;
+
         return NovelListTile(
           item: item,
+          enrichedData: enrichedItem,
           isRanking: isRanking,
           onLongPress: () async {
             if (!context.mounted) {
@@ -37,8 +44,8 @@ class NovelList extends ConsumerWidget {
             }
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
             try {
-              final novel = await db.getNovel(item.ncode);
-              if (novel != null) {
+              // Check if already in library
+              if (enrichedItem.isInLibrary) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('すでにライブラリに登録されています')),
@@ -47,10 +54,15 @@ class NovelList extends ConsumerWidget {
                 return;
               }
 
+              // Add to library
               final novelInfo = await apiService.fetchNovelInfo(
                 item.ncode,
               );
-              await db.insertNovel(novelInfo.toDbCompanion());
+              await db.insertNovel(
+                novelInfo.toDbCompanion().copyWith(
+                  fav: const Value(1), // Mark as favorite
+                ),
+              );
               // Invalidate providers to refresh UI
               ref
                 ..invalidate(libraryNovelsProvider)

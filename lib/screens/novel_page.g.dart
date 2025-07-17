@@ -6,9 +6,11 @@ part of 'novel_page.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+/// 小説の情報を取得するプロバイダー。
 @ProviderFor(novelInfo)
 const novelInfoProvider = NovelInfoFamily._();
 
+/// 小説の情報を取得するプロバイダー。
 final class NovelInfoProvider
     extends
         $FunctionalProvider<
@@ -17,6 +19,7 @@ final class NovelInfoProvider
           FutureOr<NovelInfo>
         >
     with $FutureModifier<NovelInfo>, $FutureProvider<NovelInfo> {
+  /// 小説の情報を取得するプロバイダー。
   const NovelInfoProvider._({
     required NovelInfoFamily super.from,
     required String super.argument,
@@ -62,6 +65,7 @@ final class NovelInfoProvider
 
 String _$novelInfoHash() => r'7e388f18037f9f1e3328f59630ea6434481550cb';
 
+/// 小説の情報を取得するプロバイダー。
 final class NovelInfoFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<NovelInfo>, String> {
   const NovelInfoFamily._()
@@ -73,6 +77,7 @@ final class NovelInfoFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// 小説の情報を取得するプロバイダー。
   NovelInfoProvider call(String ncode) =>
       NovelInfoProvider._(argument: ncode, from: this);
 
@@ -80,12 +85,15 @@ final class NovelInfoFamily extends $Family
   String toString() => r'novelInfoProvider';
 }
 
+/// 小説のエピソードを取得するプロバイダー。
 @ProviderFor(episode)
 const episodeProvider = EpisodeFamily._();
 
+/// 小説のエピソードを取得するプロバイダー。
 final class EpisodeProvider
     extends $FunctionalProvider<AsyncValue<Episode>, Episode, FutureOr<Episode>>
     with $FutureModifier<Episode>, $FutureProvider<Episode> {
+  /// 小説のエピソードを取得するプロバイダー。
   const EpisodeProvider._({
     required EpisodeFamily super.from,
     required ({String ncode, int episode}) super.argument,
@@ -131,6 +139,7 @@ final class EpisodeProvider
 
 String _$episodeHash() => r'1313b4e08d23632b8d52e27b0eee4c129647396e';
 
+/// 小説のエピソードを取得するプロバイダー。
 final class EpisodeFamily extends $Family
     with
         $FunctionalFamilyOverride<
@@ -146,6 +155,7 @@ final class EpisodeFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// 小説のエピソードを取得するプロバイダー。
   EpisodeProvider call({required String ncode, required int episode}) =>
       EpisodeProvider._(argument: (ncode: ncode, episode: episode), from: this);
 
@@ -153,11 +163,14 @@ final class EpisodeFamily extends $Family
   String toString() => r'episodeProvider';
 }
 
+/// 現在のエピソード番号を管理するプロバイダー。
 @ProviderFor(CurrentEpisode)
 const currentEpisodeProvider = CurrentEpisodeProvider._();
 
+/// 現在のエピソード番号を管理するプロバイダー。
 final class CurrentEpisodeProvider
     extends $NotifierProvider<CurrentEpisode, int> {
+  /// 現在のエピソード番号を管理するプロバイダー。
   const CurrentEpisodeProvider._()
     : super(
         from: null,

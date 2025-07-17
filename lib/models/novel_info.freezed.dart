@@ -16,7 +16,9 @@ T _$identity<T>(T value) => value;
 mixin _$NovelInfo {
 
 /// 作品名。
- String? get title;/// Nコード。
+ String? get title;/// Nコード
+///
+/// 常に小文字で扱う
  String? get ncode;/// 作者名。
  String? get writer;/// 作品のあらすじ。
  String? get story;/// 小説タイプ。
@@ -315,7 +317,9 @@ class _NovelInfo implements NovelInfo {
 
 /// 作品名。
 @override final  String? title;
-/// Nコード。
+/// Nコード
+///
+/// 常に小文字で扱う
 @override final  String? ncode;
 /// 作者名。
 @override final  String? writer;
