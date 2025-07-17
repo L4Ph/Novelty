@@ -67,7 +67,7 @@ class ApiService {
 
   Future<NovelInfo> _fetchNovelInfoFromNarou(String ncode) async {
     final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
-      'ncode': ncode,
+      'ncode': ncode.toLowerCase(),
       'out': 'json',
       'gzip': '5',
       'of':
@@ -114,7 +114,7 @@ class ApiService {
         i + chunkSize > ncodes.length ? ncodes.length : i + chunkSize,
       );
 
-      final ncodesParam = chunk.join('-');
+      final ncodesParam = chunk.map((ncode) => ncode.toLowerCase()).join('-');
       final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
         'ncode': ncodesParam,
         'out': 'json',
@@ -145,14 +145,14 @@ class ApiService {
                     Episode(
                       subtitle: novelInfo.title,
                       url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
-                      ncode: ncode,
+                      ncode: ncode.toLowerCase(),
                       index: 1,
                     ),
                   ],
                 );
               }
 
-              result[ncode] = novelInfo;
+              result[ncode.toLowerCase()] = novelInfo;
             }
           }
         }
@@ -194,7 +194,7 @@ class ApiService {
           Episode(
             subtitle: info.title,
             url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
-            ncode: ncode,
+            ncode: ncode.toLowerCase(),
             index: 1,
           ),
         ],
@@ -249,7 +249,7 @@ class ApiService {
           Episode(
             subtitle: info.title,
             url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
-            ncode: ncode,
+            ncode: ncode.toLowerCase(),
             index: 1,
           ),
         ],
@@ -370,7 +370,7 @@ class ApiService {
         .join('');
 
     return Episode(
-      ncode: ncode,
+      ncode: ncode.toLowerCase(),
       index: currentEpisode,
       subtitle: episodeTitle,
       body: body,

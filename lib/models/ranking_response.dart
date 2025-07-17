@@ -73,6 +73,11 @@ abstract class RankingResponse with _$RankingResponse {
   }) = _RankingResponse;
 
   /// JSONから[RankingResponse]を生成するファクトリコンストラクタ
-  factory RankingResponse.fromJson(Map<String, dynamic> json) =>
-      _$RankingResponseFromJson(json);
+  factory RankingResponse.fromJson(Map<String, dynamic> json) {
+    // ncodeを小文字化
+    if (json['ncode'] is String) {
+      json['ncode'] = (json['ncode'] as String).toLowerCase();
+    }
+    return _$RankingResponseFromJson(json);
+  }
 }

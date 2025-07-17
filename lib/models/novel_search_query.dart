@@ -242,7 +242,7 @@ extension NovelSearchQueryEx on NovelSearchQuery {
       'mintime': mintime,
       'maxtime': maxtime,
       'time': time,
-      'ncode': ncode?.join('-'),
+      'ncode': ncode?.map((n) => n.toLowerCase()).join('-'),
       'type': type,
       'buntai': buntai?.join('-'),
       'stop': stop,
