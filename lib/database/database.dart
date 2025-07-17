@@ -236,7 +236,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
@@ -245,7 +245,9 @@ class AppDatabase extends _$AppDatabase {
         return m.createAll();
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        // マイグレーション処理
+        if (from == 1) {
+          await m.issueCustomQuery('ALTER TABLE novels RENAME COLUMN poin_count TO point_count;');
+        }
       },
     );
   }
