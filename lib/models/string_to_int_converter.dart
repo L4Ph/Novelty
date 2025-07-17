@@ -1,6 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+/// JSONからint?を変換するコンバーター。
 class StringToIntConverter implements JsonConverter<int?, Object?> {
+  /// コンストラクタ。
   const StringToIntConverter();
 
   @override

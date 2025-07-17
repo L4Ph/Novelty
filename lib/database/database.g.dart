@@ -210,12 +210,23 @@ class $NovelsTable extends Novels with TableInfo<$NovelsTable, Novel> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _poinCountMeta = const VerificationMeta(
-    'poinCount',
+  static const VerificationMeta _pointCountMeta = const VerificationMeta(
+    'pointCount',
   );
   @override
-  late final GeneratedColumn<int> poinCount = GeneratedColumn<int>(
-    'poin_count',
+  late final GeneratedColumn<int> pointCount = GeneratedColumn<int>(
+    'point_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dailyPointMeta = const VerificationMeta(
+    'dailyPoint',
+  );
+  @override
+  late final GeneratedColumn<int> dailyPoint = GeneratedColumn<int>(
+    'daily_point',
     aliasedName,
     true,
     type: DriftSqlType.int,
@@ -320,7 +331,8 @@ class $NovelsTable extends Novels with TableInfo<$NovelsTable, Novel> {
     reviewCount,
     rateCount,
     allPoint,
-    poinCount,
+    pointCount,
+    dailyPoint,
     weeklyPoint,
     monthlyPoint,
     quarterPoint,
@@ -475,10 +487,16 @@ class $NovelsTable extends Novels with TableInfo<$NovelsTable, Novel> {
         allPoint.isAcceptableOrUnknown(data['all_point']!, _allPointMeta),
       );
     }
-    if (data.containsKey('poin_count')) {
+    if (data.containsKey('point_count')) {
       context.handle(
-        _poinCountMeta,
-        poinCount.isAcceptableOrUnknown(data['poin_count']!, _poinCountMeta),
+        _pointCountMeta,
+        pointCount.isAcceptableOrUnknown(data['point_count']!, _pointCountMeta),
+      );
+    }
+    if (data.containsKey('daily_point')) {
+      context.handle(
+        _dailyPointMeta,
+        dailyPoint.isAcceptableOrUnknown(data['daily_point']!, _dailyPointMeta),
       );
     }
     if (data.containsKey('weekly_point')) {
@@ -630,9 +648,13 @@ class $NovelsTable extends Novels with TableInfo<$NovelsTable, Novel> {
         DriftSqlType.int,
         data['${effectivePrefix}all_point'],
       ),
-      poinCount: attachedDatabase.typeMapping.read(
+      pointCount: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
-        data['${effectivePrefix}poin_count'],
+        data['${effectivePrefix}point_count'],
+      ),
+      dailyPoint: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}daily_point'],
       ),
       weeklyPoint: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -672,33 +694,92 @@ class $NovelsTable extends Novels with TableInfo<$NovelsTable, Novel> {
 }
 
 class Novel extends DataClass implements Insertable<Novel> {
+  /// 小説のncode
   final String ncode;
+
+  /// 小説のタイトル
   final String? title;
+
+  /// 小説の著者
   final String? writer;
+
+  /// 小説のあらすじ
   final String? story;
+
+  /// 小説の種別
+  /// 0: 短編 1: 連載中
   final int? novelType;
+
+  /// 小説の状態
+  /// 0: 短編 or 完結済 1: 連載中
   final int? end;
+
+  /// 作品に含まれる要素に「R15」が含まれる場合は1、それ以外は0
   final int? isr15;
+
+  /// 作品に含まれる要素に「ボーイズラブ」が含まれる場合は1、それ以外は0
   final int? isbl;
+
+  /// 作品に含まれる要素に「ガールズラブ」が含まれる場合は1、それ以外は0
   final int? isgl;
+
+  /// 作品に含まれる要素に「残酷な描写あり」が含まれる場合は1、それ以外は0
   final int? iszankoku;
+
+  /// 作品に含まれる要素に「異世界転生」が含まれる場合は1、それ以外は0
   final int? istensei;
+
+  /// 作品に含まれる要素に「異世界転移」が含まれる場合は1、それ以外は0
   final int? istenni;
+
+  /// キーワード
   final String? keyword;
+
+  /// 初回掲載日 YYYY-MM-DD HH:MM:SS
   final int? generalFirstup;
+
+  /// 最終掲載日 YYYY-MM-DD HH:MM:SS
   final int? generalLastup;
+
+  /// 総合評価ポイント (ブックマーク数×2)+評価ポイントで算出
   final int? globalPoint;
+
+  /// Noveltyのライブラリに登録されているかどうか
+  /// 1: 登録済み、0: 未登録
   final int? fav;
+
+  /// レビュー数
   final int? reviewCount;
   final int? rateCount;
+
+  /// 評価ポイント
   final int? allPoint;
-  final int? poinCount;
+
+  /// ポイント数(何の用途か不明)
+  final int? pointCount;
+
+  /// 日間ポイント
+  final int? dailyPoint;
+
+  /// 週間ポイント
   final int? weeklyPoint;
+
+  /// 月間ポイント
   final int? monthlyPoint;
+
+  /// 四半期ポイント
   final int? quarterPoint;
+
+  /// 年間ポイント
   final int? yearlyPoint;
+
+  /// 連載小説のエピソード数 短編は常に1
   final int? generalAllNo;
+
+  /// 作品の更新日時
   final String? novelUpdatedAt;
+
+  /// キャッシュ日時(?)
   final int? cachedAt;
   const Novel({
     required this.ncode,
@@ -721,7 +802,8 @@ class Novel extends DataClass implements Insertable<Novel> {
     this.reviewCount,
     this.rateCount,
     this.allPoint,
-    this.poinCount,
+    this.pointCount,
+    this.dailyPoint,
     this.weeklyPoint,
     this.monthlyPoint,
     this.quarterPoint,
@@ -791,8 +873,11 @@ class Novel extends DataClass implements Insertable<Novel> {
     if (!nullToAbsent || allPoint != null) {
       map['all_point'] = Variable<int>(allPoint);
     }
-    if (!nullToAbsent || poinCount != null) {
-      map['poin_count'] = Variable<int>(poinCount);
+    if (!nullToAbsent || pointCount != null) {
+      map['point_count'] = Variable<int>(pointCount);
+    }
+    if (!nullToAbsent || dailyPoint != null) {
+      map['daily_point'] = Variable<int>(dailyPoint);
     }
     if (!nullToAbsent || weeklyPoint != null) {
       map['weekly_point'] = Variable<int>(weeklyPoint);
@@ -870,9 +955,12 @@ class Novel extends DataClass implements Insertable<Novel> {
       allPoint: allPoint == null && nullToAbsent
           ? const Value.absent()
           : Value(allPoint),
-      poinCount: poinCount == null && nullToAbsent
+      pointCount: pointCount == null && nullToAbsent
           ? const Value.absent()
-          : Value(poinCount),
+          : Value(pointCount),
+      dailyPoint: dailyPoint == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dailyPoint),
       weeklyPoint: weeklyPoint == null && nullToAbsent
           ? const Value.absent()
           : Value(weeklyPoint),
@@ -923,7 +1011,8 @@ class Novel extends DataClass implements Insertable<Novel> {
       reviewCount: serializer.fromJson<int?>(json['reviewCount']),
       rateCount: serializer.fromJson<int?>(json['rateCount']),
       allPoint: serializer.fromJson<int?>(json['allPoint']),
-      poinCount: serializer.fromJson<int?>(json['poinCount']),
+      pointCount: serializer.fromJson<int?>(json['pointCount']),
+      dailyPoint: serializer.fromJson<int?>(json['dailyPoint']),
       weeklyPoint: serializer.fromJson<int?>(json['weeklyPoint']),
       monthlyPoint: serializer.fromJson<int?>(json['monthlyPoint']),
       quarterPoint: serializer.fromJson<int?>(json['quarterPoint']),
@@ -957,7 +1046,8 @@ class Novel extends DataClass implements Insertable<Novel> {
       'reviewCount': serializer.toJson<int?>(reviewCount),
       'rateCount': serializer.toJson<int?>(rateCount),
       'allPoint': serializer.toJson<int?>(allPoint),
-      'poinCount': serializer.toJson<int?>(poinCount),
+      'pointCount': serializer.toJson<int?>(pointCount),
+      'dailyPoint': serializer.toJson<int?>(dailyPoint),
       'weeklyPoint': serializer.toJson<int?>(weeklyPoint),
       'monthlyPoint': serializer.toJson<int?>(monthlyPoint),
       'quarterPoint': serializer.toJson<int?>(quarterPoint),
@@ -989,7 +1079,8 @@ class Novel extends DataClass implements Insertable<Novel> {
     Value<int?> reviewCount = const Value.absent(),
     Value<int?> rateCount = const Value.absent(),
     Value<int?> allPoint = const Value.absent(),
-    Value<int?> poinCount = const Value.absent(),
+    Value<int?> pointCount = const Value.absent(),
+    Value<int?> dailyPoint = const Value.absent(),
     Value<int?> weeklyPoint = const Value.absent(),
     Value<int?> monthlyPoint = const Value.absent(),
     Value<int?> quarterPoint = const Value.absent(),
@@ -1022,7 +1113,8 @@ class Novel extends DataClass implements Insertable<Novel> {
     reviewCount: reviewCount.present ? reviewCount.value : this.reviewCount,
     rateCount: rateCount.present ? rateCount.value : this.rateCount,
     allPoint: allPoint.present ? allPoint.value : this.allPoint,
-    poinCount: poinCount.present ? poinCount.value : this.poinCount,
+    pointCount: pointCount.present ? pointCount.value : this.pointCount,
+    dailyPoint: dailyPoint.present ? dailyPoint.value : this.dailyPoint,
     weeklyPoint: weeklyPoint.present ? weeklyPoint.value : this.weeklyPoint,
     monthlyPoint: monthlyPoint.present ? monthlyPoint.value : this.monthlyPoint,
     quarterPoint: quarterPoint.present ? quarterPoint.value : this.quarterPoint,
@@ -1063,7 +1155,12 @@ class Novel extends DataClass implements Insertable<Novel> {
           : this.reviewCount,
       rateCount: data.rateCount.present ? data.rateCount.value : this.rateCount,
       allPoint: data.allPoint.present ? data.allPoint.value : this.allPoint,
-      poinCount: data.poinCount.present ? data.poinCount.value : this.poinCount,
+      pointCount: data.pointCount.present
+          ? data.pointCount.value
+          : this.pointCount,
+      dailyPoint: data.dailyPoint.present
+          ? data.dailyPoint.value
+          : this.dailyPoint,
       weeklyPoint: data.weeklyPoint.present
           ? data.weeklyPoint.value
           : this.weeklyPoint,
@@ -1109,7 +1206,8 @@ class Novel extends DataClass implements Insertable<Novel> {
           ..write('reviewCount: $reviewCount, ')
           ..write('rateCount: $rateCount, ')
           ..write('allPoint: $allPoint, ')
-          ..write('poinCount: $poinCount, ')
+          ..write('pointCount: $pointCount, ')
+          ..write('dailyPoint: $dailyPoint, ')
           ..write('weeklyPoint: $weeklyPoint, ')
           ..write('monthlyPoint: $monthlyPoint, ')
           ..write('quarterPoint: $quarterPoint, ')
@@ -1143,7 +1241,8 @@ class Novel extends DataClass implements Insertable<Novel> {
     reviewCount,
     rateCount,
     allPoint,
-    poinCount,
+    pointCount,
+    dailyPoint,
     weeklyPoint,
     monthlyPoint,
     quarterPoint,
@@ -1176,7 +1275,8 @@ class Novel extends DataClass implements Insertable<Novel> {
           other.reviewCount == this.reviewCount &&
           other.rateCount == this.rateCount &&
           other.allPoint == this.allPoint &&
-          other.poinCount == this.poinCount &&
+          other.pointCount == this.pointCount &&
+          other.dailyPoint == this.dailyPoint &&
           other.weeklyPoint == this.weeklyPoint &&
           other.monthlyPoint == this.monthlyPoint &&
           other.quarterPoint == this.quarterPoint &&
@@ -1207,7 +1307,8 @@ class NovelsCompanion extends UpdateCompanion<Novel> {
   final Value<int?> reviewCount;
   final Value<int?> rateCount;
   final Value<int?> allPoint;
-  final Value<int?> poinCount;
+  final Value<int?> pointCount;
+  final Value<int?> dailyPoint;
   final Value<int?> weeklyPoint;
   final Value<int?> monthlyPoint;
   final Value<int?> quarterPoint;
@@ -1237,7 +1338,8 @@ class NovelsCompanion extends UpdateCompanion<Novel> {
     this.reviewCount = const Value.absent(),
     this.rateCount = const Value.absent(),
     this.allPoint = const Value.absent(),
-    this.poinCount = const Value.absent(),
+    this.pointCount = const Value.absent(),
+    this.dailyPoint = const Value.absent(),
     this.weeklyPoint = const Value.absent(),
     this.monthlyPoint = const Value.absent(),
     this.quarterPoint = const Value.absent(),
@@ -1268,7 +1370,8 @@ class NovelsCompanion extends UpdateCompanion<Novel> {
     this.reviewCount = const Value.absent(),
     this.rateCount = const Value.absent(),
     this.allPoint = const Value.absent(),
-    this.poinCount = const Value.absent(),
+    this.pointCount = const Value.absent(),
+    this.dailyPoint = const Value.absent(),
     this.weeklyPoint = const Value.absent(),
     this.monthlyPoint = const Value.absent(),
     this.quarterPoint = const Value.absent(),
@@ -1299,7 +1402,8 @@ class NovelsCompanion extends UpdateCompanion<Novel> {
     Expression<int>? reviewCount,
     Expression<int>? rateCount,
     Expression<int>? allPoint,
-    Expression<int>? poinCount,
+    Expression<int>? pointCount,
+    Expression<int>? dailyPoint,
     Expression<int>? weeklyPoint,
     Expression<int>? monthlyPoint,
     Expression<int>? quarterPoint,
@@ -1330,7 +1434,8 @@ class NovelsCompanion extends UpdateCompanion<Novel> {
       if (reviewCount != null) 'review_count': reviewCount,
       if (rateCount != null) 'rate_count': rateCount,
       if (allPoint != null) 'all_point': allPoint,
-      if (poinCount != null) 'poin_count': poinCount,
+      if (pointCount != null) 'point_count': pointCount,
+      if (dailyPoint != null) 'daily_point': dailyPoint,
       if (weeklyPoint != null) 'weekly_point': weeklyPoint,
       if (monthlyPoint != null) 'monthly_point': monthlyPoint,
       if (quarterPoint != null) 'quarter_point': quarterPoint,
@@ -1363,7 +1468,8 @@ class NovelsCompanion extends UpdateCompanion<Novel> {
     Value<int?>? reviewCount,
     Value<int?>? rateCount,
     Value<int?>? allPoint,
-    Value<int?>? poinCount,
+    Value<int?>? pointCount,
+    Value<int?>? dailyPoint,
     Value<int?>? weeklyPoint,
     Value<int?>? monthlyPoint,
     Value<int?>? quarterPoint,
@@ -1394,7 +1500,8 @@ class NovelsCompanion extends UpdateCompanion<Novel> {
       reviewCount: reviewCount ?? this.reviewCount,
       rateCount: rateCount ?? this.rateCount,
       allPoint: allPoint ?? this.allPoint,
-      poinCount: poinCount ?? this.poinCount,
+      pointCount: pointCount ?? this.pointCount,
+      dailyPoint: dailyPoint ?? this.dailyPoint,
       weeklyPoint: weeklyPoint ?? this.weeklyPoint,
       monthlyPoint: monthlyPoint ?? this.monthlyPoint,
       quarterPoint: quarterPoint ?? this.quarterPoint,
@@ -1469,8 +1576,11 @@ class NovelsCompanion extends UpdateCompanion<Novel> {
     if (allPoint.present) {
       map['all_point'] = Variable<int>(allPoint.value);
     }
-    if (poinCount.present) {
-      map['poin_count'] = Variable<int>(poinCount.value);
+    if (pointCount.present) {
+      map['point_count'] = Variable<int>(pointCount.value);
+    }
+    if (dailyPoint.present) {
+      map['daily_point'] = Variable<int>(dailyPoint.value);
     }
     if (weeklyPoint.present) {
       map['weekly_point'] = Variable<int>(weeklyPoint.value);
@@ -1522,7 +1632,8 @@ class NovelsCompanion extends UpdateCompanion<Novel> {
           ..write('reviewCount: $reviewCount, ')
           ..write('rateCount: $rateCount, ')
           ..write('allPoint: $allPoint, ')
-          ..write('poinCount: $poinCount, ')
+          ..write('pointCount: $pointCount, ')
+          ..write('dailyPoint: $dailyPoint, ')
           ..write('weeklyPoint: $weeklyPoint, ')
           ..write('monthlyPoint: $monthlyPoint, ')
           ..write('quarterPoint: $quarterPoint, ')
@@ -1686,10 +1797,19 @@ class $HistoryTable extends History with TableInfo<$HistoryTable, HistoryData> {
 }
 
 class HistoryData extends DataClass implements Insertable<HistoryData> {
+  /// 小説のncode
   final String ncode;
+
+  /// 小説のタイトル
   final String? title;
+
+  /// 小説の著者
   final String? writer;
+
+  /// 最後に閲覧したエピソード
   final int? lastEpisode;
+
+  /// 閲覧日時
   final int viewedAt;
   const HistoryData({
     required this.ncode,
@@ -2053,10 +2173,19 @@ class $EpisodesTable extends Episodes with TableInfo<$EpisodesTable, Episode> {
 }
 
 class Episode extends DataClass implements Insertable<Episode> {
+  /// 小説のncode
   final String ncode;
+
+  /// エピソード番号
   final int episode;
+
+  /// エピソードのタイトル
   final String? title;
+
+  /// エピソードの内容
   final String? content;
+
+  /// キャッシュした日時
   final int? cachedAt;
   const Episode({
     required this.ncode,
@@ -2425,10 +2554,20 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
 
 class DownloadedEpisode extends DataClass
     implements Insertable<DownloadedEpisode> {
+  /// 小説のncode
   final String ncode;
+
+  /// エピソード番号
   final int episode;
+
+  /// エピソードのタイトル
   final String? title;
+
+  /// エピソードの内容
+  /// JSON形式で保存される
   final List<NovelContentElement> content;
+
+  /// ダウンロード日時
   final int downloadedAt;
   const DownloadedEpisode({
     required this.ncode,
@@ -2799,10 +2938,20 @@ class $BookmarksTable extends Bookmarks
 }
 
 class Bookmark extends DataClass implements Insertable<Bookmark> {
+  /// 小説のncode
   final String ncode;
+
+  /// エピソード番号
   final int episode;
+
+  /// ブックマークの位置
   final int position;
+
+  /// ブックマークの内容
   final String? content;
+
+  /// ブックマークの作成日時
+  /// UNIXタイムスタンプ形式で保存される
   final int createdAt;
   const Bookmark({
     required this.ncode,
@@ -3053,7 +3202,8 @@ typedef $$NovelsTableCreateCompanionBuilder =
       Value<int?> reviewCount,
       Value<int?> rateCount,
       Value<int?> allPoint,
-      Value<int?> poinCount,
+      Value<int?> pointCount,
+      Value<int?> dailyPoint,
       Value<int?> weeklyPoint,
       Value<int?> monthlyPoint,
       Value<int?> quarterPoint,
@@ -3085,7 +3235,8 @@ typedef $$NovelsTableUpdateCompanionBuilder =
       Value<int?> reviewCount,
       Value<int?> rateCount,
       Value<int?> allPoint,
-      Value<int?> poinCount,
+      Value<int?> pointCount,
+      Value<int?> dailyPoint,
       Value<int?> weeklyPoint,
       Value<int?> monthlyPoint,
       Value<int?> quarterPoint,
@@ -3205,8 +3356,13 @@ class $$NovelsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get poinCount => $composableBuilder(
-    column: $table.poinCount,
+  ColumnFilters<int> get pointCount => $composableBuilder(
+    column: $table.pointCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dailyPoint => $composableBuilder(
+    column: $table.dailyPoint,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3355,8 +3511,13 @@ class $$NovelsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get poinCount => $composableBuilder(
-    column: $table.poinCount,
+  ColumnOrderings<int> get pointCount => $composableBuilder(
+    column: $table.pointCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dailyPoint => $composableBuilder(
+    column: $table.dailyPoint,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3473,8 +3634,15 @@ class $$NovelsTableAnnotationComposer
   GeneratedColumn<int> get allPoint =>
       $composableBuilder(column: $table.allPoint, builder: (column) => column);
 
-  GeneratedColumn<int> get poinCount =>
-      $composableBuilder(column: $table.poinCount, builder: (column) => column);
+  GeneratedColumn<int> get pointCount => $composableBuilder(
+    column: $table.pointCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get dailyPoint => $composableBuilder(
+    column: $table.dailyPoint,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get weeklyPoint => $composableBuilder(
     column: $table.weeklyPoint,
@@ -3558,7 +3726,8 @@ class $$NovelsTableTableManager
                 Value<int?> reviewCount = const Value.absent(),
                 Value<int?> rateCount = const Value.absent(),
                 Value<int?> allPoint = const Value.absent(),
-                Value<int?> poinCount = const Value.absent(),
+                Value<int?> pointCount = const Value.absent(),
+                Value<int?> dailyPoint = const Value.absent(),
                 Value<int?> weeklyPoint = const Value.absent(),
                 Value<int?> monthlyPoint = const Value.absent(),
                 Value<int?> quarterPoint = const Value.absent(),
@@ -3588,7 +3757,8 @@ class $$NovelsTableTableManager
                 reviewCount: reviewCount,
                 rateCount: rateCount,
                 allPoint: allPoint,
-                poinCount: poinCount,
+                pointCount: pointCount,
+                dailyPoint: dailyPoint,
                 weeklyPoint: weeklyPoint,
                 monthlyPoint: monthlyPoint,
                 quarterPoint: quarterPoint,
@@ -3620,7 +3790,8 @@ class $$NovelsTableTableManager
                 Value<int?> reviewCount = const Value.absent(),
                 Value<int?> rateCount = const Value.absent(),
                 Value<int?> allPoint = const Value.absent(),
-                Value<int?> poinCount = const Value.absent(),
+                Value<int?> pointCount = const Value.absent(),
+                Value<int?> dailyPoint = const Value.absent(),
                 Value<int?> weeklyPoint = const Value.absent(),
                 Value<int?> monthlyPoint = const Value.absent(),
                 Value<int?> quarterPoint = const Value.absent(),
@@ -3650,7 +3821,8 @@ class $$NovelsTableTableManager
                 reviewCount: reviewCount,
                 rateCount: rateCount,
                 allPoint: allPoint,
-                poinCount: poinCount,
+                pointCount: pointCount,
+                dailyPoint: dailyPoint,
                 weeklyPoint: weeklyPoint,
                 monthlyPoint: monthlyPoint,
                 quarterPoint: quarterPoint,
@@ -4510,12 +4682,15 @@ class $AppDatabaseManager {
 // RiverpodGenerator
 // **************************************************************************
 
+/// アプリケーションのデータベース
 @ProviderFor(appDatabase)
 const appDatabaseProvider = AppDatabaseProvider._();
 
+/// アプリケーションのデータベース
 final class AppDatabaseProvider
     extends $FunctionalProvider<AppDatabase, AppDatabase, AppDatabase>
     with $Provider<AppDatabase> {
+  /// アプリケーションのデータベース
   const AppDatabaseProvider._()
     : super(
         from: null,

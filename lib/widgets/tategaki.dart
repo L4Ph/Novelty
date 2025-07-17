@@ -77,7 +77,9 @@ class _TategakiMetrics {
   final Size size;
 }
 
+/// 縦書きの小説コンテンツを表示するウィジェット。
 class Tategaki extends StatefulWidget {
+  /// コンストラクタ。
   const Tategaki(
     this.content, {
     super.key,
@@ -86,9 +88,17 @@ class Tategaki extends StatefulWidget {
     required this.maxHeight,
   });
 
+  /// 小説のコンテンツ要素のリスト。
+  /// `PlainText`, `RubyText`, `NewLine`のいずれか
   final List<NovelContentElement> content;
+
+  /// テキストのスタイル。
   final TextStyle? style;
+
+  /// 列間のスペース。
   final double space;
+
+  /// 最大の高さ。
   final double maxHeight;
 
   @override

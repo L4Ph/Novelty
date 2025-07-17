@@ -7,9 +7,15 @@ import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
+/// 小説リストを表示するウィジェット。
 class NovelList extends ConsumerWidget {
-  const NovelList({super.key, required this.novels, this.isRanking = true});
+  /// コンストラクタ。
+  const NovelList({required this.novels, super.key, this.isRanking = true});
+
+  /// 小説のリスト。
   final List<RankingResponse> novels;
+
+  /// ランキングリストかどうか。
   final bool isRanking;
 
   @override

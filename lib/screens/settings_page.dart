@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
+/// 設定ページのウィジェット。
 class SettingsPage extends ConsumerWidget {
+  /// コンストラクタ。
   const SettingsPage({super.key});
 
   @override

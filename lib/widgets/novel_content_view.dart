@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/widgets/ruby_text_widget.dart';
 
+/// 小説のコンテンツを表示するウィジェット。
 class NovelContentView extends StatelessWidget {
-  const NovelContentView({super.key, required this.elements});
+  /// コンストラクタ。
+  const NovelContentView({required this.elements, super.key});
 
+  /// 小説のコンテンツ要素のリスト。
   final List<NovelContentElement> elements;
 
   @override
@@ -26,6 +29,7 @@ class NovelContentView extends StatelessWidget {
     );
   }
 
+  /// 小説のコンテンツ要素から`InlineSpan`のリストを生成するヘルパーメソッド。
   static List<InlineSpan> buildSpans(
     List<NovelContentElement> elements,
     TextStyle style,

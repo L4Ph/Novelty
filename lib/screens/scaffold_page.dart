@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+/// Scaffoldのウィジェット。
 class ScaffoldPage extends StatelessWidget {
+  /// コンストラクタ。
   const ScaffoldPage({required this.child, super.key});
 
+  /// 子ウィジェット。
+  /// Scaffoldのbodyとして表示されるウィジェット。
   final Widget child;
 
   @override

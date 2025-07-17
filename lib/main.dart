@@ -15,7 +15,10 @@ Future<void> main() async {
   );
 }
 
+/// アプリケーションのエントリーポイント。
+/// アプリの設定を初期化し、ルーターを設定してアプリを起動
 class MyApp extends ConsumerWidget {
+  /// コンストラクタ。
   const MyApp({super.key});
 
   @override

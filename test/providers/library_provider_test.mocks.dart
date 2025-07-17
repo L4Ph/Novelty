@@ -1443,12 +1443,23 @@ class Mock$NovelsTable extends _i1.Mock implements _i3.$NovelsTable {
           as _i2.GeneratedColumn<int>);
 
   @override
-  _i2.GeneratedColumn<int> get poinCount =>
+  _i2.GeneratedColumn<int> get pointCount =>
       (super.noSuchMethod(
-            Invocation.getter(#poinCount),
+            Invocation.getter(#pointCount),
             returnValue: _FakeGeneratedColumn_25<int>(
               this,
-              Invocation.getter(#poinCount),
+              Invocation.getter(#pointCount),
+            ),
+          )
+          as _i2.GeneratedColumn<int>);
+
+  @override
+  _i2.GeneratedColumn<int> get dailyPoint =>
+      (super.noSuchMethod(
+            Invocation.getter(#dailyPoint),
+            returnValue: _FakeGeneratedColumn_25<int>(
+              this,
+              Invocation.getter(#dailyPoint),
             ),
           )
           as _i2.GeneratedColumn<int>);

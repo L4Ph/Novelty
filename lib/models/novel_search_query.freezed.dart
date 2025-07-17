@@ -24,7 +24,7 @@ mixin _$NovelSearchQuery {
  String? get notword;/// タイトルを検索対象にするか。
  bool get title;/// あらすじを検索対象にするか。
  bool get ex;/// キーワードを検索対象にするか。
- bool get keyword;/// 作者名を検索対象にするか��
+ bool get keyword;/// 作者名を検索対象にするか。
  bool get wname;/// 大ジャンル。
 ///
 /// [大ジャンル一覧](https://dev.syosetu.com/man/api/#biggenre)
@@ -369,7 +369,7 @@ class _NovelSearchQuery implements NovelSearchQuery {
 @override@JsonKey() final  bool ex;
 /// キーワードを検索対象にするか。
 @override@JsonKey() final  bool keyword;
-/// 作者名を検索対象にするか��
+/// 作者名を検索対象にするか。
 @override@JsonKey() final  bool wname;
 /// 大ジャンル。
 ///

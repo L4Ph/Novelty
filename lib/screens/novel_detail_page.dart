@@ -16,6 +16,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'novel_detail_page.g.dart';
 
 @riverpod
+/// 小説の情報を取得するプロバイダー。
 Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   final apiService = ref.read(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
@@ -44,6 +45,7 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
 }
 
 @riverpod
+/// 小説のエピソードを取得するプロバイダー。
 Future<List<Episode>> episodeList(Ref ref, String key) async {
   final parts = key.split('_');
   if (parts.length != 2) {
@@ -58,6 +60,7 @@ Future<List<Episode>> episodeList(Ref ref, String key) async {
 }
 
 @riverpod
+/// 小説のお気に入り状態を管理するプロバイダー。
 class FavoriteStatus extends _$FavoriteStatus {
   @override
   Future<bool> build(String ncode) async {
@@ -66,6 +69,7 @@ class FavoriteStatus extends _$FavoriteStatus {
     return novel?.fav == 1;
   }
 
+  /// お気に入り状態をトグルするメソッド。
   Future<bool> toggle(NovelInfo novelInfo) async {
     final db = ref.read(appDatabaseProvider);
     final currentStatus = state.value ?? false;
@@ -95,6 +99,8 @@ class FavoriteStatus extends _$FavoriteStatus {
 }
 
 @riverpod
+/// 小説のダウンロード状態を管理するプロバイダー。
+/// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
 class DownloadStatus extends _$DownloadStatus {
   @override
   Stream<bool> build(NovelInfo novelInfo) {
@@ -102,6 +108,7 @@ class DownloadStatus extends _$DownloadStatus {
     return repo.isNovelDownloaded(novelInfo);
   }
 
+  /// 小説のダウンロード状態を切り替えるメソッド
   Future<void> toggle(BuildContext context, NovelInfo novelInfo) async {
     final repo = ref.read(novelRepositoryProvider);
     final isDownloaded = state.value ?? false;
@@ -178,8 +185,12 @@ class DownloadStatus extends _$DownloadStatus {
   }
 }
 
+/// 小説の詳細ページ
 class NovelDetailPage extends ConsumerWidget {
-  const NovelDetailPage({super.key, required this.ncode});
+  /// コンストラクタ
+  const NovelDetailPage({required this.ncode, super.key});
+
+  /// 詳細ページの識別子として使用される小説のコード
   final String ncode;
 
   @override

@@ -1039,11 +1039,9 @@ class MockApiService extends _i1.Mock implements _i8.ApiService {
           as _i5.Future<List<_i10.RankingResponse>>);
 
   @override
-  _i5.Future<List<_i10.RankingResponse>> fetchRankingAndDetails(
-    String? rankingType,
-  ) =>
+  _i5.Future<List<_i10.RankingResponse>> fetchRanking(String? rankingType) =>
       (super.noSuchMethod(
-            Invocation.method(#fetchRankingAndDetails, [rankingType]),
+            Invocation.method(#fetchRanking, [rankingType]),
             returnValue: _i5.Future<List<_i10.RankingResponse>>.value(
               <_i10.RankingResponse>[],
             ),

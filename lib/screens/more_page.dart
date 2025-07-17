@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+/// "もっと"ページのウィジェット。
 class MorePage extends StatelessWidget {
+  /// コンストラクタ。
   const MorePage({super.key});
 
   @override

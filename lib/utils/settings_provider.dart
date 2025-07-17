@@ -7,7 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 part 'settings_provider.g.dart';
 
 @immutable
+/// アプリケーションの設定を管理するクラス。
+/// フォント、フォントサイズ、縦書き設定、ダウンロードパスの設定を含む。
 class AppSettings {
+  /// コンストラクタ。
   const AppSettings({
     required this.selectedFont,
     required this.fontSize,
@@ -15,13 +18,22 @@ class AppSettings {
     required this.novelDownloadPath,
   });
 
+  /// 選択されたフォント名。
   final String selectedFont;
+
+  /// フォントサイズ。
   final double fontSize;
+
+  /// 縦書き設定。
   final bool isVertical;
+
+  /// 小説のダウンロードパス。
   final String novelDownloadPath;
 
+  /// 選択されたフォントに基づいてテキストスタイルを取得するメソッド。
   TextStyle get selectedFontTheme => _getTextStyle(selectedFont);
 
+  /// フォントサイズに基づいてテキストスタイルを取得するメソッド。
   AppSettings copyWith({
     String? selectedFont,
     double? fontSize,
@@ -56,7 +68,9 @@ class AppSettings {
 }
 
 @Riverpod(keepAlive: true)
+/// アプリケーションの設定を提供するプロバイダー。
 class Settings extends _$Settings {
+  /// 利用可能なフォントのリスト。
   static const availableFonts = <String>[
     'Noto Sans JP',
     'IBM Plex Sans JP',
@@ -80,7 +94,8 @@ class Settings extends _$Settings {
         prefs.getString(_fontPreferenceKey) ?? availableFonts.first;
     final fontSize = prefs.getDouble(_fontSizePreferenceKey) ?? 16.0;
     final isVertical = prefs.getBool(_isVerticalPreferenceKey) ?? false;
-    final novelDownloadPath = prefs.getString(_novelDownloadPathPreferenceKey) ??
+    final novelDownloadPath =
+        prefs.getString(_novelDownloadPathPreferenceKey) ??
         (await getApplicationDocumentsDirectory()).path;
 
     return AppSettings(
@@ -91,6 +106,7 @@ class Settings extends _$Settings {
     );
   }
 
+  /// フォントを設定するメソッド。
   Future<void> setSelectedFont(String font) async {
     if (availableFonts.contains(font) && state.hasValue) {
       await (await _prefs).setString(_fontPreferenceKey, font);
@@ -98,6 +114,7 @@ class Settings extends _$Settings {
     }
   }
 
+  /// フォントサイズを設定するメソッド。
   Future<void> setFontSize(double size) async {
     if (state.hasValue) {
       await (await _prefs).setDouble(_fontSizePreferenceKey, size);
@@ -105,6 +122,7 @@ class Settings extends _$Settings {
     }
   }
 
+  /// 縦書き設定を更新するメソッド。
   Future<void> setIsVertical(bool isVertical) async {
     if (state.hasValue) {
       await (await _prefs).setBool(_isVerticalPreferenceKey, isVertical);
@@ -112,6 +130,7 @@ class Settings extends _$Settings {
     }
   }
 
+  /// 小説のダウンロードパスを設定するメソッド。
   Future<void> setNovelDownloadPath(String path) async {
     if (state.hasValue) {
       await (await _prefs).setString(_novelDownloadPathPreferenceKey, path);

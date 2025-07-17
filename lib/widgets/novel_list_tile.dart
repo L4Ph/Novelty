@@ -3,18 +3,27 @@ import 'package:go_router/go_router.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/utils/app_constants.dart';
 
+/// 小説リストのタイルを表示するウィジェット。
 class NovelListTile extends StatelessWidget {
+  /// コンストラクタ。
   const NovelListTile({
-    super.key,
     required this.item,
+    super.key,
     this.isRanking = false,
     this.onTap,
     this.onLongPress,
   });
 
+  /// 小説の情報。
   final RankingResponse item;
+
+  /// ランキングリストかどうか。
   final bool isRanking;
+
+  /// タップ時のコールバック。
   final VoidCallback? onTap;
+
+  /// 長押し時のコールバック。
   final VoidCallback? onLongPress;
 
   @override

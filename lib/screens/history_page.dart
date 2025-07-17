@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
 
+/// 小説の履歴を取得するためのプロバイダー。
 final historyProvider = FutureProvider<List<HistoryData>>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return db.getHistory();
 });
 
+/// "履歴"ページのウィジェット。
 class HistoryPage extends ConsumerWidget {
+  /// コンストラクタ。
   const HistoryPage({super.key});
 
   @override

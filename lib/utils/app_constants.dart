@@ -1,3 +1,4 @@
+/// 小説のジャンル
 const List<Map<String, dynamic>> genreList = [
   {'id': 101, 'name': '異世界〔恋愛〕'},
   {'id': 102, 'name': '現実世界〔恋愛〕'},
@@ -21,6 +22,7 @@ const List<Map<String, dynamic>> genreList = [
   {'id': 9999, 'name': 'その他〔その他〕'},
 ];
 
+/// 小説のタイプ
 const novelTypes = <String, String>{
   't': '短編',
   'r': '連載中',
@@ -29,6 +31,7 @@ const novelTypes = <String, String>{
   'ter': '短編と完結済連載作品',
 };
 
+/// 小説の並び替えオプション
 const novelOrders = <String, String>{
   'new': '新着更新順',
   'favnovelcnt': 'ブックマーク数の多い順',
