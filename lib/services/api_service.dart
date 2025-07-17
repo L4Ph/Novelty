@@ -498,6 +498,7 @@ class ApiService {
     return '0$n';
   }
 
+  /// ランキングを取得するメソッド。
   Future<List<RankingResponse>> fetchRanking(
     String rankingType,
   ) async {

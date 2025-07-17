@@ -12,7 +12,9 @@ part 'ranking_response.g.dart';
 abstract class RankingResponse with _$RankingResponse {
   /// [RankingResponse]のコンストラクタ
   const factory RankingResponse({
-    /// Nコード。
+    /// Nコード
+    ///
+    /// 常に小文字で扱う
     required String ncode,
 
     /// 順位。

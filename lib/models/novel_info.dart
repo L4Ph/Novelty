@@ -18,7 +18,9 @@ abstract class NovelInfo with _$NovelInfo {
     /// 作品名。
     String? title,
 
-    /// Nコード。
+    /// Nコード
+    ///
+    /// 常に小文字で扱う
     String? ncode,
 
     /// 作者名。

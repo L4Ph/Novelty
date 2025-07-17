@@ -23,7 +23,9 @@ mixin _$Episode {
  String? get update;/// 改稿日時。
 ///
 /// `YYYY/MM/DD HH:MM` の形式。
- String? get revised;/// Nコード。
+ String? get revised;/// Nコード
+///
+/// 常に小文字で扱う
  String? get ncode;/// 話数。
  int? get index;/// 本文。
 ///
@@ -247,7 +249,9 @@ class _Episode implements Episode {
 ///
 /// `YYYY/MM/DD HH:MM` の形式。
 @override final  String? revised;
-/// Nコード。
+/// Nコード
+///
+/// 常に小文字で扱う
 @override final  String? ncode;
 /// 話数。
 @override final  int? index;

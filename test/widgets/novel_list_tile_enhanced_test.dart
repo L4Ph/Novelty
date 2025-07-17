@@ -6,14 +6,16 @@ import 'package:novelty/widgets/novel_list_tile.dart';
 
 void main() {
   group('NovelListTile Tests', () {
-    testWidgets('should show heart icon when novel is in library', (WidgetTester tester) async {
+    testWidgets('should show heart icon when novel is in library', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       const testNovel = RankingResponse(
         ncode: 'n1234test',
         title: 'Test Novel',
         writer: 'Test Author',
       );
-      
+
       const enrichedData = EnrichedNovelData(
         novel: testNovel,
         isInLibrary: true,
@@ -21,7 +23,7 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: NovelListTile(
               item: testNovel,
@@ -36,14 +38,16 @@ void main() {
       expect(find.byIcon(Icons.favorite), findsOneWidget);
     });
 
-    testWidgets('should not show heart icon when novel is not in library', (WidgetTester tester) async {
+    testWidgets('should not show heart icon when novel is not in library', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       const testNovel = RankingResponse(
         ncode: 'n1234test',
         title: 'Test Novel',
         writer: 'Test Author',
       );
-      
+
       const enrichedData = EnrichedNovelData(
         novel: testNovel,
         isInLibrary: false,
@@ -51,7 +55,7 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: NovelListTile(
               item: testNovel,
@@ -66,7 +70,9 @@ void main() {
       expect(find.byIcon(Icons.favorite), findsNothing);
     });
 
-    testWidgets('should not show heart icon when enriched data is null', (WidgetTester tester) async {
+    testWidgets('should not show heart icon when enriched data is null', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       const testNovel = RankingResponse(
         ncode: 'n1234test',
@@ -76,7 +82,7 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: NovelListTile(
               item: testNovel,

@@ -44,6 +44,8 @@ class NovelPage extends ConsumerWidget {
   const NovelPage({required this.ncode, super.key, this.episode});
 
   /// 小説のNコード。
+  ///
+  /// 常に小文字で扱う
   final String ncode;
 
   /// 表示するエピソード番号。

@@ -33,7 +33,7 @@ class EnrichedNovelList extends ConsumerWidget {
       itemBuilder: (context, index) {
         final enrichedItem = enrichedNovels[index];
         final item = enrichedItem.novel;
-        
+
         return NovelListTile(
           item: item,
           enrichedData: enrichedItem,
@@ -58,9 +58,11 @@ class EnrichedNovelList extends ConsumerWidget {
               final novelInfo = await apiService.fetchNovelInfo(
                 item.ncode,
               );
-              await db.insertNovel(novelInfo.toDbCompanion().copyWith(
-                fav: const Value(1), // Mark as favorite
-              ));
+              await db.insertNovel(
+                novelInfo.toDbCompanion().copyWith(
+                  fav: const Value(1), // Mark as favorite
+                ),
+              );
               // Invalidate providers to refresh UI
               ref
                 ..invalidate(libraryNovelsProvider)

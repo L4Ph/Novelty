@@ -245,7 +245,7 @@ class _RankingListState extends ConsumerState<RankingList>
             itemBuilder: (context, index) {
               if (index == displayData.length) {
                 return const Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(16),
                   child: Center(child: CircularProgressIndicator()),
                 );
               }
