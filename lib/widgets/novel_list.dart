@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
@@ -50,7 +51,14 @@ class NovelList extends ConsumerWidget {
                 item.ncode,
               );
               await db.insertNovel(novelInfo.toDbCompanion());
-              ref.invalidate(libraryNovelsProvider);
+              // Invalidate providers to refresh UI
+              ref
+                ..invalidate(libraryNovelsProvider)
+                ..invalidate(enrichedRankingDataProvider('d'))
+                ..invalidate(enrichedRankingDataProvider('w'))
+                ..invalidate(enrichedRankingDataProvider('m'))
+                ..invalidate(enrichedRankingDataProvider('q'))
+                ..invalidate(enrichedRankingDataProvider('all'));
               if (context.mounted) {
                 ScaffoldMessenger.of(
                   context,

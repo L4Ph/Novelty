@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
@@ -60,7 +61,14 @@ class EnrichedNovelList extends ConsumerWidget {
               await db.insertNovel(novelInfo.toDbCompanion().copyWith(
                 fav: const Value(1), // Mark as favorite
               ));
-              ref.invalidate(libraryNovelsProvider);
+              // Invalidate providers to refresh UI
+              ref
+                ..invalidate(libraryNovelsProvider)
+                ..invalidate(enrichedRankingDataProvider('d'))
+                ..invalidate(enrichedRankingDataProvider('w'))
+                ..invalidate(enrichedRankingDataProvider('m'))
+                ..invalidate(enrichedRankingDataProvider('q'))
+                ..invalidate(enrichedRankingDataProvider('all'));
               if (context.mounted) {
                 ScaffoldMessenger.of(
                   context,

@@ -27,16 +27,19 @@ final FutureProviderFamily<List<EnrichedNovelData>, String> enrichedRankingDataP
         // Get ranking data from API
         final rankingData = await ref.watch(rankingDataProvider(rankingType).future);
         
+        // Get all library novels at once for efficient lookup
+        final libraryNovels = await (db.select(db.novels)
+              ..where((tbl) => tbl.fav.equals(1))).get();
+        final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
+        
         // Enrich each novel with library status
-        final enrichedData = <EnrichedNovelData>[];
-        for (final novel in rankingData) {
-          final dbNovel = await db.getNovel(novel.ncode);
-          final isInLibrary = dbNovel?.fav == 1;
-          enrichedData.add(EnrichedNovelData(
+        final enrichedData = rankingData.map((novel) {
+          final isInLibrary = libraryNcodes.contains(novel.ncode);
+          return EnrichedNovelData(
             novel: novel,
             isInLibrary: isInLibrary,
-          ));
-        }
+          );
+        }).toList();
         
         return enrichedData;
       },
@@ -66,4 +69,12 @@ Future<bool> getNovelLibraryStatus(WidgetRef ref, String ncode) async {
   final db = ref.read(appDatabaseProvider);
   final novel = await db.getNovel(ncode);
   return novel?.fav == 1;
+}
+
+/// Helper function to get all library novel ncodes for efficient lookup
+Future<Set<String>> getLibraryNcodes(WidgetRef ref) async {
+  final db = ref.read(appDatabaseProvider);
+  final libraryNovels = await (db.select(db.novels)
+        ..where((tbl) => tbl.fav.equals(1))).get();
+  return libraryNovels.map((novel) => novel.ncode).toSet();
 }

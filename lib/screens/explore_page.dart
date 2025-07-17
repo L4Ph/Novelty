@@ -425,16 +425,20 @@ class _EnrichedSearchResults extends ConsumerWidget {
     List<RankingResponse> searchResults,
   ) async {
     final db = ref.read(appDatabaseProvider);
-    final enrichedData = <EnrichedNovelData>[];
     
-    for (final novel in searchResults) {
-      final dbNovel = await db.getNovel(novel.ncode);
-      final isInLibrary = dbNovel?.fav == 1;
-      enrichedData.add(EnrichedNovelData(
+    // Get all library novels at once for efficient lookup  
+    final libraryNovels = await (db.select(db.novels)
+          ..where((tbl) => tbl.fav.equals(1))).get();
+    final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
+    
+    // Enrich each novel with library status
+    final enrichedData = searchResults.map((novel) {
+      final isInLibrary = libraryNcodes.contains(novel.ncode);
+      return EnrichedNovelData(
         novel: novel,
         isInLibrary: isInLibrary,
-      ));
-    }
+      );
+    }).toList();
     
     return enrichedData;
   }
