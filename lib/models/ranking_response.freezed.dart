@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RankingResponse {
 
-/// 順位。
+/// Nコード。
+ String get ncode;/// 順位。
 ///
 /// 1～300位。
 /// ランキングAPIで取得。
@@ -26,8 +27,7 @@ mixin _$RankingResponse {
 ///
 /// (ブックマーク数×2)+評価ポイント。
 /// 小説APIで取得。
-@StringToIntConverter()@JsonKey(name: 'all_point') int? get allPoint;/// Nコード。
- String get ncode;/// 作品名。
+@StringToIntConverter()@JsonKey(name: 'all_point') int? get allPoint;/// 作品名。
  String? get title;/// 小説タイプ。
 ///
 /// [1] 連載
@@ -59,16 +59,16 @@ $RankingResponseCopyWith<RankingResponse> get copyWith => _$RankingResponseCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RankingResponse&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.pt, pt) || other.pt == pt)&&(identical(other.allPoint, allPoint) || other.allPoint == allPoint)&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.title, title) || other.title == title)&&(identical(other.novelType, novelType) || other.novelType == novelType)&&(identical(other.end, end) || other.end == end)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.writer, writer) || other.writer == writer)&&(identical(other.story, story) || other.story == story)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.generalAllNo, generalAllNo) || other.generalAllNo == generalAllNo)&&(identical(other.keyword, keyword) || other.keyword == keyword));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RankingResponse&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.pt, pt) || other.pt == pt)&&(identical(other.allPoint, allPoint) || other.allPoint == allPoint)&&(identical(other.title, title) || other.title == title)&&(identical(other.novelType, novelType) || other.novelType == novelType)&&(identical(other.end, end) || other.end == end)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.writer, writer) || other.writer == writer)&&(identical(other.story, story) || other.story == story)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.generalAllNo, generalAllNo) || other.generalAllNo == generalAllNo)&&(identical(other.keyword, keyword) || other.keyword == keyword));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,rank,pt,allPoint,ncode,title,novelType,end,genre,writer,story,userId,generalAllNo,keyword);
+int get hashCode => Object.hash(runtimeType,ncode,rank,pt,allPoint,title,novelType,end,genre,writer,story,userId,generalAllNo,keyword);
 
 @override
 String toString() {
-  return 'RankingResponse(rank: $rank, pt: $pt, allPoint: $allPoint, ncode: $ncode, title: $title, novelType: $novelType, end: $end, genre: $genre, writer: $writer, story: $story, userId: $userId, generalAllNo: $generalAllNo, keyword: $keyword)';
+  return 'RankingResponse(ncode: $ncode, rank: $rank, pt: $pt, allPoint: $allPoint, title: $title, novelType: $novelType, end: $end, genre: $genre, writer: $writer, story: $story, userId: $userId, generalAllNo: $generalAllNo, keyword: $keyword)';
 }
 
 
@@ -79,7 +79,7 @@ abstract mixin class $RankingResponseCopyWith<$Res>  {
   factory $RankingResponseCopyWith(RankingResponse value, $Res Function(RankingResponse) _then) = _$RankingResponseCopyWithImpl;
 @useResult
 $Res call({
-@StringToIntConverter() int? rank,@StringToIntConverter() int? pt,@StringToIntConverter()@JsonKey(name: 'all_point') int? allPoint, String ncode, String? title,@StringToIntConverter()@JsonKey(name: 'novel_type') int? novelType,@StringToIntConverter() int? end,@StringToIntConverter() int? genre, String? writer, String? story,@StringToIntConverter()@JsonKey(name: 'userid') int? userId,@StringToIntConverter()@JsonKey(name: 'general_all_no') int? generalAllNo, String? keyword
+ String ncode,@StringToIntConverter() int? rank,@StringToIntConverter() int? pt,@StringToIntConverter()@JsonKey(name: 'all_point') int? allPoint, String? title,@StringToIntConverter()@JsonKey(name: 'novel_type') int? novelType,@StringToIntConverter() int? end,@StringToIntConverter() int? genre, String? writer, String? story,@StringToIntConverter()@JsonKey(name: 'userid') int? userId,@StringToIntConverter()@JsonKey(name: 'general_all_no') int? generalAllNo, String? keyword
 });
 
 
@@ -96,13 +96,13 @@ class _$RankingResponseCopyWithImpl<$Res>
 
 /// Create a copy of RankingResponse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? rank = freezed,Object? pt = freezed,Object? allPoint = freezed,Object? ncode = null,Object? title = freezed,Object? novelType = freezed,Object? end = freezed,Object? genre = freezed,Object? writer = freezed,Object? story = freezed,Object? userId = freezed,Object? generalAllNo = freezed,Object? keyword = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? ncode = null,Object? rank = freezed,Object? pt = freezed,Object? allPoint = freezed,Object? title = freezed,Object? novelType = freezed,Object? end = freezed,Object? genre = freezed,Object? writer = freezed,Object? story = freezed,Object? userId = freezed,Object? generalAllNo = freezed,Object? keyword = freezed,}) {
   return _then(_self.copyWith(
-rank: freezed == rank ? _self.rank : rank // ignore: cast_nullable_to_non_nullable
+ncode: null == ncode ? _self.ncode : ncode // ignore: cast_nullable_to_non_nullable
+as String,rank: freezed == rank ? _self.rank : rank // ignore: cast_nullable_to_non_nullable
 as int?,pt: freezed == pt ? _self.pt : pt // ignore: cast_nullable_to_non_nullable
 as int?,allPoint: freezed == allPoint ? _self.allPoint : allPoint // ignore: cast_nullable_to_non_nullable
-as int?,ncode: null == ncode ? _self.ncode : ncode // ignore: cast_nullable_to_non_nullable
-as String,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as int?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,novelType: freezed == novelType ? _self.novelType : novelType // ignore: cast_nullable_to_non_nullable
 as int?,end: freezed == end ? _self.end : end // ignore: cast_nullable_to_non_nullable
 as int?,genre: freezed == genre ? _self.genre : genre // ignore: cast_nullable_to_non_nullable
@@ -196,10 +196,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@StringToIntConverter()  int? rank, @StringToIntConverter()  int? pt, @StringToIntConverter()@JsonKey(name: 'all_point')  int? allPoint,  String ncode,  String? title, @StringToIntConverter()@JsonKey(name: 'novel_type')  int? novelType, @StringToIntConverter()  int? end, @StringToIntConverter()  int? genre,  String? writer,  String? story, @StringToIntConverter()@JsonKey(name: 'userid')  int? userId, @StringToIntConverter()@JsonKey(name: 'general_all_no')  int? generalAllNo,  String? keyword)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String ncode, @StringToIntConverter()  int? rank, @StringToIntConverter()  int? pt, @StringToIntConverter()@JsonKey(name: 'all_point')  int? allPoint,  String? title, @StringToIntConverter()@JsonKey(name: 'novel_type')  int? novelType, @StringToIntConverter()  int? end, @StringToIntConverter()  int? genre,  String? writer,  String? story, @StringToIntConverter()@JsonKey(name: 'userid')  int? userId, @StringToIntConverter()@JsonKey(name: 'general_all_no')  int? generalAllNo,  String? keyword)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RankingResponse() when $default != null:
-return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that.novelType,_that.end,_that.genre,_that.writer,_that.story,_that.userId,_that.generalAllNo,_that.keyword);case _:
+return $default(_that.ncode,_that.rank,_that.pt,_that.allPoint,_that.title,_that.novelType,_that.end,_that.genre,_that.writer,_that.story,_that.userId,_that.generalAllNo,_that.keyword);case _:
   return orElse();
 
 }
@@ -217,10 +217,10 @@ return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@StringToIntConverter()  int? rank, @StringToIntConverter()  int? pt, @StringToIntConverter()@JsonKey(name: 'all_point')  int? allPoint,  String ncode,  String? title, @StringToIntConverter()@JsonKey(name: 'novel_type')  int? novelType, @StringToIntConverter()  int? end, @StringToIntConverter()  int? genre,  String? writer,  String? story, @StringToIntConverter()@JsonKey(name: 'userid')  int? userId, @StringToIntConverter()@JsonKey(name: 'general_all_no')  int? generalAllNo,  String? keyword)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String ncode, @StringToIntConverter()  int? rank, @StringToIntConverter()  int? pt, @StringToIntConverter()@JsonKey(name: 'all_point')  int? allPoint,  String? title, @StringToIntConverter()@JsonKey(name: 'novel_type')  int? novelType, @StringToIntConverter()  int? end, @StringToIntConverter()  int? genre,  String? writer,  String? story, @StringToIntConverter()@JsonKey(name: 'userid')  int? userId, @StringToIntConverter()@JsonKey(name: 'general_all_no')  int? generalAllNo,  String? keyword)  $default,) {final _that = this;
 switch (_that) {
 case _RankingResponse():
-return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that.novelType,_that.end,_that.genre,_that.writer,_that.story,_that.userId,_that.generalAllNo,_that.keyword);case _:
+return $default(_that.ncode,_that.rank,_that.pt,_that.allPoint,_that.title,_that.novelType,_that.end,_that.genre,_that.writer,_that.story,_that.userId,_that.generalAllNo,_that.keyword);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -237,10 +237,10 @@ return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@StringToIntConverter()  int? rank, @StringToIntConverter()  int? pt, @StringToIntConverter()@JsonKey(name: 'all_point')  int? allPoint,  String ncode,  String? title, @StringToIntConverter()@JsonKey(name: 'novel_type')  int? novelType, @StringToIntConverter()  int? end, @StringToIntConverter()  int? genre,  String? writer,  String? story, @StringToIntConverter()@JsonKey(name: 'userid')  int? userId, @StringToIntConverter()@JsonKey(name: 'general_all_no')  int? generalAllNo,  String? keyword)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String ncode, @StringToIntConverter()  int? rank, @StringToIntConverter()  int? pt, @StringToIntConverter()@JsonKey(name: 'all_point')  int? allPoint,  String? title, @StringToIntConverter()@JsonKey(name: 'novel_type')  int? novelType, @StringToIntConverter()  int? end, @StringToIntConverter()  int? genre,  String? writer,  String? story, @StringToIntConverter()@JsonKey(name: 'userid')  int? userId, @StringToIntConverter()@JsonKey(name: 'general_all_no')  int? generalAllNo,  String? keyword)?  $default,) {final _that = this;
 switch (_that) {
 case _RankingResponse() when $default != null:
-return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that.novelType,_that.end,_that.genre,_that.writer,_that.story,_that.userId,_that.generalAllNo,_that.keyword);case _:
+return $default(_that.ncode,_that.rank,_that.pt,_that.allPoint,_that.title,_that.novelType,_that.end,_that.genre,_that.writer,_that.story,_that.userId,_that.generalAllNo,_that.keyword);case _:
   return null;
 
 }
@@ -252,9 +252,11 @@ return $default(_that.rank,_that.pt,_that.allPoint,_that.ncode,_that.title,_that
 @JsonSerializable()
 
 class _RankingResponse implements RankingResponse {
-  const _RankingResponse({@StringToIntConverter() this.rank, @StringToIntConverter() this.pt, @StringToIntConverter()@JsonKey(name: 'all_point') this.allPoint, required this.ncode, this.title, @StringToIntConverter()@JsonKey(name: 'novel_type') this.novelType, @StringToIntConverter() this.end, @StringToIntConverter() this.genre, this.writer, this.story, @StringToIntConverter()@JsonKey(name: 'userid') this.userId, @StringToIntConverter()@JsonKey(name: 'general_all_no') this.generalAllNo, this.keyword});
+  const _RankingResponse({required this.ncode, @StringToIntConverter() this.rank, @StringToIntConverter() this.pt, @StringToIntConverter()@JsonKey(name: 'all_point') this.allPoint, this.title, @StringToIntConverter()@JsonKey(name: 'novel_type') this.novelType, @StringToIntConverter() this.end, @StringToIntConverter() this.genre, this.writer, this.story, @StringToIntConverter()@JsonKey(name: 'userid') this.userId, @StringToIntConverter()@JsonKey(name: 'general_all_no') this.generalAllNo, this.keyword});
   factory _RankingResponse.fromJson(Map<String, dynamic> json) => _$RankingResponseFromJson(json);
 
+/// Nコード。
+@override final  String ncode;
 /// 順位。
 ///
 /// 1～300位。
@@ -269,8 +271,6 @@ class _RankingResponse implements RankingResponse {
 /// (ブックマーク数×2)+評価ポイント。
 /// 小説APIで取得。
 @override@StringToIntConverter()@JsonKey(name: 'all_point') final  int? allPoint;
-/// Nコード。
-@override final  String ncode;
 /// 作品名。
 @override final  String? title;
 /// 小説タイプ。
@@ -313,16 +313,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RankingResponse&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.pt, pt) || other.pt == pt)&&(identical(other.allPoint, allPoint) || other.allPoint == allPoint)&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.title, title) || other.title == title)&&(identical(other.novelType, novelType) || other.novelType == novelType)&&(identical(other.end, end) || other.end == end)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.writer, writer) || other.writer == writer)&&(identical(other.story, story) || other.story == story)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.generalAllNo, generalAllNo) || other.generalAllNo == generalAllNo)&&(identical(other.keyword, keyword) || other.keyword == keyword));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RankingResponse&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.pt, pt) || other.pt == pt)&&(identical(other.allPoint, allPoint) || other.allPoint == allPoint)&&(identical(other.title, title) || other.title == title)&&(identical(other.novelType, novelType) || other.novelType == novelType)&&(identical(other.end, end) || other.end == end)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.writer, writer) || other.writer == writer)&&(identical(other.story, story) || other.story == story)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.generalAllNo, generalAllNo) || other.generalAllNo == generalAllNo)&&(identical(other.keyword, keyword) || other.keyword == keyword));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,rank,pt,allPoint,ncode,title,novelType,end,genre,writer,story,userId,generalAllNo,keyword);
+int get hashCode => Object.hash(runtimeType,ncode,rank,pt,allPoint,title,novelType,end,genre,writer,story,userId,generalAllNo,keyword);
 
 @override
 String toString() {
-  return 'RankingResponse(rank: $rank, pt: $pt, allPoint: $allPoint, ncode: $ncode, title: $title, novelType: $novelType, end: $end, genre: $genre, writer: $writer, story: $story, userId: $userId, generalAllNo: $generalAllNo, keyword: $keyword)';
+  return 'RankingResponse(ncode: $ncode, rank: $rank, pt: $pt, allPoint: $allPoint, title: $title, novelType: $novelType, end: $end, genre: $genre, writer: $writer, story: $story, userId: $userId, generalAllNo: $generalAllNo, keyword: $keyword)';
 }
 
 
@@ -333,7 +333,7 @@ abstract mixin class _$RankingResponseCopyWith<$Res> implements $RankingResponse
   factory _$RankingResponseCopyWith(_RankingResponse value, $Res Function(_RankingResponse) _then) = __$RankingResponseCopyWithImpl;
 @override @useResult
 $Res call({
-@StringToIntConverter() int? rank,@StringToIntConverter() int? pt,@StringToIntConverter()@JsonKey(name: 'all_point') int? allPoint, String ncode, String? title,@StringToIntConverter()@JsonKey(name: 'novel_type') int? novelType,@StringToIntConverter() int? end,@StringToIntConverter() int? genre, String? writer, String? story,@StringToIntConverter()@JsonKey(name: 'userid') int? userId,@StringToIntConverter()@JsonKey(name: 'general_all_no') int? generalAllNo, String? keyword
+ String ncode,@StringToIntConverter() int? rank,@StringToIntConverter() int? pt,@StringToIntConverter()@JsonKey(name: 'all_point') int? allPoint, String? title,@StringToIntConverter()@JsonKey(name: 'novel_type') int? novelType,@StringToIntConverter() int? end,@StringToIntConverter() int? genre, String? writer, String? story,@StringToIntConverter()@JsonKey(name: 'userid') int? userId,@StringToIntConverter()@JsonKey(name: 'general_all_no') int? generalAllNo, String? keyword
 });
 
 
@@ -350,13 +350,13 @@ class __$RankingResponseCopyWithImpl<$Res>
 
 /// Create a copy of RankingResponse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? rank = freezed,Object? pt = freezed,Object? allPoint = freezed,Object? ncode = null,Object? title = freezed,Object? novelType = freezed,Object? end = freezed,Object? genre = freezed,Object? writer = freezed,Object? story = freezed,Object? userId = freezed,Object? generalAllNo = freezed,Object? keyword = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? ncode = null,Object? rank = freezed,Object? pt = freezed,Object? allPoint = freezed,Object? title = freezed,Object? novelType = freezed,Object? end = freezed,Object? genre = freezed,Object? writer = freezed,Object? story = freezed,Object? userId = freezed,Object? generalAllNo = freezed,Object? keyword = freezed,}) {
   return _then(_RankingResponse(
-rank: freezed == rank ? _self.rank : rank // ignore: cast_nullable_to_non_nullable
+ncode: null == ncode ? _self.ncode : ncode // ignore: cast_nullable_to_non_nullable
+as String,rank: freezed == rank ? _self.rank : rank // ignore: cast_nullable_to_non_nullable
 as int?,pt: freezed == pt ? _self.pt : pt // ignore: cast_nullable_to_non_nullable
 as int?,allPoint: freezed == allPoint ? _self.allPoint : allPoint // ignore: cast_nullable_to_non_nullable
-as int?,ncode: null == ncode ? _self.ncode : ncode // ignore: cast_nullable_to_non_nullable
-as String,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as int?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,novelType: freezed == novelType ? _self.novelType : novelType // ignore: cast_nullable_to_non_nullable
 as int?,end: freezed == end ? _self.end : end // ignore: cast_nullable_to_non_nullable
 as int?,genre: freezed == genre ? _self.genre : genre // ignore: cast_nullable_to_non_nullable

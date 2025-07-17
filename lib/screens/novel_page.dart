@@ -11,13 +11,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'novel_page.g.dart';
 
-
 @riverpod
+/// 小説の情報を取得するプロバイダー。
 Future<NovelInfo> novelInfo(Ref ref, String ncode) {
   return ApiService().fetchNovelInfo(ncode);
 }
 
 @riverpod
+/// 小説のエピソードを取得するプロバイダー。
 Future<Episode> episode(
   Ref ref, {
   required String ncode,
@@ -28,16 +29,24 @@ Future<Episode> episode(
 }
 
 @riverpod
+/// 現在のエピソード番号を管理するプロバイダー。
 class CurrentEpisode extends _$CurrentEpisode {
   @override
   int build() => 1;
 
+  /// 現在のエピソード番号を設定するメソッド。
   void set(int value) => state = value;
 }
 
+/// 小説のページを表示するウィジェット。
 class NovelPage extends ConsumerWidget {
-  const NovelPage({super.key, required this.ncode, this.episode});
+  /// コンストラクタ。
+  const NovelPage({required this.ncode, super.key, this.episode});
+
+  /// 小説のNコード。
   final String ncode;
+
+  /// 表示するエピソード番号。
   final int? episode;
 
   @override
@@ -57,8 +66,9 @@ class NovelPage extends ConsumerWidget {
 
         return settings.when(
           data: (settings) {
-            final pageController =
-                PageController(initialPage: initialEpisode - 1);
+            final pageController = PageController(
+              initialPage: initialEpisode - 1,
+            );
 
             // 最初の履歴追加
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -83,8 +93,8 @@ class NovelPage extends ConsumerWidget {
                         return Text(
                           novelInfo.novelType == 2
                               ? (subtitle.isNotEmpty
-                                  ? subtitle
-                                  : novelInfo.title ?? '')
+                                    ? subtitle
+                                    : novelInfo.title ?? '')
                               : '${novelInfo.title} - $subtitle',
                           overflow: TextOverflow.ellipsis,
                         );
@@ -96,8 +106,9 @@ class NovelPage extends ConsumerWidget {
                 ),
               ),
               body: PageView.builder(
-                scrollDirection:
-                    settings.isVertical ? Axis.vertical : Axis.horizontal,
+                scrollDirection: settings.isVertical
+                    ? Axis.vertical
+                    : Axis.horizontal,
                 controller: pageController,
                 itemCount: totalEpisodes,
                 onPageChanged: (index) {
@@ -151,7 +162,9 @@ class NovelPage extends ConsumerWidget {
   }
 
   void _updateHistory(WidgetRef ref, NovelInfo novelInfo, int episode) {
-    ref.read(appDatabaseProvider).addToHistory(
+    ref
+        .read(appDatabaseProvider)
+        .addToHistory(
           HistoryCompanion(
             ncode: drift.Value(ncode),
             title: drift.Value(novelInfo.title),

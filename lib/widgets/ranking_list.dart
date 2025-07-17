@@ -4,15 +4,23 @@ import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
+/// ランキングリストを表示するウィジェット。
 class RankingList extends ConsumerStatefulWidget {
+  /// コンストラクタ。
   const RankingList({
-    super.key,
     required this.rankingType,
+    super.key,
     this.showOnlyOngoing = false,
     this.selectedGenre,
   });
+
+  /// ランキングの種類。
   final String rankingType;
+
+  /// 連載中の作品のみを表示するかどうか。
   final bool showOnlyOngoing;
+
+  /// 選択されたジャンル。
   final int? selectedGenre;
 
   @override
@@ -190,7 +198,8 @@ class _RankingListState extends ConsumerState<RankingList>
     });
 
     // Reapply filters after loading details if filters are active
-    final hasActiveFilters = widget.showOnlyOngoing || widget.selectedGenre != null;
+    final hasActiveFilters =
+        widget.showOnlyOngoing || widget.selectedGenre != null;
     if (hasActiveFilters) {
       _applyFilters();
     }

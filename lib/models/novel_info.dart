@@ -153,11 +153,12 @@ abstract class NovelInfo with _$NovelInfo {
     @StringToIntConverter() int? istenni,
   }) = _NovelInfo;
 
-  /// JSONから[NovelInfo]を��成するファクトリコンストラクタ
+  /// JSONから[NovelInfo]を生成するファクトリコンストラクタ
   factory NovelInfo.fromJson(Map<String, dynamic> json) =>
       _$NovelInfoFromJson(json);
 }
 
+/// [NovelInfo]をデータベースの[NovelsCompanion]に変換する拡張メソッド。
 extension NovelInfoEx on NovelInfo {
   /// [NovelInfo]をデータベースの[NovelsCompanion]に変換するメソッド。
   NovelsCompanion toDbCompanion() {
@@ -176,7 +177,7 @@ extension NovelInfoEx on NovelInfo {
       reviewCount: Value(reviewCnt),
       rateCount: Value(allHyokaCnt),
       allPoint: Value(allPoint),
-      poinCount: Value(impressionCnt),
+      pointCount: Value(impressionCnt),
       weeklyPoint: Value(weeklyPoint),
       monthlyPoint: Value(monthlyPoint),
       quarterPoint: Value(quarterPoint),

@@ -12,6 +12,9 @@ part 'ranking_response.g.dart';
 abstract class RankingResponse with _$RankingResponse {
   /// [RankingResponse]のコンストラクタ
   const factory RankingResponse({
+    /// Nコード。
+    required String ncode,
+
     /// 順位。
     ///
     /// 1～300位。
@@ -28,9 +31,6 @@ abstract class RankingResponse with _$RankingResponse {
     /// (ブックマーク数×2)+評価ポイント。
     /// 小説APIで取得。
     @StringToIntConverter() @JsonKey(name: 'all_point') int? allPoint,
-
-    /// Nコード。
-    required String ncode,
 
     /// 作品名。
     String? title,

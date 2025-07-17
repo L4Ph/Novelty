@@ -6,7 +6,9 @@ import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/novel_list.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
+/// "見つける"ページのウィジェット。
 class ExplorePage extends StatefulWidget {
+  /// コンストラクタ。
   const ExplorePage({super.key});
 
   @override

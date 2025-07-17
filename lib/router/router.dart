@@ -13,6 +13,8 @@ import 'package:novelty/screens/settings_page.dart';
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+/// ルーティングの設定。
+/// GoRouterを使用して、アプリのナビゲーションを管理
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
@@ -83,7 +85,8 @@ final router = GoRouter(
           path: ':episode',
           builder: (BuildContext context, GoRouterState state) {
             final ncode = state.pathParameters['ncode']!;
-            final episode = int.tryParse(state.pathParameters['episode'] ?? '1') ?? 1;
+            final episode =
+                int.tryParse(state.pathParameters['episode'] ?? '1') ?? 1;
             return NovelPage(ncode: ncode, episode: episode);
           },
         ),

@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
 
 // WidgetSpanの中で、Stackを使ってルビをベーステキストの上に重ねる
+/// ルビ付きテキストを表示するウィジェット。
 class RubySpan extends StatelessWidget {
+  /// コンストラクタ。
   const RubySpan({
-    super.key,
     required this.base,
     required this.ruby,
     required this.style,
+    super.key,
   });
 
+  /// ベーステキストとルビのテキスト、スタイルを指定する。
   final String base;
+
+  /// ルビのテキスト。
   final String ruby;
+
+  /// テキストスタイル。
   final TextStyle style;
 
   @override

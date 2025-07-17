@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
 
+/// 小説のライブラリを表示するためのプロバイダー。
 final libraryNovelsProvider = FutureProvider<List<Novel>>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return (db.select(db.novels)..where((tbl) => tbl.fav.equals(1))).get();
 });
 
+/// "ライブラリ"ページのウィジェット。
 class LibraryPage extends ConsumerWidget {
+  /// コンストラクタ。
   const LibraryPage({super.key});
 
   @override

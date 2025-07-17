@@ -9,6 +9,7 @@ import 'package:novelty/utils/novel_parser.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:path/path.dart' as p;
 
+/// 小説のダウンロードと管理を行うリポジトリ。
 final novelRepositoryProvider = Provider<NovelRepository>((ref) {
   final apiService = ref.watch(apiServiceProvider);
   final settings = ref.watch(settingsProvider);
@@ -19,15 +20,22 @@ final novelRepositoryProvider = Provider<NovelRepository>((ref) {
   );
 });
 
+/// 小説のダウンロードと管理を行うリポジトリクラス。
 class NovelRepository {
+  /// コンストラクタ。
   NovelRepository({
     required this.ref,
     required this.apiService,
     required this.settings,
   });
 
+  /// アプリケーションの設定を取得するためのリファレンス。
   final Ref ref;
+
+  /// APIサービスを通じて小説データを取得するためのサービス。
   final ApiService apiService;
+
+  /// アプリケーションの設定。
   final AsyncValue<AppSettings> settings;
 
   String _getNovelDirectory(String downloadPath, String ncode) =>
@@ -47,6 +55,7 @@ class NovelRepository {
   File _getNovelInfoFile(String downloadPath, String ncode) =>
       File(p.join(_getNovelDirectory(downloadPath, ncode), 'info.json'));
 
+  /// 小説のエピソードを取得するメソッド。
   Future<List<NovelContentElement>> getEpisode(
     String ncode,
     int episode,
@@ -71,6 +80,7 @@ class NovelRepository {
     return parsedContent;
   }
 
+  /// 小説の情報を取得するメソッド。
   Future<void> downloadEpisode(String ncode, int episode) async {
     final downloadPath = await _getDownloadPath();
     final episodeDir = Directory(
@@ -97,6 +107,7 @@ class NovelRepository {
     await contentFile.writeAsString(encodedContent);
   }
 
+  /// 小説のダウンロードを行うメソッド。
   Future<void> downloadNovel(NovelInfo novelInfo) async {
     final ncode = novelInfo.ncode!;
     final downloadPath = await _getDownloadPath();
@@ -124,6 +135,7 @@ class NovelRepository {
     }
   }
 
+  /// ダウンロード済みエピソードを削除するメソッド。
   Future<void> deleteDownloadedEpisode(String ncode, int episode) async {
     final downloadPath = await _getDownloadPath();
     final episodeDir = Directory(
@@ -134,6 +146,7 @@ class NovelRepository {
     }
   }
 
+  /// ダウンロード済み小説を削除するメソッド。
   Future<void> deleteDownloadedNovel(NovelInfo novelInfo) async {
     final ncode = novelInfo.ncode!;
     final downloadPath = await _getDownloadPath();
@@ -143,12 +156,14 @@ class NovelRepository {
     }
   }
 
+  /// ダウンロードパスを取得するメソッド。
   Stream<bool> isEpisodeDownloaded(String ncode, int episode) async* {
     final downloadPath = await _getDownloadPath();
     final contentFile = _getEpisodeContentFile(downloadPath, ncode, episode);
     yield await contentFile.exists();
   }
 
+  /// 小説がダウンロードされているかを確認するメソッド。
   Stream<bool> isNovelDownloaded(NovelInfo novelInfo) async* {
     final ncode = novelInfo.ncode!;
     final downloadPath = await _getDownloadPath();

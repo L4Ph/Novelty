@@ -8,10 +8,10 @@ part of 'ranking_response.dart';
 
 _RankingResponse _$RankingResponseFromJson(Map<String, dynamic> json) =>
     _RankingResponse(
+      ncode: json['ncode'] as String,
       rank: const StringToIntConverter().fromJson(json['rank']),
       pt: const StringToIntConverter().fromJson(json['pt']),
       allPoint: const StringToIntConverter().fromJson(json['all_point']),
-      ncode: json['ncode'] as String,
       title: json['title'] as String?,
       novelType: const StringToIntConverter().fromJson(json['novel_type']),
       end: const StringToIntConverter().fromJson(json['end']),
@@ -28,10 +28,10 @@ _RankingResponse _$RankingResponseFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$RankingResponseToJson(
   _RankingResponse instance,
 ) => <String, dynamic>{
+  'ncode': instance.ncode,
   'rank': const StringToIntConverter().toJson(instance.rank),
   'pt': const StringToIntConverter().toJson(instance.pt),
   'all_point': const StringToIntConverter().toJson(instance.allPoint),
-  'ncode': instance.ncode,
   'title': instance.title,
   'novel_type': const StringToIntConverter().toJson(instance.novelType),
   'end': const StringToIntConverter().toJson(instance.end),

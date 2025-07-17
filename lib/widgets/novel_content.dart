@@ -7,6 +7,7 @@ import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
 import 'package:novelty/widgets/tategaki.dart';
 
+/// 小説のコンテンツを取得するプロバイダー。
 final FutureProviderFamily<
   List<NovelContentElement>,
   ({int episode, String ncode})
@@ -20,13 +21,19 @@ novelContentProvider = FutureProvider.autoDispose
       return repository.getEpisode(params.ncode, params.episode);
     });
 
+/// 小説のコンテンツを表示するウィジェット。
 class NovelContent extends ConsumerWidget {
+  /// コンストラクタ。
   const NovelContent({
-    super.key,
     required this.ncode,
     required this.episode,
+    super.key,
   });
+
+  /// 小説のncode
   final String ncode;
+
+  /// 小説のエピソード番号
   final int episode;
 
   @override

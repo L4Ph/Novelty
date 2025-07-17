@@ -4,6 +4,7 @@ part 'novel_content_element.freezed.dart';
 part 'novel_content_element.g.dart';
 
 @freezed
+/// 小説のコンテンツ要素を表すクラス。
 sealed class NovelContentElement with _$NovelContentElement {
   factory NovelContentElement.plainText(String text) = PlainText;
   factory NovelContentElement.rubyText(String base, String ruby) = RubyText;

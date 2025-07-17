@@ -15,8 +15,10 @@ import 'package:riverpod/src/providers/future_provider.dart';
 /// 定数として使用するランキングのデフォルト制限値
 const int defaultRankingLimit = 100;
 
+/// APIサービスのプロバイダー
 final Provider<ApiService> apiServiceProvider = Provider((ref) => ApiService());
 
+/// ランキングデータのプロバイダー
 final FutureProviderFamily<List<RankingResponse>, String> rankingDataProvider =
     FutureProvider.autoDispose.family<List<RankingResponse>, String>(
       (ref, rankingType) {
@@ -25,6 +27,7 @@ final FutureProviderFamily<List<RankingResponse>, String> rankingDataProvider =
       },
     );
 
+/// APIサービスクラス。
 class ApiService {
   Future<http.Response> _fetchWithCache(String url) async {
     final response = await http.get(
@@ -200,6 +203,7 @@ class ApiService {
     return info;
   }
 
+  /// 小説のエピソードを取得するメソッド。
   Future<List<Episode>> fetchEpisodeList(String ncode, int page) async {
     final pageUrl = page == 1
         ? 'https://ncode.syosetu.com/${ncode.toLowerCase()}/'
@@ -218,6 +222,7 @@ class ApiService {
     return _parseEpisodes(document);
   }
 
+  /// 小説のランキングを取得するメソッド。
   Future<NovelInfo> fetchNovelInfo(String ncode) async {
     var info = await _fetchNovelInfoFromNarou(ncode);
 
@@ -302,6 +307,7 @@ class ApiService {
     return info;
   }
 
+  /// 小説のエピソードを取得するメソッド。
   Future<Episode> fetchEpisode(String ncode, int episode) async {
     var info = await _fetchNovelInfoFromNarou(ncode);
 
@@ -411,6 +417,7 @@ class ApiService {
     return compute(_parseJson, bytes.toList());
   }
 
+  /// 小説のランキングを取得するメソッド。
   Future<List<RankingResponse>> searchNovels(NovelSearchQuery query) async {
     final queryParameters = query.toMap();
     final filteredQueryParameters = queryParameters

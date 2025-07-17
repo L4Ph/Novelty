@@ -29,7 +29,7 @@ abstract class NovelSearchQuery with _$NovelSearchQuery {
     /// キーワードを検索対象にするか。
     @Default(false) bool keyword,
 
-    /// 作者名を検索対象にするか��
+    /// 作者名を検索対象にするか。
     @Default(false) bool wname,
 
     /// 大ジャンル。
@@ -202,6 +202,7 @@ abstract class NovelSearchQuery with _$NovelSearchQuery {
       _$NovelSearchQueryFromJson(json);
 }
 
+/// [NovelSearchQuery]をMapに変換する拡張メソッド。
 extension NovelSearchQueryEx on NovelSearchQuery {
   /// [NovelSearchQuery]をMapに変換するメソッド。
   ///
