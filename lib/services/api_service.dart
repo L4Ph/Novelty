@@ -57,6 +57,7 @@ class ApiService {
       return Episode(
         subtitle: subtitle?.text.trim(),
         url: url,
+        // ignore: unnecessary_raw_strings
         update: update?.text.trim().replaceAll(RegExp(r'（.+）'), '').trim(),
         revised: revisedAttr?.replaceAll(' 改稿', '').trim(),
         index: index,

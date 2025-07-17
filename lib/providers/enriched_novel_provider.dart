@@ -51,26 +51,30 @@ enrichedRankingDataProvider = FutureProvider.autoDispose
     );
 
 /// 検索結果をデータベースのライブラリ状態で強化するプロバイダー
-final Provider<List<EnrichedNovelData> Function(List<RankingResponse>)>
-enrichedSearchDataProvider =
-    Provider<List<EnrichedNovelData> Function(List<RankingResponse>)>((ref) {
-      final _ = ref.watch(appDatabaseProvider);
+final FutureProviderFamily<List<EnrichedNovelData>, List<RankingResponse>>
+enrichedSearchDataProvider = FutureProvider.autoDispose
+    .family<List<EnrichedNovelData>, List<RankingResponse>>(
+      (ref, searchResults) async {
+        final db = ref.watch(appDatabaseProvider);
 
-      return (List<RankingResponse> searchResults) {
-        final enrichedData = <EnrichedNovelData>[];
-        for (final novel in searchResults) {
-          // For immediate synchronous access, we need to check if we have cached data
-          // This is a limitation - for real-time updates, we might need a different approach
-          enrichedData.add(
-            EnrichedNovelData(
-              novel: novel,
-              isInLibrary: false, // Will be updated by UI state management
-            ),
+        // すべてのライブラリ小説を一度に取得して効率的に検索
+        final libraryNovels = await (db.select(
+          db.novels,
+        )..where((tbl) => tbl.fav.equals(1))).get();
+        final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
+
+        // 検索結果の各小説をライブラリ状態で強化
+        final enrichedData = searchResults.map((novel) {
+          final isInLibrary = libraryNcodes.contains(novel.ncode);
+          return EnrichedNovelData(
+            novel: novel,
+            isInLibrary: isInLibrary,
           );
-        }
+        }).toList();
+
         return enrichedData;
-      };
-    });
+      },
+    );
 
 /// 小説のライブラリ状態を取得するヘルパー関数
 Future<bool> getNovelLibraryStatus(WidgetRef ref, String ncode) async {

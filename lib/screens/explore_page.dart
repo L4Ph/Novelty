@@ -7,7 +7,7 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/enriched_novel_list.dart';
 import 'package:novelty/widgets/ranking_list.dart';
-import 'package:novelty/database/database.dart';
+
 
 /// "見つける"ページのウィジェット。
 class ExplorePage extends ConsumerStatefulWidget {
@@ -400,47 +400,17 @@ class _EnrichedSearchResults extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FutureBuilder<List<EnrichedNovelData>>(
-      future: _enrichSearchResults(ref, searchResults),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    final enrichedResults = ref.watch(enrichedSearchDataProvider(searchResults));
 
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-
-        final enrichedResults = snapshot.data ?? [];
+    return enrichedResults.when(
+      data: (data) {
         return EnrichedNovelList(
-          enrichedNovels: enrichedResults,
+          enrichedNovels: data,
           isRanking: false,
         );
       },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('Error: $error')),
     );
-  }
-
-  Future<List<EnrichedNovelData>> _enrichSearchResults(
-    WidgetRef ref,
-    List<RankingResponse> searchResults,
-  ) async {
-    final db = ref.read(appDatabaseProvider);
-
-    // Get all library novels at once for efficient lookup
-    final libraryNovels = await (db.select(
-      db.novels,
-    )..where((tbl) => tbl.fav.equals(1))).get();
-    final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
-
-    // Enrich each novel with library status
-    final enrichedData = searchResults.map((novel) {
-      final isInLibrary = libraryNcodes.contains(novel.ncode);
-      return EnrichedNovelData(
-        novel: novel,
-        isInLibrary: isInLibrary,
-      );
-    }).toList();
-
-    return enrichedData;
   }
 }
