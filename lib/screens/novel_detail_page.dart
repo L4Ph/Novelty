@@ -25,16 +25,6 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
 
   final novelInfo = await apiService.fetchBasicNovelInfo(ncode);
 
-  // Insert into history
-  await db.addToHistory(
-    HistoryCompanion(
-      ncode: drift.Value(ncode),
-      title: drift.Value(novelInfo.title),
-      writer: drift.Value(novelInfo.writer),
-      viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
-    ),
-  );
-
   // Upsert novel data, preserving fav status
   final existing = await db.getNovel(ncode);
   await db.insertNovel(
