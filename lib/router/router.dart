@@ -77,14 +77,14 @@ final router = GoRouter(
       path: '/novel/:ncode',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
-        final ncode = state.pathParameters['ncode']!;
+        final ncode = state.pathParameters['ncode']!.toLowerCase();
         return NovelDetailPage(ncode: ncode);
       },
       routes: [
         GoRoute(
           path: ':episode',
           builder: (BuildContext context, GoRouterState state) {
-            final ncode = state.pathParameters['ncode']!;
+            final ncode = state.pathParameters['ncode']!.toLowerCase();
             final episode =
                 int.tryParse(state.pathParameters['episode'] ?? '1') ?? 1;
             return NovelPage(ncode: ncode, episode: episode);

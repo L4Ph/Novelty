@@ -39,21 +39,21 @@ class NovelRepository {
   final AsyncValue<AppSettings> settings;
 
   String _getNovelDirectory(String downloadPath, String ncode) =>
-      p.join(downloadPath, ncode);
+      p.join(downloadPath, ncode.toLowerCase());
 
   String _getEpisodeDirectory(String downloadPath, String ncode, int episode) =>
-      p.join(_getNovelDirectory(downloadPath, ncode), episode.toString());
+      p.join(_getNovelDirectory(downloadPath, ncode.toLowerCase()), episode.toString());
 
   File _getEpisodeContentFile(String downloadPath, String ncode, int episode) =>
       File(
         p.join(
-          _getEpisodeDirectory(downloadPath, ncode, episode),
+          _getEpisodeDirectory(downloadPath, ncode.toLowerCase(), episode),
           'content.json',
         ),
       );
 
   File _getNovelInfoFile(String downloadPath, String ncode) =>
-      File(p.join(_getNovelDirectory(downloadPath, ncode), 'info.json'));
+      File(p.join(_getNovelDirectory(downloadPath, ncode.toLowerCase()), 'info.json'));
 
   /// 小説のエピソードを取得するメソッド。
   Future<List<NovelContentElement>> getEpisode(
@@ -61,7 +61,7 @@ class NovelRepository {
     int episode,
   ) async {
     final downloadPath = await _getDownloadPath();
-    final contentFile = _getEpisodeContentFile(downloadPath, ncode, episode);
+    final contentFile = _getEpisodeContentFile(downloadPath, ncode.toLowerCase(), episode);
 
     if (await contentFile.exists()) {
       final content = await contentFile.readAsString();
@@ -71,7 +71,7 @@ class NovelRepository {
           .toList();
     }
 
-    final episodeData = await apiService.fetchEpisode(ncode, episode);
+    final episodeData = await apiService.fetchEpisode(ncode.toLowerCase(), episode);
     if (episodeData.body == null) {
       return [];
     }
@@ -84,18 +84,18 @@ class NovelRepository {
   Future<void> downloadEpisode(String ncode, int episode) async {
     final downloadPath = await _getDownloadPath();
     final episodeDir = Directory(
-      _getEpisodeDirectory(downloadPath, ncode, episode),
+      _getEpisodeDirectory(downloadPath, ncode.toLowerCase(), episode),
     );
     if (!await episodeDir.exists()) {
       await episodeDir.create(recursive: true);
     }
 
-    final contentFile = _getEpisodeContentFile(downloadPath, ncode, episode);
+    final contentFile = _getEpisodeContentFile(downloadPath, ncode.toLowerCase(), episode);
     if (await contentFile.exists()) {
       return; // Already downloaded
     }
 
-    final episodeData = await apiService.fetchEpisode(ncode, episode);
+    final episodeData = await apiService.fetchEpisode(ncode.toLowerCase(), episode);
     if (episodeData.body == null) {
       throw Exception('Failed to fetch episode content');
     }
@@ -109,7 +109,7 @@ class NovelRepository {
 
   /// 小説のダウンロードを行うメソッド。
   Future<void> downloadNovel(NovelInfo novelInfo) async {
-    final ncode = novelInfo.ncode!;
+    final ncode = novelInfo.ncode!.toLowerCase();
     final downloadPath = await _getDownloadPath();
 
     final novelDir = Directory(_getNovelDirectory(downloadPath, ncode));
@@ -139,7 +139,7 @@ class NovelRepository {
   Future<void> deleteDownloadedEpisode(String ncode, int episode) async {
     final downloadPath = await _getDownloadPath();
     final episodeDir = Directory(
-      _getEpisodeDirectory(downloadPath, ncode, episode),
+      _getEpisodeDirectory(downloadPath, ncode.toLowerCase(), episode),
     );
     if (await episodeDir.exists()) {
       await episodeDir.delete(recursive: true);
@@ -148,7 +148,7 @@ class NovelRepository {
 
   /// ダウンロード済み小説を削除するメソッド。
   Future<void> deleteDownloadedNovel(NovelInfo novelInfo) async {
-    final ncode = novelInfo.ncode!;
+    final ncode = novelInfo.ncode!.toLowerCase();
     final downloadPath = await _getDownloadPath();
     final novelDir = Directory(_getNovelDirectory(downloadPath, ncode));
     if (await novelDir.exists()) {
@@ -159,13 +159,13 @@ class NovelRepository {
   /// ダウンロードパスを取得するメソッド。
   Stream<bool> isEpisodeDownloaded(String ncode, int episode) async* {
     final downloadPath = await _getDownloadPath();
-    final contentFile = _getEpisodeContentFile(downloadPath, ncode, episode);
+    final contentFile = _getEpisodeContentFile(downloadPath, ncode.toLowerCase(), episode);
     yield await contentFile.exists();
   }
 
   /// 小説がダウンロードされているかを確認するメソッド。
   Stream<bool> isNovelDownloaded(NovelInfo novelInfo) async* {
-    final ncode = novelInfo.ncode!;
+    final ncode = novelInfo.ncode!.toLowerCase();
     final downloadPath = await _getDownloadPath();
 
     if (novelInfo.novelType == 2) {

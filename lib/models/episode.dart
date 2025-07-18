@@ -46,6 +46,11 @@ abstract class Episode with _$Episode {
   }) = _Episode;
 
   /// JSONから[Episode]を生成するファクトリコンストラクタ
-  factory Episode.fromJson(Map<String, dynamic> json) =>
-      _$EpisodeFromJson(json);
+  factory Episode.fromJson(Map<String, dynamic> json) {
+    // ncodeを小文字化
+    if (json['ncode'] is String) {
+      json['ncode'] = (json['ncode'] as String).toLowerCase();
+    }
+    return _$EpisodeFromJson(json);
+  }
 }

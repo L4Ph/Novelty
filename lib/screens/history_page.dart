@@ -51,9 +51,9 @@ class HistoryPage extends ConsumerWidget {
                 ),
                 onTap: () {
                   if (lastEpisode != null && lastEpisode > 0) {
-                    context.push('/novel/${ncode.toLowerCase()}/$lastEpisode');
+                    context.push('/novel/$ncode/$lastEpisode');
                   } else {
-                    context.push('/novel/${ncode.toLowerCase()}');
+                    context.push('/novel/$ncode');
                   }
                 },
               );
