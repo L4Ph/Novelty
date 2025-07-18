@@ -523,6 +523,14 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<int>);
 
   @override
+  _i5.Future<List<_i3.Novel>> searchLibraryNovels(String? query) =>
+      (super.noSuchMethod(
+            Invocation.method(#searchLibraryNovels, [query]),
+            returnValue: _i5.Future<List<_i3.Novel>>.value(<_i3.Novel>[]),
+          )
+          as _i5.Future<List<_i3.Novel>>);
+
+  @override
   _i2.Migrator createMigrator() =>
       (super.noSuchMethod(
             Invocation.method(#createMigrator, []),

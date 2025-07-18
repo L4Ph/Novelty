@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/widgets/library_search_dialog.dart';
 
 /// 小説のライブラリを表示するためのプロバイダー。
 final libraryNovelsProvider = FutureProvider<List<Novel>>((ref) {
@@ -25,7 +26,12 @@ class LibraryPage extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: Implement search functionality
+              showDialog<void>(
+                context: context,
+                builder: (BuildContext context) {
+                  return const LibrarySearchDialog();
+                },
+              );
             },
           ),
           IconButton(

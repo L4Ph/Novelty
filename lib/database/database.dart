@@ -236,14 +236,17 @@ class AppDatabase extends _$AppDatabase {
   /// データベースの接続を初期化
   AppDatabase() : super(_openConnection());
 
+  /// テスト用のコンストラクタ
+  AppDatabase.forTesting(QueryExecutor executor) : super(executor);
+
   @override
   int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
-      onCreate: (Migrator m) {
-        return m.createAll();
+      onCreate: (Migrator m) async {
+        await m.createAll();
       },
       onUpgrade: (Migrator m, int from, int to) async {
         if (from == 1) {
@@ -381,6 +384,26 @@ class AppDatabase extends _$AppDatabase {
               t.position.equals(position),
         ))
         .go();
+  }
+
+  /// ライブラリ内の小説を検索
+  Future<List<Novel>> searchLibraryNovels(String query) async {
+    if (query.trim().isEmpty) {
+      // 空の検索クエリの場合は全ての小説を返す
+      return (select(novels)..where((t) => t.fav.equals(1))).get();
+    }
+
+    // LIKE検索でタイトル、著者、あらすじ、キーワードを検索
+    final searchTerm = '%${query.toLowerCase()}%';
+    
+    return (select(novels)
+          ..where((t) => 
+              t.fav.equals(1) &
+              (t.title.lower().like(searchTerm) |
+               t.writer.lower().like(searchTerm) |
+               t.story.lower().like(searchTerm) |
+               t.keyword.lower().like(searchTerm))))
+        .get();
   }
 }
 

@@ -63,7 +63,7 @@ final class NovelInfoProvider
   }
 }
 
-String _$novelInfoHash() => r'8a70e4fa7e60d18d2b6f94b97b6cc2f7fd110fc2';
+String _$novelInfoHash() => r'64cf469eb7e46427b32ccfb68391bf202ae7e2a9';
 
 /// 小説の情報を取得するプロバイダー。
 final class NovelInfoFamily extends $Family
