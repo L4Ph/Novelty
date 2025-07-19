@@ -17,7 +17,7 @@ void main() {
 
     setUp(() {
       mockDatabase = MockAppDatabase();
-      fixedTime = DateTime(2024, 1, 15, 12, 0, 0);
+      fixedTime = DateTime(2024, 1, 15, 12);
     });
 
     testWidgets('should take screenshot of grouped history display', (

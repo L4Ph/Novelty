@@ -133,16 +133,12 @@ void main() {
         today.month,
         today.day,
         8,
-        0,
-        0,
       );
       final todayEvening = DateTime(
         today.year,
         today.month,
         today.day,
         20,
-        0,
-        0,
       );
 
       final historyItems = [
