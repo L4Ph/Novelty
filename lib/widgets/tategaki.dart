@@ -82,10 +82,10 @@ class Tategaki extends StatefulWidget {
   /// コンストラクタ。
   const Tategaki(
     this.content, {
+    required this.maxHeight,
     super.key,
     this.style,
     this.space = 12,
-    required this.maxHeight,
   });
 
   /// 小説のコンテンツ要素のリスト。

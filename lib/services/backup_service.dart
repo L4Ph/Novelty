@@ -20,7 +20,7 @@ class BackupService {
     // LibraryNovelsテーブルからライブラリリストを取得
     final libraryNovels = await _database.getLibraryNovels();
     final novelsData = <Map<String, dynamic>>[];
-    
+
     // 各ライブラリ小説の詳細情報を取得
     for (final libNovel in libraryNovels) {
       final novel = await _database.getNovel(libNovel.ncode);
@@ -58,21 +58,23 @@ class BackupService {
 
     for (final novelData in novels) {
       final novelMap = novelData as Map<String, dynamic>;
-      
+
       // 小説データをNovelsテーブルに保存（favは除外）
       final novel = _jsonToNovelCompanion(novelMap);
       await _database.insertNovel(novel);
-      
+
       // ライブラリテーブルに追加
       int addedAt;
       if (version == '2.0') {
         // v2.0では addedAt フィールドを使用
-        addedAt = novelMap['addedAt'] as int? ?? DateTime.now().millisecondsSinceEpoch;
+        addedAt =
+            novelMap['addedAt'] as int? ??
+            DateTime.now().millisecondsSinceEpoch;
       } else {
         // v1.0では現在時刻を使用（下位互換性）
         addedAt = DateTime.now().millisecondsSinceEpoch;
       }
-      
+
       await _database.addToLibrary(
         LibraryNovelsCompanion(
           ncode: Value(novelMap['ncode'] as String),
@@ -89,15 +91,16 @@ class BackupService {
     final histories = jsonData['data'] as List<dynamic>;
 
     for (final historyData in histories) {
-      final history =
-          _jsonToHistoryCompanion(historyData as Map<String, dynamic>);
+      final history = _jsonToHistoryCompanion(
+        historyData as Map<String, dynamic>,
+      );
       await _database.addToHistory(history);
     }
   }
 
   /// ライブラリデータをファイルにエクスポートする
   Future<String?> exportLibraryToFile() async {
-    final String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
+    final selectedDirectory = await FilePicker.platform.getDirectoryPath(
       dialogTitle: 'バックアップ先のディレクトリを選択',
     );
 
@@ -119,7 +122,7 @@ class BackupService {
 
   /// 履歴データをファイルにエクスポートする
   Future<String?> exportHistoryToFile() async {
-    final String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
+    final selectedDirectory = await FilePicker.platform.getDirectoryPath(
       dialogTitle: 'バックアップ先のディレクトリを選択',
     );
 

@@ -86,7 +86,6 @@ void main() {
           home: Scaffold(
             body: NovelListTile(
               item: testNovel,
-              enrichedData: null,
             ),
           ),
         ),

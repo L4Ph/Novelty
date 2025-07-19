@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/models/episode.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
+import 'package:novelty/models/ranking_response.dart';
 
 void main() {
   group('ncodeを小文字で扱うテスト', () {
