@@ -58,9 +58,13 @@ class EnrichedNovelList extends ConsumerWidget {
               final novelInfo = await apiService.fetchNovelInfo(
                 item.ncode,
               );
-              await db.insertNovel(
-                novelInfo.toDbCompanion().copyWith(
-                  fav: const Value(1), // Mark as favorite
+              // Novelテーブルに保存（favは設定しない）
+              await db.insertNovel(novelInfo.toDbCompanion());
+              // LibraryNovelsテーブルに追加
+              await db.addToLibrary(
+                LibraryNovelsCompanion(
+                  ncode: Value(item.ncode),
+                  addedAt: Value(DateTime.now().millisecondsSinceEpoch),
                 ),
               );
               // Invalidate providers to refresh UI

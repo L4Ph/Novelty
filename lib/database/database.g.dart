@@ -2827,6 +2827,228 @@ class DownloadedEpisodesCompanion
   }
 }
 
+class $LibraryNovelsTable extends LibraryNovels
+    with drift.TableInfo<$LibraryNovelsTable, LibraryNovel> {
+  @override
+  final drift.GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LibraryNovelsTable(this.attachedDatabase, [this._alias]);
+  static const drift.VerificationMeta _ncodeMeta = const drift.VerificationMeta(
+    'ncode',
+  );
+  @override
+  late final drift.GeneratedColumn<String> ncode =
+      drift.GeneratedColumn<String>(
+        'ncode',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const drift.VerificationMeta _addedAtMeta =
+      const drift.VerificationMeta('addedAt');
+  @override
+  late final drift.GeneratedColumn<int> addedAt = drift.GeneratedColumn<int>(
+    'added_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<drift.GeneratedColumn> get $columns => [ncode, addedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'library_novels';
+  @override
+  drift.VerificationContext validateIntegrity(
+    drift.Insertable<LibraryNovel> instance, {
+    bool isInserting = false,
+  }) {
+    final context = drift.VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('ncode')) {
+      context.handle(
+        _ncodeMeta,
+        ncode.isAcceptableOrUnknown(data['ncode']!, _ncodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ncodeMeta);
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(
+        _addedAtMeta,
+        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_addedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<drift.GeneratedColumn> get $primaryKey => {ncode};
+  @override
+  LibraryNovel map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LibraryNovel(
+      ncode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ncode'],
+      )!,
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}added_at'],
+      )!,
+    );
+  }
+
+  @override
+  $LibraryNovelsTable createAlias(String alias) {
+    return $LibraryNovelsTable(attachedDatabase, alias);
+  }
+}
+
+class LibraryNovel extends drift.DataClass
+    implements drift.Insertable<LibraryNovel> {
+  /// 小説のncode
+  final String ncode;
+
+  /// ライブラリに追加された日時
+  /// UNIXタイムスタンプ形式で保存される
+  final int addedAt;
+  const LibraryNovel({required this.ncode, required this.addedAt});
+  @override
+  Map<String, drift.Expression> toColumns(bool nullToAbsent) {
+    final map = <String, drift.Expression>{};
+    map['ncode'] = drift.Variable<String>(ncode);
+    map['added_at'] = drift.Variable<int>(addedAt);
+    return map;
+  }
+
+  LibraryNovelsCompanion toCompanion(bool nullToAbsent) {
+    return LibraryNovelsCompanion(
+      ncode: drift.Value(ncode),
+      addedAt: drift.Value(addedAt),
+    );
+  }
+
+  factory LibraryNovel.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= drift.driftRuntimeOptions.defaultSerializer;
+    return LibraryNovel(
+      ncode: serializer.fromJson<String>(json['ncode']),
+      addedAt: serializer.fromJson<int>(json['addedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= drift.driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ncode': serializer.toJson<String>(ncode),
+      'addedAt': serializer.toJson<int>(addedAt),
+    };
+  }
+
+  LibraryNovel copyWith({String? ncode, int? addedAt}) => LibraryNovel(
+    ncode: ncode ?? this.ncode,
+    addedAt: addedAt ?? this.addedAt,
+  );
+  LibraryNovel copyWithCompanion(LibraryNovelsCompanion data) {
+    return LibraryNovel(
+      ncode: data.ncode.present ? data.ncode.value : this.ncode,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LibraryNovel(')
+          ..write('ncode: $ncode, ')
+          ..write('addedAt: $addedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(ncode, addedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LibraryNovel &&
+          other.ncode == this.ncode &&
+          other.addedAt == this.addedAt);
+}
+
+class LibraryNovelsCompanion extends drift.UpdateCompanion<LibraryNovel> {
+  final drift.Value<String> ncode;
+  final drift.Value<int> addedAt;
+  final drift.Value<int> rowid;
+  const LibraryNovelsCompanion({
+    this.ncode = const drift.Value.absent(),
+    this.addedAt = const drift.Value.absent(),
+    this.rowid = const drift.Value.absent(),
+  });
+  LibraryNovelsCompanion.insert({
+    required String ncode,
+    required int addedAt,
+    this.rowid = const drift.Value.absent(),
+  }) : ncode = drift.Value(ncode),
+       addedAt = drift.Value(addedAt);
+  static drift.Insertable<LibraryNovel> custom({
+    drift.Expression<String>? ncode,
+    drift.Expression<int>? addedAt,
+    drift.Expression<int>? rowid,
+  }) {
+    return drift.RawValuesInsertable({
+      if (ncode != null) 'ncode': ncode,
+      if (addedAt != null) 'added_at': addedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LibraryNovelsCompanion copyWith({
+    drift.Value<String>? ncode,
+    drift.Value<int>? addedAt,
+    drift.Value<int>? rowid,
+  }) {
+    return LibraryNovelsCompanion(
+      ncode: ncode ?? this.ncode,
+      addedAt: addedAt ?? this.addedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, drift.Expression> toColumns(bool nullToAbsent) {
+    final map = <String, drift.Expression>{};
+    if (ncode.present) {
+      map['ncode'] = drift.Variable<String>(ncode.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = drift.Variable<int>(addedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = drift.Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LibraryNovelsCompanion(')
+          ..write('ncode: $ncode, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $BookmarksTable extends Bookmarks
     with drift.TableInfo<$BookmarksTable, Bookmark> {
   @override
@@ -3211,6 +3433,7 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
   late final $EpisodesTable episodes = $EpisodesTable(this);
   late final $DownloadedEpisodesTable downloadedEpisodes =
       $DownloadedEpisodesTable(this);
+  late final $LibraryNovelsTable libraryNovels = $LibraryNovelsTable(this);
   late final $BookmarksTable bookmarks = $BookmarksTable(this);
   @override
   Iterable<drift.TableInfo<drift.Table, Object?>> get allTables =>
@@ -3221,6 +3444,7 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
     history,
     episodes,
     downloadedEpisodes,
+    libraryNovels,
     bookmarks,
   ];
 }
@@ -4530,6 +4754,155 @@ typedef $$DownloadedEpisodesTableProcessedTableManager =
       DownloadedEpisode,
       drift.PrefetchHooks Function()
     >;
+typedef $$LibraryNovelsTableCreateCompanionBuilder =
+    LibraryNovelsCompanion Function({
+      required String ncode,
+      required int addedAt,
+      drift.Value<int> rowid,
+    });
+typedef $$LibraryNovelsTableUpdateCompanionBuilder =
+    LibraryNovelsCompanion Function({
+      drift.Value<String> ncode,
+      drift.Value<int> addedAt,
+      drift.Value<int> rowid,
+    });
+
+class $$LibraryNovelsTableFilterComposer
+    extends drift.Composer<_$AppDatabase, $LibraryNovelsTable> {
+  $$LibraryNovelsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  drift.ColumnFilters<String> get ncode => $composableBuilder(
+    column: $table.ncode,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+
+  drift.ColumnFilters<int> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+}
+
+class $$LibraryNovelsTableOrderingComposer
+    extends drift.Composer<_$AppDatabase, $LibraryNovelsTable> {
+  $$LibraryNovelsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  drift.ColumnOrderings<String> get ncode => $composableBuilder(
+    column: $table.ncode,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
+
+  drift.ColumnOrderings<int> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
+}
+
+class $$LibraryNovelsTableAnnotationComposer
+    extends drift.Composer<_$AppDatabase, $LibraryNovelsTable> {
+  $$LibraryNovelsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  drift.GeneratedColumn<String> get ncode =>
+      $composableBuilder(column: $table.ncode, builder: (column) => column);
+
+  drift.GeneratedColumn<int> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+}
+
+class $$LibraryNovelsTableTableManager
+    extends
+        drift.RootTableManager<
+          _$AppDatabase,
+          $LibraryNovelsTable,
+          LibraryNovel,
+          $$LibraryNovelsTableFilterComposer,
+          $$LibraryNovelsTableOrderingComposer,
+          $$LibraryNovelsTableAnnotationComposer,
+          $$LibraryNovelsTableCreateCompanionBuilder,
+          $$LibraryNovelsTableUpdateCompanionBuilder,
+          (
+            LibraryNovel,
+            drift.BaseReferences<
+              _$AppDatabase,
+              $LibraryNovelsTable,
+              LibraryNovel
+            >,
+          ),
+          LibraryNovel,
+          drift.PrefetchHooks Function()
+        > {
+  $$LibraryNovelsTableTableManager(_$AppDatabase db, $LibraryNovelsTable table)
+    : super(
+        drift.TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LibraryNovelsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LibraryNovelsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LibraryNovelsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                drift.Value<String> ncode = const drift.Value.absent(),
+                drift.Value<int> addedAt = const drift.Value.absent(),
+                drift.Value<int> rowid = const drift.Value.absent(),
+              }) => LibraryNovelsCompanion(
+                ncode: ncode,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ncode,
+                required int addedAt,
+                drift.Value<int> rowid = const drift.Value.absent(),
+              }) => LibraryNovelsCompanion.insert(
+                ncode: ncode,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (e.readTable(table), drift.BaseReferences(db, table, e)),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LibraryNovelsTableProcessedTableManager =
+    drift.ProcessedTableManager<
+      _$AppDatabase,
+      $LibraryNovelsTable,
+      LibraryNovel,
+      $$LibraryNovelsTableFilterComposer,
+      $$LibraryNovelsTableOrderingComposer,
+      $$LibraryNovelsTableAnnotationComposer,
+      $$LibraryNovelsTableCreateCompanionBuilder,
+      $$LibraryNovelsTableUpdateCompanionBuilder,
+      (
+        LibraryNovel,
+        drift.BaseReferences<_$AppDatabase, $LibraryNovelsTable, LibraryNovel>,
+      ),
+      LibraryNovel,
+      drift.PrefetchHooks Function()
+    >;
 typedef $$BookmarksTableCreateCompanionBuilder =
     BookmarksCompanion Function({
       required String ncode,
@@ -4744,6 +5117,8 @@ class $AppDatabaseManager {
       $$EpisodesTableTableManager(_db, _db.episodes);
   $$DownloadedEpisodesTableTableManager get downloadedEpisodes =>
       $$DownloadedEpisodesTableTableManager(_db, _db.downloadedEpisodes);
+  $$LibraryNovelsTableTableManager get libraryNovels =>
+      $$LibraryNovelsTableTableManager(_db, _db.libraryNovels);
   $$BookmarksTableTableManager get bookmarks =>
       $$BookmarksTableTableManager(_db, _db.bookmarks);
 }
