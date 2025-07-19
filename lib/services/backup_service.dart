@@ -17,9 +17,7 @@ class BackupService {
 
   /// ライブラリデータをエクスポートする
   Future<Map<String, dynamic>> exportLibraryData() async {
-    final libraryNovels = await (_database.select(_database.novels)
-          ..where((t) => t.fav.equals(1)))
-        .get();
+    final libraryNovels = await _database.novelDao.watchAllFavoriteNovels().first;
 
     return {
       'version': '1.0',
@@ -47,7 +45,7 @@ class BackupService {
 
     for (final novelData in novels) {
       final novel = _jsonToNovelCompanion(novelData as Map<String, dynamic>);
-      await _database.insertNovel(novel);
+      await _database.novelDao.insertNovel(novel);
     }
   }
 

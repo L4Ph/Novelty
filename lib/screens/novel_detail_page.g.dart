@@ -63,7 +63,7 @@ final class NovelInfoProvider
   }
 }
 
-String _$novelInfoHash() => r'64cf469eb7e46427b32ccfb68391bf202ae7e2a9';
+String _$novelInfoHash() => r'0a2cd83d8fa8abcb1c31344eae2744eb1a6f7865';
 
 /// 小説の情報を取得するプロバイダー。
 final class NovelInfoFamily extends $Family
@@ -209,7 +209,7 @@ final class FavoriteStatusProvider
   }
 }
 
-String _$favoriteStatusHash() => r'b0ca148131c21e996980eb29d4bda6e4976f3c42';
+String _$favoriteStatusHash() => r'b89e67c61213a32ab1f077935bccb0aad5ab5082';
 
 /// 小説のお気に入り状態を管理するプロバイダー。
 final class FavoriteStatusFamily extends $Family

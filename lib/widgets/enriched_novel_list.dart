@@ -58,7 +58,7 @@ class EnrichedNovelList extends ConsumerWidget {
               final novelInfo = await apiService.fetchNovelInfo(
                 item.ncode,
               );
-              await db.insertNovel(
+              await db.novelDao.insertNovel(
                 novelInfo.toDbCompanion().copyWith(
                   fav: const Value(1), // Mark as favorite
                 ),

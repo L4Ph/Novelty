@@ -26,8 +26,8 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   final novelInfo = await apiService.fetchBasicNovelInfo(ncode);
 
   // Upsert novel data, preserving fav status
-  final existing = await db.getNovel(ncode);
-  await db.insertNovel(
+  final existing = await db.novelDao.getNovel(ncode);
+  await db.novelDao.insertNovel(
     novelInfo.toDbCompanion().copyWith(
       fav: drift.Value(existing?.fav ?? 0),
     ),
@@ -57,7 +57,7 @@ class FavoriteStatus extends _$FavoriteStatus {
   @override
   Future<bool> build(String ncode) async {
     final db = ref.watch(appDatabaseProvider);
-    final novel = await db.getNovel(ncode);
+    final novel = await db.novelDao.getNovel(ncode);
     return novel?.fav == 1;
   }
 
@@ -72,7 +72,7 @@ class FavoriteStatus extends _$FavoriteStatus {
       final companion = novelInfo.toDbCompanion().copyWith(
         fav: drift.Value(newStatus ? 1 : 0),
       );
-      await db.insertNovel(companion);
+      await db.novelDao.insertNovel(companion);
       state = AsyncValue.data(newStatus);
 
       ref

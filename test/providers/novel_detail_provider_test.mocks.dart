@@ -68,124 +68,134 @@ class _Fake$BookmarksTable_5 extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
-class _Fake$AppDatabaseManager_6 extends _i1.SmartFake
+class _FakeNovelDao_6 extends _i1.SmartFake implements _i3.NovelDao {
+  _FakeNovelDao_6(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _Fake$AppDatabaseManager_7 extends _i1.SmartFake
     implements _i3.$AppDatabaseManager {
-  _Fake$AppDatabaseManager_6(Object parent, Invocation parentInvocation)
+  _Fake$AppDatabaseManager_7(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeGeneratedDatabase_7 extends _i1.SmartFake
+class _FakeGeneratedDatabase_8 extends _i1.SmartFake
     implements _i2.GeneratedDatabase {
-  _FakeGeneratedDatabase_7(Object parent, Invocation parentInvocation)
+  _FakeGeneratedDatabase_8(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeDriftDatabaseOptions_8 extends _i1.SmartFake
+class _FakeDriftDatabaseOptions_9 extends _i1.SmartFake
     implements _i2.DriftDatabaseOptions {
-  _FakeDriftDatabaseOptions_8(Object parent, Invocation parentInvocation)
+  _FakeDriftDatabaseOptions_9(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeStreamQueryUpdateRules_9 extends _i1.SmartFake
+class _FakeStreamQueryUpdateRules_10 extends _i1.SmartFake
     implements _i2.StreamQueryUpdateRules {
-  _FakeStreamQueryUpdateRules_9(Object parent, Invocation parentInvocation)
+  _FakeStreamQueryUpdateRules_10(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeDatabaseConnection_10 extends _i1.SmartFake
+class _FakeDatabaseConnection_11 extends _i1.SmartFake
     implements _i2.DatabaseConnection {
-  _FakeDatabaseConnection_10(Object parent, Invocation parentInvocation)
+  _FakeDatabaseConnection_11(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeQueryExecutor_11 extends _i1.SmartFake implements _i2.QueryExecutor {
-  _FakeQueryExecutor_11(Object parent, Invocation parentInvocation)
+class _FakeQueryExecutor_12 extends _i1.SmartFake implements _i2.QueryExecutor {
+  _FakeQueryExecutor_12(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeStreamQueryStore_12 extends _i1.SmartFake
+class _FakeStreamQueryStore_13 extends _i1.SmartFake
     implements _i4.StreamQueryStore {
-  _FakeStreamQueryStore_12(Object parent, Invocation parentInvocation)
+  _FakeStreamQueryStore_13(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeDatabaseConnectionUser_13 extends _i1.SmartFake
+class _FakeDatabaseConnectionUser_14 extends _i1.SmartFake
     implements _i2.DatabaseConnectionUser {
-  _FakeDatabaseConnectionUser_13(Object parent, Invocation parentInvocation)
+  _FakeDatabaseConnectionUser_14(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeMigrator_14 extends _i1.SmartFake implements _i2.Migrator {
-  _FakeMigrator_14(Object parent, Invocation parentInvocation)
+class _FakeMigrator_15 extends _i1.SmartFake implements _i2.Migrator {
+  _FakeMigrator_15(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeFuture_15<T1> extends _i1.SmartFake implements _i5.Future<T1> {
-  _FakeFuture_15(Object parent, Invocation parentInvocation)
+class _FakeFuture_16<T1> extends _i1.SmartFake implements _i5.Future<T1> {
+  _FakeFuture_16(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeInsertStatement_16<T1 extends _i2.Table, D1> extends _i1.SmartFake
+class _FakeInsertStatement_17<T1 extends _i2.Table, D1> extends _i1.SmartFake
     implements _i2.InsertStatement<T1, D1> {
-  _FakeInsertStatement_16(Object parent, Invocation parentInvocation)
+  _FakeInsertStatement_17(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeUpdateStatement_17<T extends _i2.Table, D> extends _i1.SmartFake
+class _FakeUpdateStatement_18<T extends _i2.Table, D> extends _i1.SmartFake
     implements _i2.UpdateStatement<T, D> {
-  _FakeUpdateStatement_17(Object parent, Invocation parentInvocation)
+  _FakeUpdateStatement_18(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeSimpleSelectStatement_18<T1 extends _i2.HasResultSet, D>
+class _FakeSimpleSelectStatement_19<T1 extends _i2.HasResultSet, D>
     extends _i1.SmartFake
     implements _i2.SimpleSelectStatement<T1, D> {
-  _FakeSimpleSelectStatement_18(Object parent, Invocation parentInvocation)
+  _FakeSimpleSelectStatement_19(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeJoinedSelectStatement_19<FirstT extends _i2.HasResultSet, FirstD>
+class _FakeJoinedSelectStatement_20<FirstT extends _i2.HasResultSet, FirstD>
     extends _i1.SmartFake
     implements _i2.JoinedSelectStatement<FirstT, FirstD> {
-  _FakeJoinedSelectStatement_19(Object parent, Invocation parentInvocation)
+  _FakeJoinedSelectStatement_20(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeBaseSelectStatement_20<Row> extends _i1.SmartFake
+class _FakeBaseSelectStatement_21<Row> extends _i1.SmartFake
     implements _i2.BaseSelectStatement<Row> {
-  _FakeBaseSelectStatement_20(Object parent, Invocation parentInvocation)
+  _FakeBaseSelectStatement_21(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeDeleteStatement_21<T1 extends _i2.Table, D1> extends _i1.SmartFake
+class _FakeDeleteStatement_22<T1 extends _i2.Table, D1> extends _i1.SmartFake
     implements _i2.DeleteStatement<T1, D1> {
-  _FakeDeleteStatement_21(Object parent, Invocation parentInvocation)
+  _FakeDeleteStatement_22(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeSelectable_22<T> extends _i1.SmartFake implements _i2.Selectable<T> {
-  _FakeSelectable_22(Object parent, Invocation parentInvocation)
+class _FakeSelectable_23<T> extends _i1.SmartFake implements _i2.Selectable<T> {
+  _FakeSelectable_23(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeGenerationContext_23 extends _i1.SmartFake
+class _FakeGenerationContext_24 extends _i1.SmartFake
     implements _i2.GenerationContext {
-  _FakeGenerationContext_23(Object parent, Invocation parentInvocation)
+  _FakeGenerationContext_24(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeNovelInfo_24 extends _i1.SmartFake implements _i6.NovelInfo {
-  _FakeNovelInfo_24(Object parent, Invocation parentInvocation)
+class _FakeNovelInfo_25 extends _i1.SmartFake implements _i6.NovelInfo {
+  _FakeNovelInfo_25(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeEpisode_25 extends _i1.SmartFake implements _i7.Episode {
-  _FakeEpisode_25(Object parent, Invocation parentInvocation)
+class _FakeEpisode_26 extends _i1.SmartFake implements _i7.Episode {
+  _FakeEpisode_26(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeApiService_26 extends _i1.SmartFake implements _i8.ApiService {
-  _FakeApiService_26(Object parent, Invocation parentInvocation)
+class _FakeApiService_27 extends _i1.SmartFake implements _i8.ApiService {
+  _FakeApiService_27(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeAppDatabase_28 extends _i1.SmartFake implements _i3.AppDatabase {
+  _FakeAppDatabase_28(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -266,10 +276,18 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i3.$BookmarksTable);
 
   @override
+  _i3.NovelDao get novelDao =>
+      (super.noSuchMethod(
+            Invocation.getter(#novelDao),
+            returnValue: _FakeNovelDao_6(this, Invocation.getter(#novelDao)),
+          )
+          as _i3.NovelDao);
+
+  @override
   _i3.$AppDatabaseManager get managers =>
       (super.noSuchMethod(
             Invocation.getter(#managers),
-            returnValue: _Fake$AppDatabaseManager_6(
+            returnValue: _Fake$AppDatabaseManager_7(
               this,
               Invocation.getter(#managers),
             ),
@@ -296,7 +314,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i2.GeneratedDatabase get attachedDatabase =>
       (super.noSuchMethod(
             Invocation.getter(#attachedDatabase),
-            returnValue: _FakeGeneratedDatabase_7(
+            returnValue: _FakeGeneratedDatabase_8(
               this,
               Invocation.getter(#attachedDatabase),
             ),
@@ -307,7 +325,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i2.DriftDatabaseOptions get options =>
       (super.noSuchMethod(
             Invocation.getter(#options),
-            returnValue: _FakeDriftDatabaseOptions_8(
+            returnValue: _FakeDriftDatabaseOptions_9(
               this,
               Invocation.getter(#options),
             ),
@@ -318,7 +336,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i2.StreamQueryUpdateRules get streamUpdateRules =>
       (super.noSuchMethod(
             Invocation.getter(#streamUpdateRules),
-            returnValue: _FakeStreamQueryUpdateRules_9(
+            returnValue: _FakeStreamQueryUpdateRules_10(
               this,
               Invocation.getter(#streamUpdateRules),
             ),
@@ -329,7 +347,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i2.DatabaseConnection get connection =>
       (super.noSuchMethod(
             Invocation.getter(#connection),
-            returnValue: _FakeDatabaseConnection_10(
+            returnValue: _FakeDatabaseConnection_11(
               this,
               Invocation.getter(#connection),
             ),
@@ -351,7 +369,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i2.QueryExecutor get executor =>
       (super.noSuchMethod(
             Invocation.getter(#executor),
-            returnValue: _FakeQueryExecutor_11(
+            returnValue: _FakeQueryExecutor_12(
               this,
               Invocation.getter(#executor),
             ),
@@ -362,7 +380,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i4.StreamQueryStore get streamQueries =>
       (super.noSuchMethod(
             Invocation.getter(#streamQueries),
-            returnValue: _FakeStreamQueryStore_12(
+            returnValue: _FakeStreamQueryStore_13(
               this,
               Invocation.getter(#streamQueries),
             ),
@@ -373,44 +391,12 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i2.DatabaseConnectionUser get resolvedEngine =>
       (super.noSuchMethod(
             Invocation.getter(#resolvedEngine),
-            returnValue: _FakeDatabaseConnectionUser_13(
+            returnValue: _FakeDatabaseConnectionUser_14(
               this,
               Invocation.getter(#resolvedEngine),
             ),
           )
           as _i2.DatabaseConnectionUser);
-
-  @override
-  _i5.Future<_i3.Novel?> getNovel(String? ncode) =>
-      (super.noSuchMethod(
-            Invocation.method(#getNovel, [ncode]),
-            returnValue: _i5.Future<_i3.Novel?>.value(),
-          )
-          as _i5.Future<_i3.Novel?>);
-
-  @override
-  _i5.Stream<bool> watchIsFavorite(String? ncode) =>
-      (super.noSuchMethod(
-            Invocation.method(#watchIsFavorite, [ncode]),
-            returnValue: _i5.Stream<bool>.empty(),
-          )
-          as _i5.Stream<bool>);
-
-  @override
-  _i5.Future<int> insertNovel(_i3.NovelsCompanion? novel) =>
-      (super.noSuchMethod(
-            Invocation.method(#insertNovel, [novel]),
-            returnValue: _i5.Future<int>.value(0),
-          )
-          as _i5.Future<int>);
-
-  @override
-  _i5.Future<int> deleteNovel(String? ncode) =>
-      (super.noSuchMethod(
-            Invocation.method(#deleteNovel, [ncode]),
-            returnValue: _i5.Future<int>.value(0),
-          )
-          as _i5.Future<int>);
 
   @override
   _i5.Future<int> addToHistory(_i3.HistoryCompanion? history) =>
@@ -519,7 +505,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i2.Migrator createMigrator() =>
       (super.noSuchMethod(
             Invocation.method(#createMigrator, []),
-            returnValue: _FakeMigrator_14(
+            returnValue: _FakeMigrator_15(
               this,
               Invocation.method(#createMigrator, []),
             ),
@@ -605,7 +591,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
                   ),
                   (T v) => _i5.Future<T>.value(v),
                 ) ??
-                _FakeFuture_15<T>(this, Invocation.method(#doWhenOpened, [fn])),
+                _FakeFuture_16<T>(this, Invocation.method(#doWhenOpened, [fn])),
           )
           as _i5.Future<T>);
 
@@ -615,7 +601,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   ) =>
       (super.noSuchMethod(
             Invocation.method(#into, [table]),
-            returnValue: _FakeInsertStatement_16<T, D>(
+            returnValue: _FakeInsertStatement_17<T, D>(
               this,
               Invocation.method(#into, [table]),
             ),
@@ -628,7 +614,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   ) =>
       (super.noSuchMethod(
             Invocation.method(#update, [table]),
-            returnValue: _FakeUpdateStatement_17<Tbl, R>(
+            returnValue: _FakeUpdateStatement_18<Tbl, R>(
               this,
               Invocation.method(#update, [table]),
             ),
@@ -642,7 +628,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   }) =>
       (super.noSuchMethod(
             Invocation.method(#select, [table], {#distinct: distinct}),
-            returnValue: _FakeSimpleSelectStatement_18<T, R>(
+            returnValue: _FakeSimpleSelectStatement_19<T, R>(
               this,
               Invocation.method(#select, [table], {#distinct: distinct}),
             ),
@@ -656,7 +642,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   }) =>
       (super.noSuchMethod(
             Invocation.method(#selectOnly, [table], {#distinct: distinct}),
-            returnValue: _FakeJoinedSelectStatement_19<T, R>(
+            returnValue: _FakeJoinedSelectStatement_20<T, R>(
               this,
               Invocation.method(#selectOnly, [table], {#distinct: distinct}),
             ),
@@ -669,7 +655,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   ) =>
       (super.noSuchMethod(
             Invocation.method(#selectExpressions, [columns]),
-            returnValue: _FakeBaseSelectStatement_20<_i2.TypedResult>(
+            returnValue: _FakeBaseSelectStatement_21<_i2.TypedResult>(
               this,
               Invocation.method(#selectExpressions, [columns]),
             ),
@@ -682,7 +668,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   ) =>
       (super.noSuchMethod(
             Invocation.method(#delete, [table]),
-            returnValue: _FakeDeleteStatement_21<T, D>(
+            returnValue: _FakeDeleteStatement_22<T, D>(
               this,
               Invocation.method(#delete, [table]),
             ),
@@ -759,7 +745,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
               [query],
               {#variables: variables, #readsFrom: readsFrom},
             ),
-            returnValue: _FakeSelectable_22<_i2.QueryRow>(
+            returnValue: _FakeSelectable_23<_i2.QueryRow>(
               this,
               Invocation.method(
                 #customSelect,
@@ -782,7 +768,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
               [query],
               {#variables: variables, #readsFrom: readsFrom},
             ),
-            returnValue: _FakeSelectable_22<_i2.QueryRow>(
+            returnValue: _FakeSelectable_23<_i2.QueryRow>(
               this,
               Invocation.method(
                 #customSelectQuery,
@@ -825,7 +811,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
                   ),
                   (T v) => _i5.Future<T>.value(v),
                 ) ??
-                _FakeFuture_15<T>(
+                _FakeFuture_16<T>(
                   this,
                   Invocation.method(
                     #transaction,
@@ -848,7 +834,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
                   ),
                   (T v) => _i5.Future<T>.value(v),
                 ) ??
-                _FakeFuture_15<T>(
+                _FakeFuture_16<T>(
                   this,
                   Invocation.method(#exclusively, [action]),
                 ),
@@ -887,7 +873,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
                   ),
                   (T v) => _i5.Future<T>.value(v),
                 ) ??
-                _FakeFuture_15<T>(
+                _FakeFuture_16<T>(
                   this,
                   Invocation.method(
                     #runWithInterceptor,
@@ -910,7 +896,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
               [component],
               {#hasMultipleTables: hasMultipleTables, #startIndex: startIndex},
             ),
-            returnValue: _FakeGenerationContext_23(
+            returnValue: _FakeGenerationContext_24(
               this,
               Invocation.method(
                 #$write,
@@ -936,7 +922,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
               [table, insertable],
               {#startIndex: startIndex},
             ),
-            returnValue: _FakeGenerationContext_23(
+            returnValue: _FakeGenerationContext_24(
               this,
               Invocation.method(
                 #$writeInsertable,
@@ -984,7 +970,7 @@ class MockApiService extends _i1.Mock implements _i8.ApiService {
       (super.noSuchMethod(
             Invocation.method(#fetchBasicNovelInfo, [ncode]),
             returnValue: _i5.Future<_i6.NovelInfo>.value(
-              _FakeNovelInfo_24(
+              _FakeNovelInfo_25(
                 this,
                 Invocation.method(#fetchBasicNovelInfo, [ncode]),
               ),
@@ -1005,7 +991,7 @@ class MockApiService extends _i1.Mock implements _i8.ApiService {
       (super.noSuchMethod(
             Invocation.method(#fetchNovelInfo, [ncode]),
             returnValue: _i5.Future<_i6.NovelInfo>.value(
-              _FakeNovelInfo_24(
+              _FakeNovelInfo_25(
                 this,
                 Invocation.method(#fetchNovelInfo, [ncode]),
               ),
@@ -1018,7 +1004,7 @@ class MockApiService extends _i1.Mock implements _i8.ApiService {
       (super.noSuchMethod(
             Invocation.method(#fetchEpisode, [ncode, episode]),
             returnValue: _i5.Future<_i7.Episode>.value(
-              _FakeEpisode_25(
+              _FakeEpisode_26(
                 this,
                 Invocation.method(#fetchEpisode, [ncode, episode]),
               ),
@@ -1072,7 +1058,7 @@ class MockNovelRepository extends _i1.Mock implements _i12.NovelRepository {
   _i8.ApiService get apiService =>
       (super.noSuchMethod(
             Invocation.getter(#apiService),
-            returnValue: _FakeApiService_26(
+            returnValue: _FakeApiService_27(
               this,
               Invocation.getter(#apiService),
             ),
@@ -1154,4 +1140,574 @@ class MockNovelRepository extends _i1.Mock implements _i12.NovelRepository {
             returnValue: _i5.Stream<bool>.empty(),
           )
           as _i5.Stream<bool>);
+}
+
+/// A class which mocks [NovelDao].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockNovelDao extends _i1.Mock implements _i3.NovelDao {
+  MockNovelDao() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i3.AppDatabase get db =>
+      (super.noSuchMethod(
+            Invocation.getter(#db),
+            returnValue: _FakeAppDatabase_28(this, Invocation.getter(#db)),
+          )
+          as _i3.AppDatabase);
+
+  @override
+  _i3.AppDatabase get attachedDatabase =>
+      (super.noSuchMethod(
+            Invocation.getter(#attachedDatabase),
+            returnValue: _FakeAppDatabase_28(
+              this,
+              Invocation.getter(#attachedDatabase),
+            ),
+          )
+          as _i3.AppDatabase);
+
+  @override
+  _i2.DatabaseConnection get connection =>
+      (super.noSuchMethod(
+            Invocation.getter(#connection),
+            returnValue: _FakeDatabaseConnection_11(
+              this,
+              Invocation.getter(#connection),
+            ),
+          )
+          as _i2.DatabaseConnection);
+
+  @override
+  _i2.SqlTypes get typeMapping =>
+      (super.noSuchMethod(
+            Invocation.getter(#typeMapping),
+            returnValue: _i9.dummyValue<_i2.SqlTypes>(
+              this,
+              Invocation.getter(#typeMapping),
+            ),
+          )
+          as _i2.SqlTypes);
+
+  @override
+  _i2.DriftDatabaseOptions get options =>
+      (super.noSuchMethod(
+            Invocation.getter(#options),
+            returnValue: _FakeDriftDatabaseOptions_9(
+              this,
+              Invocation.getter(#options),
+            ),
+          )
+          as _i2.DriftDatabaseOptions);
+
+  @override
+  _i2.QueryExecutor get executor =>
+      (super.noSuchMethod(
+            Invocation.getter(#executor),
+            returnValue: _FakeQueryExecutor_12(
+              this,
+              Invocation.getter(#executor),
+            ),
+          )
+          as _i2.QueryExecutor);
+
+  @override
+  _i4.StreamQueryStore get streamQueries =>
+      (super.noSuchMethod(
+            Invocation.getter(#streamQueries),
+            returnValue: _FakeStreamQueryStore_13(
+              this,
+              Invocation.getter(#streamQueries),
+            ),
+          )
+          as _i4.StreamQueryStore);
+
+  @override
+  _i2.DatabaseConnectionUser get resolvedEngine =>
+      (super.noSuchMethod(
+            Invocation.getter(#resolvedEngine),
+            returnValue: _FakeDatabaseConnectionUser_14(
+              this,
+              Invocation.getter(#resolvedEngine),
+            ),
+          )
+          as _i2.DatabaseConnectionUser);
+
+  @override
+  _i3.$NovelsTable get novels =>
+      (super.noSuchMethod(
+            Invocation.getter(#novels),
+            returnValue: _Fake$NovelsTable_1(this, Invocation.getter(#novels)),
+          )
+          as _i3.$NovelsTable);
+
+  @override
+  _i5.Future<_i3.Novel?> getNovel(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#getNovel, [ncode]),
+            returnValue: _i5.Future<_i3.Novel?>.value(),
+          )
+          as _i5.Future<_i3.Novel?>);
+
+  @override
+  _i5.Stream<List<_i3.Novel>> watchAllFavoriteNovels() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchAllFavoriteNovels, []),
+            returnValue: _i5.Stream<List<_i3.Novel>>.empty(),
+          )
+          as _i5.Stream<List<_i3.Novel>>);
+
+  @override
+  _i5.Stream<bool> watchIsFavorite(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#watchIsFavorite, [ncode]),
+            returnValue: _i5.Stream<bool>.empty(),
+          )
+          as _i5.Stream<bool>);
+
+  @override
+  _i5.Future<int> insertNovel(_i3.NovelsCompanion? novel) =>
+      (super.noSuchMethod(
+            Invocation.method(#insertNovel, [novel]),
+            returnValue: _i5.Future<int>.value(0),
+          )
+          as _i5.Future<int>);
+
+  @override
+  _i5.Future<int> deleteNovel(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteNovel, [ncode]),
+            returnValue: _i5.Future<int>.value(0),
+          )
+          as _i5.Future<int>);
+
+  @override
+  _i5.Stream<List<_i3.Novel>> searchFavoriteNovels(String? query) =>
+      (super.noSuchMethod(
+            Invocation.method(#searchFavoriteNovels, [query]),
+            returnValue: _i5.Stream<List<_i3.Novel>>.empty(),
+          )
+          as _i5.Stream<List<_i3.Novel>>);
+
+  @override
+  _i5.Stream<T> createStream<T extends Object>(
+    _i4.QueryStreamFetcher<T>? stmt,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#createStream, [stmt]),
+            returnValue: _i5.Stream<T>.empty(),
+          )
+          as _i5.Stream<T>);
+
+  @override
+  T alias<T, D>(_i2.ResultSetImplementation<T, D>? table, String? alias) =>
+      (super.noSuchMethod(
+            Invocation.method(#alias, [table, alias]),
+            returnValue: _i9.dummyValue<T>(
+              this,
+              Invocation.method(#alias, [table, alias]),
+            ),
+          )
+          as T);
+
+  @override
+  void markTablesUpdated(Iterable<_i2.TableInfo<_i2.Table, dynamic>>? tables) =>
+      super.noSuchMethod(
+        Invocation.method(#markTablesUpdated, [tables]),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void notifyUpdates(Set<_i2.TableUpdate>? updates) => super.noSuchMethod(
+    Invocation.method(#notifyUpdates, [updates]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i5.Stream<Set<_i2.TableUpdate>> tableUpdates([
+    _i2.TableUpdateQuery? query = const _i2.TableUpdateQuery.any(),
+  ]) =>
+      (super.noSuchMethod(
+            Invocation.method(#tableUpdates, [query]),
+            returnValue: _i5.Stream<Set<_i2.TableUpdate>>.empty(),
+          )
+          as _i5.Stream<Set<_i2.TableUpdate>>);
+
+  @override
+  _i5.Future<T> doWhenOpened<T>(
+    _i5.FutureOr<T> Function(_i2.QueryExecutor)? fn,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#doWhenOpened, [fn]),
+            returnValue:
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
+                    this,
+                    Invocation.method(#doWhenOpened, [fn]),
+                  ),
+                  (T v) => _i5.Future<T>.value(v),
+                ) ??
+                _FakeFuture_16<T>(this, Invocation.method(#doWhenOpened, [fn])),
+          )
+          as _i5.Future<T>);
+
+  @override
+  _i2.InsertStatement<T, D> into<T extends _i2.Table, D>(
+    _i2.TableInfo<T, D>? table,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#into, [table]),
+            returnValue: _FakeInsertStatement_17<T, D>(
+              this,
+              Invocation.method(#into, [table]),
+            ),
+          )
+          as _i2.InsertStatement<T, D>);
+
+  @override
+  _i2.UpdateStatement<Tbl, R> update<Tbl extends _i2.Table, R>(
+    _i2.TableInfo<Tbl, R>? table,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#update, [table]),
+            returnValue: _FakeUpdateStatement_18<Tbl, R>(
+              this,
+              Invocation.method(#update, [table]),
+            ),
+          )
+          as _i2.UpdateStatement<Tbl, R>);
+
+  @override
+  _i2.SimpleSelectStatement<T, R> select<T extends _i2.HasResultSet, R>(
+    _i2.ResultSetImplementation<T, R>? table, {
+    bool? distinct = false,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#select, [table], {#distinct: distinct}),
+            returnValue: _FakeSimpleSelectStatement_19<T, R>(
+              this,
+              Invocation.method(#select, [table], {#distinct: distinct}),
+            ),
+          )
+          as _i2.SimpleSelectStatement<T, R>);
+
+  @override
+  _i2.JoinedSelectStatement<T, R> selectOnly<T extends _i2.HasResultSet, R>(
+    _i2.ResultSetImplementation<T, R>? table, {
+    bool? distinct = false,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#selectOnly, [table], {#distinct: distinct}),
+            returnValue: _FakeJoinedSelectStatement_20<T, R>(
+              this,
+              Invocation.method(#selectOnly, [table], {#distinct: distinct}),
+            ),
+          )
+          as _i2.JoinedSelectStatement<T, R>);
+
+  @override
+  _i2.BaseSelectStatement<_i2.TypedResult> selectExpressions(
+    Iterable<_i2.Expression<Object>>? columns,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#selectExpressions, [columns]),
+            returnValue: _FakeBaseSelectStatement_21<_i2.TypedResult>(
+              this,
+              Invocation.method(#selectExpressions, [columns]),
+            ),
+          )
+          as _i2.BaseSelectStatement<_i2.TypedResult>);
+
+  @override
+  _i2.DeleteStatement<T, D> delete<T extends _i2.Table, D>(
+    _i2.TableInfo<T, D>? table,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#delete, [table]),
+            returnValue: _FakeDeleteStatement_22<T, D>(
+              this,
+              Invocation.method(#delete, [table]),
+            ),
+          )
+          as _i2.DeleteStatement<T, D>);
+
+  @override
+  _i5.Future<int> customUpdate(
+    String? query, {
+    List<_i2.Variable<Object>>? variables = const [],
+    Set<_i2.ResultSetImplementation<dynamic, dynamic>>? updates,
+    _i2.UpdateKind? updateKind,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #customUpdate,
+              [query],
+              {
+                #variables: variables,
+                #updates: updates,
+                #updateKind: updateKind,
+              },
+            ),
+            returnValue: _i5.Future<int>.value(0),
+          )
+          as _i5.Future<int>);
+
+  @override
+  _i5.Future<int> customInsert(
+    String? query, {
+    List<_i2.Variable<Object>>? variables = const [],
+    Set<_i2.ResultSetImplementation<dynamic, dynamic>>? updates,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #customInsert,
+              [query],
+              {#variables: variables, #updates: updates},
+            ),
+            returnValue: _i5.Future<int>.value(0),
+          )
+          as _i5.Future<int>);
+
+  @override
+  _i5.Future<List<_i2.QueryRow>> customWriteReturning(
+    String? query, {
+    List<_i2.Variable<Object>>? variables = const [],
+    Set<_i2.ResultSetImplementation<dynamic, dynamic>>? updates,
+    _i2.UpdateKind? updateKind,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #customWriteReturning,
+              [query],
+              {
+                #variables: variables,
+                #updates: updates,
+                #updateKind: updateKind,
+              },
+            ),
+            returnValue: _i5.Future<List<_i2.QueryRow>>.value(<_i2.QueryRow>[]),
+          )
+          as _i5.Future<List<_i2.QueryRow>>);
+
+  @override
+  _i2.Selectable<_i2.QueryRow> customSelect(
+    String? query, {
+    List<_i2.Variable<Object>>? variables = const [],
+    Set<_i2.ResultSetImplementation<dynamic, dynamic>>? readsFrom = const {},
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #customSelect,
+              [query],
+              {#variables: variables, #readsFrom: readsFrom},
+            ),
+            returnValue: _FakeSelectable_23<_i2.QueryRow>(
+              this,
+              Invocation.method(
+                #customSelect,
+                [query],
+                {#variables: variables, #readsFrom: readsFrom},
+              ),
+            ),
+          )
+          as _i2.Selectable<_i2.QueryRow>);
+
+  @override
+  _i2.Selectable<_i2.QueryRow> customSelectQuery(
+    String? query, {
+    List<_i2.Variable<Object>>? variables = const [],
+    Set<_i2.ResultSetImplementation<dynamic, dynamic>>? readsFrom = const {},
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #customSelectQuery,
+              [query],
+              {#variables: variables, #readsFrom: readsFrom},
+            ),
+            returnValue: _FakeSelectable_23<_i2.QueryRow>(
+              this,
+              Invocation.method(
+                #customSelectQuery,
+                [query],
+                {#variables: variables, #readsFrom: readsFrom},
+              ),
+            ),
+          )
+          as _i2.Selectable<_i2.QueryRow>);
+
+  @override
+  _i5.Future<void> customStatement(String? statement, [List<dynamic>? args]) =>
+      (super.noSuchMethod(
+            Invocation.method(#customStatement, [statement, args]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<T> transaction<T>(
+    _i5.Future<T> Function()? action, {
+    bool? requireNew = false,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #transaction,
+              [action],
+              {#requireNew: requireNew},
+            ),
+            returnValue:
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
+                    this,
+                    Invocation.method(
+                      #transaction,
+                      [action],
+                      {#requireNew: requireNew},
+                    ),
+                  ),
+                  (T v) => _i5.Future<T>.value(v),
+                ) ??
+                _FakeFuture_16<T>(
+                  this,
+                  Invocation.method(
+                    #transaction,
+                    [action],
+                    {#requireNew: requireNew},
+                  ),
+                ),
+          )
+          as _i5.Future<T>);
+
+  @override
+  _i5.Future<T> exclusively<T>(_i5.Future<T> Function()? action) =>
+      (super.noSuchMethod(
+            Invocation.method(#exclusively, [action]),
+            returnValue:
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
+                    this,
+                    Invocation.method(#exclusively, [action]),
+                  ),
+                  (T v) => _i5.Future<T>.value(v),
+                ) ??
+                _FakeFuture_16<T>(
+                  this,
+                  Invocation.method(#exclusively, [action]),
+                ),
+          )
+          as _i5.Future<T>);
+
+  @override
+  _i5.Future<void> batch(_i5.FutureOr<void> Function(_i2.Batch)? runInBatch) =>
+      (super.noSuchMethod(
+            Invocation.method(#batch, [runInBatch]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<T> runWithInterceptor<T>(
+    _i5.Future<T> Function()? action, {
+    required _i2.QueryInterceptor? interceptor,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #runWithInterceptor,
+              [action],
+              {#interceptor: interceptor},
+            ),
+            returnValue:
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
+                    this,
+                    Invocation.method(
+                      #runWithInterceptor,
+                      [action],
+                      {#interceptor: interceptor},
+                    ),
+                  ),
+                  (T v) => _i5.Future<T>.value(v),
+                ) ??
+                _FakeFuture_16<T>(
+                  this,
+                  Invocation.method(
+                    #runWithInterceptor,
+                    [action],
+                    {#interceptor: interceptor},
+                  ),
+                ),
+          )
+          as _i5.Future<T>);
+
+  @override
+  _i2.GenerationContext $write(
+    _i2.Component? component, {
+    bool? hasMultipleTables,
+    int? startIndex,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #$write,
+              [component],
+              {#hasMultipleTables: hasMultipleTables, #startIndex: startIndex},
+            ),
+            returnValue: _FakeGenerationContext_24(
+              this,
+              Invocation.method(
+                #$write,
+                [component],
+                {
+                  #hasMultipleTables: hasMultipleTables,
+                  #startIndex: startIndex,
+                },
+              ),
+            ),
+          )
+          as _i2.GenerationContext);
+
+  @override
+  _i2.GenerationContext $writeInsertable(
+    _i2.TableInfo<_i2.Table, dynamic>? table,
+    _i2.Insertable<dynamic>? insertable, {
+    int? startIndex,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #$writeInsertable,
+              [table, insertable],
+              {#startIndex: startIndex},
+            ),
+            returnValue: _FakeGenerationContext_24(
+              this,
+              Invocation.method(
+                #$writeInsertable,
+                [table, insertable],
+                {#startIndex: startIndex},
+              ),
+            ),
+          )
+          as _i2.GenerationContext);
+
+  @override
+  String $expandVar(int? start, int? amount) =>
+      (super.noSuchMethod(
+            Invocation.method(#$expandVar, [start, amount]),
+            returnValue: _i9.dummyValue<String>(
+              this,
+              Invocation.method(#$expandVar, [start, amount]),
+            ),
+          )
+          as String);
+
+  @override
+  _i5.Future<void> close() =>
+      (super.noSuchMethod(
+            Invocation.method(#close, []),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
 }

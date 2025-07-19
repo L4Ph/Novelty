@@ -3212,6 +3212,7 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
   late final $DownloadedEpisodesTable downloadedEpisodes =
       $DownloadedEpisodesTable(this);
   late final $BookmarksTable bookmarks = $BookmarksTable(this);
+  late final NovelDao novelDao = NovelDao(this as AppDatabase);
   @override
   Iterable<drift.TableInfo<drift.Table, Object?>> get allTables =>
       allSchemaEntities.whereType<drift.TableInfo<drift.Table, Object?>>();
@@ -4746,6 +4747,10 @@ class $AppDatabaseManager {
       $$DownloadedEpisodesTableTableManager(_db, _db.downloadedEpisodes);
   $$BookmarksTableTableManager get bookmarks =>
       $$BookmarksTableTableManager(_db, _db.bookmarks);
+}
+
+mixin _$NovelDaoMixin on DatabaseAccessor<AppDatabase> {
+  $NovelsTable get novels => attachedDatabase.novels;
 }
 
 // **************************************************************************
