@@ -52,7 +52,7 @@ void main() {
 
     testWidgets('ライブラリエクスポートボタンをタップできる', (WidgetTester tester) async {
       when(mockBackupService.exportLibraryData()).thenAnswer(
-        (_) async => {'version': '1.0', 'data': []},
+        (_) async => {'version': '1.0', 'data': <dynamic>[]},
       );
 
       await tester.pumpWidget(
@@ -73,7 +73,7 @@ void main() {
 
     testWidgets('履歴エクスポートボタンをタップできる', (WidgetTester tester) async {
       when(mockBackupService.exportHistoryData()).thenAnswer(
-        (_) async => {'version': '1.0', 'data': []},
+        (_) async => {'version': '1.0', 'data': <dynamic>[]},
       );
 
       await tester.pumpWidget(

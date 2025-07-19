@@ -204,6 +204,42 @@ class DownloadedEpisodes extends Table {
   Set<Column> get primaryKey => {ncode, episode};
 }
 
+/// ライブラリに追加された小説を格納するテーブル
+class LibraryNovels extends Table {
+  /// 小説のncode
+  TextColumn get ncode => text()();
+
+  /// 小説のタイトル
+  TextColumn get title => text().nullable()();
+
+  /// 小説の著者
+  TextColumn get writer => text().nullable()();
+
+  /// 小説のあらすじ
+  TextColumn get story => text().nullable()();
+
+  /// 小説の種別
+  /// 0: 短編 1: 連載中
+  IntColumn get novelType => integer().nullable()();
+
+  /// 小説の状態
+  /// 0: 短編 or 完結済 1: 連載中
+  IntColumn get end => integer().nullable()();
+
+  /// 連載小説のエピソード数 短編は常に1
+  IntColumn get generalAllNo => integer().nullable()();
+
+  /// 作品の更新日時
+  TextColumn get novelUpdatedAt => text().nullable()();
+
+  /// ライブラリに追加された日時
+  /// UNIXタイムスタンプ形式で保存される
+  IntColumn get addedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {ncode};
+}
+
 /// ブックマークを格納するテーブル(使用されていない?)
 class Bookmarks extends Table {
   /// 小説のncode
@@ -227,7 +263,7 @@ class Bookmarks extends Table {
 }
 
 @DriftDatabase(
-  tables: [Novels, History, Episodes, DownloadedEpisodes, Bookmarks],
+  tables: [Novels, History, Episodes, DownloadedEpisodes, LibraryNovels, Bookmarks],
 )
 /// アプリケーションのデータベース
 /// 小説情報、閲覧履歴、エピソード、ダウンロード済みエピソード、ブックマークを管理
@@ -236,8 +272,12 @@ class AppDatabase extends _$AppDatabase {
   /// データベースの接続を初期化
   AppDatabase() : super(_openConnection());
 
+  /// テスト用コンストラクタ
+  /// インメモリデータベースを使用
+  AppDatabase.memory() : super(NativeDatabase.memory());
+
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -251,6 +291,42 @@ class AppDatabase extends _$AppDatabase {
             'ALTER TABLE novels RENAME COLUMN poin_count TO point_count;',
           );
         }
+        if (from <= 2) {
+          // LibraryNovelsテーブルを作成
+          await m.createTable(libraryNovels);
+
+          // 既存のfav=1の小説をLibraryNovelsテーブルに移行
+          await m.issueCustomQuery('''
+            INSERT INTO library_novels (ncode, added_at)
+            SELECT ncode, cached_at
+            FROM novels
+            WHERE fav = 1;
+          ''');
+        }
+        if (from <= 3) {
+          // Add the new columns
+          await m.addColumn(libraryNovels, libraryNovels.title);
+          await m.addColumn(libraryNovels, libraryNovels.writer);
+          await m.addColumn(libraryNovels, libraryNovels.story);
+          await m.addColumn(libraryNovels, libraryNovels.novelType);
+          await m.addColumn(libraryNovels, libraryNovels.end);
+          await m.addColumn(libraryNovels, libraryNovels.generalAllNo);
+          await m.addColumn(libraryNovels, libraryNovels.novelUpdatedAt);
+
+          // データをnovelsテーブルからコピー
+          await m.issueCustomQuery('''
+            UPDATE library_novels
+            SET
+              title = (SELECT title FROM novels WHERE novels.ncode = library_novels.ncode),
+              writer = (SELECT writer FROM novels WHERE novels.ncode = library_novels.ncode),
+              story = (SELECT story FROM novels WHERE novels.ncode = library_novels.ncode),
+              novel_type = (SELECT novel_type FROM novels WHERE novels.ncode = library_novels.ncode),
+              end = (SELECT end FROM novels WHERE novels.ncode = library_novels.ncode),
+              general_all_no = (SELECT general_all_no FROM novels WHERE novels.ncode = library_novels.ncode),
+              novel_updated_at = (SELECT novel_updated_at FROM novels WHERE novels.ncode = library_novels.ncode)
+            WHERE EXISTS (SELECT 1 FROM novels WHERE novels.ncode = library_novels.ncode);
+          ''');
+        }
       },
     );
   }
@@ -262,7 +338,45 @@ class AppDatabase extends _$AppDatabase {
     )..where((t) => t.ncode.equals(ncode.toLowerCase()))).getSingleOrNull();
   }
 
-  /// ライブラリ登録状態の監視
+  /// ライブラリに小説を追加
+  Future<int> addToLibrary(LibraryNovelsCompanion novel) {
+    return into(libraryNovels).insert(
+      novel.copyWith(ncode: drift.Value(novel.ncode.value.toLowerCase())),
+      mode: InsertMode.insertOrIgnore,
+    );
+  }
+
+  /// ライブラリから小説を削除
+  Future<int> removeFromLibrary(String ncode) {
+    return (delete(libraryNovels)
+          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
+        .go();
+  }
+
+  /// ライブラリの小説リストを取得（追加日時の降順）
+  Future<List<LibraryNovel>> getLibraryNovels() {
+    return (select(libraryNovels)
+          ..orderBy([(t) => OrderingTerm.desc(t.addedAt)]))
+        .get();
+  }
+
+  /// 小説がライブラリに追加されているかを確認
+  Future<bool> isInLibrary(String ncode) async {
+    final result = await (select(libraryNovels)
+          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
+        .getSingleOrNull();
+    return result != null;
+  }
+
+  /// ライブラリ登録状態の監視（新しいメソッド）
+  Stream<bool> watchIsInLibrary(String ncode) {
+    return (select(libraryNovels)
+          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
+        .watchSingleOrNull()
+        .map((novel) => novel != null);
+  }
+
+  /// ライブラリ登録状態の監視（既存メソッドは残す - 削除予定）
   Stream<bool> watchIsFavorite(String ncode) {
     return (select(novels)..where((t) => t.ncode.equals(ncode.toLowerCase())))
         .watchSingleOrNull()

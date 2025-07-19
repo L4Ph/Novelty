@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -52,28 +51,38 @@ Future<List<Episode>> episodeList(Ref ref, String key) async {
 }
 
 @riverpod
-/// 小説のお気に入り状態を管理するプロバイダー。
-class FavoriteStatus extends _$FavoriteStatus {
+/// 小説のライブラリ状態を管理するプロバイダー。
+class LibraryStatus extends _$LibraryStatus {
   @override
-  Future<bool> build(String ncode) async {
+  Stream<bool> build(String ncode) {
     final db = ref.watch(appDatabaseProvider);
-    final novel = await db.getNovel(ncode);
-    return novel?.fav == 1;
+    return db.watchIsInLibrary(ncode);
   }
 
-  /// お気に入り状態をトグルするメソッド。
-  Future<bool> toggle(NovelInfo novelInfo) async {
+  /// ライブラリの状態をトグルするメソッド。
+  Future<void> toggle(NovelInfo novelInfo) async {
     final db = ref.read(appDatabaseProvider);
-    final currentStatus = state.value ?? false;
-    final newStatus = !currentStatus;
+    final isInLibrary = state.value ?? false;
+    final newStatus = !isInLibrary;
 
     state = const AsyncValue.loading();
     try {
-      final companion = novelInfo.toDbCompanion().copyWith(
-        fav: drift.Value(newStatus ? 1 : 0),
-      );
-      await db.insertNovel(companion);
-      state = AsyncValue.data(newStatus);
+      if (newStatus) {
+        final entry = LibraryNovelsCompanion(
+          ncode: drift.Value(novelInfo.ncode!),
+          title: drift.Value(novelInfo.title),
+          writer: drift.Value(novelInfo.writer),
+          story: drift.Value(novelInfo.story),
+          novelType: drift.Value(novelInfo.novelType),
+          end: drift.Value(novelInfo.end),
+          generalAllNo: drift.Value(novelInfo.generalAllNo),
+          novelUpdatedAt: drift.Value(novelInfo.novelupdatedAt?.toString()),
+          addedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
+        );
+        await db.addToLibrary(entry);
+      } else {
+        await db.removeFromLibrary(novelInfo.ncode!);
+      }
 
       ref
         ..invalidate(libraryNovelsProvider)
@@ -82,10 +91,8 @@ class FavoriteStatus extends _$FavoriteStatus {
         ..invalidate(enrichedRankingDataProvider('m'))
         ..invalidate(enrichedRankingDataProvider('q'))
         ..invalidate(enrichedRankingDataProvider('all'));
-      return true;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
-      return false;
     }
   }
 }
@@ -251,8 +258,7 @@ class NovelDetailPage extends ConsumerWidget {
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.menu_book),
                     label: const Text('この小説を読む'),
-                    onPressed: () =>
-                        context.push('/novel/$ncode/1'),
+                    onPressed: () => context.push('/novel/$ncode/1'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -541,7 +547,7 @@ Widget _buildActionButtons(
   NovelInfo novelInfo,
   String ncode,
 ) {
-  final isFavoriteAsync = ref.watch(favoriteStatusProvider(ncode));
+  final isFavoriteAsync = ref.watch(libraryStatusProvider(ncode));
   final downloadStatusAsync = ref.watch(downloadStatusProvider(novelInfo));
 
   return Row(
@@ -554,7 +560,7 @@ Widget _buildActionButtons(
           label: isFavorite ? '追加済' : 'ライブラリに追加',
           color: isFavorite ? Theme.of(context).colorScheme.primary : null,
           onPressed: () => ref
-              .read(favoriteStatusProvider(ncode).notifier)
+              .read(libraryStatusProvider(ncode).notifier)
               .toggle(novelInfo),
         ),
         loading: () => _buildActionButton(

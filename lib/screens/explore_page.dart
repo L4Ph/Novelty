@@ -8,7 +8,6 @@ import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/enriched_novel_list.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
-
 /// "見つける"ページのウィジェット。
 class ExplorePage extends ConsumerStatefulWidget {
   /// コンストラクタ。
@@ -253,7 +252,6 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
                     isExpanded: true,
                     items: [
                       const DropdownMenuItem<int?>(
-                        value: null,
                         child: Text('すべて'),
                       ),
                       ...genreList.map((genre) {
@@ -400,7 +398,9 @@ class _EnrichedSearchResults extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final enrichedResults = ref.watch(enrichedSearchDataProvider(searchResults));
+    final enrichedResults = ref.watch(
+      enrichedSearchDataProvider(searchResults),
+    );
 
     return enrichedResults.when(
       data: (data) {

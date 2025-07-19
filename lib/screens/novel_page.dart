@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/providers/history_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
@@ -95,8 +96,8 @@ class NovelPage extends ConsumerWidget {
                         return Text(
                           novelInfo.novelType == 2
                               ? (subtitle.isNotEmpty
-                                    ? subtitle
-                                    : novelInfo.title ?? '')
+                                  ? subtitle
+                                  : novelInfo.title ?? '')
                               : '${novelInfo.title} - $subtitle',
                           overflow: TextOverflow.ellipsis,
                         );
@@ -108,9 +109,8 @@ class NovelPage extends ConsumerWidget {
                 ),
               ),
               body: PageView.builder(
-                scrollDirection: settings.isVertical
-                    ? Axis.vertical
-                    : Axis.horizontal,
+                scrollDirection:
+                    settings.isVertical ? Axis.vertical : Axis.horizontal,
                 controller: pageController,
                 itemCount: totalEpisodes,
                 onPageChanged: (index) {
@@ -166,7 +166,7 @@ class NovelPage extends ConsumerWidget {
   void _updateHistory(WidgetRef ref, NovelInfo novelInfo, int episode) {
     // lastEpisodeが0以下の場合は1に設定
     final validEpisode = episode > 0 ? episode : 1;
-    
+
     ref
         .read(appDatabaseProvider)
         .addToHistory(
@@ -177,6 +177,7 @@ class NovelPage extends ConsumerWidget {
             lastEpisode: drift.Value(validEpisode),
             viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
           ),
-        );
+        )
+        .then((_) => ref.refresh(historyProvider));
   }
 }

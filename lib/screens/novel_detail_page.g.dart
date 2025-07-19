@@ -165,42 +165,42 @@ final class EpisodeListFamily extends $Family
   String toString() => r'episodeListProvider';
 }
 
-/// 小説のお気に入り状態を管理するプロバイダー。
-@ProviderFor(FavoriteStatus)
-const favoriteStatusProvider = FavoriteStatusFamily._();
+/// 小説のライブラリ状態を管理するプロバイダー。
+@ProviderFor(LibraryStatus)
+const libraryStatusProvider = LibraryStatusFamily._();
 
-/// 小説のお気に入り状態を管理するプロバイダー。
-final class FavoriteStatusProvider
-    extends $AsyncNotifierProvider<FavoriteStatus, bool> {
-  /// 小説のお気に入り状態を管理するプロバイダー。
-  const FavoriteStatusProvider._({
-    required FavoriteStatusFamily super.from,
+/// 小説のライブラリ状態を管理するプロバイダー。
+final class LibraryStatusProvider
+    extends $StreamNotifierProvider<LibraryStatus, bool> {
+  /// 小説のライブラリ状態を管理するプロバイダー。
+  const LibraryStatusProvider._({
+    required LibraryStatusFamily super.from,
     required String super.argument,
   }) : super(
          retry: null,
-         name: r'favoriteStatusProvider',
+         name: r'libraryStatusProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$favoriteStatusHash();
+  String debugGetCreateSourceHash() => _$libraryStatusHash();
 
   @override
   String toString() {
-    return r'favoriteStatusProvider'
+    return r'libraryStatusProvider'
         ''
         '($argument)';
   }
 
   @$internal
   @override
-  FavoriteStatus create() => FavoriteStatus();
+  LibraryStatus create() => LibraryStatus();
 
   @override
   bool operator ==(Object other) {
-    return other is FavoriteStatusProvider && other.argument == argument;
+    return other is LibraryStatusProvider && other.argument == argument;
   }
 
   @override
@@ -209,40 +209,40 @@ final class FavoriteStatusProvider
   }
 }
 
-String _$favoriteStatusHash() => r'b0ca148131c21e996980eb29d4bda6e4976f3c42';
+String _$libraryStatusHash() => r'dc96c0a8361af25db8a08a10982cdf323599443e';
 
-/// 小説のお気に入り状態を管理するプロバイダー。
-final class FavoriteStatusFamily extends $Family
+/// 小説のライブラリ状態を管理するプロバイダー。
+final class LibraryStatusFamily extends $Family
     with
         $ClassFamilyOverride<
-          FavoriteStatus,
+          LibraryStatus,
           AsyncValue<bool>,
           bool,
-          FutureOr<bool>,
+          Stream<bool>,
           String
         > {
-  const FavoriteStatusFamily._()
+  const LibraryStatusFamily._()
     : super(
         retry: null,
-        name: r'favoriteStatusProvider',
+        name: r'libraryStatusProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
-  /// 小説のお気に入り状態を管理するプロバイダー。
-  FavoriteStatusProvider call(String ncode) =>
-      FavoriteStatusProvider._(argument: ncode, from: this);
+  /// 小説のライブラリ状態を管理するプロバイダー。
+  LibraryStatusProvider call(String ncode) =>
+      LibraryStatusProvider._(argument: ncode, from: this);
 
   @override
-  String toString() => r'favoriteStatusProvider';
+  String toString() => r'libraryStatusProvider';
 }
 
-abstract class _$FavoriteStatus extends $AsyncNotifier<bool> {
+abstract class _$LibraryStatus extends $StreamNotifier<bool> {
   late final _$args = ref.$arg as String;
   String get ncode => _$args;
 
-  FutureOr<bool> build(String ncode);
+  Stream<bool> build(String ncode);
   @$mustCallSuper
   @override
   void runBuild() {
