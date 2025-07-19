@@ -34,28 +34,34 @@ class HistoryPage extends ConsumerWidget {
               final writer = item.writer ?? 'No Writer';
               final lastEpisode = item.lastEpisode;
 
-              return ListTile(
-                title: Text(title),
-                subtitle: Row(
-                  children: [
-                    Expanded(child: Text(writer)),
-                    if (lastEpisode != null)
-                      Text(
-                        '最終: $lastEpisode話',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                      ),
-                  ],
+              return Card(
+                margin: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 8,
                 ),
-                onTap: () {
-                  if (lastEpisode != null && lastEpisode > 0) {
-                    context.push('/novel/$ncode/$lastEpisode');
-                  } else {
-                    context.push('/novel/$ncode');
-                  }
-                },
+                child: ListTile(
+                  title: Text(title),
+                  subtitle: Row(
+                    children: [
+                      Expanded(child: Text(writer)),
+                      if (lastEpisode != null)
+                        Text(
+                          '最終: $lastEpisode話',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                  onTap: () {
+                    if (lastEpisode != null && lastEpisode > 0) {
+                      context.push('/novel/$ncode/$lastEpisode');
+                    } else {
+                      context.push('/novel/$ncode');
+                    }
+                  },
+                ),
               );
             },
           ),

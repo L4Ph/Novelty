@@ -45,30 +45,36 @@ class NovelListTile extends StatelessWidget {
         ? '情報取得失敗'
         : (item.novelType == 2 ? '短編' : (item.end == 0 ? '完結済' : '連載中'));
 
-    return ListTile(
-      leading: isRanking ? Text('${item.rank ?? ''}') : null,
-      title: Row(
-        children: [
-          Expanded(child: Text(title)),
-          if (enrichedData?.isInLibrary == true) ...[
-            const SizedBox(width: 8),
-            Icon(
-              Icons.favorite,
-              color: Theme.of(context).colorScheme.primary,
-              size: 16,
-            ),
+    return Card(
+      margin: const EdgeInsets.symmetric(
+        vertical: 4,
+        horizontal: 8,
+      ),
+      child: ListTile(
+        leading: isRanking ? Text('${item.rank ?? ''}') : null,
+        title: Row(
+          children: [
+            Expanded(child: Text(title)),
+            if (enrichedData?.isInLibrary == true) ...[
+              const SizedBox(width: 8),
+              Icon(
+                Icons.favorite,
+                color: Theme.of(context).colorScheme.primary,
+                size: 16,
+              ),
+            ],
           ],
-        ],
+        ),
+        subtitle: Text(
+          'Nコード: ${item.ncode} - ${item.allPoint ?? item.pt ?? 0}pt\nジャンル: $genreName - $status',
+        ),
+        onTap:
+            onTap ??
+            () {
+              context.push('/novel/${item.ncode}');
+            },
+        onLongPress: onLongPress,
       ),
-      subtitle: Text(
-        'Nコード: ${item.ncode} - ${item.allPoint ?? item.pt ?? 0}pt\nジャンル: $genreName - $status',
-      ),
-      onTap:
-          onTap ??
-          () {
-            context.push('/novel/${item.ncode}');
-          },
-      onLongPress: onLongPress,
     );
   }
 }
