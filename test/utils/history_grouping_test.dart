@@ -5,7 +5,7 @@ import 'package:novelty/utils/history_grouping.dart';
 void main() {
   group('HistoryGrouping', () {
     late DateTime today;
-    
+
     setUp(() {
       // テストのために固定日時を使用（2024年1月15日）
       today = DateTime(2024, 1, 15);
@@ -19,7 +19,7 @@ void main() {
         lastEpisode: 1,
         viewedAt: today.millisecondsSinceEpoch,
       );
-      
+
       final label = HistoryGrouping.getDateLabel(historyData, today);
       expect(label, '今日');
     });
@@ -33,7 +33,7 @@ void main() {
         lastEpisode: 1,
         viewedAt: oneDayAgo.millisecondsSinceEpoch,
       );
-      
+
       final label = HistoryGrouping.getDateLabel(historyData, today);
       expect(label, '1日前');
     });
@@ -47,7 +47,7 @@ void main() {
         lastEpisode: 1,
         viewedAt: sixDaysAgo.millisecondsSinceEpoch,
       );
-      
+
       final label = HistoryGrouping.getDateLabel(historyData, today);
       expect(label, '6日前');
     });
@@ -61,7 +61,7 @@ void main() {
         lastEpisode: 1,
         viewedAt: sevenDaysAgo.millisecondsSinceEpoch,
       );
-      
+
       final label = HistoryGrouping.getDateLabel(historyData, today);
       expect(label, '1週間前');
     });
@@ -75,7 +75,7 @@ void main() {
         lastEpisode: 1,
         viewedAt: eightDaysAgo.millisecondsSinceEpoch,
       );
-      
+
       final label = HistoryGrouping.getDateLabel(historyData, today);
       expect(label, '2024年1月7日');
     });
@@ -94,7 +94,9 @@ void main() {
           title: 'Test Novel 2',
           writer: 'Test Author 2',
           lastEpisode: 2,
-          viewedAt: today.subtract(const Duration(days: 1)).millisecondsSinceEpoch,
+          viewedAt: today
+              .subtract(const Duration(days: 1))
+              .millisecondsSinceEpoch,
         ),
         HistoryData(
           ncode: 'test3',
@@ -106,7 +108,7 @@ void main() {
       ];
 
       final groupedItems = HistoryGrouping.groupByDate(historyItems, today);
-      
+
       expect(groupedItems.length, 2);
       expect(groupedItems[0].dateLabel, '今日');
       expect(groupedItems[0].items.length, 2);
@@ -116,9 +118,23 @@ void main() {
 
     test('should maintain order within groups', () {
       // 同じ日の異なる時刻を作成
-      final todayMorning = DateTime(today.year, today.month, today.day, 8, 0, 0);
-      final todayEvening = DateTime(today.year, today.month, today.day, 20, 0, 0);
-      
+      final todayMorning = DateTime(
+        today.year,
+        today.month,
+        today.day,
+        8,
+        0,
+        0,
+      );
+      final todayEvening = DateTime(
+        today.year,
+        today.month,
+        today.day,
+        20,
+        0,
+        0,
+      );
+
       final historyItems = [
         HistoryData(
           ncode: 'test1',
@@ -137,7 +153,7 @@ void main() {
       ];
 
       final groupedItems = HistoryGrouping.groupByDate(historyItems, today);
-      
+
       expect(groupedItems.length, 1);
       expect(groupedItems[0].items.length, 2);
       expect(groupedItems[0].items[0].ncode, 'test1'); // 新しい順（夜）

@@ -20,7 +20,9 @@ void main() {
       fixedTime = DateTime(2024, 1, 15, 12, 0, 0);
     });
 
-    testWidgets('should take screenshot of grouped history display', (tester) async {
+    testWidgets('should take screenshot of grouped history display', (
+      tester,
+    ) async {
       // より豊富なテストデータを作成
       final testHistoryData = [
         // 今日
@@ -36,7 +38,9 @@ void main() {
           title: '今日の2番目の小説',
           writer: '別の作者',
           lastEpisode: 10,
-          viewedAt: fixedTime.subtract(const Duration(hours: 3)).millisecondsSinceEpoch,
+          viewedAt: fixedTime
+              .subtract(const Duration(hours: 3))
+              .millisecondsSinceEpoch,
         ),
         // 1日前
         HistoryData(
@@ -44,7 +48,9 @@ void main() {
           title: '昨日読んだ面白い物語',
           writer: '昨日の作者',
           lastEpisode: 45,
-          viewedAt: fixedTime.subtract(const Duration(days: 1)).millisecondsSinceEpoch,
+          viewedAt: fixedTime
+              .subtract(const Duration(days: 1))
+              .millisecondsSinceEpoch,
         ),
         // 3日前
         HistoryData(
@@ -52,7 +58,9 @@ void main() {
           title: '3日前の冒険小説',
           writer: '冒険作家',
           lastEpisode: 12,
-          viewedAt: fixedTime.subtract(const Duration(days: 3)).millisecondsSinceEpoch,
+          viewedAt: fixedTime
+              .subtract(const Duration(days: 3))
+              .millisecondsSinceEpoch,
         ),
         // 1週間前
         HistoryData(
@@ -60,7 +68,9 @@ void main() {
           title: '1週間前の恋愛小説',
           writer: '恋愛作家',
           lastEpisode: 33,
-          viewedAt: fixedTime.subtract(const Duration(days: 7)).millisecondsSinceEpoch,
+          viewedAt: fixedTime
+              .subtract(const Duration(days: 7))
+              .millisecondsSinceEpoch,
         ),
         // 10日前（実際の日付表示）
         HistoryData(
@@ -68,7 +78,9 @@ void main() {
           title: '古い時代の歴史小説',
           writer: '歴史作家',
           lastEpisode: 100,
-          viewedAt: fixedTime.subtract(const Duration(days: 10)).millisecondsSinceEpoch,
+          viewedAt: fixedTime
+              .subtract(const Duration(days: 10))
+              .millisecondsSinceEpoch,
         ),
         // 30日前（実際の日付表示）
         HistoryData(
@@ -76,7 +88,9 @@ void main() {
           title: '1ヶ月前のファンタジー',
           writer: 'ファンタジー作家',
           lastEpisode: 200,
-          viewedAt: fixedTime.subtract(const Duration(days: 30)).millisecondsSinceEpoch,
+          viewedAt: fixedTime
+              .subtract(const Duration(days: 30))
+              .millisecondsSinceEpoch,
         ),
       ];
 

@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
@@ -43,21 +43,27 @@ void main() {
           title: '今日の小説2',
           writer: '作者2',
           lastEpisode: 3,
-          viewedAt: fixedTime.subtract(const Duration(hours: 2)).millisecondsSinceEpoch,
+          viewedAt: fixedTime
+              .subtract(const Duration(hours: 2))
+              .millisecondsSinceEpoch,
         ),
         HistoryData(
           ncode: 'yesterday1',
           title: '昨日の小説',
           writer: '作者3',
           lastEpisode: 10,
-          viewedAt: fixedTime.subtract(const Duration(days: 1)).millisecondsSinceEpoch,
+          viewedAt: fixedTime
+              .subtract(const Duration(days: 1))
+              .millisecondsSinceEpoch,
         ),
         HistoryData(
           ncode: 'old1',
           title: '古い小説',
           writer: '作者4',
           lastEpisode: 15,
-          viewedAt: fixedTime.subtract(const Duration(days: 10)).millisecondsSinceEpoch,
+          viewedAt: fixedTime
+              .subtract(const Duration(days: 10))
+              .millisecondsSinceEpoch,
         ),
       ];
 
@@ -66,18 +72,18 @@ void main() {
       final result = await container.read(groupedHistoryProvider.future);
 
       expect(result.length, 3); // 今日、1日前、古い日付の3グループ
-      
+
       // 今日のグループ
       expect(result[0].dateLabel, '今日');
       expect(result[0].items.length, 2);
       expect(result[0].items[0].ncode, 'today1'); // 新しい順
       expect(result[0].items[1].ncode, 'today2');
-      
+
       // 1日前のグループ
       expect(result[1].dateLabel, '1日前');
       expect(result[1].items.length, 1);
       expect(result[1].items[0].ncode, 'yesterday1');
-      
+
       // 古い日付のグループ（実際の日付が表示される）
       expect(result[2].dateLabel, '2024年1月5日');
       expect(result[2].items.length, 1);

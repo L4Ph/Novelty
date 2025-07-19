@@ -10,7 +10,7 @@ class HistoryGroup {
 
   /// 日付ラベル（「今日」、「1日前」、「2024年1月1日」など）
   final String dateLabel;
-  
+
   /// そのグループに属する履歴アイテムのリスト
   final List<HistoryData> items;
 }
@@ -19,10 +19,16 @@ class HistoryGroup {
 class HistoryGrouping {
   /// 履歴アイテムの閲覧日時に基づいて適切な日付ラベルを生成する
   static String getDateLabel(HistoryData historyData, DateTime today) {
-    final viewedDate = DateTime.fromMillisecondsSinceEpoch(historyData.viewedAt);
-    final viewedDateOnly = DateTime(viewedDate.year, viewedDate.month, viewedDate.day);
+    final viewedDate = DateTime.fromMillisecondsSinceEpoch(
+      historyData.viewedAt,
+    );
+    final viewedDateOnly = DateTime(
+      viewedDate.year,
+      viewedDate.month,
+      viewedDate.day,
+    );
     final todayOnly = DateTime(today.year, today.month, today.day);
-    
+
     final difference = todayOnly.difference(viewedDateOnly).inDays;
 
     switch (difference) {
@@ -49,9 +55,12 @@ class HistoryGrouping {
   }
 
   /// 履歴アイテムのリストを日付でグルーピングする
-  static List<HistoryGroup> groupByDate(List<HistoryData> historyItems, DateTime today) {
+  static List<HistoryGroup> groupByDate(
+    List<HistoryData> historyItems,
+    DateTime today,
+  ) {
     final groupMap = <String, List<HistoryData>>{};
-    
+
     // 各履歴アイテムを日付ラベルでグルーピング
     for (final item in historyItems) {
       final dateLabel = getDateLabel(item, today);
@@ -61,22 +70,27 @@ class HistoryGrouping {
         groupMap[dateLabel] = [item];
       }
     }
-    
+
     // グループを作成し、各グループ内をviewedAtでソート（新しい順）
-    final groups = groupMap.entries.map((entry) {
-      return HistoryGroup(
-        dateLabel: entry.key,
-        items: entry.value..sort((a, b) => b.viewedAt.compareTo(a.viewedAt)),
-      );
-    }).toList();
-    
-    // グループを日付順でソート（新しい順）
-    groups.sort((a, b) {
-      final aSampleDate = DateTime.fromMillisecondsSinceEpoch(a.items.first.viewedAt);
-      final bSampleDate = DateTime.fromMillisecondsSinceEpoch(b.items.first.viewedAt);
-      return bSampleDate.compareTo(aSampleDate);
-    });
-    
+    final groups =
+        groupMap.entries.map((entry) {
+            return HistoryGroup(
+              dateLabel: entry.key,
+              items: entry.value
+                ..sort((a, b) => b.viewedAt.compareTo(a.viewedAt)),
+            );
+          }).toList()
+          // グループを日付順でソート（新しい順）
+          ..sort((a, b) {
+            final aSampleDate = DateTime.fromMillisecondsSinceEpoch(
+              a.items.first.viewedAt,
+            );
+            final bSampleDate = DateTime.fromMillisecondsSinceEpoch(
+              b.items.first.viewedAt,
+            );
+            return bSampleDate.compareTo(aSampleDate);
+          });
+
     return groups;
   }
 }
