@@ -237,7 +237,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   /// テスト用のコンストラクタ
-  AppDatabase.forTesting(QueryExecutor executor) : super(executor);
+  AppDatabase.forTesting(super.executor);
 
   @override
   int get schemaVersion => 2;
@@ -395,14 +395,15 @@ class AppDatabase extends _$AppDatabase {
 
     // LIKE検索でタイトル、著者、あらすじ、キーワードを検索
     final searchTerm = '%${query.toLowerCase()}%';
-    
-    return (select(novels)
-          ..where((t) => 
+
+    return (select(novels)..where(
+          (t) =>
               t.fav.equals(1) &
               (t.title.lower().like(searchTerm) |
-               t.writer.lower().like(searchTerm) |
-               t.story.lower().like(searchTerm) |
-               t.keyword.lower().like(searchTerm))))
+                  t.writer.lower().like(searchTerm) |
+                  t.story.lower().like(searchTerm) |
+                  t.keyword.lower().like(searchTerm)),
+        ))
         .get();
   }
 }

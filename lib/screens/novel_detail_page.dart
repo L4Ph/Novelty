@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -83,7 +82,7 @@ class FavoriteStatus extends _$FavoriteStatus {
         ..invalidate(enrichedRankingDataProvider('q'))
         ..invalidate(enrichedRankingDataProvider('all'));
       return true;
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       state = AsyncValue.error(e, st);
       return false;
     }
@@ -251,8 +250,7 @@ class NovelDetailPage extends ConsumerWidget {
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.menu_book),
                     label: const Text('この小説を読む'),
-                    onPressed: () =>
-                        context.push('/novel/$ncode/1'),
+                    onPressed: () => context.push('/novel/$ncode/1'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,

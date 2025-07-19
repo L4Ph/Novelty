@@ -32,14 +32,14 @@ void main() {
 
     test('検索クエリが空の場合、全ての小説を返す', () async {
       final mockNovels = [
-        Novel(
+        const Novel(
           ncode: 'n1234ab',
           title: 'テスト小説',
           writer: 'テスト作者',
           fav: 1,
         ),
       ];
-      
+
       when(mockDb.searchLibraryNovels('')).thenAnswer((_) async => mockNovels);
 
       final notifier = container.read(librarySearchProvider.notifier);
@@ -51,15 +51,17 @@ void main() {
 
     test('検索クエリに基づいて小説を検索する', () async {
       final mockNovels = [
-        Novel(
+        const Novel(
           ncode: 'n1234ab',
           title: 'テスト小説',
           writer: 'テスト作者',
           fav: 1,
         ),
       ];
-      
-      when(mockDb.searchLibraryNovels('テスト')).thenAnswer((_) async => mockNovels);
+
+      when(
+        mockDb.searchLibraryNovels('テスト'),
+      ).thenAnswer((_) async => mockNovels);
 
       final notifier = container.read(librarySearchProvider.notifier);
       await notifier.searchNovels('テスト');
@@ -79,8 +81,7 @@ void main() {
     });
 
     test('検索でエラーが発生した場合、エラー状態を返す', () async {
-      when(mockDb.searchLibraryNovels('エラー'))
-          .thenThrow(Exception('データベースエラー'));
+      when(mockDb.searchLibraryNovels('エラー')).thenThrow(Exception('データベースエラー'));
 
       final notifier = container.read(librarySearchProvider.notifier);
       await notifier.searchNovels('エラー');
@@ -93,15 +94,17 @@ void main() {
     test('検索結果をクリアできる', () async {
       // 最初に検索結果を設定
       final mockNovels = [
-        Novel(
+        const Novel(
           ncode: 'n1234ab',
           title: 'テスト小説',
           writer: 'テスト作者',
           fav: 1,
         ),
       ];
-      
-      when(mockDb.searchLibraryNovels('テスト')).thenAnswer((_) async => mockNovels);
+
+      when(
+        mockDb.searchLibraryNovels('テスト'),
+      ).thenAnswer((_) async => mockNovels);
 
       final notifier = container.read(librarySearchProvider.notifier);
       await notifier.searchNovels('テスト');

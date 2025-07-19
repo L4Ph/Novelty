@@ -43,7 +43,7 @@ void main() {
       );
 
       final results = await db.searchLibraryNovels('');
-      
+
       expect(results.length, equals(2));
       expect(results.map((n) => n.ncode), containsAll(['n1234ab', 'n5678cd']));
     });
@@ -67,7 +67,7 @@ void main() {
       );
 
       final results = await db.searchLibraryNovels('異世界');
-      
+
       expect(results.length, equals(1));
       expect(results.first.ncode, equals('n1234ab'));
       expect(results.first.title, equals('異世界転生物語'));
@@ -92,7 +92,7 @@ void main() {
       );
 
       final results = await db.searchLibraryNovels('田中');
-      
+
       expect(results.length, equals(1));
       expect(results.first.ncode, equals('n1234ab'));
       expect(results.first.writer, equals('田中太郎'));
@@ -109,7 +109,7 @@ void main() {
       );
 
       final results = await db.searchLibraryNovels('fantasy');
-      
+
       expect(results.length, equals(1));
       expect(results.first.title, equals('Fantasy Adventure'));
     });
@@ -125,7 +125,7 @@ void main() {
       );
 
       final results = await db.searchLibraryNovels('存在しないキーワード');
-      
+
       expect(results, isEmpty);
     });
 
@@ -148,7 +148,7 @@ void main() {
       );
 
       final results = await db.searchLibraryNovels('ライブラリ');
-      
+
       expect(results.length, equals(1));
       expect(results.first.ncode, equals('n1234ab'));
     });

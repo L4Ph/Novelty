@@ -23,8 +23,8 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
   @override
   void initState() {
     super.initState();
-    _backupService = widget.backupService ??
-        BackupService(ref.read(appDatabaseProvider));
+    _backupService =
+        widget.backupService ?? BackupService(ref.read(appDatabaseProvider));
   }
 
   @override
@@ -131,7 +131,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
       if (filePath != null && mounted) {
         _showSuccessDialog('ライブラリデータのエクスポートが完了しました', filePath);
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         _showErrorDialog('エクスポートに失敗しました', e.toString());
       }
@@ -155,7 +155,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
       if (filePath != null && mounted) {
         _showSuccessDialog('履歴データのエクスポートが完了しました', filePath);
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         _showErrorDialog('エクスポートに失敗しました', e.toString());
       }
@@ -182,7 +182,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
           '$count件の小説を復元しました',
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         _showErrorDialog('インポートに失敗しました', e.toString());
       }
@@ -209,7 +209,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
           '$count件の履歴を復元しました',
         );
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         _showErrorDialog('インポートに失敗しました', e.toString());
       }

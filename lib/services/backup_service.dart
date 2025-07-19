@@ -17,9 +17,9 @@ class BackupService {
 
   /// ライブラリデータをエクスポートする
   Future<Map<String, dynamic>> exportLibraryData() async {
-    final libraryNovels = await (_database.select(_database.novels)
-          ..where((t) => t.fav.equals(1)))
-        .get();
+    final libraryNovels = await (_database.select(
+      _database.novels,
+    )..where((t) => t.fav.equals(1))).get();
 
     return {
       'version': '1.0',
@@ -58,17 +58,19 @@ class BackupService {
     final histories = jsonData['data'] as List<dynamic>;
 
     for (final historyData in histories) {
-      final history =
-          _jsonToHistoryCompanion(historyData as Map<String, dynamic>);
+      final history = _jsonToHistoryCompanion(
+        historyData as Map<String, dynamic>,
+      );
       await _database.addToHistory(history);
     }
   }
 
   /// ライブラリデータをファイルにエクスポートする
   Future<String?> exportLibraryToFile() async {
-    final String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: 'バックアップ先のディレクトリを選択',
-    );
+    final String? selectedDirectory = await FilePicker.platform
+        .getDirectoryPath(
+          dialogTitle: 'バックアップ先のディレクトリを選択',
+        );
 
     if (selectedDirectory == null) {
       return null;
@@ -88,7 +90,7 @@ class BackupService {
 
   /// 履歴データをファイルにエクスポートする
   Future<String?> exportHistoryToFile() async {
-    final String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
+    final selectedDirectory = await FilePicker.platform.getDirectoryPath(
       dialogTitle: 'バックアップ先のディレクトリを選択',
     );
 
