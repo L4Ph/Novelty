@@ -122,7 +122,7 @@ class DownloadStatus extends _$DownloadStatus {
       }
 
       // ファイルアクセス権限のチェック
-      final hasFilePermission = await _checkFilePermission();
+      final hasFilePermission = await checkFilePermission();
       if (!hasFilePermission) {
         state = previousState;
         if (context.mounted) {
@@ -136,7 +136,7 @@ class DownloadStatus extends _$DownloadStatus {
       }
 
       // 通知権限のチェック
-      final hasNotificationPermission = await _checkNotificationPermission();
+      final hasNotificationPermission = await checkNotificationPermission();
       if (!hasNotificationPermission) {
         state = previousState;
         if (context.mounted) {
@@ -163,7 +163,8 @@ class DownloadStatus extends _$DownloadStatus {
   }
 
   /// ファイルアクセス権限をチェックするメソッド
-  Future<bool> _checkFilePermission() async {
+  @visibleForTesting
+  Future<bool> checkFilePermission() async {
     if (Platform.isAndroid) {
       final status = await Permission.manageExternalStorage.status;
       if (status.isGranted) {
@@ -182,7 +183,8 @@ class DownloadStatus extends _$DownloadStatus {
   }
 
   /// 通知権限をチェックするメソッド
-  Future<bool> _checkNotificationPermission() async {
+  @visibleForTesting
+  Future<bool> checkNotificationPermission() async {
     final status = await Permission.notification.status;
     if (status.isGranted) {
       return true;

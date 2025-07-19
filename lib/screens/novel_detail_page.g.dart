@@ -209,7 +209,7 @@ final class LibraryStatusProvider
   }
 }
 
-String _$libraryStatusHash() => r'dc96c0a8361af25db8a08a10982cdf323599443e';
+String _$libraryStatusHash() => r'7fd298025f27a721e544ed2e844d6a06cd487c45';
 
 /// 小説のライブラリ状態を管理するプロバイダー。
 final class LibraryStatusFamily extends $Family
@@ -307,7 +307,7 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'802dc20c13f978fe13a721af0783d28fc878012e';
+String _$downloadStatusHash() => r'b607842b70e0bba152dab6b00be6797b55d96e61';
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
