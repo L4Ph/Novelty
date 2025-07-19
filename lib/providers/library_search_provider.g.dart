@@ -33,7 +33,7 @@ final class LibrarySearchProvider
   LibrarySearch create() => LibrarySearch();
 }
 
-String _$librarySearchHash() => r'522fdea2b7fa842ab171b29e50fa9eaa30b4edd1';
+String _$librarySearchHash() => r'56581291fc913a7ba8c607552a8277bacc3c63a0';
 
 abstract class _$LibrarySearch extends $AsyncNotifier<List<Novel>> {
   FutureOr<List<Novel>> build();
