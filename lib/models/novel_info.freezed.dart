@@ -11,7 +11,6 @@ part of 'novel_info.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$NovelInfo {
 
@@ -93,8 +92,6 @@ mixin _$NovelInfo {
 @pragma('vm:prefer-inline')
 $NovelInfoCopyWith<NovelInfo> get copyWith => _$NovelInfoCopyWithImpl<NovelInfo>(this as NovelInfo, _$identity);
 
-  /// Serializes this NovelInfo to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -102,7 +99,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is NovelInfo&&(identical(other.title, title) || other.title == title)&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.writer, writer) || other.writer == writer)&&(identical(other.story, story) || other.story == story)&&(identical(other.novelType, novelType) || other.novelType == novelType)&&(identical(other.end, end) || other.end == end)&&(identical(other.generalAllNo, generalAllNo) || other.generalAllNo == generalAllNo)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.keyword, keyword) || other.keyword == keyword)&&(identical(other.generalFirstup, generalFirstup) || other.generalFirstup == generalFirstup)&&(identical(other.generalLastup, generalLastup) || other.generalLastup == generalLastup)&&(identical(other.globalPoint, globalPoint) || other.globalPoint == globalPoint)&&(identical(other.dailyPoint, dailyPoint) || other.dailyPoint == dailyPoint)&&(identical(other.weeklyPoint, weeklyPoint) || other.weeklyPoint == weeklyPoint)&&(identical(other.monthlyPoint, monthlyPoint) || other.monthlyPoint == monthlyPoint)&&(identical(other.quarterPoint, quarterPoint) || other.quarterPoint == quarterPoint)&&(identical(other.yearlyPoint, yearlyPoint) || other.yearlyPoint == yearlyPoint)&&(identical(other.favNovelCnt, favNovelCnt) || other.favNovelCnt == favNovelCnt)&&(identical(other.impressionCnt, impressionCnt) || other.impressionCnt == impressionCnt)&&(identical(other.reviewCnt, reviewCnt) || other.reviewCnt == reviewCnt)&&(identical(other.allPoint, allPoint) || other.allPoint == allPoint)&&(identical(other.allHyokaCnt, allHyokaCnt) || other.allHyokaCnt == allHyokaCnt)&&(identical(other.sasieCnt, sasieCnt) || other.sasieCnt == sasieCnt)&&(identical(other.kaiwaritu, kaiwaritu) || other.kaiwaritu == kaiwaritu)&&(identical(other.novelupdatedAt, novelupdatedAt) || other.novelupdatedAt == novelupdatedAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other.episodes, episodes)&&(identical(other.isr15, isr15) || other.isr15 == isr15)&&(identical(other.isbl, isbl) || other.isbl == isbl)&&(identical(other.isgl, isgl) || other.isgl == isgl)&&(identical(other.iszankoku, iszankoku) || other.iszankoku == iszankoku)&&(identical(other.istensei, istensei) || other.istensei == istensei)&&(identical(other.istenni, istenni) || other.istenni == istenni));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hashAll([runtimeType,title,ncode,writer,story,novelType,end,generalAllNo,genre,keyword,generalFirstup,generalLastup,globalPoint,dailyPoint,weeklyPoint,monthlyPoint,quarterPoint,yearlyPoint,favNovelCnt,impressionCnt,reviewCnt,allPoint,allHyokaCnt,sasieCnt,kaiwaritu,novelupdatedAt,updatedAt,const DeepCollectionEquality().hash(episodes),isr15,isbl,isgl,iszankoku,istensei,istenni]);
 
@@ -309,11 +306,11 @@ return $default(_that.title,_that.ncode,_that.writer,_that.story,_that.novelType
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _NovelInfo implements NovelInfo {
   const _NovelInfo({this.title, this.ncode, this.writer, this.story, @StringToIntConverter()@JsonKey(name: 'novel_type') this.novelType, @StringToIntConverter() this.end, @StringToIntConverter()@JsonKey(name: 'general_all_no') this.generalAllNo, @StringToIntConverter() this.genre, this.keyword, @JsonKey(name: 'general_firstup') this.generalFirstup, @JsonKey(name: 'general_lastup') this.generalLastup, @StringToIntConverter()@JsonKey(name: 'global_point') this.globalPoint, @StringToIntConverter()@JsonKey(name: 'daily_point') this.dailyPoint, @StringToIntConverter()@JsonKey(name: 'weekly_point') this.weeklyPoint, @StringToIntConverter()@JsonKey(name: 'monthly_point') this.monthlyPoint, @StringToIntConverter()@JsonKey(name: 'quarter_point') this.quarterPoint, @StringToIntConverter()@JsonKey(name: 'yearly_point') this.yearlyPoint, @StringToIntConverter()@JsonKey(name: 'fav_novel_cnt') this.favNovelCnt, @StringToIntConverter()@JsonKey(name: 'impression_cnt') this.impressionCnt, @StringToIntConverter()@JsonKey(name: 'review_cnt') this.reviewCnt, @StringToIntConverter()@JsonKey(name: 'all_point') this.allPoint, @StringToIntConverter()@JsonKey(name: 'all_hyoka_cnt') this.allHyokaCnt, @StringToIntConverter()@JsonKey(name: 'sasie_cnt') this.sasieCnt, @StringToIntConverter() this.kaiwaritu, @StringToIntConverter()@JsonKey(name: 'novelupdated_at') this.novelupdatedAt, @StringToIntConverter()@JsonKey(name: 'updated_at') this.updatedAt, final  List<Episode>? episodes, @StringToIntConverter() this.isr15, @StringToIntConverter() this.isbl, @StringToIntConverter() this.isgl, @StringToIntConverter() this.iszankoku, @StringToIntConverter() this.istensei, @StringToIntConverter() this.istenni}): _episodes = episodes;
-  factory _NovelInfo.fromJson(Map<String, dynamic> json) => _$NovelInfoFromJson(json);
+  
 
 /// 作品名。
 @override final  String? title;
@@ -435,17 +432,14 @@ class _NovelInfo implements NovelInfo {
 @pragma('vm:prefer-inline')
 _$NovelInfoCopyWith<_NovelInfo> get copyWith => __$NovelInfoCopyWithImpl<_NovelInfo>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$NovelInfoToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _NovelInfo&&(identical(other.title, title) || other.title == title)&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.writer, writer) || other.writer == writer)&&(identical(other.story, story) || other.story == story)&&(identical(other.novelType, novelType) || other.novelType == novelType)&&(identical(other.end, end) || other.end == end)&&(identical(other.generalAllNo, generalAllNo) || other.generalAllNo == generalAllNo)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.keyword, keyword) || other.keyword == keyword)&&(identical(other.generalFirstup, generalFirstup) || other.generalFirstup == generalFirstup)&&(identical(other.generalLastup, generalLastup) || other.generalLastup == generalLastup)&&(identical(other.globalPoint, globalPoint) || other.globalPoint == globalPoint)&&(identical(other.dailyPoint, dailyPoint) || other.dailyPoint == dailyPoint)&&(identical(other.weeklyPoint, weeklyPoint) || other.weeklyPoint == weeklyPoint)&&(identical(other.monthlyPoint, monthlyPoint) || other.monthlyPoint == monthlyPoint)&&(identical(other.quarterPoint, quarterPoint) || other.quarterPoint == quarterPoint)&&(identical(other.yearlyPoint, yearlyPoint) || other.yearlyPoint == yearlyPoint)&&(identical(other.favNovelCnt, favNovelCnt) || other.favNovelCnt == favNovelCnt)&&(identical(other.impressionCnt, impressionCnt) || other.impressionCnt == impressionCnt)&&(identical(other.reviewCnt, reviewCnt) || other.reviewCnt == reviewCnt)&&(identical(other.allPoint, allPoint) || other.allPoint == allPoint)&&(identical(other.allHyokaCnt, allHyokaCnt) || other.allHyokaCnt == allHyokaCnt)&&(identical(other.sasieCnt, sasieCnt) || other.sasieCnt == sasieCnt)&&(identical(other.kaiwaritu, kaiwaritu) || other.kaiwaritu == kaiwaritu)&&(identical(other.novelupdatedAt, novelupdatedAt) || other.novelupdatedAt == novelupdatedAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other._episodes, _episodes)&&(identical(other.isr15, isr15) || other.isr15 == isr15)&&(identical(other.isbl, isbl) || other.isbl == isbl)&&(identical(other.isgl, isgl) || other.isgl == isgl)&&(identical(other.iszankoku, iszankoku) || other.iszankoku == iszankoku)&&(identical(other.istensei, istensei) || other.istensei == istensei)&&(identical(other.istenni, istenni) || other.istenni == istenni));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hashAll([runtimeType,title,ncode,writer,story,novelType,end,generalAllNo,genre,keyword,generalFirstup,generalLastup,globalPoint,dailyPoint,weeklyPoint,monthlyPoint,quarterPoint,yearlyPoint,favNovelCnt,impressionCnt,reviewCnt,allPoint,allHyokaCnt,sasieCnt,kaiwaritu,novelupdatedAt,updatedAt,const DeepCollectionEquality().hash(_episodes),isr15,isbl,isgl,iszankoku,istensei,istenni]);
 

@@ -11,7 +11,6 @@ part of 'ranking_response.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$RankingResponse {
 
@@ -55,8 +54,6 @@ mixin _$RankingResponse {
 @pragma('vm:prefer-inline')
 $RankingResponseCopyWith<RankingResponse> get copyWith => _$RankingResponseCopyWithImpl<RankingResponse>(this as RankingResponse, _$identity);
 
-  /// Serializes this RankingResponse to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -64,7 +61,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is RankingResponse&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.pt, pt) || other.pt == pt)&&(identical(other.allPoint, allPoint) || other.allPoint == allPoint)&&(identical(other.title, title) || other.title == title)&&(identical(other.novelType, novelType) || other.novelType == novelType)&&(identical(other.end, end) || other.end == end)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.writer, writer) || other.writer == writer)&&(identical(other.story, story) || other.story == story)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.generalAllNo, generalAllNo) || other.generalAllNo == generalAllNo)&&(identical(other.keyword, keyword) || other.keyword == keyword));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,ncode,rank,pt,allPoint,title,novelType,end,genre,writer,story,userId,generalAllNo,keyword);
 
@@ -251,11 +248,11 @@ return $default(_that.ncode,_that.rank,_that.pt,_that.allPoint,_that.title,_that
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _RankingResponse implements RankingResponse {
   const _RankingResponse({required this.ncode, @StringToIntConverter() this.rank, @StringToIntConverter() this.pt, @StringToIntConverter()@JsonKey(name: 'all_point') this.allPoint, this.title, @StringToIntConverter()@JsonKey(name: 'novel_type') this.novelType, @StringToIntConverter() this.end, @StringToIntConverter() this.genre, this.writer, this.story, @StringToIntConverter()@JsonKey(name: 'userid') this.userId, @StringToIntConverter()@JsonKey(name: 'general_all_no') this.generalAllNo, this.keyword});
-  factory _RankingResponse.fromJson(Map<String, dynamic> json) => _$RankingResponseFromJson(json);
+  
 
 /// Nコード
 ///
@@ -310,17 +307,14 @@ class _RankingResponse implements RankingResponse {
 @pragma('vm:prefer-inline')
 _$RankingResponseCopyWith<_RankingResponse> get copyWith => __$RankingResponseCopyWithImpl<_RankingResponse>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$RankingResponseToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _RankingResponse&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.rank, rank) || other.rank == rank)&&(identical(other.pt, pt) || other.pt == pt)&&(identical(other.allPoint, allPoint) || other.allPoint == allPoint)&&(identical(other.title, title) || other.title == title)&&(identical(other.novelType, novelType) || other.novelType == novelType)&&(identical(other.end, end) || other.end == end)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.writer, writer) || other.writer == writer)&&(identical(other.story, story) || other.story == story)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.generalAllNo, generalAllNo) || other.generalAllNo == generalAllNo)&&(identical(other.keyword, keyword) || other.keyword == keyword));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,ncode,rank,pt,allPoint,title,novelType,end,genre,writer,story,userId,generalAllNo,keyword);
 

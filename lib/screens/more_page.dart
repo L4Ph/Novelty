@@ -20,6 +20,13 @@ class MorePage extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.storage),
+            title: const Text('データとストレージ'),
+            onTap: () {
+              context.go('/more/data-storage');
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('このアプリについて'),
             onTap: () {

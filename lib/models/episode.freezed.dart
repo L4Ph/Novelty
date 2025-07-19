@@ -11,7 +11,6 @@ part of 'episode.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$Episode {
 
@@ -40,8 +39,6 @@ mixin _$Episode {
 @pragma('vm:prefer-inline')
 $EpisodeCopyWith<Episode> get copyWith => _$EpisodeCopyWithImpl<Episode>(this as Episode, _$identity);
 
-  /// Serializes this Episode to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -49,7 +46,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is Episode&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.url, url) || other.url == url)&&(identical(other.update, update) || other.update == update)&&(identical(other.revised, revised) || other.revised == revised)&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.index, index) || other.index == index)&&(identical(other.body, body) || other.body == body)&&(identical(other.novelUpdatedAt, novelUpdatedAt) || other.novelUpdatedAt == novelUpdatedAt));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,subtitle,url,update,revised,ncode,index,body,novelUpdatedAt);
 
@@ -231,11 +228,11 @@ return $default(_that.subtitle,_that.url,_that.update,_that.revised,_that.ncode,
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _Episode implements Episode {
   const _Episode({this.subtitle, this.url, this.update, this.revised, this.ncode, this.index, this.body, this.novelUpdatedAt});
-  factory _Episode.fromJson(Map<String, dynamic> json) => _$EpisodeFromJson(json);
+  
 
 /// サブタイトル。
 @override final  String? subtitle;
@@ -270,17 +267,14 @@ class _Episode implements Episode {
 @pragma('vm:prefer-inline')
 _$EpisodeCopyWith<_Episode> get copyWith => __$EpisodeCopyWithImpl<_Episode>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$EpisodeToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _Episode&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.url, url) || other.url == url)&&(identical(other.update, update) || other.update == update)&&(identical(other.revised, revised) || other.revised == revised)&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.index, index) || other.index == index)&&(identical(other.body, body) || other.body == body)&&(identical(other.novelUpdatedAt, novelUpdatedAt) || other.novelUpdatedAt == novelUpdatedAt));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,subtitle,url,update,revised,ncode,index,body,novelUpdatedAt);
 
