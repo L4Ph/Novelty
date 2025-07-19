@@ -37,7 +37,7 @@ class NovelList extends ConsumerWidget {
             }
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
             try {
-              final novel = await db.getNovel(item.ncode);
+              final novel = await db.novelDao.getNovel(item.ncode);
               if (novel != null) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -50,7 +50,7 @@ class NovelList extends ConsumerWidget {
               final novelInfo = await apiService.fetchNovelInfo(
                 item.ncode,
               );
-              await db.insertNovel(novelInfo.toDbCompanion());
+              await db.novelDao.insertNovel(novelInfo.toDbCompanion());
               // Invalidate providers to refresh UI
               ref
                 ..invalidate(libraryNovelsProvider)

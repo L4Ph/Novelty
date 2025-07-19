@@ -8,18 +8,22 @@ import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/novel_detail_page.dart';
 import 'package:novelty/services/api_service.dart';
 
-@GenerateMocks([AppDatabase, ApiService, NovelRepository])
+@GenerateMocks([AppDatabase, ApiService, NovelRepository, NovelDao])
 import 'novel_detail_provider_test.mocks.dart';
 
 void main() {
   group('novelInfoProvider', () {
     late MockAppDatabase mockDatabase;
     late MockApiService mockApiService;
+    late MockNovelDao mockNovelDao;
     late ProviderContainer container;
 
     setUp(() {
       mockDatabase = MockAppDatabase();
       mockApiService = MockApiService();
+      mockNovelDao = MockNovelDao();
+      when(mockDatabase.novelDao).thenReturn(mockNovelDao);
+
       container = ProviderContainer(
         overrides: [
           appDatabaseProvider.overrideWithValue(mockDatabase),
@@ -38,13 +42,13 @@ void main() {
         ncode: testNcode,
         title: 'テスト小説',
         writer: 'テスト作者',
-        story: 'テストストーリー',
+        story: 'テストスト���リー',
         novelType: 1,
         episodes: [],
       );
 
-      when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
-      when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
+      when(mockNovelDao.getNovel(testNcode)).thenAnswer((_) async => null);
+      when(mockNovelDao.insertNovel(any)).thenAnswer((_) async => 1);
       when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1);
       when(
         mockApiService.fetchNovelInfo(testNcode),
@@ -53,9 +57,9 @@ void main() {
       final result = await container.read(novelInfoProvider(testNcode).future);
 
       expect(result, equals(testNovelInfo));
-      verify(mockDatabase.getNovel(testNcode)).called(1);
+      verify(mockNovelDao.getNovel(testNcode)).called(1);
       verify(mockApiService.fetchNovelInfo(testNcode)).called(1);
-      verify(mockDatabase.insertNovel(any)).called(1);
+      verify(mockNovelDao.insertNovel(any)).called(1);
       verify(mockDatabase.addToHistory(any)).called(1);
     });
 
@@ -70,8 +74,8 @@ void main() {
         episodes: [],
       );
 
-      when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
-      when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
+      when(mockNovelDao.getNovel(testNcode)).thenAnswer((_) async => null);
+      when(mockNovelDao.insertNovel(any)).thenAnswer((_) async => 1);
       when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1);
       when(
         mockApiService.fetchNovelInfo(testNcode),
@@ -86,7 +90,7 @@ void main() {
       const testNcode = 'N1234AB';
 
       when(
-        mockDatabase.getNovel(testNcode),
+        mockNovelDao.getNovel(testNcode),
       ).thenThrow(Exception('Database error'));
       when(
         mockApiService.fetchNovelInfo(any),

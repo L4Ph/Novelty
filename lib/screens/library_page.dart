@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/widgets/novel_search_delegate.dart';
 
 /// 小説のライブラリを表示するためのプロバイダー。
-final libraryNovelsProvider = FutureProvider<List<Novel>>((ref) {
+final libraryNovelsProvider = StreamProvider<List<Novel>>((ref) {
   final db = ref.watch(appDatabaseProvider);
-  return (db.select(db.novels)..where((tbl) => tbl.fav.equals(1))).get();
+  return db.novelDao.watchAllFavoriteNovels();
 });
 
 /// "ライブラリ"ページのウィジェット。
@@ -25,7 +26,10 @@ class LibraryPage extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: Implement search functionality
+              showSearch(
+                context: context,
+                delegate: NovelSearchDelegate(ref),
+              );
             },
           ),
           IconButton(
@@ -71,7 +75,7 @@ class LibraryPage extends ConsumerWidget {
             return const Center(child: Text('ライブラリに小説がありません'));
           }
           return RefreshIndicator(
-            onRefresh: () => ref.refresh(libraryNovelsProvider.future),
+            onRefresh: () async => ref.invalidate(libraryNovelsProvider),
             child: ListView.builder(
               itemCount: novels.length,
               itemBuilder: (context, index) {
@@ -97,8 +101,8 @@ class LibraryPage extends ConsumerWidget {
                             onPressed: () async {
                               await ref
                                   .read(appDatabaseProvider)
+                                  .novelDao
                                   .deleteNovel(novel.ncode);
-                              ref.invalidate(libraryNovelsProvider);
                               if (context.mounted) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -125,3 +129,4 @@ class LibraryPage extends ConsumerWidget {
     );
   }
 }
+

@@ -45,6 +45,7 @@ class ContentConverter
 
 // テーブル定義
 /// 小説情報を格納するテーブル
+@DataClassName('Novel')
 class Novels extends Table {
   /// 小説のncode
   TextColumn get ncode => text()();
@@ -228,6 +229,7 @@ class Bookmarks extends Table {
 
 @DriftDatabase(
   tables: [Novels, History, Episodes, DownloadedEpisodes, Bookmarks],
+  daos: [NovelDao],
 )
 /// アプリケーションのデータベース
 /// 小説情報、閲覧履歴、エピソード、ダウンロード済みエピソード、ブックマークを管理
@@ -236,16 +238,27 @@ class AppDatabase extends _$AppDatabase {
   /// データベースの接続を初期化
   AppDatabase() : super(_openConnection());
 
+  /// テスト用のコンストラクタ
+  AppDatabase.forTesting(super.connection);
+
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
-      onCreate: (Migrator m) {
-        return m.createAll();
+      onCreate: (Migrator m) async {
+        await m.createAll();
+        await m.issueCustomQuery(
+          "CREATE VIRTUAL TABLE novel_search USING fts5(title, content='novels', content_rowid='ncode')",
+        );
       },
       onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 3) {
+          await m.issueCustomQuery(
+            "CREATE VIRTUAL TABLE novel_search USING fts5(title, content='novels', content_rowid='ncode')",
+          );
+        }
         if (from == 1) {
           await m.issueCustomQuery(
             'ALTER TABLE novels RENAME COLUMN poin_count TO point_count;',
@@ -255,34 +268,7 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  /// 小説情報の取得
-  Future<Novel?> getNovel(String ncode) {
-    return (select(
-      novels,
-    )..where((t) => t.ncode.equals(ncode.toLowerCase()))).getSingleOrNull();
-  }
-
-  /// ライブラリ登録状態の監視
-  Stream<bool> watchIsFavorite(String ncode) {
-    return (select(novels)..where((t) => t.ncode.equals(ncode.toLowerCase())))
-        .watchSingleOrNull()
-        .map((novel) => novel != null && novel.fav == 1);
-  }
-
-  /// 小説情報の保存
-  Future<int> insertNovel(NovelsCompanion novel) {
-    return into(novels).insert(
-      novel.copyWith(ncode: drift.Value(novel.ncode.value.toLowerCase())),
-      mode: InsertMode.insertOrReplace,
-    );
-  }
-
-  /// 小説情報の削除
-  Future<int> deleteNovel(String ncode) {
-    return (delete(
-      novels,
-    )..where((t) => t.ncode.equals(ncode.toLowerCase()))).go();
-  }
+  
 
   /// 履歴の追加
   Future<int> addToHistory(HistoryCompanion history) {
@@ -381,6 +367,53 @@ class AppDatabase extends _$AppDatabase {
               t.position.equals(position),
         ))
         .go();
+  }
+}
+
+@DriftAccessor(tables: [Novels])
+class NovelDao extends DatabaseAccessor<AppDatabase> with _$NovelDaoMixin {
+  final AppDatabase db;
+
+  NovelDao(this.db) : super(db);
+
+  Future<Novel?> getNovel(String ncode) {
+    return (select(novels)..where((t) => t.ncode.equals(ncode.toLowerCase()))).getSingleOrNull();
+  }
+
+  Stream<List<Novel>> watchAllFavoriteNovels() {
+    return (select(novels)..where((t) => t.fav.equals(1))).watch();
+  }
+
+  Stream<bool> watchIsFavorite(String ncode) {
+    return (select(novels)..where((t) => t.ncode.equals(ncode.toLowerCase())))
+        .watchSingleOrNull()
+        .map((novel) => novel != null && novel.fav == 1);
+  }
+
+  Future<int> insertNovel(NovelsCompanion novel) {
+    return into(novels).insert(
+      novel.copyWith(ncode: drift.Value(novel.ncode.value.toLowerCase())),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  Future<int> deleteNovel(String ncode) {
+    return (delete(novels)..where((t) => t.ncode.equals(ncode.toLowerCase()))).go();
+  }
+
+  Stream<List<Novel>> searchFavoriteNovels(String query) {
+    if (query.isEmpty) {
+      return watchAllFavoriteNovels();
+    }
+
+    final escapedQuery = query.replaceAll("'", "''").replaceAll('"', '""');
+
+    return customSelect(
+      'SELECT * FROM novels WHERE fav = 1 AND ncode IN (SELECT rowid FROM novel_search WHERE novel_search MATCH \'"$escapedQuery"*\')',
+      readsFrom: {novels},
+    ).watch().map((rows) {
+      return rows.map((row) => novels.map(row.data)).toList();
+    });
   }
 }
 
