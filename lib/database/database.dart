@@ -157,6 +157,9 @@ class History extends Table {
   /// 閲覧日時
   IntColumn get viewedAt => integer()();
 
+  /// 更新日時
+  IntColumn get updatedAt => integer().withDefault(const Constant(0))();
+
   @override
   Set<Column> get primaryKey => {ncode};
 }
@@ -263,7 +266,14 @@ class Bookmarks extends Table {
 }
 
 @DriftDatabase(
-  tables: [Novels, History, Episodes, DownloadedEpisodes, LibraryNovels, Bookmarks],
+  tables: [
+    Novels,
+    History,
+    Episodes,
+    DownloadedEpisodes,
+    LibraryNovels,
+    Bookmarks,
+  ],
 )
 /// アプリケーションのデータベース
 /// 小説情報、閲覧履歴、エピソード、ダウンロード済みエピソード、ブックマークを管理
@@ -277,7 +287,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -327,6 +337,12 @@ class AppDatabase extends _$AppDatabase {
             WHERE EXISTS (SELECT 1 FROM novels WHERE novels.ncode = library_novels.ncode);
           ''');
         }
+        if (from <= 4) {
+          await m.addColumn(history, history.updatedAt);
+          await m.issueCustomQuery(
+            'UPDATE history SET updated_at = viewed_at;',
+          );
+        }
       },
     );
   }
@@ -348,23 +364,23 @@ class AppDatabase extends _$AppDatabase {
 
   /// ライブラリから小説を削除
   Future<int> removeFromLibrary(String ncode) {
-    return (delete(libraryNovels)
-          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
-        .go();
+    return (delete(
+      libraryNovels,
+    )..where((t) => t.ncode.equals(ncode.toLowerCase()))).go();
   }
 
   /// ライブラリの小説リストを取得（追加日時の降順）
   Future<List<LibraryNovel>> getLibraryNovels() {
-    return (select(libraryNovels)
-          ..orderBy([(t) => OrderingTerm.desc(t.addedAt)]))
-        .get();
+    return (select(
+      libraryNovels,
+    )..orderBy([(t) => OrderingTerm.desc(t.addedAt)])).get();
   }
 
   /// 小説がライブラリに追加されているかを確認
   Future<bool> isInLibrary(String ncode) async {
-    final result = await (select(libraryNovels)
-          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
-        .getSingleOrNull();
+    final result = await (select(
+      libraryNovels,
+    )..where((t) => t.ncode.equals(ncode.toLowerCase()))).getSingleOrNull();
     return result != null;
   }
 
@@ -400,8 +416,13 @@ class AppDatabase extends _$AppDatabase {
 
   /// 履歴の追加
   Future<int> addToHistory(HistoryCompanion history) {
+    final now = DateTime.now().millisecondsSinceEpoch;
     return into(this.history).insert(
-      history.copyWith(ncode: drift.Value(history.ncode.value.toLowerCase())),
+      history.copyWith(
+        ncode: drift.Value(history.ncode.value.toLowerCase()),
+        viewedAt: drift.Value(now),
+        updatedAt: drift.Value(now),
+      ),
       mode: InsertMode.insertOrReplace,
     );
   }

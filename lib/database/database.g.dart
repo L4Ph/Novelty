@@ -1731,6 +1731,17 @@ class $HistoryTable extends History
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const drift.VerificationMeta _updatedAtMeta =
+      const drift.VerificationMeta('updatedAt');
+  @override
+  late final drift.GeneratedColumn<int> updatedAt = drift.GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const drift.Constant(0),
+  );
   @override
   List<drift.GeneratedColumn> get $columns => [
     ncode,
@@ -1738,6 +1749,7 @@ class $HistoryTable extends History
     writer,
     lastEpisode,
     viewedAt,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1788,6 +1800,12 @@ class $HistoryTable extends History
     } else if (isInserting) {
       context.missing(_viewedAtMeta);
     }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -1817,6 +1835,10 @@ class $HistoryTable extends History
         DriftSqlType.int,
         data['${effectivePrefix}viewed_at'],
       )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -1842,12 +1864,16 @@ class HistoryData extends drift.DataClass
 
   /// 閲覧日時
   final int viewedAt;
+
+  /// 更新日時
+  final int updatedAt;
   const HistoryData({
     required this.ncode,
     this.title,
     this.writer,
     this.lastEpisode,
     required this.viewedAt,
+    required this.updatedAt,
   });
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
@@ -1863,6 +1889,7 @@ class HistoryData extends drift.DataClass
       map['last_episode'] = drift.Variable<int>(lastEpisode);
     }
     map['viewed_at'] = drift.Variable<int>(viewedAt);
+    map['updated_at'] = drift.Variable<int>(updatedAt);
     return map;
   }
 
@@ -1879,6 +1906,7 @@ class HistoryData extends drift.DataClass
           ? const drift.Value.absent()
           : drift.Value(lastEpisode),
       viewedAt: drift.Value(viewedAt),
+      updatedAt: drift.Value(updatedAt),
     );
   }
 
@@ -1893,6 +1921,7 @@ class HistoryData extends drift.DataClass
       writer: serializer.fromJson<String?>(json['writer']),
       lastEpisode: serializer.fromJson<int?>(json['lastEpisode']),
       viewedAt: serializer.fromJson<int>(json['viewedAt']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
     );
   }
   @override
@@ -1904,6 +1933,7 @@ class HistoryData extends drift.DataClass
       'writer': serializer.toJson<String?>(writer),
       'lastEpisode': serializer.toJson<int?>(lastEpisode),
       'viewedAt': serializer.toJson<int>(viewedAt),
+      'updatedAt': serializer.toJson<int>(updatedAt),
     };
   }
 
@@ -1913,12 +1943,14 @@ class HistoryData extends drift.DataClass
     drift.Value<String?> writer = const drift.Value.absent(),
     drift.Value<int?> lastEpisode = const drift.Value.absent(),
     int? viewedAt,
+    int? updatedAt,
   }) => HistoryData(
     ncode: ncode ?? this.ncode,
     title: title.present ? title.value : this.title,
     writer: writer.present ? writer.value : this.writer,
     lastEpisode: lastEpisode.present ? lastEpisode.value : this.lastEpisode,
     viewedAt: viewedAt ?? this.viewedAt,
+    updatedAt: updatedAt ?? this.updatedAt,
   );
   HistoryData copyWithCompanion(HistoryCompanion data) {
     return HistoryData(
@@ -1929,6 +1961,7 @@ class HistoryData extends drift.DataClass
           ? data.lastEpisode.value
           : this.lastEpisode,
       viewedAt: data.viewedAt.present ? data.viewedAt.value : this.viewedAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -1939,13 +1972,15 @@ class HistoryData extends drift.DataClass
           ..write('title: $title, ')
           ..write('writer: $writer, ')
           ..write('lastEpisode: $lastEpisode, ')
-          ..write('viewedAt: $viewedAt')
+          ..write('viewedAt: $viewedAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(ncode, title, writer, lastEpisode, viewedAt);
+  int get hashCode =>
+      Object.hash(ncode, title, writer, lastEpisode, viewedAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1954,7 +1989,8 @@ class HistoryData extends drift.DataClass
           other.title == this.title &&
           other.writer == this.writer &&
           other.lastEpisode == this.lastEpisode &&
-          other.viewedAt == this.viewedAt);
+          other.viewedAt == this.viewedAt &&
+          other.updatedAt == this.updatedAt);
 }
 
 class HistoryCompanion extends drift.UpdateCompanion<HistoryData> {
@@ -1963,6 +1999,7 @@ class HistoryCompanion extends drift.UpdateCompanion<HistoryData> {
   final drift.Value<String?> writer;
   final drift.Value<int?> lastEpisode;
   final drift.Value<int> viewedAt;
+  final drift.Value<int> updatedAt;
   final drift.Value<int> rowid;
   const HistoryCompanion({
     this.ncode = const drift.Value.absent(),
@@ -1970,6 +2007,7 @@ class HistoryCompanion extends drift.UpdateCompanion<HistoryData> {
     this.writer = const drift.Value.absent(),
     this.lastEpisode = const drift.Value.absent(),
     this.viewedAt = const drift.Value.absent(),
+    this.updatedAt = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
   });
   HistoryCompanion.insert({
@@ -1978,6 +2016,7 @@ class HistoryCompanion extends drift.UpdateCompanion<HistoryData> {
     this.writer = const drift.Value.absent(),
     this.lastEpisode = const drift.Value.absent(),
     required int viewedAt,
+    this.updatedAt = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
   }) : ncode = drift.Value(ncode),
        viewedAt = drift.Value(viewedAt);
@@ -1987,6 +2026,7 @@ class HistoryCompanion extends drift.UpdateCompanion<HistoryData> {
     drift.Expression<String>? writer,
     drift.Expression<int>? lastEpisode,
     drift.Expression<int>? viewedAt,
+    drift.Expression<int>? updatedAt,
     drift.Expression<int>? rowid,
   }) {
     return drift.RawValuesInsertable({
@@ -1995,6 +2035,7 @@ class HistoryCompanion extends drift.UpdateCompanion<HistoryData> {
       if (writer != null) 'writer': writer,
       if (lastEpisode != null) 'last_episode': lastEpisode,
       if (viewedAt != null) 'viewed_at': viewedAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2005,6 +2046,7 @@ class HistoryCompanion extends drift.UpdateCompanion<HistoryData> {
     drift.Value<String?>? writer,
     drift.Value<int?>? lastEpisode,
     drift.Value<int>? viewedAt,
+    drift.Value<int>? updatedAt,
     drift.Value<int>? rowid,
   }) {
     return HistoryCompanion(
@@ -2013,6 +2055,7 @@ class HistoryCompanion extends drift.UpdateCompanion<HistoryData> {
       writer: writer ?? this.writer,
       lastEpisode: lastEpisode ?? this.lastEpisode,
       viewedAt: viewedAt ?? this.viewedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2035,6 +2078,9 @@ class HistoryCompanion extends drift.UpdateCompanion<HistoryData> {
     if (viewedAt.present) {
       map['viewed_at'] = drift.Variable<int>(viewedAt.value);
     }
+    if (updatedAt.present) {
+      map['updated_at'] = drift.Variable<int>(updatedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = drift.Variable<int>(rowid.value);
     }
@@ -2049,6 +2095,7 @@ class HistoryCompanion extends drift.UpdateCompanion<HistoryData> {
           ..write('writer: $writer, ')
           ..write('lastEpisode: $lastEpisode, ')
           ..write('viewedAt: $viewedAt, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4518,6 +4565,7 @@ typedef $$HistoryTableCreateCompanionBuilder =
       drift.Value<String?> writer,
       drift.Value<int?> lastEpisode,
       required int viewedAt,
+      drift.Value<int> updatedAt,
       drift.Value<int> rowid,
     });
 typedef $$HistoryTableUpdateCompanionBuilder =
@@ -4527,6 +4575,7 @@ typedef $$HistoryTableUpdateCompanionBuilder =
       drift.Value<String?> writer,
       drift.Value<int?> lastEpisode,
       drift.Value<int> viewedAt,
+      drift.Value<int> updatedAt,
       drift.Value<int> rowid,
     });
 
@@ -4561,6 +4610,11 @@ class $$HistoryTableFilterComposer
 
   drift.ColumnFilters<int> get viewedAt => $composableBuilder(
     column: $table.viewedAt,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+
+  drift.ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
     builder: (column) => drift.ColumnFilters(column),
   );
 }
@@ -4598,6 +4652,11 @@ class $$HistoryTableOrderingComposer
     column: $table.viewedAt,
     builder: (column) => drift.ColumnOrderings(column),
   );
+
+  drift.ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
 }
 
 class $$HistoryTableAnnotationComposer
@@ -4625,6 +4684,9 @@ class $$HistoryTableAnnotationComposer
 
   drift.GeneratedColumn<int> get viewedAt =>
       $composableBuilder(column: $table.viewedAt, builder: (column) => column);
+
+  drift.GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
 
 class $$HistoryTableTableManager
@@ -4663,6 +4725,7 @@ class $$HistoryTableTableManager
                 drift.Value<String?> writer = const drift.Value.absent(),
                 drift.Value<int?> lastEpisode = const drift.Value.absent(),
                 drift.Value<int> viewedAt = const drift.Value.absent(),
+                drift.Value<int> updatedAt = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => HistoryCompanion(
                 ncode: ncode,
@@ -4670,6 +4733,7 @@ class $$HistoryTableTableManager
                 writer: writer,
                 lastEpisode: lastEpisode,
                 viewedAt: viewedAt,
+                updatedAt: updatedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4679,6 +4743,7 @@ class $$HistoryTableTableManager
                 drift.Value<String?> writer = const drift.Value.absent(),
                 drift.Value<int?> lastEpisode = const drift.Value.absent(),
                 required int viewedAt,
+                drift.Value<int> updatedAt = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => HistoryCompanion.insert(
                 ncode: ncode,
@@ -4686,6 +4751,7 @@ class $$HistoryTableTableManager
                 writer: writer,
                 lastEpisode: lastEpisode,
                 viewedAt: viewedAt,
+                updatedAt: updatedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

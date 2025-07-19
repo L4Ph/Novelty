@@ -41,6 +41,7 @@ dependencies:
   google_fonts: ^6.2.1
   html: ^0.15.6
   http: ^1.4.0
+  intl: ^0.20.2
   json_annotation: ^4.9.0
   package_info_plus: ^8.3.0
   path: ^1.9.0

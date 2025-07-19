@@ -30,6 +30,7 @@ void main() {
           writer: '作者1',
           lastEpisode: 5,
           viewedAt: fixedTime.millisecondsSinceEpoch,
+          updatedAt: fixedTime.millisecondsSinceEpoch,
         ),
         HistoryData(
           ncode: 'today2',
@@ -39,6 +40,9 @@ void main() {
           viewedAt: fixedTime
               .subtract(const Duration(hours: 2))
               .millisecondsSinceEpoch,
+          updatedAt: fixedTime
+              .subtract(const Duration(hours: 2))
+              .millisecondsSinceEpoch,
         ),
         HistoryData(
           ncode: 'yesterday1',
@@ -46,6 +50,9 @@ void main() {
           writer: '作者3',
           lastEpisode: 10,
           viewedAt: fixedTime
+              .subtract(const Duration(days: 1))
+              .millisecondsSinceEpoch,
+          updatedAt: fixedTime
               .subtract(const Duration(days: 1))
               .millisecondsSinceEpoch,
         ),
@@ -148,6 +155,9 @@ void main() {
             writer: '古い作者',
             lastEpisode: 15,
             viewedAt: fixedTime
+                .subtract(const Duration(days: 10))
+                .millisecondsSinceEpoch,
+            updatedAt: fixedTime
                 .subtract(const Duration(days: 10))
                 .millisecondsSinceEpoch,
           ),

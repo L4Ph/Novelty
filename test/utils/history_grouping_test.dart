@@ -18,6 +18,7 @@ void main() {
         writer: 'Test Author',
         lastEpisode: 1,
         viewedAt: today.millisecondsSinceEpoch,
+        updatedAt: today.millisecondsSinceEpoch,
       );
 
       final label = HistoryGrouping.getDateLabel(historyData, today);
@@ -32,6 +33,7 @@ void main() {
         writer: 'Test Author',
         lastEpisode: 1,
         viewedAt: oneDayAgo.millisecondsSinceEpoch,
+        updatedAt: oneDayAgo.millisecondsSinceEpoch,
       );
 
       final label = HistoryGrouping.getDateLabel(historyData, today);
@@ -46,6 +48,7 @@ void main() {
         writer: 'Test Author',
         lastEpisode: 1,
         viewedAt: sixDaysAgo.millisecondsSinceEpoch,
+        updatedAt: sixDaysAgo.millisecondsSinceEpoch,
       );
 
       final label = HistoryGrouping.getDateLabel(historyData, today);
@@ -60,6 +63,7 @@ void main() {
         writer: 'Test Author',
         lastEpisode: 1,
         viewedAt: sevenDaysAgo.millisecondsSinceEpoch,
+        updatedAt: sevenDaysAgo.millisecondsSinceEpoch,
       );
 
       final label = HistoryGrouping.getDateLabel(historyData, today);
@@ -74,6 +78,7 @@ void main() {
         writer: 'Test Author',
         lastEpisode: 1,
         viewedAt: eightDaysAgo.millisecondsSinceEpoch,
+        updatedAt: eightDaysAgo.millisecondsSinceEpoch,
       );
 
       final label = HistoryGrouping.getDateLabel(historyData, today);
@@ -88,6 +93,7 @@ void main() {
           writer: 'Test Author 1',
           lastEpisode: 1,
           viewedAt: today.millisecondsSinceEpoch,
+          updatedAt: today.millisecondsSinceEpoch,
         ),
         HistoryData(
           ncode: 'test2',
@@ -97,6 +103,9 @@ void main() {
           viewedAt: today
               .subtract(const Duration(days: 1))
               .millisecondsSinceEpoch,
+          updatedAt: today
+              .subtract(const Duration(days: 1))
+              .millisecondsSinceEpoch,
         ),
         HistoryData(
           ncode: 'test3',
@@ -104,6 +113,7 @@ void main() {
           writer: 'Test Author 3',
           lastEpisode: 3,
           viewedAt: today.millisecondsSinceEpoch,
+          updatedAt: today.millisecondsSinceEpoch,
         ),
       ];
 
@@ -142,6 +152,7 @@ void main() {
           writer: 'Test Author 1',
           lastEpisode: 1,
           viewedAt: todayEvening.millisecondsSinceEpoch, // 夜
+          updatedAt: todayEvening.millisecondsSinceEpoch, // 夜
         ),
         HistoryData(
           ncode: 'test2',
@@ -149,6 +160,7 @@ void main() {
           writer: 'Test Author 2',
           lastEpisode: 2,
           viewedAt: todayMorning.millisecondsSinceEpoch, // 朝
+          updatedAt: todayMorning.millisecondsSinceEpoch, // 朝
         ),
       ];
 

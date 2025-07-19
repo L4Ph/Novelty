@@ -32,6 +32,7 @@ void main() {
           writer: '今日の作者',
           lastEpisode: 25,
           viewedAt: fixedTime.millisecondsSinceEpoch,
+          updatedAt: fixedTime.millisecondsSinceEpoch,
         ),
         HistoryData(
           ncode: 'n5678cd',
@@ -39,6 +40,9 @@ void main() {
           writer: '別の作者',
           lastEpisode: 10,
           viewedAt: fixedTime
+              .subtract(const Duration(hours: 3))
+              .millisecondsSinceEpoch,
+          updatedAt: fixedTime
               .subtract(const Duration(hours: 3))
               .millisecondsSinceEpoch,
         ),
@@ -51,6 +55,9 @@ void main() {
           viewedAt: fixedTime
               .subtract(const Duration(days: 1))
               .millisecondsSinceEpoch,
+          updatedAt: fixedTime
+              .subtract(const Duration(days: 1))
+              .millisecondsSinceEpoch,
         ),
         // 3日前
         HistoryData(
@@ -59,6 +66,9 @@ void main() {
           writer: '冒険作家',
           lastEpisode: 12,
           viewedAt: fixedTime
+              .subtract(const Duration(days: 3))
+              .millisecondsSinceEpoch,
+          updatedAt: fixedTime
               .subtract(const Duration(days: 3))
               .millisecondsSinceEpoch,
         ),
@@ -71,6 +81,9 @@ void main() {
           viewedAt: fixedTime
               .subtract(const Duration(days: 7))
               .millisecondsSinceEpoch,
+          updatedAt: fixedTime
+              .subtract(const Duration(days: 7))
+              .millisecondsSinceEpoch,
         ),
         // 10日前（実際の日付表示）
         HistoryData(
@@ -81,6 +94,9 @@ void main() {
           viewedAt: fixedTime
               .subtract(const Duration(days: 10))
               .millisecondsSinceEpoch,
+          updatedAt: fixedTime
+              .subtract(const Duration(days: 10))
+              .millisecondsSinceEpoch,
         ),
         // 30日前（実際の日付表示）
         HistoryData(
@@ -89,6 +105,9 @@ void main() {
           writer: 'ファンタジー作家',
           lastEpisode: 200,
           viewedAt: fixedTime
+              .subtract(const Duration(days: 30))
+              .millisecondsSinceEpoch,
+          updatedAt: fixedTime
               .subtract(const Duration(days: 30))
               .millisecondsSinceEpoch,
         ),
