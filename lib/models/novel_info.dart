@@ -156,13 +156,10 @@ abstract class NovelInfo with _$NovelInfo {
   }) = _NovelInfo;
 
   /// JSONから[NovelInfo]を生成するファクトリコンストラクタ
-  factory NovelInfo.fromJson(Map<String, dynamic> json) {
-    // ncodeを小文字化
-    if (json['ncode'] is String) {
-      json['ncode'] = (json['ncode'] as String).toLowerCase();
-    }
-    return _$NovelInfoFromJson(json);
-  }
+  factory NovelInfo.fromJson(Map<String, dynamic> json) => _$NovelInfoFromJson({
+        ...json,
+        if (json['ncode'] is String) 'ncode': (json['ncode'] as String).toLowerCase(),
+      });
 }
 
 /// [NovelInfo]をデータベースの[NovelsCompanion]に変換する拡張メソッド。
