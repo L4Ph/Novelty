@@ -17,14 +17,24 @@ class BackupService {
 
   /// ライブラリデータをエクスポートする
   Future<Map<String, dynamic>> exportLibraryData() async {
-    final libraryNovels = await (_database.select(_database.novels)
-          ..where((t) => t.fav.equals(1)))
-        .get();
+    // LibraryNovelsテーブルからライブラリリストを取得
+    final libraryNovels = await _database.getLibraryNovels();
+    final novelsData = <Map<String, dynamic>>[];
+    
+    // 各ライブラリ小説の詳細情報を取得
+    for (final libNovel in libraryNovels) {
+      final novel = await _database.getNovel(libNovel.ncode);
+      if (novel != null) {
+        final novelData = _novelToJson(novel);
+        novelData['addedAt'] = libNovel.addedAt; // ライブラリ追加日時を追加
+        novelsData.add(novelData);
+      }
+    }
 
     return {
-      'version': '1.0',
+      'version': '2.0', // バージョンを2.0に更新（LibraryNovelsテーブル対応）
       'exportedAt': DateTime.now().toIso8601String(),
-      'data': libraryNovels.map(_novelToJson).toList(),
+      'data': novelsData,
     };
   }
 
@@ -43,11 +53,32 @@ class BackupService {
   Future<void> importLibraryData(Map<String, dynamic> jsonData) async {
     _validateVersion(jsonData);
 
+    final version = jsonData['version'] as String;
     final novels = jsonData['data'] as List<dynamic>;
 
     for (final novelData in novels) {
-      final novel = _jsonToNovelCompanion(novelData as Map<String, dynamic>);
+      final novelMap = novelData as Map<String, dynamic>;
+      
+      // 小説データをNovelsテーブルに保存（favは除外）
+      final novel = _jsonToNovelCompanion(novelMap);
       await _database.insertNovel(novel);
+      
+      // ライブラリテーブルに追加
+      int addedAt;
+      if (version == '2.0') {
+        // v2.0では addedAt フィールドを使用
+        addedAt = novelMap['addedAt'] as int? ?? DateTime.now().millisecondsSinceEpoch;
+      } else {
+        // v1.0では現在時刻を使用（下位互換性）
+        addedAt = DateTime.now().millisecondsSinceEpoch;
+      }
+      
+      await _database.addToLibrary(
+        LibraryNovelsCompanion(
+          ncode: Value(novelMap['ncode'] as String),
+          addedAt: Value(addedAt),
+        ),
+      );
     }
   }
 
@@ -171,7 +202,7 @@ class BackupService {
       'generalFirstup': novel.generalFirstup,
       'generalLastup': novel.generalLastup,
       'globalPoint': novel.globalPoint,
-      'fav': novel.fav,
+      // fav カラムは削除（LibraryNovelsテーブルで管理）
       'reviewCount': novel.reviewCount,
       'rateCount': novel.rateCount,
       'allPoint': novel.allPoint,
@@ -217,7 +248,7 @@ class BackupService {
       generalFirstup: Value(json['generalFirstup'] as int?),
       generalLastup: Value(json['generalLastup'] as int?),
       globalPoint: Value(json['globalPoint'] as int?),
-      fav: Value(json['fav'] as int? ?? 1), // インポート時は必ずライブラリに追加
+      // fav カラムは削除（LibraryNovelsテーブルで管理）
       reviewCount: Value(json['reviewCount'] as int?),
       rateCount: Value(json['rateCount'] as int?),
       allPoint: Value(json['allPoint'] as int?),
@@ -247,7 +278,7 @@ class BackupService {
   /// バージョンの検証
   void _validateVersion(Map<String, dynamic> jsonData) {
     final version = jsonData['version'] as String?;
-    if (version != '1.0') {
+    if (version != '1.0' && version != '2.0') {
       throw Exception('サポートされていないバックアップファイルのバージョンです: $version');
     }
   }

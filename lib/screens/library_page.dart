@@ -4,9 +4,21 @@ import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
 
 /// 小説のライブラリを表示するためのプロバイダー。
-final libraryNovelsProvider = FutureProvider<List<Novel>>((ref) {
+final libraryNovelsProvider = FutureProvider<List<Novel>>((ref) async {
   final db = ref.watch(appDatabaseProvider);
-  return (db.select(db.novels)..where((tbl) => tbl.fav.equals(1))).get();
+  
+  // LibraryNovelsテーブルとNovelsテーブルをJOINして詳細情報を取得
+  final libraryNovels = await db.getLibraryNovels();
+  final novels = <Novel>[];
+  
+  for (final libNovel in libraryNovels) {
+    final novel = await db.getNovel(libNovel.ncode);
+    if (novel != null) {
+      novels.add(novel);
+    }
+  }
+  
+  return novels;
 });
 
 /// "ライブラリ"ページのウィジェット。
@@ -100,7 +112,7 @@ class LibraryPage extends ConsumerWidget {
                               onPressed: () async {
                                 await ref
                                     .read(appDatabaseProvider)
-                                    .deleteNovel(novel.ncode);
+                                    .removeFromLibrary(novel.ncode);
                                 if (context.mounted) {
                                   Navigator.pop(context);
                                   ScaffoldMessenger.of(context).showSnackBar(

@@ -32,9 +32,7 @@ enrichedRankingDataProvider = FutureProvider.autoDispose
         );
 
         // Get all library novels at once for efficient lookup
-        final libraryNovels = await (db.select(
-          db.novels,
-        )..where((tbl) => tbl.fav.equals(1))).get();
+        final libraryNovels = await db.getLibraryNovels();
         final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
 
         // Enrich each novel with library status
@@ -58,9 +56,7 @@ enrichedSearchDataProvider = FutureProvider.autoDispose
         final db = ref.watch(appDatabaseProvider);
 
         // すべてのライブラリ小説を一度に取得して効率的に検索
-        final libraryNovels = await (db.select(
-          db.novels,
-        )..where((tbl) => tbl.fav.equals(1))).get();
+        final libraryNovels = await db.getLibraryNovels();
         final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
 
         // 検索結果の各小説をライブラリ状態で強化
@@ -79,15 +75,12 @@ enrichedSearchDataProvider = FutureProvider.autoDispose
 /// 小説のライブラリ状態を取得するヘルパー関数
 Future<bool> getNovelLibraryStatus(WidgetRef ref, String ncode) async {
   final db = ref.read(appDatabaseProvider);
-  final novel = await db.getNovel(ncode);
-  return novel?.fav == 1;
+  return db.isInLibrary(ncode);
 }
 
 /// すべてのライブラリ小説のNコードを取得するヘルパー関数
 Future<Set<String>> getLibraryNcodes(WidgetRef ref) async {
   final db = ref.read(appDatabaseProvider);
-  final libraryNovels = await (db.select(
-    db.novels,
-  )..where((tbl) => tbl.fav.equals(1))).get();
+  final libraryNovels = await db.getLibraryNovels();
   return libraryNovels.map((novel) => novel.ncode).toSet();
 }
