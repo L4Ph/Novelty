@@ -55,14 +55,6 @@ class NovelListTile extends StatelessWidget {
         title: Row(
           children: [
             Expanded(child: Text(title)),
-            if (enrichedData?.isInLibrary == true) ...[
-              const SizedBox(width: 8),
-              Icon(
-                Icons.favorite,
-                color: Theme.of(context).colorScheme.primary,
-                size: 16,
-              ),
-            ],
           ],
         ),
         subtitle: Text(
