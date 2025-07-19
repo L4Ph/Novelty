@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/widgets/novel_search_delegate.dart';
 
 /// 小説のライブラリを表示するためのプロバイダー。
-final libraryNovelsProvider = StreamProvider<List<Novel>>((ref) {
+final libraryNovelsProvider = FutureProvider<List<Novel>>((ref) {
   final db = ref.watch(appDatabaseProvider);
-  return db.novelDao.watchAllFavoriteNovels();
+  return (db.select(db.novels)..where((tbl) => tbl.fav.equals(1))).get();
 });
 
 /// "ライブラリ"ページのウィジェット。
@@ -23,14 +22,9 @@ class LibraryPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('ライブラリ'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: NovelSearchDelegate(ref),
-              );
-            },
+          const IconButton(
+            icon: Icon(Icons.search),
+            onPressed: null,
           ),
           IconButton(
             icon: const Icon(Icons.filter_list),
@@ -96,7 +90,7 @@ class LibraryPage extends ConsumerWidget {
                         context: context,
                         builder: (context) => AlertDialog(
                           title: const Text('削除の確認'),
-                          content: Text('${novel.title}をライブラリから削除しますか？'),
+                          content: Text('"${novel.title}"をライブラリから削除しますか？'),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
@@ -106,7 +100,6 @@ class LibraryPage extends ConsumerWidget {
                               onPressed: () async {
                                 await ref
                                     .read(appDatabaseProvider)
-                                    .novelDao
                                     .deleteNovel(novel.ncode);
                                 if (context.mounted) {
                                   Navigator.pop(context);
