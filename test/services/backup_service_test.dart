@@ -26,7 +26,7 @@ void main() {
         expect(result, isA<Map<String, dynamic>>());
         expect(result['version'], equals('1.0'));
         expect(result['exportedAt'], isA<String>());
-        expect(result['data'], isA<List>());
+        expect(result['data'], isA<List<dynamic>>());
       });
     });
 
@@ -38,7 +38,7 @@ void main() {
         expect(result, isA<Map<String, dynamic>>());
         expect(result['version'], equals('1.0'));
         expect(result['exportedAt'], isA<String>());
-        expect(result['data'], isA<List>());
+        expect(result['data'], isA<List<dynamic>>());
       });
     });
 
@@ -47,7 +47,7 @@ void main() {
         final jsonData = {
           'version': '1.0',
           'exportedAt': '2022-01-01T00:00:00.000Z',
-          'data': [
+          'data': <Map<String, dynamic>>[
             {
               'ncode': 'n1234ab',
               'title': 'テスト小説1',
@@ -68,7 +68,7 @@ void main() {
         final jsonData = {
           'version': '1.0',
           'exportedAt': '2022-01-01T00:00:00.000Z',
-          'data': [
+          'data': <Map<String, dynamic>>[
             {
               'ncode': 'n1234ab',
               'title': 'テスト小説1',
@@ -88,7 +88,7 @@ void main() {
       test('無効なバージョンの場合は例外を投げる', () async {
         final jsonData = {
           'version': '2.0',
-          'data': [],
+          'data': <dynamic>[],
         };
 
         expect(
