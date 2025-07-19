@@ -46,6 +46,7 @@ class NovelListTile extends StatelessWidget {
         : (item.novelType == 2 ? '短編' : (item.end == 0 ? '完結済' : '連載中'));
 
     return Card(
+      elevation: 0,
       margin: const EdgeInsets.symmetric(
         vertical: 4,
         horizontal: 8,

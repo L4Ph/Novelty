@@ -34,6 +34,7 @@ void main() {
           writer: 'テスト作者',
           lastEpisode: 5,
           viewedAt: DateTime.now().millisecondsSinceEpoch,
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
         ),
         HistoryData(
           ncode: 'N5678CD',
@@ -41,6 +42,7 @@ void main() {
           writer: 'テスト作者2',
           lastEpisode: 10,
           viewedAt: DateTime.now().millisecondsSinceEpoch - 86400000,
+          updatedAt: DateTime.now().millisecondsSinceEpoch - 86400000,
         ),
       ];
 
@@ -83,6 +85,7 @@ void main() {
           writer: 'テスト作者',
           lastEpisode: 5,
           viewedAt: DateTime.now().millisecondsSinceEpoch,
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
         ),
       ];
 
@@ -103,6 +106,7 @@ void main() {
           writer: 'テスト作者',
           lastEpisode: 5,
           viewedAt: DateTime.now().millisecondsSinceEpoch,
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
         ),
       ];
 
@@ -113,6 +117,7 @@ void main() {
           writer: 'テスト作者',
           lastEpisode: 6,
           viewedAt: DateTime.now().millisecondsSinceEpoch,
+          updatedAt: DateTime.now().millisecondsSinceEpoch,
         ),
         HistoryData(
           ncode: 'N5678CD',
@@ -120,6 +125,7 @@ void main() {
           writer: '新しい作者',
           lastEpisode: 1,
           viewedAt: DateTime.now().millisecondsSinceEpoch - 3600000,
+          updatedAt: DateTime.now().millisecondsSinceEpoch - 3600000,
         ),
       ];
 

@@ -13,6 +13,13 @@ DatabaseService databaseService(Ref ref) {
 /// データベースへのアクセスを提供
 class DatabaseService {
   /// コンストラクタ。
-  // ignore: avoid_unused_constructor_parameters
-  DatabaseService(AppDatabase db);
+  DatabaseService(this.db);
+
+  /// データベースのインスタンス。
+  final AppDatabase db;
+
+  /// 履歴を削除する。
+  Future<int> deleteHistory(String ncode) {
+    return db.deleteHistory(ncode);
+  }
 }

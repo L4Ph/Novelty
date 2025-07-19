@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart' hide Episode;
@@ -13,6 +14,7 @@ import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 part 'novel_detail_page.g.dart';
 
@@ -91,7 +93,7 @@ class LibraryStatus extends _$LibraryStatus {
         ..invalidate(enrichedRankingDataProvider('m'))
         ..invalidate(enrichedRankingDataProvider('q'))
         ..invalidate(enrichedRankingDataProvider('all'));
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       state = AsyncValue.error(e, st);
     }
   }
@@ -557,16 +559,15 @@ Widget _buildActionButtons(
         data: (isFavorite) => _buildActionButton(
           context,
           icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-          label: isFavorite ? '追加済' : 'ライブラリに追加',
+          label: isFavorite ? '追加済' : '追加',
           color: isFavorite ? Theme.of(context).colorScheme.primary : null,
-          onPressed: () => ref
-              .read(libraryStatusProvider(ncode).notifier)
-              .toggle(novelInfo),
+          onPressed: () =>
+              ref.read(libraryStatusProvider(ncode).notifier).toggle(novelInfo),
         ),
         loading: () => _buildActionButton(
           context,
           icon: Icons.favorite_border,
-          label: 'ライブラリに追加',
+          label: '追加',
         ),
         error: (e, s) =>
             _buildActionButton(context, icon: Icons.error, label: 'Error'),
@@ -589,6 +590,16 @@ Widget _buildActionButtons(
         ),
         error: (e, s) =>
             _buildActionButton(context, icon: Icons.error, label: 'Error'),
+      ),
+      _buildActionButton(
+        context,
+        icon: Icons.web,
+        label: 'WebView',
+        onPressed: () {
+          launchUrl(
+            Uri.parse('https://ncode.syosetu.com/$ncode/'),
+          );
+        },
       ),
     ],
   );

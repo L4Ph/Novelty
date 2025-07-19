@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:novelty/providers/history_provider.dart';
+import 'package:intl/intl.dart';
+import 'package:novelty/providers/enriched_novel_provider.dart';
+import 'package:novelty/providers/grouped_history_provider.dart';
+import 'package:novelty/services/database_service.dart';
 
 /// "履歴"ページのウィジェット。
 class HistoryPage extends ConsumerWidget {
@@ -10,59 +13,114 @@ class HistoryPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final historyAsync = ref.watch(historyProvider);
+    final groupedHistoryAsync = ref.watch(groupedHistoryProvider);
 
-    return historyAsync.when(
-      data: (historyItems) {
-        if (historyItems.isEmpty) {
-          return const Center(child: Text('No history found.'));
-        }
-        return RefreshIndicator(
-          onRefresh: () => ref.refresh(historyProvider.future),
-          child: ListView.builder(
-            itemCount: historyItems.length,
-            itemBuilder: (context, index) {
-              final item = historyItems[index];
-              final ncode = item.ncode;
-              final title = item.title ?? 'No Title';
-              final writer = item.writer ?? 'No Writer';
-              final lastEpisode = item.lastEpisode;
-
-              return Card(
-                margin: const EdgeInsets.symmetric(
-                  vertical: 4,
-                  horizontal: 8,
-                ),
-                child: ListTile(
-                  title: Text(title),
-                  subtitle: Row(
-                    children: [
-                      Expanded(child: Text(writer)),
-                      if (lastEpisode != null)
-                        Text(
-                          '最終: $lastEpisode話',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).colorScheme.secondary,
-                          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('履歴'),
+      ),
+      body: groupedHistoryAsync.when(
+        data: (historyGroups) {
+          if (historyGroups.isEmpty) {
+            return const Center(child: Text('履歴がありません。'));
+          }
+          return RefreshIndicator(
+            onRefresh: () => ref.refresh(groupedHistoryProvider.future),
+            child: ListView.builder(
+              itemCount: historyGroups.length,
+              itemBuilder: (context, groupIndex) {
+                final group = historyGroups[groupIndex];
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 日付ラベル
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        group.dateLabel,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
-                    ],
-                  ),
-                  onTap: () {
-                    if (lastEpisode != null && lastEpisode > 0) {
-                      context.push('/novel/$ncode/$lastEpisode');
-                    } else {
-                      context.push('/novel/$ncode');
-                    }
-                  },
-                ),
-              );
-            },
-          ),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('Error: $err')),
+                      ),
+                    ),
+                    // グループ内のアイテム
+                    ...group.items.map((item) {
+                      final ncode = item.ncode;
+                      final title = item.title ?? 'タイトルなし';
+                      final lastEpisode = item.lastEpisode;
+                      final updatedAt = item.updatedAt != 0
+                          ? DateTime.fromMillisecondsSinceEpoch(item.updatedAt)
+                          : null;
+
+                      return Consumer(
+                        builder: (context, ref, child) {
+                          final enrichedNovelAsync = ref.watch(
+                            enrichedNovelProvider(ncode),
+                          );
+                          return enrichedNovelAsync.when(
+                            data: (enrichedNovel) {
+                              return ListTile(
+                                title: Text(
+                                  title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Text(
+                                  '第$lastEpisode章 - ${updatedAt != null ? DateFormat('HH:mm').format(updatedAt) : ''}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  onPressed: () async {
+                                    await ref
+                                        .read(databaseServiceProvider)
+                                        .deleteHistory(ncode);
+                                    ref.invalidate(groupedHistoryProvider);
+                                  },
+                                ),
+                                onTap: () {
+                                  if (lastEpisode != null && lastEpisode > 0) {
+                                    context.push('/novel/$ncode/$lastEpisode');
+                                  } else {
+                                    context.push('/novel/$ncode');
+                                  }
+                                },
+                              );
+                            },
+                            loading: () => const ListTile(
+                              leading: SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                              title: Text('読み込み中...'),
+                            ),
+                            error: (err, stack) => ListTile(
+                              leading: const SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: Icon(Icons.error),
+                              ),
+                              title: Text('エラー: $err'),
+                            ),
+                          );
+                        },
+                      );
+                    }),
+                  ],
+                );
+              },
+            ),
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+      ),
     );
   }
 }
