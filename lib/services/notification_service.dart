@@ -107,6 +107,16 @@ class NotificationService {
     );
   }
   
+  /// ダウンロード進捗のパーセンテージを計算するメソッド。
+  int calculateProgressPercent(int progress, int maxProgress) {
+    if (maxProgress <= 0) {
+      return 0;
+    }
+    
+    final percent = ((progress / maxProgress) * 100).round();
+    return percent > 100 ? 100 : percent;
+  }
+  
   /// ダウンロード完了通知を表示するメソッド。
   Future<void> showDownloadCompleteNotification({
     required int notificationId,

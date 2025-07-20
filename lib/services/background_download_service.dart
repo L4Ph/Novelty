@@ -68,7 +68,7 @@ class BackgroundDownloadService {
     service.invoke('stop');
   }
 
-  /// ダウンロード進捗を監視するためのStreamを取得するメソッド。
+  /// ダウンロード進捗の監視を停止するメソッド。
   Stream<Map<String, dynamic>> getDownloadProgressStream() {
     final port = ReceivePort();
     
@@ -76,6 +76,25 @@ class BackgroundDownloadService {
     IsolateNameServer.registerPortWithName(port.sendPort, _portName);
     
     return port.cast<Map<String, dynamic>>();
+  }
+
+  /// ダウンロード進捗のパーセンテージを計算するメソッド。
+  int calculateDownloadProgress(int currentEpisode, int totalEpisodes) {
+    if (totalEpisodes <= 0) {
+      return 0;
+    }
+    
+    return ((currentEpisode / totalEpisodes) * 100).round();
+  }
+
+  /// 小説ディレクトリのパスを生成するメソッド。
+  String generateNovelDirectoryPath(String basePath, String ncode) {
+    return p.join(basePath, ncode);
+  }
+
+  /// エピソードファイル名を生成するメソッド。
+  String generateEpisodeFileName(String ncode, int episodeNumber) {
+    return '${ncode}_$episodeNumber.txt';
   }
 }
 
