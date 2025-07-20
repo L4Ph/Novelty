@@ -6,8 +6,8 @@ import 'dart:ui';
 
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as parser;
+import 'package:http/http.dart' as http;
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/notification_service.dart';
@@ -87,7 +87,7 @@ Future<bool> onIosBackground(ServiceInstance service) async {
 
 /// バックグラウンドサービスの開始時に呼び出される関数。
 @pragma('vm:entry-point')
-void onStart(ServiceInstance service) async {
+Future<void> onStart(ServiceInstance service) async {
   final notificationService = NotificationService();
   await notificationService.initialize();
   
@@ -154,7 +154,7 @@ Future<void> _performDownload(
       final episodes = novelInfo.episodes ?? [];
       final totalEpisodes = episodes.length;
       
-      for (int i = 0; i < episodes.length; i++) {
+      for (var i = 0; i < episodes.length; i++) {
         final episode = episodes[i];
         if (episode.index != null) {
           await _downloadEpisode(
@@ -188,7 +188,7 @@ Future<void> _performDownload(
       'novelTitle': novelTitle,
     });
     
-  } catch (e) {
+  } on Exception catch (e) {
     // エラー通知
     await notificationService.showDownloadErrorNotification(
       notificationId: notificationId,
@@ -265,7 +265,7 @@ Future<void> _downloadEpisode(
     // ファイルに保存
     await _writeFile(contentFile, encodedContent);
     
-  } catch (e) {
+  } on Exception catch (e) {
     throw Exception('Failed to download episode $episodeIndex: $e');
   }
 }
@@ -280,7 +280,7 @@ Future<String?> _fetchEpisode(String ncode, int episode) async {
       return response.body;
     }
     return null;
-  } catch (e) {
+  } on Exception {
     return null;
   }
 }
