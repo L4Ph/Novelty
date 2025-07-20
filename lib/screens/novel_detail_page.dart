@@ -11,6 +11,7 @@ import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/services/background_download_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -111,6 +112,7 @@ class DownloadStatus extends _$DownloadStatus {
   /// 小説のダウンロード状態を切り替えるメソッド
   Future<void> toggle(BuildContext context, NovelInfo novelInfo) async {
     final repo = ref.read(novelRepositoryProvider);
+    final backgroundService = ref.read(backgroundDownloadServiceProvider);
     final isDownloaded = state.value ?? false;
     final previousState = state;
     state = const AsyncValue.loading();
@@ -149,7 +151,18 @@ class DownloadStatus extends _$DownloadStatus {
         return;
       }
 
-      await repo.downloadNovel(novelInfo);
+      // バックグラウンドダウンロードを開始
+      await backgroundService.startDownload(novelInfo);
+      
+      // ダウンロード開始のメッセージを表示
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${novelInfo.title} のダウンロードをバックグラウンドで開始しました'),
+          ),
+        );
+      }
+      
     } on Exception catch (e, st) {
       state = AsyncValue.error(e, st);
       if (context.mounted) {

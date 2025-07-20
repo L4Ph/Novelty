@@ -3,10 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:novelty/router/router.dart';
+import 'package:novelty/services/background_download_service.dart';
+import 'package:novelty/services/notification_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // バックグラウンドダウンロードサービスと通知サービスの初期化
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+  await BackgroundDownloadService.initialize();
 
   runApp(
     const ProviderScope(
