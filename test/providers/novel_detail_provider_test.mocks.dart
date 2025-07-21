@@ -1151,6 +1151,12 @@ class MockNovelRepository extends _i1.Mock implements _i12.NovelRepository {
           as _i13.AsyncValue<_i14.AppSettings>);
 
   @override
+  void dispose() => super.noSuchMethod(
+    Invocation.method(#dispose, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
   _i5.Stream<_i15.DownloadProgress> watchDownloadProgress(String? ncode) =>
       (super.noSuchMethod(
             Invocation.method(#watchDownloadProgress, [ncode]),

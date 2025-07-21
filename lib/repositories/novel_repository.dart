@@ -15,11 +15,17 @@ import 'package:path/path.dart' as p;
 final novelRepositoryProvider = Provider<NovelRepository>((ref) {
   final apiService = ref.watch(apiServiceProvider);
   final settings = ref.watch(settingsProvider);
-  return NovelRepository(
+  final repository = NovelRepository(
     ref: ref,
     apiService: apiService,
     settings: settings,
   );
+  
+  ref.onDispose(() {
+    repository.dispose();
+  });
+  
+  return repository;
 });
 
 /// 小説のダウンロードと管理を行うリポジトリクラス。
@@ -42,6 +48,16 @@ class NovelRepository {
 
   /// ダウンロード進捗のストリームコントローラー
   final Map<String, StreamController<DownloadProgress>> _progressControllers = {};
+
+  /// リソースをクリーンアップする
+  void dispose() {
+    for (final controller in _progressControllers.values) {
+      if (!controller.isClosed) {
+        controller.close();
+      }
+    }
+    _progressControllers.clear();
+  }
 
   /// ダウンロード進捗を監視するストリーム
   Stream<DownloadProgress> watchDownloadProgress(String ncode) {
