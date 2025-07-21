@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart' hide Episode;
+import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
@@ -17,6 +17,13 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 part 'novel_detail_page.g.dart';
+
+@riverpod
+/// 小説のダウンロード進捗を監視するプロバイダー。
+Stream<DownloadProgress?> downloadProgress(Ref ref, String ncode) {
+  final repo = ref.watch(novelRepositoryProvider);
+  return repo.watchDownloadProgress(ncode);
+}
 
 @riverpod
 /// 小説の情報を取得するプロバイダー。
@@ -551,6 +558,7 @@ Widget _buildActionButtons(
 ) {
   final isFavoriteAsync = ref.watch(libraryStatusProvider(ncode));
   final downloadStatusAsync = ref.watch(downloadStatusProvider(novelInfo));
+  final downloadProgressAsync = ref.watch(downloadProgressProvider(ncode));
 
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -573,15 +581,24 @@ Widget _buildActionButtons(
             _buildActionButton(context, icon: Icons.error, label: 'Error'),
       ),
       downloadStatusAsync.when(
-        data: (isDownloaded) => _buildActionButton(
-          context,
-          icon: isDownloaded
-              ? Icons.download_done
-              : Icons.download_for_offline_outlined,
-          label: isDownloaded ? 'ダウンロード済' : 'ダウンロード',
-          onPressed: () => ref
-              .read(downloadStatusProvider(novelInfo).notifier)
-              .toggle(context, novelInfo),
+        data: (isDownloaded) => downloadProgressAsync.when(
+          data: (progress) => _buildDownloadButton(
+            context,
+            ref,
+            novelInfo,
+            isDownloaded,
+            progress,
+          ),
+          loading: () => _buildActionButton(
+            context,
+            icon: Icons.download_for_offline_outlined,
+            label: 'ダウンロード',
+          ),
+          error: (e, s) => _buildActionButton(
+            context,
+            icon: Icons.error,
+            label: 'Error',
+          ),
         ),
         loading: () => _buildActionButton(
           context,
@@ -602,6 +619,60 @@ Widget _buildActionButtons(
         },
       ),
     ],
+  );
+}
+
+Widget _buildDownloadButton(
+  BuildContext context,
+  WidgetRef ref,
+  NovelInfo novelInfo,
+  bool isDownloaded,
+  DownloadProgress? progress,
+) {
+  // ダウンロード中の場合
+  if (progress != null && progress.isDownloading) {
+    return Column(
+      children: [
+        SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(
+            value: progress.progress,
+            strokeWidth: 3,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'ダウンロード中',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+
+  // エラーがある場合
+  if (progress != null && progress.hasError) {
+    return _buildActionButton(
+      context,
+      icon: Icons.error,
+      label: 'エラー',
+      color: Theme.of(context).colorScheme.error,
+      onPressed: () => ref
+          .read(downloadStatusProvider(novelInfo).notifier)
+          .toggle(context, novelInfo),
+    );
+  }
+
+  // 通常の状態
+  return _buildActionButton(
+    context,
+    icon: isDownloaded
+        ? Icons.download_done
+        : Icons.download_for_offline_outlined,
+    label: isDownloaded ? 'ダウンロード済' : 'ダウンロード',
+    onPressed: () => ref
+        .read(downloadStatusProvider(novelInfo).notifier)
+        .toggle(context, novelInfo),
   );
 }
 

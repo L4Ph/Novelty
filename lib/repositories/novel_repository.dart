@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/api_service.dart';
@@ -37,6 +39,37 @@ class NovelRepository {
 
   /// アプリケーションの設定。
   final AsyncValue<AppSettings> settings;
+
+  /// ダウンロード進捗のストリームコントローラー
+  final Map<String, StreamController<DownloadProgress>> _progressControllers = {};
+
+  /// ダウンロード進捗を監視するストリーム
+  Stream<DownloadProgress> watchDownloadProgress(String ncode) {
+    final normalizedNcode = ncode.toLowerCase();
+    if (!_progressControllers.containsKey(normalizedNcode)) {
+      _progressControllers[normalizedNcode] = StreamController<DownloadProgress>.broadcast();
+    }
+    return _progressControllers[normalizedNcode]!.stream;
+  }
+
+  /// ダウンロード進捗を更新する
+  void _updateProgress(String ncode, DownloadProgress progress) {
+    final normalizedNcode = ncode.toLowerCase();
+    final controller = _progressControllers[normalizedNcode];
+    if (controller != null && !controller.isClosed) {
+      controller.add(progress);
+    }
+  }
+
+  /// ダウンロード進捗をクリア
+  void _clearProgress(String ncode) {
+    final normalizedNcode = ncode.toLowerCase();
+    final controller = _progressControllers[normalizedNcode];
+    if (controller != null && !controller.isClosed) {
+      controller.close();
+      _progressControllers.remove(normalizedNcode);
+    }
+  }
 
   String _getNovelDirectory(String downloadPath, String ncode) =>
       p.join(downloadPath, ncode.toLowerCase());
@@ -111,27 +144,77 @@ class NovelRepository {
   Future<void> downloadNovel(NovelInfo novelInfo) async {
     final ncode = novelInfo.ncode!.toLowerCase();
     final downloadPath = await _getDownloadPath();
-
-    final novelDir = Directory(_getNovelDirectory(downloadPath, ncode));
-    if (!await novelDir.exists()) {
-      await novelDir.create(recursive: true);
-    }
-
-    final infoFile = _getNovelInfoFile(downloadPath, ncode);
-    await infoFile.writeAsString(jsonEncode(novelInfo.toJson()));
-
-    if (novelInfo.novelType == 2) {
-      await downloadEpisode(ncode, 1);
-      return;
-    }
-
-    if (novelInfo.episodes == null) {
-      return;
-    }
-    for (final episode in novelInfo.episodes!) {
-      if (episode.index != null) {
-        await downloadEpisode(ncode, episode.index!);
+    
+    try {
+      final novelDir = Directory(_getNovelDirectory(downloadPath, ncode));
+      if (!await novelDir.exists()) {
+        await novelDir.create(recursive: true);
       }
+
+      final infoFile = _getNovelInfoFile(downloadPath, ncode);
+      await infoFile.writeAsString(jsonEncode(novelInfo.toJson()));
+
+      // 短編小説の場合
+      if (novelInfo.novelType == 2 && novelInfo.end == 0 && novelInfo.generalAllNo == 1) {
+        _updateProgress(ncode, const DownloadProgress(
+          currentEpisode: 0,
+          totalEpisodes: 1,
+          isDownloading: true,
+        ));
+        
+        await downloadEpisode(ncode, 1);
+        
+        _updateProgress(ncode, const DownloadProgress(
+          currentEpisode: 1,
+          totalEpisodes: 1,
+          isDownloading: false,
+        ));
+        
+        _clearProgress(ncode);
+        return;
+      }
+
+      if (novelInfo.episodes == null || novelInfo.episodes!.isEmpty) {
+        _updateProgress(ncode, const DownloadProgress(
+          currentEpisode: 0,
+          totalEpisodes: 0,
+          isDownloading: false,
+          errorMessage: 'エピソード情報が取得できませんでした',
+        ));
+        _clearProgress(ncode);
+        return;
+      }
+
+      final totalEpisodes = novelInfo.episodes!.length;
+      _updateProgress(ncode, DownloadProgress(
+        currentEpisode: 0,
+        totalEpisodes: totalEpisodes,
+        isDownloading: true,
+      ));
+
+      var currentEpisode = 0;
+      for (final episode in novelInfo.episodes!) {
+        if (episode.index != null) {
+          await downloadEpisode(ncode, episode.index!);
+          currentEpisode++;
+          _updateProgress(ncode, DownloadProgress(
+            currentEpisode: currentEpisode,
+            totalEpisodes: totalEpisodes,
+            isDownloading: currentEpisode < totalEpisodes,
+          ));
+        }
+      }
+      
+      _clearProgress(ncode);
+    } catch (e) {
+      _updateProgress(ncode, DownloadProgress(
+        currentEpisode: 0,
+        totalEpisodes: novelInfo.episodes?.length ?? 0,
+        isDownloading: false,
+        errorMessage: e.toString(),
+      ));
+      _clearProgress(ncode);
+      rethrow;
     }
   }
 
