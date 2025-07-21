@@ -20,11 +20,9 @@ final novelRepositoryProvider = Provider<NovelRepository>((ref) {
     apiService: apiService,
     settings: settings,
   );
-  
-  ref.onDispose(() {
-    repository.dispose();
-  });
-  
+
+  ref.onDispose(repository.dispose);
+
   return repository;
 });
 
@@ -47,7 +45,8 @@ class NovelRepository {
   final AsyncValue<AppSettings> settings;
 
   /// ダウンロード進捗のストリームコントローラー
-  final Map<String, StreamController<DownloadProgress>> _progressControllers = {};
+  final Map<String, StreamController<DownloadProgress>> _progressControllers =
+      {};
 
   /// リソースをクリーンアップする
   void dispose() {
@@ -63,7 +62,8 @@ class NovelRepository {
   Stream<DownloadProgress> watchDownloadProgress(String ncode) {
     final normalizedNcode = ncode.toLowerCase();
     if (!_progressControllers.containsKey(normalizedNcode)) {
-      _progressControllers[normalizedNcode] = StreamController<DownloadProgress>.broadcast();
+      _progressControllers[normalizedNcode] =
+          StreamController<DownloadProgress>.broadcast();
     }
     return _progressControllers[normalizedNcode]!.stream;
   }
@@ -91,7 +91,10 @@ class NovelRepository {
       p.join(downloadPath, ncode.toLowerCase());
 
   String _getEpisodeDirectory(String downloadPath, String ncode, int episode) =>
-      p.join(_getNovelDirectory(downloadPath, ncode.toLowerCase()), episode.toString());
+      p.join(
+        _getNovelDirectory(downloadPath, ncode.toLowerCase()),
+        episode.toString(),
+      );
 
   File _getEpisodeContentFile(String downloadPath, String ncode, int episode) =>
       File(
@@ -101,8 +104,9 @@ class NovelRepository {
         ),
       );
 
-  File _getNovelInfoFile(String downloadPath, String ncode) =>
-      File(p.join(_getNovelDirectory(downloadPath, ncode.toLowerCase()), 'info.json'));
+  File _getNovelInfoFile(String downloadPath, String ncode) => File(
+    p.join(_getNovelDirectory(downloadPath, ncode.toLowerCase()), 'info.json'),
+  );
 
   /// 小説のエピソードを取得するメソッド。
   Future<List<NovelContentElement>> getEpisode(
@@ -110,7 +114,11 @@ class NovelRepository {
     int episode,
   ) async {
     final downloadPath = await _getDownloadPath();
-    final contentFile = _getEpisodeContentFile(downloadPath, ncode.toLowerCase(), episode);
+    final contentFile = _getEpisodeContentFile(
+      downloadPath,
+      ncode.toLowerCase(),
+      episode,
+    );
 
     if (await contentFile.exists()) {
       final content = await contentFile.readAsString();
@@ -120,7 +128,10 @@ class NovelRepository {
           .toList();
     }
 
-    final episodeData = await apiService.fetchEpisode(ncode.toLowerCase(), episode);
+    final episodeData = await apiService.fetchEpisode(
+      ncode.toLowerCase(),
+      episode,
+    );
     if (episodeData.body == null) {
       return [];
     }
@@ -139,12 +150,19 @@ class NovelRepository {
       await episodeDir.create(recursive: true);
     }
 
-    final contentFile = _getEpisodeContentFile(downloadPath, ncode.toLowerCase(), episode);
+    final contentFile = _getEpisodeContentFile(
+      downloadPath,
+      ncode.toLowerCase(),
+      episode,
+    );
     if (await contentFile.exists()) {
       return; // Already downloaded
     }
 
-    final episodeData = await apiService.fetchEpisode(ncode.toLowerCase(), episode);
+    final episodeData = await apiService.fetchEpisode(
+      ncode.toLowerCase(),
+      episode,
+    );
     if (episodeData.body == null) {
       throw Exception('Failed to fetch episode content');
     }
@@ -160,7 +178,7 @@ class NovelRepository {
   Future<void> downloadNovel(NovelInfo novelInfo) async {
     final ncode = novelInfo.ncode!.toLowerCase();
     final downloadPath = await _getDownloadPath();
-    
+
     try {
       final novelDir = Directory(_getNovelDirectory(downloadPath, ncode));
       if (!await novelDir.exists()) {
@@ -171,64 +189,84 @@ class NovelRepository {
       await infoFile.writeAsString(jsonEncode(novelInfo.toJson()));
 
       // 短編小説の場合
-      if (novelInfo.novelType == 2 && novelInfo.end == 0 && novelInfo.generalAllNo == 1) {
-        _updateProgress(ncode, const DownloadProgress(
-          currentEpisode: 0,
-          totalEpisodes: 1,
-          isDownloading: true,
-        ));
-        
+      if (novelInfo.novelType == 2 &&
+          novelInfo.end == 0 &&
+          novelInfo.generalAllNo == 1) {
+        _updateProgress(
+          ncode,
+          const DownloadProgress(
+            currentEpisode: 0,
+            totalEpisodes: 1,
+            isDownloading: true,
+          ),
+        );
+
         await downloadEpisode(ncode, 1);
-        
-        _updateProgress(ncode, const DownloadProgress(
-          currentEpisode: 1,
-          totalEpisodes: 1,
-          isDownloading: false,
-        ));
-        
+
+        _updateProgress(
+          ncode,
+          const DownloadProgress(
+            currentEpisode: 1,
+            totalEpisodes: 1,
+            isDownloading: false,
+          ),
+        );
+
         _clearProgress(ncode);
         return;
       }
 
       if (novelInfo.episodes == null || novelInfo.episodes!.isEmpty) {
-        _updateProgress(ncode, const DownloadProgress(
-          currentEpisode: 0,
-          totalEpisodes: 0,
-          isDownloading: false,
-          errorMessage: 'エピソード情報が取得できませんでした',
-        ));
+        _updateProgress(
+          ncode,
+          const DownloadProgress(
+            currentEpisode: 0,
+            totalEpisodes: 0,
+            isDownloading: false,
+            errorMessage: 'エピソード情報が取得できませんでした',
+          ),
+        );
         _clearProgress(ncode);
         return;
       }
 
       final totalEpisodes = novelInfo.episodes!.length;
-      _updateProgress(ncode, DownloadProgress(
-        currentEpisode: 0,
-        totalEpisodes: totalEpisodes,
-        isDownloading: true,
-      ));
+      _updateProgress(
+        ncode,
+        DownloadProgress(
+          currentEpisode: 0,
+          totalEpisodes: totalEpisodes,
+          isDownloading: true,
+        ),
+      );
 
       var currentEpisode = 0;
       for (final episode in novelInfo.episodes!) {
         if (episode.index != null) {
           await downloadEpisode(ncode, episode.index!);
           currentEpisode++;
-          _updateProgress(ncode, DownloadProgress(
-            currentEpisode: currentEpisode,
-            totalEpisodes: totalEpisodes,
-            isDownloading: currentEpisode < totalEpisodes,
-          ));
+          _updateProgress(
+            ncode,
+            DownloadProgress(
+              currentEpisode: currentEpisode,
+              totalEpisodes: totalEpisodes,
+              isDownloading: currentEpisode < totalEpisodes,
+            ),
+          );
         }
       }
-      
+
       _clearProgress(ncode);
     } catch (e) {
-      _updateProgress(ncode, DownloadProgress(
-        currentEpisode: 0,
-        totalEpisodes: novelInfo.episodes?.length ?? 0,
-        isDownloading: false,
-        errorMessage: e.toString(),
-      ));
+      _updateProgress(
+        ncode,
+        DownloadProgress(
+          currentEpisode: 0,
+          totalEpisodes: novelInfo.episodes?.length ?? 0,
+          isDownloading: false,
+          errorMessage: e.toString(),
+        ),
+      );
       _clearProgress(ncode);
       rethrow;
     }
@@ -258,7 +296,11 @@ class NovelRepository {
   /// ダウンロードパスを取得するメソッド。
   Stream<bool> isEpisodeDownloaded(String ncode, int episode) async* {
     final downloadPath = await _getDownloadPath();
-    final contentFile = _getEpisodeContentFile(downloadPath, ncode.toLowerCase(), episode);
+    final contentFile = _getEpisodeContentFile(
+      downloadPath,
+      ncode.toLowerCase(),
+      episode,
+    );
     yield await contentFile.exists();
   }
 

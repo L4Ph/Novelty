@@ -17,7 +17,7 @@ void main() {
 
     setUp(() {
       mockDatabase = MockAppDatabase();
-      fixedTime = DateTime(2024, 1, 15, 12, 0, 0);
+      fixedTime = DateTime(2024, 1, 15, 12, 0);
     });
 
     testWidgets('should display grouped history items with date headers', (
