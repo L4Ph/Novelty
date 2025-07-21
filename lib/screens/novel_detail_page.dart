@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart' hide Episode;
@@ -121,29 +122,51 @@ class DownloadStatus extends _$DownloadStatus {
         return;
       }
 
-      // ファイルアクセス権限のチェック
-      final hasFilePermission = await checkFilePermission();
-      if (!hasFilePermission) {
-        state = previousState;
-        if (context.mounted) {
-          await _showPermissionDialog(
-            context,
-            'ファイルアクセス権限が必要です',
-            '小説をダウンロードするには、ファイルへのアクセス権限を許可してください。',
-          );
+      var hasPermission = false;
+      if (Platform.isAndroid) {
+        final status = await Permission.manageExternalStorage.status;
+        if (status.isGranted) {
+          hasPermission = true;
+        } else {
+          final result = await Permission.manageExternalStorage.request();
+          if (result.isGranted) {
+            hasPermission = true;
+          }
         }
-        return;
+      } else {
+        final status = await Permission.storage.status;
+        if (status.isGranted) {
+          hasPermission = true;
+        } else {
+          final result = await Permission.storage.request();
+          if (result.isGranted) {
+            hasPermission = true;
+          }
+        }
       }
 
-      // 通知権限のチェック
-      final hasNotificationPermission = await checkNotificationPermission();
-      if (!hasNotificationPermission) {
+      if (!hasPermission) {
         state = previousState;
         if (context.mounted) {
-          await _showPermissionDialog(
-            context,
-            '通知権限が必要です',
-            'ダウンロード状況をお知らせするため、通知へのアクセス権限を許可してください。',
+          await showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('権限が必要です'),
+              content: const Text('小説をダウンロードするには、ファイルへのアクセス権限を許可してください。'),
+              actions: [
+                TextButton(
+                  child: const Text('キャンセル'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                TextButton(
+                  child: const Text('設定を開く'),
+                  onPressed: () {
+                    openAppSettings();
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
           );
         }
         return;
@@ -160,65 +183,6 @@ class DownloadStatus extends _$DownloadStatus {
       await Future<void>.delayed(const Duration(seconds: 2));
       state = previousState;
     }
-  }
-
-  /// ファイルアクセス権限をチェックするメソッド
-  @visibleForTesting
-  Future<bool> checkFilePermission() async {
-    if (Platform.isAndroid) {
-      final status = await Permission.manageExternalStorage.status;
-      if (status.isGranted) {
-        return true;
-      }
-      final result = await Permission.manageExternalStorage.request();
-      return result.isGranted;
-    } else {
-      final status = await Permission.storage.status;
-      if (status.isGranted) {
-        return true;
-      }
-      final result = await Permission.storage.request();
-      return result.isGranted;
-    }
-  }
-
-  /// 通知権限をチェックするメソッド
-  @visibleForTesting
-  Future<bool> checkNotificationPermission() async {
-    final status = await Permission.notification.status;
-    if (status.isGranted) {
-      return true;
-    }
-    final result = await Permission.notification.request();
-    return result.isGranted;
-  }
-
-  /// 権限許可ダイアログを表示するメソッド
-  Future<void> _showPermissionDialog(
-    BuildContext context,
-    String title,
-    String content,
-  ) async {
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          TextButton(
-            child: const Text('キャンセル'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          TextButton(
-            child: const Text('設定を開く'),
-            onPressed: () {
-              openAppSettings();
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
-    );
   }
 }
 
