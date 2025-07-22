@@ -5,7 +5,6 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/screens/data_storage_page.dart';
 import 'package:novelty/services/backup_service.dart';
-import 'package:novelty/utils/settings_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data_storage_page_test.mocks.dart';
@@ -133,7 +132,7 @@ void main() {
       SharedPreferences.setMockInitialValues({
         'novel_download_path': '/test/path',
       });
-      
+
       // モックの設定
       when(mockBackupService.validateDownloadPath(any)).thenAnswer(
         (_) async => const DownloadPathValidationResult(
@@ -155,7 +154,7 @@ void main() {
 
       // ダウンロードデータ復元ボタンをタップ
       final restoreButton = find.text('ダウンロードデータを復元');
-      
+
       await tester.tap(restoreButton);
       await tester.pumpAndSettle();
 
