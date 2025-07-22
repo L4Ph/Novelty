@@ -162,6 +162,7 @@ class DownloadStatus extends _$DownloadStatus {
 
         if (confirmed == true) {
           await repo.deleteDownloadedNovel(novelInfo);
+          ref.invalidateSelf();
         } else {
           // キャンセルされた場合は、状態を元に戻す
           state = const AsyncData(true);
