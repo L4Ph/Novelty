@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/novel_content_element.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/novel_parser.dart';
 import 'package:novelty/utils/settings_provider.dart';
@@ -249,5 +250,73 @@ class NovelRepository {
   Stream<bool> isNovelDownloaded(String ncode) async* {
     final novel = await _db.getDownloadedNovel(ncode);
     yield novel != null && novel.downloadStatus == 2;
+  }
+
+  /// ライブラリ内の小説を更新するメソッド。
+  /// 変更があった小説のリストを返す。
+  Future<List<String>> updateLibraryNovels() async {
+    // ライブラリの小説一覧を取得
+    final libraryNovels = await _db.getLibraryNovels();
+    
+    if (libraryNovels.isEmpty) {
+      return [];
+    }
+
+    // ncodeのリストを取得
+    final ncodes = libraryNovels.map((novel) => novel.ncode).toList();
+
+    // APIから最新の小説情報を取得
+    final updatedNovelsFromAPI = await apiService.fetchMultipleNovelsInfo(ncodes);
+
+    final updatedNcodes = <String>[];
+
+    // 各小説を比較して変更があるかチェック
+    for (final libraryNovel in libraryNovels) {
+      final ncode = libraryNovel.ncode;
+      final apiNovel = updatedNovelsFromAPI[ncode];
+
+      if (apiNovel == null) {
+        continue; // APIに存在しない場合はスキップ
+      }
+
+      // 変更チェック：タイトル、更新日時を比較
+      final hasChanges = _hasNovelChanges(libraryNovel, apiNovel);
+
+      if (hasChanges) {
+        updatedNcodes.add(ncode);
+      }
+    }
+
+    return updatedNcodes;
+  }
+
+  /// 小説に変更があるかどうかを判定するヘルパーメソッド
+  bool _hasNovelChanges(LibraryNovel libraryNovel, NovelInfo apiNovel) {
+    // タイトルの変更をチェック
+    if (libraryNovel.title != apiNovel.title) {
+      return true;
+    }
+
+    // 更新日時の変更をチェック
+    try {
+      final libraryUpdatedAt = libraryNovel.novelUpdatedAt;
+      if (libraryUpdatedAt == null) {
+        return false; // ライブラリの更新日時がnullの場合は変更なしとする
+      }
+
+      final libraryDate = DateTime.parse(libraryUpdatedAt);
+      final apiDateString = apiNovel.generalLastup;
+      
+      if (apiDateString != null) {
+        final apiDate = DateTime.parse(apiDateString);
+        if (libraryDate.isBefore(apiDate)) {
+          return true;
+        }
+      }
+    } catch (e) {
+      // 日時のパースに失敗した場合は変更なしとする
+    }
+
+    return false;
   }
 }
