@@ -113,6 +113,19 @@ class DownloadStatus extends _$DownloadStatus {
   @override
   Stream<bool> build(NovelInfo novelInfo) {
     final repo = ref.watch(novelRepositoryProvider);
+
+    // downloadProgressProviderを監視
+    ref.listen<AsyncValue<DownloadProgress?>>(
+      downloadProgressProvider(novelInfo.ncode!),
+      (previous, next) {
+        final progress = next.value;
+        if (progress != null && !progress.isDownloading) {
+          // ダウンロードが完了または失敗したら、自身の状態を再評価
+          ref.invalidateSelf();
+        }
+      },
+    );
+
     return repo.isNovelDownloaded(novelInfo);
   }
 
@@ -126,60 +139,59 @@ class DownloadStatus extends _$DownloadStatus {
     try {
       if (isDownloaded) {
         await repo.deleteDownloadedNovel(novelInfo);
-        return;
-      }
-
-      var hasPermission = false;
-      if (Platform.isAndroid) {
-        final status = await Permission.manageExternalStorage.status;
-        if (status.isGranted) {
-          hasPermission = true;
-        } else {
-          final result = await Permission.manageExternalStorage.request();
-          if (result.isGranted) {
-            hasPermission = true;
-          }
-        }
       } else {
-        final status = await Permission.storage.status;
-        if (status.isGranted) {
-          hasPermission = true;
-        } else {
-          final result = await Permission.storage.request();
-          if (result.isGranted) {
+        var hasPermission = false;
+        if (Platform.isAndroid) {
+          final status = await Permission.manageExternalStorage.status;
+          if (status.isGranted) {
             hasPermission = true;
+          } else {
+            final result = await Permission.manageExternalStorage.request();
+            if (result.isGranted) {
+              hasPermission = true;
+            }
+          }
+        } else {
+          final status = await Permission.storage.status;
+          if (status.isGranted) {
+            hasPermission = true;
+          } else {
+            final result = await Permission.storage.request();
+            if (result.isGranted) {
+              hasPermission = true;
+            }
           }
         }
-      }
 
-      if (!hasPermission) {
-        state = previousState;
-        if (context.mounted) {
-          await showDialog<void>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('権限が必要です'),
-              content: const Text('小説をダウンロードするには、ファイルへのアクセス権限を許可してください。'),
-              actions: [
-                TextButton(
-                  child: const Text('キャンセル'),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                TextButton(
-                  child: const Text('設定を開く'),
-                  onPressed: () {
-                    openAppSettings();
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
-          );
+        if (!hasPermission) {
+          state = previousState;
+          if (context.mounted) {
+            await showDialog<void>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('権限が必要です'),
+                content: const Text('小説をダウンロードするには、ファイルへのアクセス権限を許可してください。'),
+                actions: [
+                  TextButton(
+                    child: const Text('キャンセル'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  TextButton(
+                    child: const Text('設定を開く'),
+                    onPressed: () {
+                      openAppSettings();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
+            );
+          }
+          return;
         }
-        return;
+        await repo.downloadNovel(novelInfo);
       }
-
-      await repo.downloadNovel(novelInfo);
+      ref.invalidate(downloadStatusProvider(novelInfo));
     } on Exception catch (e, st) {
       state = AsyncValue.error(e, st);
       if (context.mounted) {
@@ -600,8 +612,9 @@ Widget _buildActionButtons(
       ),
       downloadStatusAsync.when(
         data: (isDownloaded) {
-          final downloadProgressAsync =
-              ref.watch(downloadProgressProvider(ncode));
+          final downloadProgressAsync = ref.watch(
+            downloadProgressProvider(ncode),
+          );
           return downloadProgressAsync.when(
             data: (progress) => _buildDownloadButton(
               context,
@@ -624,31 +637,13 @@ Widget _buildActionButtons(
             ),
           );
         },
-        loading: () {
-          final downloadProgressAsync =
-              ref.watch(downloadProgressProvider(ncode));
-          return downloadProgressAsync.when(
-            data: (progress) => _buildDownloadButton(
-              context,
-              ref,
-              novelInfo,
-              false,
-              progress,
-            ),
-            loading: () => _buildDownloadButton(
-              context,
-              ref,
-              novelInfo,
-              false,
-              null,
-            ),
-            error: (e, s) => _buildActionButton(
-              context,
-              icon: Icons.error,
-              label: 'Error',
-            ),
-          );
-        },
+        loading: () => _buildActionButton(
+          context,
+          icon: Icons.downloading,
+          label: 'ダウンロード中...',
+          // ignore: avoid_redundant_argument_values
+          onPressed: null,
+        ),
         error: (e, s) =>
             _buildActionButton(context, icon: Icons.error, label: 'Error'),
       ),

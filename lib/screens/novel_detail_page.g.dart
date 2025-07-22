@@ -145,7 +145,7 @@ final class NovelInfoProvider
   }
 }
 
-String _$novelInfoHash() => r'64cf469eb7e46427b32ccfb68391bf202ae7e2a9';
+String _$novelInfoHash() => r'3e82a0eaab679d6ed9c5ecca692b1ea1ea3c2a47';
 
 /// 小説の情報を取得するプロバイダー。
 final class NovelInfoFamily extends $Family
@@ -389,7 +389,7 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'802dc20c13f978fe13a721af0783d28fc878012e';
+String _$downloadStatusHash() => r'32e3f901204938c99dbc256d27d95b153b9fe5e0';
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
