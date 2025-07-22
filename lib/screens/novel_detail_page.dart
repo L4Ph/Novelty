@@ -700,7 +700,7 @@ Widget _buildActionButtons(
       ),
       _buildActionButton(
         context,
-        icon: Icons.web,
+        icon: Icons.public,
         label: 'WebView',
         onPressed: () {
           launchUrl(
