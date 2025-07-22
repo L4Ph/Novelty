@@ -10,8 +10,9 @@ import 'package:drift/src/runtime/executor/stream_queries.dart' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i9;
 import 'package:novelty/database/database.dart' as _i3;
+import 'package:novelty/models/download_progress.dart' as _i15;
 import 'package:novelty/models/episode.dart' as _i7;
-import 'package:novelty/models/novel_content_element.dart' as _i15;
+import 'package:novelty/models/novel_content_element.dart' as _i16;
 import 'package:novelty/models/novel_info.dart' as _i6;
 import 'package:novelty/models/novel_search_query.dart' as _i11;
 import 'package:novelty/models/ranking_response.dart' as _i10;
@@ -1150,17 +1151,31 @@ class MockNovelRepository extends _i1.Mock implements _i12.NovelRepository {
           as _i13.AsyncValue<_i14.AppSettings>);
 
   @override
-  _i5.Future<List<_i15.NovelContentElement>> getEpisode(
+  void dispose() => super.noSuchMethod(
+    Invocation.method(#dispose, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i5.Stream<_i15.DownloadProgress> watchDownloadProgress(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#watchDownloadProgress, [ncode]),
+            returnValue: _i5.Stream<_i15.DownloadProgress>.empty(),
+          )
+          as _i5.Stream<_i15.DownloadProgress>);
+
+  @override
+  _i5.Future<List<_i16.NovelContentElement>> getEpisode(
     String? ncode,
     int? episode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getEpisode, [ncode, episode]),
-            returnValue: _i5.Future<List<_i15.NovelContentElement>>.value(
-              <_i15.NovelContentElement>[],
+            returnValue: _i5.Future<List<_i16.NovelContentElement>>.value(
+              <_i16.NovelContentElement>[],
             ),
           )
-          as _i5.Future<List<_i15.NovelContentElement>>);
+          as _i5.Future<List<_i16.NovelContentElement>>);
 
   @override
   _i5.Future<void> downloadEpisode(String? ncode, int? episode) =>

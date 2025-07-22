@@ -16,7 +16,7 @@ void main() {
 
     setUp(() {
       mockDatabase = MockAppDatabase();
-      fixedTime = DateTime(2024, 1, 15, 12, 0, 0);
+      fixedTime = DateTime(2024, 1, 15, 12, 0);
       container = ProviderContainer(
         overrides: [
           appDatabaseProvider.overrideWithValue(mockDatabase),

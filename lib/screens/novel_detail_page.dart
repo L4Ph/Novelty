@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart' hide Episode;
+import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
@@ -19,12 +19,19 @@ import 'package:url_launcher/url_launcher.dart';
 part 'novel_detail_page.g.dart';
 
 @riverpod
+/// 小説のダウンロード進捗を監視するプロバイダー。
+Stream<DownloadProgress?> downloadProgress(Ref ref, String ncode) {
+  final repo = ref.watch(novelRepositoryProvider);
+  return repo.watchDownloadProgress(ncode);
+}
+
+@riverpod
 /// 小説の情報を取得するプロバイダー。
 Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   final apiService = ref.read(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
 
-  final novelInfo = await apiService.fetchBasicNovelInfo(ncode);
+  final novelInfo = await apiService.fetchNovelInfo(ncode);
 
   // Upsert novel data, preserving fav status
   final existing = await db.getNovel(ncode);
@@ -101,15 +108,32 @@ class LibraryStatus extends _$LibraryStatus {
 
 @riverpod
 /// 小説のダウンロード状態を管理するプロバイダー。
+///
 /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
 class DownloadStatus extends _$DownloadStatus {
   @override
   Stream<bool> build(NovelInfo novelInfo) {
     final repo = ref.watch(novelRepositoryProvider);
+
+    // downloadProgressProviderを監視
+    ref.listen<AsyncValue<DownloadProgress?>>(
+      downloadProgressProvider(novelInfo.ncode!),
+      (previous, next) {
+        final progress = next.value;
+        if (progress != null && !progress.isDownloading) {
+          // ダウンロードが完了または失敗したら、自身の状態を再評価
+          ref.invalidateSelf();
+        }
+      },
+    );
+
     return repo.isNovelDownloaded(novelInfo);
   }
 
-  /// 小説のダウンロード状態を切り替えるメソッド
+  /// 小説のダウンロード状態を切り替えるメソッド。
+  ///
+  /// ダウンロード済みの場合は削除確認ダイアログを表示し、
+  /// 未ダウンロードの場合はダウンロードを開始する。
   Future<void> toggle(BuildContext context, NovelInfo novelInfo) async {
     final repo = ref.read(novelRepositoryProvider);
     final isDownloaded = state.value ?? false;
@@ -118,61 +142,84 @@ class DownloadStatus extends _$DownloadStatus {
 
     try {
       if (isDownloaded) {
-        await repo.deleteDownloadedNovel(novelInfo);
-        return;
-      }
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('削除の確認'),
+            content: Text('「${novelInfo.title}」を端末から削除しますか？'),
+            actions: [
+              TextButton(
+                child: const Text('キャンセル'),
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              TextButton(
+                child: const Text('削除'),
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          ),
+        );
 
-      var hasPermission = false;
-      if (Platform.isAndroid) {
-        final status = await Permission.manageExternalStorage.status;
-        if (status.isGranted) {
-          hasPermission = true;
+        if (confirmed == true) {
+          await repo.deleteDownloadedNovel(novelInfo);
+          ref.invalidateSelf();
         } else {
-          final result = await Permission.manageExternalStorage.request();
-          if (result.isGranted) {
-            hasPermission = true;
-          }
+          // キャンセルされた場合は、状態を元に戻す
+          state = const AsyncData(true);
+          return;
         }
       } else {
-        final status = await Permission.storage.status;
-        if (status.isGranted) {
-          hasPermission = true;
-        } else {
-          final result = await Permission.storage.request();
-          if (result.isGranted) {
+        var hasPermission = false;
+        if (Platform.isAndroid) {
+          final status = await Permission.manageExternalStorage.status;
+          if (status.isGranted) {
             hasPermission = true;
+          } else {
+            final result = await Permission.manageExternalStorage.request();
+            if (result.isGranted) {
+              hasPermission = true;
+            }
+          }
+        } else {
+          final status = await Permission.storage.status;
+          if (status.isGranted) {
+            hasPermission = true;
+          } else {
+            final result = await Permission.storage.request();
+            if (result.isGranted) {
+              hasPermission = true;
+            }
           }
         }
-      }
 
-      if (!hasPermission) {
-        state = previousState;
-        if (context.mounted) {
-          await showDialog<void>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('権限が必要です'),
-              content: const Text('小説をダウンロードするには、ファイルへのアクセス権限を許可してください。'),
-              actions: [
-                TextButton(
-                  child: const Text('キャンセル'),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                TextButton(
-                  child: const Text('設定を開く'),
-                  onPressed: () {
-                    openAppSettings();
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
-          );
+        if (!hasPermission) {
+          state = previousState;
+          if (context.mounted) {
+            await showDialog<void>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('権限が必要です'),
+                content: const Text('小説をダウンロードするには、ファイルへのアクセス権限を許可してください。'),
+                actions: [
+                  TextButton(
+                    child: const Text('キャンセル'),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  TextButton(
+                    child: const Text('設定を開く'),
+                    onPressed: () {
+                      openAppSettings();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
+            );
+          }
+          return;
         }
-        return;
+        await repo.downloadNovel(novelInfo);
       }
-
-      await repo.downloadNovel(novelInfo);
     } on Exception catch (e, st) {
       state = AsyncValue.error(e, st);
       if (context.mounted) {
@@ -217,6 +264,21 @@ class NovelDetailPage extends ConsumerWidget {
     NovelInfo novelInfo,
   ) {
     final isShortStory = novelInfo.generalAllNo == 1;
+    final downloadProgressAsync = ref.watch(downloadProgressProvider(ncode));
+
+    final progressBar = downloadProgressAsync.when(
+      data: (progress) {
+        if (progress != null && progress.isDownloading) {
+          return LinearProgressIndicator(
+            value: progress.progress,
+            minHeight: 2,
+          );
+        }
+        return const SizedBox.shrink();
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (e, s) => const SizedBox.shrink(),
+    );
 
     return Scaffold(
       body: CustomScrollView(
@@ -227,6 +289,10 @@ class NovelDetailPage extends ConsumerWidget {
               novelInfo.title ?? '',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+            ),
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(2),
+              child: progressBar,
             ),
           ),
           SliverPadding(
@@ -573,20 +639,38 @@ Widget _buildActionButtons(
             _buildActionButton(context, icon: Icons.error, label: 'Error'),
       ),
       downloadStatusAsync.when(
-        data: (isDownloaded) => _buildActionButton(
-          context,
-          icon: isDownloaded
-              ? Icons.download_done
-              : Icons.download_for_offline_outlined,
-          label: isDownloaded ? 'ダウンロード済' : 'ダウンロード',
-          onPressed: () => ref
-              .read(downloadStatusProvider(novelInfo).notifier)
-              .toggle(context, novelInfo),
-        ),
+        data: (isDownloaded) {
+          final downloadProgressAsync = ref.watch(
+            downloadProgressProvider(ncode),
+          );
+          return downloadProgressAsync.when(
+            data: (progress) => _buildDownloadButton(
+              context,
+              ref,
+              novelInfo,
+              isDownloaded,
+              progress,
+            ),
+            loading: () => _buildDownloadButton(
+              context,
+              ref,
+              novelInfo,
+              isDownloaded,
+              null,
+            ),
+            error: (e, s) => _buildActionButton(
+              context,
+              icon: Icons.error,
+              label: 'Error',
+            ),
+          );
+        },
         loading: () => _buildActionButton(
           context,
-          icon: Icons.download_for_offline_outlined,
-          label: 'ダウンロード',
+          icon: Icons.downloading,
+          label: 'ダウンロード中...',
+          // ignore: avoid_redundant_argument_values
+          onPressed: null,
         ),
         error: (e, s) =>
             _buildActionButton(context, icon: Icons.error, label: 'Error'),
@@ -602,6 +686,49 @@ Widget _buildActionButtons(
         },
       ),
     ],
+  );
+}
+
+Widget _buildDownloadButton(
+  BuildContext context,
+  WidgetRef ref,
+  NovelInfo novelInfo,
+  bool isDownloaded,
+  DownloadProgress? progress,
+) {
+  // ダウンロード中の場合
+  if (progress != null && progress.isDownloading) {
+    return _buildActionButton(
+      context,
+      icon: Icons.downloading,
+      label: 'ダウンロード中',
+      onPressed: null,
+    );
+  }
+
+  // エラーがある場合
+  if (progress != null && progress.hasError) {
+    return _buildActionButton(
+      context,
+      icon: Icons.error,
+      label: 'エラー',
+      color: Theme.of(context).colorScheme.error,
+      onPressed: () => ref
+          .read(downloadStatusProvider(novelInfo).notifier)
+          .toggle(context, novelInfo),
+    );
+  }
+
+  // 通常の状態
+  return _buildActionButton(
+    context,
+    icon: isDownloaded
+        ? Icons.download_done
+        : Icons.download_for_offline_outlined,
+    label: isDownloaded ? 'ダウンロード済' : 'ダウンロード',
+    onPressed: () => ref
+        .read(downloadStatusProvider(novelInfo).notifier)
+        .toggle(context, novelInfo),
   );
 }
 
