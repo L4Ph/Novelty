@@ -31,7 +31,7 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   final apiService = ref.read(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
 
-  final novelInfo = await apiService.fetchBasicNovelInfo(ncode);
+  final novelInfo = await apiService.fetchNovelInfo(ncode);
 
   // Upsert novel data, preserving fav status
   final existing = await db.getNovel(ncode);
@@ -224,6 +224,21 @@ class NovelDetailPage extends ConsumerWidget {
     NovelInfo novelInfo,
   ) {
     final isShortStory = novelInfo.generalAllNo == 1;
+    final downloadProgressAsync = ref.watch(downloadProgressProvider(ncode));
+
+    final progressBar = downloadProgressAsync.when(
+      data: (progress) {
+        if (progress != null && progress.isDownloading) {
+          return LinearProgressIndicator(
+            value: progress.progress,
+            minHeight: 2,
+          );
+        }
+        return const SizedBox.shrink();
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (e, s) => const SizedBox.shrink(),
+    );
 
     return Scaffold(
       body: CustomScrollView(
@@ -234,6 +249,10 @@ class NovelDetailPage extends ConsumerWidget {
               novelInfo.title ?? '',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+            ),
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(2),
+              child: progressBar,
             ),
           ),
           SliverPadding(
@@ -558,7 +577,6 @@ Widget _buildActionButtons(
 ) {
   final isFavoriteAsync = ref.watch(libraryStatusProvider(ncode));
   final downloadStatusAsync = ref.watch(downloadStatusProvider(novelInfo));
-  final downloadProgressAsync = ref.watch(downloadProgressProvider(ncode));
 
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -581,30 +599,56 @@ Widget _buildActionButtons(
             _buildActionButton(context, icon: Icons.error, label: 'Error'),
       ),
       downloadStatusAsync.when(
-        data: (isDownloaded) => downloadProgressAsync.when(
-          data: (progress) => _buildDownloadButton(
-            context,
-            ref,
-            novelInfo,
-            isDownloaded,
-            progress,
-          ),
-          loading: () => _buildActionButton(
-            context,
-            icon: Icons.download_for_offline_outlined,
-            label: 'ダウンロード',
-          ),
-          error: (e, s) => _buildActionButton(
-            context,
-            icon: Icons.error,
-            label: 'Error',
-          ),
-        ),
-        loading: () => _buildActionButton(
-          context,
-          icon: Icons.download_for_offline_outlined,
-          label: 'ダウンロード',
-        ),
+        data: (isDownloaded) {
+          final downloadProgressAsync =
+              ref.watch(downloadProgressProvider(ncode));
+          return downloadProgressAsync.when(
+            data: (progress) => _buildDownloadButton(
+              context,
+              ref,
+              novelInfo,
+              isDownloaded,
+              progress,
+            ),
+            loading: () => _buildDownloadButton(
+              context,
+              ref,
+              novelInfo,
+              isDownloaded,
+              null,
+            ),
+            error: (e, s) => _buildActionButton(
+              context,
+              icon: Icons.error,
+              label: 'Error',
+            ),
+          );
+        },
+        loading: () {
+          final downloadProgressAsync =
+              ref.watch(downloadProgressProvider(ncode));
+          return downloadProgressAsync.when(
+            data: (progress) => _buildDownloadButton(
+              context,
+              ref,
+              novelInfo,
+              false,
+              progress,
+            ),
+            loading: () => _buildDownloadButton(
+              context,
+              ref,
+              novelInfo,
+              false,
+              null,
+            ),
+            error: (e, s) => _buildActionButton(
+              context,
+              icon: Icons.error,
+              label: 'Error',
+            ),
+          );
+        },
         error: (e, s) =>
             _buildActionButton(context, icon: Icons.error, label: 'Error'),
       ),
@@ -631,22 +675,11 @@ Widget _buildDownloadButton(
 ) {
   // ダウンロード中の場合
   if (progress != null && progress.isDownloading) {
-    return Column(
-      children: [
-        SizedBox(
-          width: 28,
-          height: 28,
-          child: CircularProgressIndicator(
-            value: progress.progress,
-            strokeWidth: 3,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'ダウンロード中',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-      ],
+    return _buildActionButton(
+      context,
+      icon: Icons.downloading,
+      label: 'ダウンロード中',
+      onPressed: null,
     );
   }
 
