@@ -222,6 +222,25 @@ class DownloadStatus extends _$DownloadStatus {
           novelInfo.ncode!,
           novelInfo.generalAllNo!,
         );
+
+        // ライブラリに追加されていない場合、Snackbarを表示
+        final isInLibrary =
+            await ref.read(libraryStatusProvider(novelInfo.ncode!).future);
+        if (!isInLibrary && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('ダウンロードが完了しました。'),
+              action: SnackBarAction(
+                label: 'ライブラリに追加',
+                onPressed: () {
+                  ref
+                      .read(libraryStatusProvider(novelInfo.ncode!).notifier)
+                      .toggle(novelInfo);
+                },
+              ),
+            ),
+          );
+        }
       }
     } on Exception catch (e, st) {
       state = AsyncValue.error(e, st);

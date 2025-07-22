@@ -294,11 +294,15 @@ class BackupService {
   }
 
   /// ダウンロードフォルダからデータを復元する
-  /// 
+  ///
   /// [downloadPath] ダウンロードフォルダのパス
-  /// 
+  /// [addToLibrary] ライブラリに追加するかどうか
+  ///
   /// 戻り値：復元された小説の数
-  Future<int> restoreFromDownloadDirectory(String downloadPath) async {
+  Future<int> restoreFromDownloadDirectory(
+    String downloadPath, {
+    required bool addToLibrary,
+  }) async {
     final downloadDir = Directory(downloadPath);
     if (!await downloadDir.exists()) {
       return 0;
@@ -320,20 +324,23 @@ class BackupService {
               final novelCompanion = _novelInfoToNovelCompanion(novelInfo);
               await _database.insertNovel(novelCompanion);
 
-              // ライブラリに追加
-              await _database.addToLibrary(
-                LibraryNovelsCompanion(
-                  ncode: Value(novelInfo.ncode!.toLowerCase()),
-                  title: Value(novelInfo.title),
-                  writer: Value(novelInfo.writer),
-                  story: Value(novelInfo.story),
-                  novelType: Value(novelInfo.novelType),
-                  end: Value(novelInfo.end),
-                  generalAllNo: Value(novelInfo.generalAllNo),
-                  novelUpdatedAt: Value(novelInfo.novelupdatedAt?.toString()),
-                  addedAt: Value(DateTime.now().millisecondsSinceEpoch),
-                ),
-              );
+              // ライブラリに追加するかどうかのフラグをチェック
+              if (addToLibrary) {
+                await _database.addToLibrary(
+                  LibraryNovelsCompanion(
+                    ncode: Value(novelInfo.ncode!.toLowerCase()),
+                    title: Value(novelInfo.title),
+                    writer: Value(novelInfo.writer),
+                    story: Value(novelInfo.story),
+                    novelType: Value(novelInfo.novelType),
+                    end: Value(novelInfo.end),
+                    generalAllNo: Value(novelInfo.generalAllNo),
+                    novelUpdatedAt:
+                        Value(novelInfo.novelupdatedAt?.toString()),
+                    addedAt: Value(DateTime.now().millisecondsSinceEpoch),
+                  ),
+                );
+              }
 
               restoredCount++;
             }

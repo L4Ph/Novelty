@@ -271,8 +271,9 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
       final downloadPath = settings.novelDownloadPath;
 
       // ダウンロードパスの検証
-      final validationResult = await _backupService.validateDownloadPath(downloadPath);
-      
+      final validationResult =
+          await _backupService.validateDownloadPath(downloadPath);
+
       if (!validationResult.isValid) {
         if (mounted) {
           _showErrorDialog(
@@ -284,22 +285,29 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
       }
 
       // 確認ダイアログを表示
-      final shouldRestore = await _showDownloadRestoreConfirmDialog(
+      final addToLibrary = await _showDownloadRestoreConfirmDialog(
         downloadPath,
         validationResult,
       );
-      
-      if (!shouldRestore) {
+
+      // ユーザーがダイアログをキャンセルした場合は何もしない
+      if (addToLibrary == null) {
         return;
       }
 
       // 復元処理の実行
-      final restoredCount = await _backupService.restoreFromDownloadDirectory(downloadPath);
-      
+      final restoredCount = await _backupService.restoreFromDownloadDirectory(
+        downloadPath,
+        addToLibrary: addToLibrary,
+      );
+
       if (mounted) {
+        final message = addToLibrary
+            ? '$restoredCount件の小説をライブラリに復元しました'
+            : '$restoredCount件の小説データを復元しました';
         _showSuccessDialog(
           'ダウンロードデータの復元が完了しました',
-          '$restoredCount件の小説をライブラリに復元しました',
+          message,
         );
       }
     } on Exception catch (e) {
@@ -316,58 +324,64 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
   }
 
   /// ダウンロードデータ復元の確認ダイアログを表示
-  Future<bool> _showDownloadRestoreConfirmDialog(
+  Future<bool?> _showDownloadRestoreConfirmDialog(
     String downloadPath,
     DownloadPathValidationResult validationResult,
   ) async {
-    final result = await showDialog<bool>(
+    final result = await showDialog<bool?>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('ダウンロードデータの復元'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('以下のダウンロードフォルダから${validationResult.foundNovelsCount}件の小説データが見つかりました。'),
-            const SizedBox(height: 16),
-            Text(
-              'ダウンロードパス:',
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
-            Text(
-              downloadPath,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontFamily: 'monospace',
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                  '以下のダウンロードフォルダから${validationResult.foundNovelsCount}件の小説データが見つかりました。'),
+              const SizedBox(height: 16),
+              Text(
+                'ダウンロードパス:',
+                style: Theme.of(context).textTheme.labelMedium,
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '見つかった小説:',
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
-            ...validationResult.sampleNcodes.map(
-              (ncode) => Text('• $ncode'),
-            ),
-            if (validationResult.foundNovelsCount > validationResult.sampleNcodes.length)
-              Text('...他${validationResult.foundNovelsCount - validationResult.sampleNcodes.length}件'),
-            const SizedBox(height: 16),
-            const Text('これらの小説をライブラリに復元しますか？'),
-          ],
+              Text(
+                downloadPath,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(fontFamily: 'monospace'),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '見つかった小説:',
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              ...validationResult.sampleNcodes.map(
+                (ncode) => Text('• $ncode'),
+              ),
+              if (validationResult.foundNovelsCount >
+                  validationResult.sampleNcodes.length)
+                Text(
+                    '...他${validationResult.foundNovelsCount - validationResult.sampleNcodes.length}件'),
+              const SizedBox(height: 16),
+              const Text('これらの小説をライブラリに追加しますか？'),
+            ],
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
+            child: const Text('追加しない'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('復元する'),
+            child: const Text('追加する'),
           ),
         ],
       ),
     );
-    
-    return result ?? false;
+
+    return result;
   }
 
   /// ダウンロードデータ復元セクションを構築
