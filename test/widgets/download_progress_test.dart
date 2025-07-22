@@ -71,7 +71,7 @@ void main() {
 
       // CircularProgressIndicatorが表示されていることを確認
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      
+
       // プログレスの値が正しいことを確認
       final progressIndicator = tester.widget<CircularProgressIndicator>(
         find.byType(CircularProgressIndicator),

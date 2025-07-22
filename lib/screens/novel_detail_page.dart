@@ -127,7 +127,7 @@ class DownloadStatus extends _$DownloadStatus {
       },
     );
 
-    return repo.isNovelDownloaded(novelInfo);
+    return repo.isNovelDownloaded(novelInfo.ncode!);
   }
 
   /// 小説のダウンロード状態を切り替えるメソッド。
@@ -161,7 +161,7 @@ class DownloadStatus extends _$DownloadStatus {
         );
 
         if (confirmed == true) {
-          await repo.deleteDownloadedNovel(novelInfo);
+          await repo.deleteDownloadedNovel(novelInfo.ncode!);
           ref.invalidateSelf();
         } else {
           // キャンセルされた場合は、状態を元に戻す
@@ -218,7 +218,30 @@ class DownloadStatus extends _$DownloadStatus {
           }
           return;
         }
-        await repo.downloadNovel(novelInfo);
+        await repo.downloadNovel(
+          novelInfo.ncode!,
+          novelInfo.generalAllNo!,
+        );
+
+        // ライブラリに追加されていない場合、Snackbarを表示
+        final isInLibrary = await ref.read(
+          libraryStatusProvider(novelInfo.ncode!).future,
+        );
+        if (!isInLibrary && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('ライブラリに追加しますか?'),
+              action: SnackBarAction(
+                label: '追加',
+                onPressed: () {
+                  ref
+                      .read(libraryStatusProvider(novelInfo.ncode!).notifier)
+                      .toggle(novelInfo);
+                },
+              ),
+            ),
+          );
+        }
       }
     } on Exception catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -677,7 +700,7 @@ Widget _buildActionButtons(
       ),
       _buildActionButton(
         context,
-        icon: Icons.web,
+        icon: Icons.public,
         label: 'WebView',
         onPressed: () {
           launchUrl(

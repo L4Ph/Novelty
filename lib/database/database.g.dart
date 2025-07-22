@@ -2481,6 +2481,413 @@ class EpisodesCompanion extends drift.UpdateCompanion<Episode> {
   }
 }
 
+class $DownloadedNovelsTable extends DownloadedNovels
+    with drift.TableInfo<$DownloadedNovelsTable, DownloadedNovel> {
+  @override
+  final drift.GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DownloadedNovelsTable(this.attachedDatabase, [this._alias]);
+  static const drift.VerificationMeta _ncodeMeta = const drift.VerificationMeta(
+    'ncode',
+  );
+  @override
+  late final drift.GeneratedColumn<String> ncode =
+      drift.GeneratedColumn<String>(
+        'ncode',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const drift.VerificationMeta _downloadStatusMeta =
+      const drift.VerificationMeta('downloadStatus');
+  @override
+  late final drift.GeneratedColumn<int> downloadStatus =
+      drift.GeneratedColumn<int>(
+        'download_status',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      );
+  static const drift.VerificationMeta _downloadedAtMeta =
+      const drift.VerificationMeta('downloadedAt');
+  @override
+  late final drift.GeneratedColumn<int> downloadedAt =
+      drift.GeneratedColumn<int>(
+        'downloaded_at',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      );
+  static const drift.VerificationMeta _totalEpisodesMeta =
+      const drift.VerificationMeta('totalEpisodes');
+  @override
+  late final drift.GeneratedColumn<int> totalEpisodes =
+      drift.GeneratedColumn<int>(
+        'total_episodes',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      );
+  static const drift.VerificationMeta _downloadedEpisodesMeta =
+      const drift.VerificationMeta('downloadedEpisodes');
+  @override
+  late final drift.GeneratedColumn<int> downloadedEpisodes =
+      drift.GeneratedColumn<int>(
+        'downloaded_episodes',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      );
+  @override
+  List<drift.GeneratedColumn> get $columns => [
+    ncode,
+    downloadStatus,
+    downloadedAt,
+    totalEpisodes,
+    downloadedEpisodes,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'downloaded_novels';
+  @override
+  drift.VerificationContext validateIntegrity(
+    drift.Insertable<DownloadedNovel> instance, {
+    bool isInserting = false,
+  }) {
+    final context = drift.VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('ncode')) {
+      context.handle(
+        _ncodeMeta,
+        ncode.isAcceptableOrUnknown(data['ncode']!, _ncodeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ncodeMeta);
+    }
+    if (data.containsKey('download_status')) {
+      context.handle(
+        _downloadStatusMeta,
+        downloadStatus.isAcceptableOrUnknown(
+          data['download_status']!,
+          _downloadStatusMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_downloadStatusMeta);
+    }
+    if (data.containsKey('downloaded_at')) {
+      context.handle(
+        _downloadedAtMeta,
+        downloadedAt.isAcceptableOrUnknown(
+          data['downloaded_at']!,
+          _downloadedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_downloadedAtMeta);
+    }
+    if (data.containsKey('total_episodes')) {
+      context.handle(
+        _totalEpisodesMeta,
+        totalEpisodes.isAcceptableOrUnknown(
+          data['total_episodes']!,
+          _totalEpisodesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_totalEpisodesMeta);
+    }
+    if (data.containsKey('downloaded_episodes')) {
+      context.handle(
+        _downloadedEpisodesMeta,
+        downloadedEpisodes.isAcceptableOrUnknown(
+          data['downloaded_episodes']!,
+          _downloadedEpisodesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_downloadedEpisodesMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<drift.GeneratedColumn> get $primaryKey => {ncode};
+  @override
+  DownloadedNovel map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DownloadedNovel(
+      ncode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ncode'],
+      )!,
+      downloadStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}download_status'],
+      )!,
+      downloadedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}downloaded_at'],
+      )!,
+      totalEpisodes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_episodes'],
+      )!,
+      downloadedEpisodes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}downloaded_episodes'],
+      )!,
+    );
+  }
+
+  @override
+  $DownloadedNovelsTable createAlias(String alias) {
+    return $DownloadedNovelsTable(attachedDatabase, alias);
+  }
+}
+
+class DownloadedNovel extends drift.DataClass
+    implements drift.Insertable<DownloadedNovel> {
+  /// 小説のncode
+  final String ncode;
+
+  /// ダウンロード状態
+  /// 0: 未ダウンロード, 1: ダウンロード中, 2: 完了, 3: 失敗
+  final int downloadStatus;
+
+  /// ダウンロード完了日時
+  final int downloadedAt;
+
+  /// ダウンロード対象の総話数
+  final int totalEpisodes;
+
+  /// ダウンロード済みの話数
+  final int downloadedEpisodes;
+  const DownloadedNovel({
+    required this.ncode,
+    required this.downloadStatus,
+    required this.downloadedAt,
+    required this.totalEpisodes,
+    required this.downloadedEpisodes,
+  });
+  @override
+  Map<String, drift.Expression> toColumns(bool nullToAbsent) {
+    final map = <String, drift.Expression>{};
+    map['ncode'] = drift.Variable<String>(ncode);
+    map['download_status'] = drift.Variable<int>(downloadStatus);
+    map['downloaded_at'] = drift.Variable<int>(downloadedAt);
+    map['total_episodes'] = drift.Variable<int>(totalEpisodes);
+    map['downloaded_episodes'] = drift.Variable<int>(downloadedEpisodes);
+    return map;
+  }
+
+  DownloadedNovelsCompanion toCompanion(bool nullToAbsent) {
+    return DownloadedNovelsCompanion(
+      ncode: drift.Value(ncode),
+      downloadStatus: drift.Value(downloadStatus),
+      downloadedAt: drift.Value(downloadedAt),
+      totalEpisodes: drift.Value(totalEpisodes),
+      downloadedEpisodes: drift.Value(downloadedEpisodes),
+    );
+  }
+
+  factory DownloadedNovel.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= drift.driftRuntimeOptions.defaultSerializer;
+    return DownloadedNovel(
+      ncode: serializer.fromJson<String>(json['ncode']),
+      downloadStatus: serializer.fromJson<int>(json['downloadStatus']),
+      downloadedAt: serializer.fromJson<int>(json['downloadedAt']),
+      totalEpisodes: serializer.fromJson<int>(json['totalEpisodes']),
+      downloadedEpisodes: serializer.fromJson<int>(json['downloadedEpisodes']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= drift.driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ncode': serializer.toJson<String>(ncode),
+      'downloadStatus': serializer.toJson<int>(downloadStatus),
+      'downloadedAt': serializer.toJson<int>(downloadedAt),
+      'totalEpisodes': serializer.toJson<int>(totalEpisodes),
+      'downloadedEpisodes': serializer.toJson<int>(downloadedEpisodes),
+    };
+  }
+
+  DownloadedNovel copyWith({
+    String? ncode,
+    int? downloadStatus,
+    int? downloadedAt,
+    int? totalEpisodes,
+    int? downloadedEpisodes,
+  }) => DownloadedNovel(
+    ncode: ncode ?? this.ncode,
+    downloadStatus: downloadStatus ?? this.downloadStatus,
+    downloadedAt: downloadedAt ?? this.downloadedAt,
+    totalEpisodes: totalEpisodes ?? this.totalEpisodes,
+    downloadedEpisodes: downloadedEpisodes ?? this.downloadedEpisodes,
+  );
+  DownloadedNovel copyWithCompanion(DownloadedNovelsCompanion data) {
+    return DownloadedNovel(
+      ncode: data.ncode.present ? data.ncode.value : this.ncode,
+      downloadStatus: data.downloadStatus.present
+          ? data.downloadStatus.value
+          : this.downloadStatus,
+      downloadedAt: data.downloadedAt.present
+          ? data.downloadedAt.value
+          : this.downloadedAt,
+      totalEpisodes: data.totalEpisodes.present
+          ? data.totalEpisodes.value
+          : this.totalEpisodes,
+      downloadedEpisodes: data.downloadedEpisodes.present
+          ? data.downloadedEpisodes.value
+          : this.downloadedEpisodes,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DownloadedNovel(')
+          ..write('ncode: $ncode, ')
+          ..write('downloadStatus: $downloadStatus, ')
+          ..write('downloadedAt: $downloadedAt, ')
+          ..write('totalEpisodes: $totalEpisodes, ')
+          ..write('downloadedEpisodes: $downloadedEpisodes')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ncode,
+    downloadStatus,
+    downloadedAt,
+    totalEpisodes,
+    downloadedEpisodes,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DownloadedNovel &&
+          other.ncode == this.ncode &&
+          other.downloadStatus == this.downloadStatus &&
+          other.downloadedAt == this.downloadedAt &&
+          other.totalEpisodes == this.totalEpisodes &&
+          other.downloadedEpisodes == this.downloadedEpisodes);
+}
+
+class DownloadedNovelsCompanion extends drift.UpdateCompanion<DownloadedNovel> {
+  final drift.Value<String> ncode;
+  final drift.Value<int> downloadStatus;
+  final drift.Value<int> downloadedAt;
+  final drift.Value<int> totalEpisodes;
+  final drift.Value<int> downloadedEpisodes;
+  final drift.Value<int> rowid;
+  const DownloadedNovelsCompanion({
+    this.ncode = const drift.Value.absent(),
+    this.downloadStatus = const drift.Value.absent(),
+    this.downloadedAt = const drift.Value.absent(),
+    this.totalEpisodes = const drift.Value.absent(),
+    this.downloadedEpisodes = const drift.Value.absent(),
+    this.rowid = const drift.Value.absent(),
+  });
+  DownloadedNovelsCompanion.insert({
+    required String ncode,
+    required int downloadStatus,
+    required int downloadedAt,
+    required int totalEpisodes,
+    required int downloadedEpisodes,
+    this.rowid = const drift.Value.absent(),
+  }) : ncode = drift.Value(ncode),
+       downloadStatus = drift.Value(downloadStatus),
+       downloadedAt = drift.Value(downloadedAt),
+       totalEpisodes = drift.Value(totalEpisodes),
+       downloadedEpisodes = drift.Value(downloadedEpisodes);
+  static drift.Insertable<DownloadedNovel> custom({
+    drift.Expression<String>? ncode,
+    drift.Expression<int>? downloadStatus,
+    drift.Expression<int>? downloadedAt,
+    drift.Expression<int>? totalEpisodes,
+    drift.Expression<int>? downloadedEpisodes,
+    drift.Expression<int>? rowid,
+  }) {
+    return drift.RawValuesInsertable({
+      if (ncode != null) 'ncode': ncode,
+      if (downloadStatus != null) 'download_status': downloadStatus,
+      if (downloadedAt != null) 'downloaded_at': downloadedAt,
+      if (totalEpisodes != null) 'total_episodes': totalEpisodes,
+      if (downloadedEpisodes != null) 'downloaded_episodes': downloadedEpisodes,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DownloadedNovelsCompanion copyWith({
+    drift.Value<String>? ncode,
+    drift.Value<int>? downloadStatus,
+    drift.Value<int>? downloadedAt,
+    drift.Value<int>? totalEpisodes,
+    drift.Value<int>? downloadedEpisodes,
+    drift.Value<int>? rowid,
+  }) {
+    return DownloadedNovelsCompanion(
+      ncode: ncode ?? this.ncode,
+      downloadStatus: downloadStatus ?? this.downloadStatus,
+      downloadedAt: downloadedAt ?? this.downloadedAt,
+      totalEpisodes: totalEpisodes ?? this.totalEpisodes,
+      downloadedEpisodes: downloadedEpisodes ?? this.downloadedEpisodes,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, drift.Expression> toColumns(bool nullToAbsent) {
+    final map = <String, drift.Expression>{};
+    if (ncode.present) {
+      map['ncode'] = drift.Variable<String>(ncode.value);
+    }
+    if (downloadStatus.present) {
+      map['download_status'] = drift.Variable<int>(downloadStatus.value);
+    }
+    if (downloadedAt.present) {
+      map['downloaded_at'] = drift.Variable<int>(downloadedAt.value);
+    }
+    if (totalEpisodes.present) {
+      map['total_episodes'] = drift.Variable<int>(totalEpisodes.value);
+    }
+    if (downloadedEpisodes.present) {
+      map['downloaded_episodes'] = drift.Variable<int>(
+        downloadedEpisodes.value,
+      );
+    }
+    if (rowid.present) {
+      map['rowid'] = drift.Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DownloadedNovelsCompanion(')
+          ..write('ncode: $ncode, ')
+          ..write('downloadStatus: $downloadStatus, ')
+          ..write('downloadedAt: $downloadedAt, ')
+          ..write('totalEpisodes: $totalEpisodes, ')
+          ..write('downloadedEpisodes: $downloadedEpisodes, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $DownloadedEpisodesTable extends DownloadedEpisodes
     with drift.TableInfo<$DownloadedEpisodesTable, DownloadedEpisode> {
   @override
@@ -2509,18 +2916,6 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const drift.VerificationMeta _titleMeta = const drift.VerificationMeta(
-    'title',
-  );
-  @override
-  late final drift.GeneratedColumn<String> title =
-      drift.GeneratedColumn<String>(
-        'title',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
   @override
   late final drift.GeneratedColumnWithTypeConverter<
     List<NovelContentElement>,
@@ -2551,7 +2946,6 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
   List<drift.GeneratedColumn> get $columns => [
     ncode,
     episode,
-    title,
     content,
     downloadedAt,
   ];
@@ -2583,12 +2977,6 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
     } else if (isInserting) {
       context.missing(_episodeMeta);
     }
-    if (data.containsKey('title')) {
-      context.handle(
-        _titleMeta,
-        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
-      );
-    }
     if (data.containsKey('downloaded_at')) {
       context.handle(
         _downloadedAtMeta,
@@ -2617,10 +3005,6 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
         DriftSqlType.int,
         data['${effectivePrefix}episode'],
       )!,
-      title: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}title'],
-      ),
       content: $DownloadedEpisodesTable.$convertercontent.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
@@ -2651,9 +3035,6 @@ class DownloadedEpisode extends drift.DataClass
   /// エピソード番号
   final int episode;
 
-  /// エピソードのタイトル
-  final String? title;
-
   /// エピソードの内容
   /// JSON形式で保存される
   final List<NovelContentElement> content;
@@ -2663,7 +3044,6 @@ class DownloadedEpisode extends drift.DataClass
   const DownloadedEpisode({
     required this.ncode,
     required this.episode,
-    this.title,
     required this.content,
     required this.downloadedAt,
   });
@@ -2672,9 +3052,6 @@ class DownloadedEpisode extends drift.DataClass
     final map = <String, drift.Expression>{};
     map['ncode'] = drift.Variable<String>(ncode);
     map['episode'] = drift.Variable<int>(episode);
-    if (!nullToAbsent || title != null) {
-      map['title'] = drift.Variable<String>(title);
-    }
     {
       map['content'] = drift.Variable<String>(
         $DownloadedEpisodesTable.$convertercontent.toSql(content),
@@ -2688,9 +3065,6 @@ class DownloadedEpisode extends drift.DataClass
     return DownloadedEpisodesCompanion(
       ncode: drift.Value(ncode),
       episode: drift.Value(episode),
-      title: title == null && nullToAbsent
-          ? const drift.Value.absent()
-          : drift.Value(title),
       content: drift.Value(content),
       downloadedAt: drift.Value(downloadedAt),
     );
@@ -2704,7 +3078,6 @@ class DownloadedEpisode extends drift.DataClass
     return DownloadedEpisode(
       ncode: serializer.fromJson<String>(json['ncode']),
       episode: serializer.fromJson<int>(json['episode']),
-      title: serializer.fromJson<String?>(json['title']),
       content: serializer.fromJson<List<NovelContentElement>>(json['content']),
       downloadedAt: serializer.fromJson<int>(json['downloadedAt']),
     );
@@ -2715,7 +3088,6 @@ class DownloadedEpisode extends drift.DataClass
     return <String, dynamic>{
       'ncode': serializer.toJson<String>(ncode),
       'episode': serializer.toJson<int>(episode),
-      'title': serializer.toJson<String?>(title),
       'content': serializer.toJson<List<NovelContentElement>>(content),
       'downloadedAt': serializer.toJson<int>(downloadedAt),
     };
@@ -2724,13 +3096,11 @@ class DownloadedEpisode extends drift.DataClass
   DownloadedEpisode copyWith({
     String? ncode,
     int? episode,
-    drift.Value<String?> title = const drift.Value.absent(),
     List<NovelContentElement>? content,
     int? downloadedAt,
   }) => DownloadedEpisode(
     ncode: ncode ?? this.ncode,
     episode: episode ?? this.episode,
-    title: title.present ? title.value : this.title,
     content: content ?? this.content,
     downloadedAt: downloadedAt ?? this.downloadedAt,
   );
@@ -2738,7 +3108,6 @@ class DownloadedEpisode extends drift.DataClass
     return DownloadedEpisode(
       ncode: data.ncode.present ? data.ncode.value : this.ncode,
       episode: data.episode.present ? data.episode.value : this.episode,
-      title: data.title.present ? data.title.value : this.title,
       content: data.content.present ? data.content.value : this.content,
       downloadedAt: data.downloadedAt.present
           ? data.downloadedAt.value
@@ -2751,7 +3120,6 @@ class DownloadedEpisode extends drift.DataClass
     return (StringBuffer('DownloadedEpisode(')
           ..write('ncode: $ncode, ')
           ..write('episode: $episode, ')
-          ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('downloadedAt: $downloadedAt')
           ..write(')'))
@@ -2759,14 +3127,13 @@ class DownloadedEpisode extends drift.DataClass
   }
 
   @override
-  int get hashCode => Object.hash(ncode, episode, title, content, downloadedAt);
+  int get hashCode => Object.hash(ncode, episode, content, downloadedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is DownloadedEpisode &&
           other.ncode == this.ncode &&
           other.episode == this.episode &&
-          other.title == this.title &&
           other.content == this.content &&
           other.downloadedAt == this.downloadedAt);
 }
@@ -2775,14 +3142,12 @@ class DownloadedEpisodesCompanion
     extends drift.UpdateCompanion<DownloadedEpisode> {
   final drift.Value<String> ncode;
   final drift.Value<int> episode;
-  final drift.Value<String?> title;
   final drift.Value<List<NovelContentElement>> content;
   final drift.Value<int> downloadedAt;
   final drift.Value<int> rowid;
   const DownloadedEpisodesCompanion({
     this.ncode = const drift.Value.absent(),
     this.episode = const drift.Value.absent(),
-    this.title = const drift.Value.absent(),
     this.content = const drift.Value.absent(),
     this.downloadedAt = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
@@ -2790,7 +3155,6 @@ class DownloadedEpisodesCompanion
   DownloadedEpisodesCompanion.insert({
     required String ncode,
     required int episode,
-    this.title = const drift.Value.absent(),
     required List<NovelContentElement> content,
     required int downloadedAt,
     this.rowid = const drift.Value.absent(),
@@ -2801,7 +3165,6 @@ class DownloadedEpisodesCompanion
   static drift.Insertable<DownloadedEpisode> custom({
     drift.Expression<String>? ncode,
     drift.Expression<int>? episode,
-    drift.Expression<String>? title,
     drift.Expression<String>? content,
     drift.Expression<int>? downloadedAt,
     drift.Expression<int>? rowid,
@@ -2809,7 +3172,6 @@ class DownloadedEpisodesCompanion
     return drift.RawValuesInsertable({
       if (ncode != null) 'ncode': ncode,
       if (episode != null) 'episode': episode,
-      if (title != null) 'title': title,
       if (content != null) 'content': content,
       if (downloadedAt != null) 'downloaded_at': downloadedAt,
       if (rowid != null) 'rowid': rowid,
@@ -2819,7 +3181,6 @@ class DownloadedEpisodesCompanion
   DownloadedEpisodesCompanion copyWith({
     drift.Value<String>? ncode,
     drift.Value<int>? episode,
-    drift.Value<String?>? title,
     drift.Value<List<NovelContentElement>>? content,
     drift.Value<int>? downloadedAt,
     drift.Value<int>? rowid,
@@ -2827,7 +3188,6 @@ class DownloadedEpisodesCompanion
     return DownloadedEpisodesCompanion(
       ncode: ncode ?? this.ncode,
       episode: episode ?? this.episode,
-      title: title ?? this.title,
       content: content ?? this.content,
       downloadedAt: downloadedAt ?? this.downloadedAt,
       rowid: rowid ?? this.rowid,
@@ -2842,9 +3202,6 @@ class DownloadedEpisodesCompanion
     }
     if (episode.present) {
       map['episode'] = drift.Variable<int>(episode.value);
-    }
-    if (title.present) {
-      map['title'] = drift.Variable<String>(title.value);
     }
     if (content.present) {
       map['content'] = drift.Variable<String>(
@@ -2865,7 +3222,6 @@ class DownloadedEpisodesCompanion
     return (StringBuffer('DownloadedEpisodesCompanion(')
           ..write('ncode: $ncode, ')
           ..write('episode: $episode, ')
-          ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('downloadedAt: $downloadedAt, ')
           ..write('rowid: $rowid')
@@ -3862,6 +4218,9 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
   late final $NovelsTable novels = $NovelsTable(this);
   late final $HistoryTable history = $HistoryTable(this);
   late final $EpisodesTable episodes = $EpisodesTable(this);
+  late final $DownloadedNovelsTable downloadedNovels = $DownloadedNovelsTable(
+    this,
+  );
   late final $DownloadedEpisodesTable downloadedEpisodes =
       $DownloadedEpisodesTable(this);
   late final $LibraryNovelsTable libraryNovels = $LibraryNovelsTable(this);
@@ -3874,6 +4233,7 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
     novels,
     history,
     episodes,
+    downloadedNovels,
     downloadedEpisodes,
     libraryNovels,
     bookmarks,
@@ -4980,11 +5340,231 @@ typedef $$EpisodesTableProcessedTableManager =
       Episode,
       drift.PrefetchHooks Function()
     >;
+typedef $$DownloadedNovelsTableCreateCompanionBuilder =
+    DownloadedNovelsCompanion Function({
+      required String ncode,
+      required int downloadStatus,
+      required int downloadedAt,
+      required int totalEpisodes,
+      required int downloadedEpisodes,
+      drift.Value<int> rowid,
+    });
+typedef $$DownloadedNovelsTableUpdateCompanionBuilder =
+    DownloadedNovelsCompanion Function({
+      drift.Value<String> ncode,
+      drift.Value<int> downloadStatus,
+      drift.Value<int> downloadedAt,
+      drift.Value<int> totalEpisodes,
+      drift.Value<int> downloadedEpisodes,
+      drift.Value<int> rowid,
+    });
+
+class $$DownloadedNovelsTableFilterComposer
+    extends drift.Composer<_$AppDatabase, $DownloadedNovelsTable> {
+  $$DownloadedNovelsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  drift.ColumnFilters<String> get ncode => $composableBuilder(
+    column: $table.ncode,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+
+  drift.ColumnFilters<int> get downloadStatus => $composableBuilder(
+    column: $table.downloadStatus,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+
+  drift.ColumnFilters<int> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+
+  drift.ColumnFilters<int> get totalEpisodes => $composableBuilder(
+    column: $table.totalEpisodes,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+
+  drift.ColumnFilters<int> get downloadedEpisodes => $composableBuilder(
+    column: $table.downloadedEpisodes,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+}
+
+class $$DownloadedNovelsTableOrderingComposer
+    extends drift.Composer<_$AppDatabase, $DownloadedNovelsTable> {
+  $$DownloadedNovelsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  drift.ColumnOrderings<String> get ncode => $composableBuilder(
+    column: $table.ncode,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
+
+  drift.ColumnOrderings<int> get downloadStatus => $composableBuilder(
+    column: $table.downloadStatus,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
+
+  drift.ColumnOrderings<int> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
+
+  drift.ColumnOrderings<int> get totalEpisodes => $composableBuilder(
+    column: $table.totalEpisodes,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
+
+  drift.ColumnOrderings<int> get downloadedEpisodes => $composableBuilder(
+    column: $table.downloadedEpisodes,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
+}
+
+class $$DownloadedNovelsTableAnnotationComposer
+    extends drift.Composer<_$AppDatabase, $DownloadedNovelsTable> {
+  $$DownloadedNovelsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  drift.GeneratedColumn<String> get ncode =>
+      $composableBuilder(column: $table.ncode, builder: (column) => column);
+
+  drift.GeneratedColumn<int> get downloadStatus => $composableBuilder(
+    column: $table.downloadStatus,
+    builder: (column) => column,
+  );
+
+  drift.GeneratedColumn<int> get downloadedAt => $composableBuilder(
+    column: $table.downloadedAt,
+    builder: (column) => column,
+  );
+
+  drift.GeneratedColumn<int> get totalEpisodes => $composableBuilder(
+    column: $table.totalEpisodes,
+    builder: (column) => column,
+  );
+
+  drift.GeneratedColumn<int> get downloadedEpisodes => $composableBuilder(
+    column: $table.downloadedEpisodes,
+    builder: (column) => column,
+  );
+}
+
+class $$DownloadedNovelsTableTableManager
+    extends
+        drift.RootTableManager<
+          _$AppDatabase,
+          $DownloadedNovelsTable,
+          DownloadedNovel,
+          $$DownloadedNovelsTableFilterComposer,
+          $$DownloadedNovelsTableOrderingComposer,
+          $$DownloadedNovelsTableAnnotationComposer,
+          $$DownloadedNovelsTableCreateCompanionBuilder,
+          $$DownloadedNovelsTableUpdateCompanionBuilder,
+          (
+            DownloadedNovel,
+            drift.BaseReferences<
+              _$AppDatabase,
+              $DownloadedNovelsTable,
+              DownloadedNovel
+            >,
+          ),
+          DownloadedNovel,
+          drift.PrefetchHooks Function()
+        > {
+  $$DownloadedNovelsTableTableManager(
+    _$AppDatabase db,
+    $DownloadedNovelsTable table,
+  ) : super(
+        drift.TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DownloadedNovelsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DownloadedNovelsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DownloadedNovelsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                drift.Value<String> ncode = const drift.Value.absent(),
+                drift.Value<int> downloadStatus = const drift.Value.absent(),
+                drift.Value<int> downloadedAt = const drift.Value.absent(),
+                drift.Value<int> totalEpisodes = const drift.Value.absent(),
+                drift.Value<int> downloadedEpisodes =
+                    const drift.Value.absent(),
+                drift.Value<int> rowid = const drift.Value.absent(),
+              }) => DownloadedNovelsCompanion(
+                ncode: ncode,
+                downloadStatus: downloadStatus,
+                downloadedAt: downloadedAt,
+                totalEpisodes: totalEpisodes,
+                downloadedEpisodes: downloadedEpisodes,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ncode,
+                required int downloadStatus,
+                required int downloadedAt,
+                required int totalEpisodes,
+                required int downloadedEpisodes,
+                drift.Value<int> rowid = const drift.Value.absent(),
+              }) => DownloadedNovelsCompanion.insert(
+                ncode: ncode,
+                downloadStatus: downloadStatus,
+                downloadedAt: downloadedAt,
+                totalEpisodes: totalEpisodes,
+                downloadedEpisodes: downloadedEpisodes,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (e.readTable(table), drift.BaseReferences(db, table, e)),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$DownloadedNovelsTableProcessedTableManager =
+    drift.ProcessedTableManager<
+      _$AppDatabase,
+      $DownloadedNovelsTable,
+      DownloadedNovel,
+      $$DownloadedNovelsTableFilterComposer,
+      $$DownloadedNovelsTableOrderingComposer,
+      $$DownloadedNovelsTableAnnotationComposer,
+      $$DownloadedNovelsTableCreateCompanionBuilder,
+      $$DownloadedNovelsTableUpdateCompanionBuilder,
+      (
+        DownloadedNovel,
+        drift.BaseReferences<
+          _$AppDatabase,
+          $DownloadedNovelsTable,
+          DownloadedNovel
+        >,
+      ),
+      DownloadedNovel,
+      drift.PrefetchHooks Function()
+    >;
 typedef $$DownloadedEpisodesTableCreateCompanionBuilder =
     DownloadedEpisodesCompanion Function({
       required String ncode,
       required int episode,
-      drift.Value<String?> title,
       required List<NovelContentElement> content,
       required int downloadedAt,
       drift.Value<int> rowid,
@@ -4993,7 +5573,6 @@ typedef $$DownloadedEpisodesTableUpdateCompanionBuilder =
     DownloadedEpisodesCompanion Function({
       drift.Value<String> ncode,
       drift.Value<int> episode,
-      drift.Value<String?> title,
       drift.Value<List<NovelContentElement>> content,
       drift.Value<int> downloadedAt,
       drift.Value<int> rowid,
@@ -5015,11 +5594,6 @@ class $$DownloadedEpisodesTableFilterComposer
 
   drift.ColumnFilters<int> get episode => $composableBuilder(
     column: $table.episode,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
-  drift.ColumnFilters<String> get title => $composableBuilder(
-    column: $table.title,
     builder: (column) => drift.ColumnFilters(column),
   );
 
@@ -5058,11 +5632,6 @@ class $$DownloadedEpisodesTableOrderingComposer
     builder: (column) => drift.ColumnOrderings(column),
   );
 
-  drift.ColumnOrderings<String> get title => $composableBuilder(
-    column: $table.title,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
   drift.ColumnOrderings<String> get content => $composableBuilder(
     column: $table.content,
     builder: (column) => drift.ColumnOrderings(column),
@@ -5088,9 +5657,6 @@ class $$DownloadedEpisodesTableAnnotationComposer
 
   drift.GeneratedColumn<int> get episode =>
       $composableBuilder(column: $table.episode, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get title =>
-      $composableBuilder(column: $table.title, builder: (column) => column);
 
   drift.GeneratedColumnWithTypeConverter<List<NovelContentElement>, String>
   get content =>
@@ -5144,7 +5710,6 @@ class $$DownloadedEpisodesTableTableManager
               ({
                 drift.Value<String> ncode = const drift.Value.absent(),
                 drift.Value<int> episode = const drift.Value.absent(),
-                drift.Value<String?> title = const drift.Value.absent(),
                 drift.Value<List<NovelContentElement>> content =
                     const drift.Value.absent(),
                 drift.Value<int> downloadedAt = const drift.Value.absent(),
@@ -5152,7 +5717,6 @@ class $$DownloadedEpisodesTableTableManager
               }) => DownloadedEpisodesCompanion(
                 ncode: ncode,
                 episode: episode,
-                title: title,
                 content: content,
                 downloadedAt: downloadedAt,
                 rowid: rowid,
@@ -5161,14 +5725,12 @@ class $$DownloadedEpisodesTableTableManager
               ({
                 required String ncode,
                 required int episode,
-                drift.Value<String?> title = const drift.Value.absent(),
                 required List<NovelContentElement> content,
                 required int downloadedAt,
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => DownloadedEpisodesCompanion.insert(
                 ncode: ncode,
                 episode: episode,
-                title: title,
                 content: content,
                 downloadedAt: downloadedAt,
                 rowid: rowid,
@@ -5704,6 +6266,8 @@ class $AppDatabaseManager {
       $$HistoryTableTableManager(_db, _db.history);
   $$EpisodesTableTableManager get episodes =>
       $$EpisodesTableTableManager(_db, _db.episodes);
+  $$DownloadedNovelsTableTableManager get downloadedNovels =>
+      $$DownloadedNovelsTableTableManager(_db, _db.downloadedNovels);
   $$DownloadedEpisodesTableTableManager get downloadedEpisodes =>
       $$DownloadedEpisodesTableTableManager(_db, _db.downloadedEpisodes);
   $$LibraryNovelsTableTableManager get libraryNovels =>

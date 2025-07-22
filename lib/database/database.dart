@@ -193,9 +193,6 @@ class DownloadedEpisodes extends Table {
   /// エピソード番号
   IntColumn get episode => integer()();
 
-  /// エピソードのタイトル
-  TextColumn get title => text().nullable()();
-
   /// エピソードの内容
   /// JSON形式で保存される
   TextColumn get content => text().map(const ContentConverter())();
@@ -205,6 +202,28 @@ class DownloadedEpisodes extends Table {
 
   @override
   Set<Column> get primaryKey => {ncode, episode};
+}
+
+/// ダウンロード済み小説を管理するテーブル
+class DownloadedNovels extends Table {
+  /// 小説のncode
+  TextColumn get ncode => text()();
+
+  /// ダウンロード状態
+  /// 0: 未ダウンロード, 1: ダウンロード中, 2: 完了, 3: 失敗
+  IntColumn get downloadStatus => integer()();
+
+  /// ダウンロード完了日時
+  IntColumn get downloadedAt => integer()();
+
+  /// ダウンロード対象の総話数
+  IntColumn get totalEpisodes => integer()();
+
+  /// ダウンロード済みの話数
+  IntColumn get downloadedEpisodes => integer()();
+
+  @override
+  Set<Column> get primaryKey => {ncode};
 }
 
 /// ライブラリに追加された小説を格納するテーブル
@@ -270,6 +289,7 @@ class Bookmarks extends Table {
     Novels,
     History,
     Episodes,
+    DownloadedNovels,
     DownloadedEpisodes,
     LibraryNovels,
     Bookmarks,
@@ -287,7 +307,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -341,6 +361,36 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(history, history.updatedAt);
           await m.issueCustomQuery(
             'UPDATE history SET updated_at = viewed_at;',
+          );
+        }
+        if (from <= 5) {
+          // DownloadedNovelsテーブルを作成
+          await m.createTable(downloadedNovels);
+
+          // DownloadedEpisodesテーブルからtitleカラムを削除するためのマイグレーション
+          // 1. 新しい構造で一時テーブルを作成
+          await m.issueCustomQuery('''
+            CREATE TABLE downloaded_episodes_new (
+              ncode TEXT NOT NULL,
+              episode INTEGER NOT NULL,
+              content TEXT NOT NULL,
+              downloaded_at INTEGER NOT NULL,
+              PRIMARY KEY(ncode, episode)
+            )
+          ''');
+
+          // 2. データを一時テーブルにコピー
+          await m.issueCustomQuery('''
+            INSERT INTO downloaded_episodes_new (ncode, episode, content, downloaded_at)
+            SELECT ncode, episode, content, downloaded_at FROM downloaded_episodes
+          ''');
+
+          // 3. 古いテーブルを削除
+          await m.issueCustomQuery('DROP TABLE downloaded_episodes');
+
+          // 4. 一時テーブルをリネーム
+          await m.issueCustomQuery(
+            'ALTER TABLE downloaded_episodes_new RENAME TO downloaded_episodes',
           );
         }
       },
@@ -488,6 +538,35 @@ class AppDatabase extends _$AppDatabase {
           (t) =>
               t.ncode.equals(ncode.toLowerCase()) & t.episode.equals(episode),
         ))
+        .go();
+  }
+
+  /// ダウンロード小説情報を挿入/更新
+  Future<int> upsertDownloadedNovel(DownloadedNovelsCompanion novel) {
+    return into(downloadedNovels).insert(
+      novel.copyWith(ncode: drift.Value(novel.ncode.value.toLowerCase())),
+      mode: InsertMode.insertOrReplace,
+    );
+  }
+
+  /// ダウンロード小説情報を取得
+  Future<DownloadedNovel?> getDownloadedNovel(String ncode) {
+    return (select(downloadedNovels)
+          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
+        .getSingleOrNull();
+  }
+
+  /// ダウンロード小説情報を監視
+  Stream<DownloadedNovel?> watchDownloadedNovel(String ncode) {
+    return (select(downloadedNovels)
+          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
+        .watchSingleOrNull();
+  }
+
+  /// ダウンロード小説を削除
+  Future<int> deleteDownloadedNovel(String ncode) {
+    return (delete(downloadedNovels)
+          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
         .go();
   }
 
