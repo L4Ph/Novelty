@@ -337,7 +337,7 @@ class BackupService {
 
               restoredCount++;
             }
-          } catch (e) {
+          } on Exception {
             // 無効なJSONファイルはスキップする
             continue;
           }
@@ -381,7 +381,7 @@ class BackupService {
                 sampleNcodes.add(ncode);
               }
             }
-          } catch (e) {
+          } on Exception {
             // 無効なJSONファイルはスキップ
             continue;
           }
@@ -437,7 +437,7 @@ class BackupService {
     try {
       final dateTime = DateTime.parse(dateTimeStr.replaceAll(' ', 'T'));
       return Value(dateTime.millisecondsSinceEpoch);
-    } catch (e) {
+    } on Exception {
       return const Value(null);
     }
   }
