@@ -127,7 +127,7 @@ class DownloadStatus extends _$DownloadStatus {
       },
     );
 
-    return repo.isNovelDownloaded(novelInfo);
+    return repo.isNovelDownloaded(novelInfo.ncode!);
   }
 
   /// 小説のダウンロード状態を切り替えるメソッド。
@@ -161,7 +161,7 @@ class DownloadStatus extends _$DownloadStatus {
         );
 
         if (confirmed == true) {
-          await repo.deleteDownloadedNovel(novelInfo);
+          await repo.deleteDownloadedNovel(novelInfo.ncode!);
           ref.invalidateSelf();
         } else {
           // キャンセルされた場合は、状態を元に戻す
@@ -218,7 +218,10 @@ class DownloadStatus extends _$DownloadStatus {
           }
           return;
         }
-        await repo.downloadNovel(novelInfo);
+        await repo.downloadNovel(
+          novelInfo.ncode!,
+          novelInfo.generalAllNo!,
+        );
       }
     } on Exception catch (e, st) {
       state = AsyncValue.error(e, st);
