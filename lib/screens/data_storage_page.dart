@@ -271,8 +271,9 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
       final downloadPath = settings.novelDownloadPath;
 
       // ダウンロードパスの検証
-      final validationResult =
-          await _backupService.validateDownloadPath(downloadPath);
+      final validationResult = await _backupService.validateDownloadPath(
+        downloadPath,
+      );
 
       if (!validationResult.isValid) {
         if (mounted) {
@@ -338,7 +339,8 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                  '以下のダウンロードフォルダから${validationResult.foundNovelsCount}件の小説データが見つかりました。'),
+                '以下のダウンロードフォルダから${validationResult.foundNovelsCount}件の小説データが見つかりました。',
+              ),
               const SizedBox(height: 16),
               Text(
                 'ダウンロードパス:',
@@ -346,10 +348,9 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
               ),
               Text(
                 downloadPath,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(fontFamily: 'monospace'),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
               ),
               const SizedBox(height: 16),
               Text(
@@ -362,9 +363,10 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
               if (validationResult.foundNovelsCount >
                   validationResult.sampleNcodes.length)
                 Text(
-                    '...他${validationResult.foundNovelsCount - validationResult.sampleNcodes.length}件'),
+                  '...他${validationResult.foundNovelsCount - validationResult.sampleNcodes.length}件',
+                ),
               const SizedBox(height: 16),
-              const Text('これらの小説をライブラリに追加しますか？'),
+              const Text('これらの小説をライブラリに追加しますか?'),
             ],
           ),
         ),

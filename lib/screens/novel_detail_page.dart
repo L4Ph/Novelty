@@ -224,14 +224,15 @@ class DownloadStatus extends _$DownloadStatus {
         );
 
         // ライブラリに追加されていない場合、Snackbarを表示
-        final isInLibrary =
-            await ref.read(libraryStatusProvider(novelInfo.ncode!).future);
+        final isInLibrary = await ref.read(
+          libraryStatusProvider(novelInfo.ncode!).future,
+        );
         if (!isInLibrary && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('ダウンロードが完了しました。'),
+              content: const Text('ライブラリに追加しますか?'),
               action: SnackBarAction(
-                label: 'ライブラリに追加',
+                label: '追加',
                 onPressed: () {
                   ref
                       .read(libraryStatusProvider(novelInfo.ncode!).notifier)
