@@ -22,6 +22,14 @@ import 'package:novelty/services/backup_service.dart' as _i2;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
+class _FakeDownloadPathValidationResult_0 extends _i1.SmartFake
+    implements _i2.DownloadPathValidationResult {
+  _FakeDownloadPathValidationResult_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(parent, parentInvocation);
+}
+
 /// A class which mocks [BackupService].
 ///
 /// See the documentation for Mockito's code generation for more information.
@@ -99,4 +107,27 @@ class MockBackupService extends _i1.Mock implements _i2.BackupService {
             returnValue: _i3.Future<int>.value(0),
           )
           as _i3.Future<int>);
+
+  @override
+  _i3.Future<int> restoreFromDownloadDirectory(String? downloadPath) =>
+      (super.noSuchMethod(
+            Invocation.method(#restoreFromDownloadDirectory, [downloadPath]),
+            returnValue: _i3.Future<int>.value(0),
+          )
+          as _i3.Future<int>);
+
+  @override
+  _i3.Future<_i2.DownloadPathValidationResult> validateDownloadPath(
+    String? downloadPath,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#validateDownloadPath, [downloadPath]),
+            returnValue: _i3.Future<_i2.DownloadPathValidationResult>.value(
+              _FakeDownloadPathValidationResult_0(
+                this,
+                Invocation.method(#validateDownloadPath, [downloadPath]),
+              ),
+            ),
+          )
+          as _i3.Future<_i2.DownloadPathValidationResult>);
 }

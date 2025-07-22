@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/services/backup_service.dart';
+import 'package:novelty/utils/settings_provider.dart';
 
 /// データとストレージページ
 /// ライブラリと履歴データのバックアップ・復元機能を提供
@@ -39,6 +40,8 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
           _buildBackupSection(),
           const SizedBox(height: 24),
           _buildRestoreSection(),
+          const SizedBox(height: 24),
+          _buildDownloadRestoreSection(),
         ],
       ),
     );
@@ -252,6 +255,148 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
             child: const Text('OK'),
           ),
         ],
+      ),
+    );
+  }
+
+  /// ダウンロードフォルダからデータを復元
+  Future<void> _restoreFromDownloadDirectory() async {
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      // 現在のダウンロードパスを取得
+      final settings = await ref.read(settingsProvider.future);
+      final downloadPath = settings.novelDownloadPath;
+
+      // ダウンロードパスの検証
+      final validationResult = await _backupService.validateDownloadPath(downloadPath);
+      
+      if (!validationResult.isValid) {
+        if (mounted) {
+          _showErrorDialog(
+            'ダウンロードデータが見つかりません',
+            'ダウンロードフォルダ「$downloadPath」に復元可能な小説データが見つかりませんでした。\n\n設定からダウンロードパスを確認してください。',
+          );
+        }
+        return;
+      }
+
+      // 確認ダイアログを表示
+      final shouldRestore = await _showDownloadRestoreConfirmDialog(
+        downloadPath,
+        validationResult,
+      );
+      
+      if (!shouldRestore) {
+        return;
+      }
+
+      // 復元処理の実行
+      final restoredCount = await _backupService.restoreFromDownloadDirectory(downloadPath);
+      
+      if (mounted) {
+        _showSuccessDialog(
+          'ダウンロードデータの復元が完了しました',
+          '$restoredCount件の小説をライブラリに復元しました',
+        );
+      }
+    } on Exception catch (e) {
+      if (mounted) {
+        _showErrorDialog('復元に失敗しました', e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
+  /// ダウンロードデータ復元の確認ダイアログを表示
+  Future<bool> _showDownloadRestoreConfirmDialog(
+    String downloadPath,
+    DownloadPathValidationResult validationResult,
+  ) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ダウンロードデータの復元'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('以下のダウンロードフォルダから${validationResult.foundNovelsCount}件の小説データが見つかりました。'),
+            const SizedBox(height: 16),
+            Text(
+              'ダウンロードパス:',
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+            Text(
+              downloadPath,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontFamily: 'monospace',
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '見つかった小説:',
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+            ...validationResult.sampleNcodes.map(
+              (ncode) => Text('• $ncode'),
+            ),
+            if (validationResult.foundNovelsCount > validationResult.sampleNcodes.length)
+              Text('...他${validationResult.foundNovelsCount - validationResult.sampleNcodes.length}件'),
+            const SizedBox(height: 16),
+            const Text('これらの小説をライブラリに復元しますか？'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('復元する'),
+          ),
+        ],
+      ),
+    );
+    
+    return result ?? false;
+  }
+
+  /// ダウンロードデータ復元セクションを構築
+  Widget _buildDownloadRestoreSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'ダウンロードデータの復元',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'ダウンロードフォルダから小説データを復元します',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.folder_open),
+              title: const Text('ダウンロードデータを復元'),
+              subtitle: const Text('現在のダウンロードフォルダから小説データをライブラリに復元'),
+              enabled: !_isProcessing,
+              onTap: _restoreFromDownloadDirectory,
+            ),
+          ],
+        ),
       ),
     );
   }

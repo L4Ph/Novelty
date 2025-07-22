@@ -4,10 +4,12 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:path/path.dart' as p;
 
 /// バックアップ・復元サービス
-/// ライブラリデータと履歴データのエクスポート・インポート機能を提供
+/// ライブラリデータと履歴データのエクスポート・インポート機能、
+/// およびダウンロードフォルダからの復元機能を提供
 class BackupService {
   /// コンストラクタ
   const BackupService(this._database);
@@ -290,4 +292,174 @@ class BackupService {
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}${dateTime.month.toString().padLeft(2, '0')}${dateTime.day.toString().padLeft(2, '0')}_${dateTime.hour.toString().padLeft(2, '0')}${dateTime.minute.toString().padLeft(2, '0')}${dateTime.second.toString().padLeft(2, '0')}';
   }
+
+  /// ダウンロードフォルダからデータを復元する
+  /// 
+  /// [downloadPath] ダウンロードフォルダのパス
+  /// 
+  /// 戻り値：復元された小説の数
+  Future<int> restoreFromDownloadDirectory(String downloadPath) async {
+    final downloadDir = Directory(downloadPath);
+    if (!await downloadDir.exists()) {
+      return 0;
+    }
+
+    var restoredCount = 0;
+
+    await for (final entity in downloadDir.list()) {
+      if (entity is Directory) {
+        final infoFile = File(p.join(entity.path, 'info.json'));
+        if (await infoFile.exists()) {
+          try {
+            final jsonContent = await infoFile.readAsString();
+            final jsonData = json.decode(jsonContent) as Map<String, dynamic>;
+            final novelInfo = NovelInfo.fromJson(jsonData);
+
+            if (novelInfo.ncode != null) {
+              // 小説情報をNovelsテーブルに保存
+              final novelCompanion = _novelInfoToNovelCompanion(novelInfo);
+              await _database.insertNovel(novelCompanion);
+
+              // ライブラリに追加
+              await _database.addToLibrary(
+                LibraryNovelsCompanion(
+                  ncode: Value(novelInfo.ncode!.toLowerCase()),
+                  title: Value(novelInfo.title),
+                  writer: Value(novelInfo.writer),
+                  story: Value(novelInfo.story),
+                  novelType: Value(novelInfo.novelType),
+                  end: Value(novelInfo.end),
+                  generalAllNo: Value(novelInfo.generalAllNo),
+                  novelUpdatedAt: Value(novelInfo.novelupdatedAt?.toString()),
+                  addedAt: Value(DateTime.now().millisecondsSinceEpoch),
+                ),
+              );
+
+              restoredCount++;
+            }
+          } catch (e) {
+            // 無効なJSONファイルはスキップする
+            continue;
+          }
+        }
+      }
+    }
+
+    return restoredCount;
+  }
+
+  /// ダウンロードパスを検証する
+  /// 
+  /// [downloadPath] 検証するダウンロードフォルダのパス
+  /// 
+  /// 戻り値：検証結果
+  Future<DownloadPathValidationResult> validateDownloadPath(String downloadPath) async {
+    final downloadDir = Directory(downloadPath);
+    if (!await downloadDir.exists()) {
+      return const DownloadPathValidationResult(
+        isValid: false,
+        foundNovelsCount: 0,
+        sampleNcodes: [],
+      );
+    }
+
+    var foundCount = 0;
+    final sampleNcodes = <String>[];
+
+    await for (final entity in downloadDir.list()) {
+      if (entity is Directory) {
+        final infoFile = File(p.join(entity.path, 'info.json'));
+        if (await infoFile.exists()) {
+          try {
+            final jsonContent = await infoFile.readAsString();
+            final jsonData = json.decode(jsonContent) as Map<String, dynamic>;
+            final ncode = jsonData['ncode'] as String?;
+            
+            if (ncode != null) {
+              foundCount++;
+              if (sampleNcodes.length < 3) {
+                sampleNcodes.add(ncode);
+              }
+            }
+          } catch (e) {
+            // 無効なJSONファイルはスキップ
+            continue;
+          }
+        }
+      }
+    }
+
+    return DownloadPathValidationResult(
+      isValid: foundCount > 0,
+      foundNovelsCount: foundCount,
+      sampleNcodes: sampleNcodes,
+    );
+  }
+
+  /// NovelInfoからNovelsCompanionに変換する
+  NovelsCompanion _novelInfoToNovelCompanion(NovelInfo novelInfo) {
+    return NovelsCompanion(
+      ncode: Value(novelInfo.ncode!.toLowerCase()),
+      title: Value(novelInfo.title),
+      writer: Value(novelInfo.writer),
+      story: Value(novelInfo.story),
+      novelType: Value(novelInfo.novelType),
+      end: Value(novelInfo.end),
+      isr15: Value(novelInfo.isr15),
+      isbl: Value(novelInfo.isbl),
+      isgl: Value(novelInfo.isgl),
+      iszankoku: Value(novelInfo.iszankoku),
+      istensei: Value(novelInfo.istensei),
+      istenni: Value(novelInfo.istenni),
+      keyword: Value(novelInfo.keyword),
+      generalFirstup: _parseToTimestamp(novelInfo.generalFirstup),
+      generalLastup: _parseToTimestamp(novelInfo.generalLastup),
+      globalPoint: Value(novelInfo.globalPoint),
+      reviewCount: Value(novelInfo.reviewCnt),
+      rateCount: Value(novelInfo.allHyokaCnt),
+      allPoint: Value(novelInfo.allPoint),
+      pointCount: Value(novelInfo.allPoint), // pointCountフィールドがないため、allPointで代用
+      dailyPoint: Value(novelInfo.dailyPoint),
+      weeklyPoint: Value(novelInfo.weeklyPoint),
+      monthlyPoint: Value(novelInfo.monthlyPoint),
+      quarterPoint: Value(novelInfo.quarterPoint),
+      yearlyPoint: Value(novelInfo.yearlyPoint),
+      generalAllNo: Value(novelInfo.generalAllNo),
+      novelUpdatedAt: Value(novelInfo.novelupdatedAt?.toString()),
+      cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
+    );
+  }
+
+  /// 日時文字列をタイムスタンプに変換する
+  Value<int?> _parseToTimestamp(String? dateTimeStr) {
+    if (dateTimeStr == null) return const Value(null);
+    
+    try {
+      final dateTime = DateTime.parse(dateTimeStr.replaceAll(' ', 'T'));
+      return Value(dateTime.millisecondsSinceEpoch);
+    } catch (e) {
+      return const Value(null);
+    }
+  }
+}
+
+/// ダウンロードパスの検証結果
+/// 
+/// 確認ダイアログ用の情報を提供
+class DownloadPathValidationResult {
+  /// コンストラクタ
+  const DownloadPathValidationResult({
+    required this.isValid,
+    required this.foundNovelsCount,
+    required this.sampleNcodes,
+  });
+
+  /// パスが有効かどうか
+  final bool isValid;
+
+  /// 見つかった小説の数
+  final int foundNovelsCount;
+
+  /// サンプルのncode（最大3個）
+  final List<String> sampleNcodes;
 }
