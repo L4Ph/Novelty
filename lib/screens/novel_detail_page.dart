@@ -108,6 +108,7 @@ class LibraryStatus extends _$LibraryStatus {
 
 @riverpod
 /// 小説のダウンロード状態を管理するプロバイダー。
+///
 /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
 class DownloadStatus extends _$DownloadStatus {
   @override
@@ -129,7 +130,10 @@ class DownloadStatus extends _$DownloadStatus {
     return repo.isNovelDownloaded(novelInfo);
   }
 
-  /// 小説のダウンロード状態を切り替えるメソッド
+  /// 小説のダウンロード状態を切り替えるメソッド。
+  ///
+  /// ダウンロード済みの場合は削除確認ダイアログを表示し、
+  /// 未ダウンロードの場合はダウンロードを開始する。
   Future<void> toggle(BuildContext context, NovelInfo novelInfo) async {
     final repo = ref.read(novelRepositoryProvider);
     final isDownloaded = state.value ?? false;
@@ -138,7 +142,31 @@ class DownloadStatus extends _$DownloadStatus {
 
     try {
       if (isDownloaded) {
-        await repo.deleteDownloadedNovel(novelInfo);
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('削除の確認'),
+            content: Text('「${novelInfo.title}」を端末から削除しますか？'),
+            actions: [
+              TextButton(
+                child: const Text('キャンセル'),
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              TextButton(
+                child: const Text('削除'),
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmed == true) {
+          await repo.deleteDownloadedNovel(novelInfo);
+        } else {
+          // キャンセルされた場合は、状態を元に戻す
+          state = const AsyncData(true);
+          return;
+        }
       } else {
         var hasPermission = false;
         if (Platform.isAndroid) {
@@ -191,7 +219,6 @@ class DownloadStatus extends _$DownloadStatus {
         }
         await repo.downloadNovel(novelInfo);
       }
-      ref.invalidate(downloadStatusProvider(novelInfo));
     } on Exception catch (e, st) {
       state = AsyncValue.error(e, st);
       if (context.mounted) {

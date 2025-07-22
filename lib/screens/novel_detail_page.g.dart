@@ -343,15 +343,18 @@ abstract class _$LibraryStatus extends $StreamNotifier<bool> {
 }
 
 /// 小説のダウンロード状態を管理するプロバイダー。
+///
 /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
 @ProviderFor(DownloadStatus)
 const downloadStatusProvider = DownloadStatusFamily._();
 
 /// 小説のダウンロード状態を管理するプロバイダー。
+///
 /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
 final class DownloadStatusProvider
     extends $StreamNotifierProvider<DownloadStatus, bool> {
   /// 小説のダウンロード状態を管理するプロバイダー。
+  ///
   /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
   const DownloadStatusProvider._({
     required DownloadStatusFamily super.from,
@@ -389,9 +392,10 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'32e3f901204938c99dbc256d27d95b153b9fe5e0';
+String _$downloadStatusHash() => r'9c3889cfa746b449475e49cc7c3b08ef9b93e721';
 
 /// 小説のダウンロード状態を管理するプロバイダー。
+///
 /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
 final class DownloadStatusFamily extends $Family
     with
@@ -412,6 +416,7 @@ final class DownloadStatusFamily extends $Family
       );
 
   /// 小説のダウンロード状態を管理するプロバイダー。
+  ///
   /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
   DownloadStatusProvider call(NovelInfo novelInfo) =>
       DownloadStatusProvider._(argument: novelInfo, from: this);
