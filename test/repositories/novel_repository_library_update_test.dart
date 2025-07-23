@@ -132,5 +132,46 @@ void main() {
       // 変更がないので空のリストが返されることを期待
       expect(result, equals([]));
     });
+
+    test('変更があった小説のデータベース情報が更新されること', () async {
+      final libraryNovels = [
+        LibraryNovel(
+          ncode: 'n1234ab',
+          title: '古いタイトル',
+          writer: 'テスト作者1',
+          story: 'あらすじ1',
+          novelType: 1,
+          end: 0,
+          generalAllNo: 10,
+          novelUpdatedAt: '2024-01-01T00:00:00.000',
+          addedAt: DateTime.now().millisecondsSinceEpoch,
+        ),
+      ];
+
+      final apiNovelsInfo = <String, NovelInfo>{
+        'n1234ab': NovelInfo(
+          ncode: 'n1234ab',
+          title: '新しいタイトル', // タイトル変更
+          writer: 'テスト作者1',
+          story: '新しいあらすじ', // あらすじ変更
+          novelType: 1,
+          end: 1, // 完結状態に変更
+          generalAllNo: 15, // 話数増加
+          generalLastup: '2024-02-01T00:00:00.000Z', // 更新日時が新しい
+        ),
+      };
+
+      when(mockDatabase.getLibraryNovels()).thenAnswer((_) async => libraryNovels);
+      when(mockApiService.fetchMultipleNovelsInfo(any)).thenAnswer((_) async => apiNovelsInfo);
+      when(mockDatabase.updateNovelFromApi(any, any)).thenAnswer((_) async => {});
+
+      final result = await repository.updateLibraryNovels();
+
+      // 変更があった小説のncodeが返される
+      expect(result, equals(['n1234ab']));
+      
+      // データベースの更新メソッドが呼ばれることを確認
+      verify(mockDatabase.updateNovelFromApi('n1234ab', apiNovelsInfo['n1234ab']!)).called(1);
+    });
   });
 }

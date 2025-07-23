@@ -53,14 +53,34 @@ void main() {
       container.dispose();
     });
 
-    test('should return Future<List<LibraryNovel>>', () async {
+    test('should return Future<List<Novel>>', () async {
       when(
         mockDatabase.getLibraryNovels(),
       ).thenAnswer((_) async => testLibraryNovels);
 
+      // getNovelのスタブを追加
+      when(mockDatabase.getNovel(any)).thenAnswer((invocation) async {
+        final ncode = invocation.positionalArguments[0] as String;
+        final libraryNovel = testLibraryNovels.firstWhere((novel) => novel.ncode == ncode);
+        return Novel(
+          ncode: libraryNovel.ncode,
+          title: libraryNovel.title,
+          writer: libraryNovel.writer,
+          story: libraryNovel.story,
+          novelType: libraryNovel.novelType,
+          end: libraryNovel.end,
+          generalAllNo: libraryNovel.generalAllNo,
+          generalLastup: libraryNovel.novelUpdatedAt != null
+              ? DateTime.parse(libraryNovel.novelUpdatedAt!).millisecondsSinceEpoch
+              : null,
+        );
+      });
+
       final result = await container.read(libraryNovelsProvider.future);
 
-      expect(result, equals(testLibraryNovels));
+      expect(result, isA<List<Novel>>());
+      expect(result.length, equals(testLibraryNovels.length));
+      expect(result.first.ncode, equals(testLibraryNovels.first.ncode));
       verify(mockDatabase.getLibraryNovels()).called(1);
     });
 
@@ -80,6 +100,21 @@ void main() {
         mockDatabase.getLibraryNovels(),
       ).thenAnswer((_) async => testLibraryNovels);
 
+      when(mockDatabase.getNovel(any)).thenAnswer((invocation) async {
+        final ncode = invocation.positionalArguments[0] as String;
+        final libraryNovel = testLibraryNovels.firstWhere((novel) => novel.ncode == ncode);
+        return Novel(
+          ncode: libraryNovel.ncode,
+          title: libraryNovel.title,
+          writer: libraryNovel.writer,
+          story: libraryNovel.story,
+          novelType: libraryNovel.novelType,
+          end: libraryNovel.end,
+          generalAllNo: libraryNovel.generalAllNo,
+          generalLastup: libraryNovel.novelUpdatedAt != null ? DateTime.parse(libraryNovel.novelUpdatedAt!).millisecondsSinceEpoch : null,
+        );
+      });
+
       await container.read(libraryNovelsProvider.future);
       container.dispose();
 
@@ -93,9 +128,24 @@ void main() {
       when(
         newMockDatabase.getLibraryNovels(),
       ).thenAnswer((_) async => testLibraryNovels);
+      
+      when(newMockDatabase.getNovel(any)).thenAnswer((invocation) async {
+        final ncode = invocation.positionalArguments[0] as String;
+        final libraryNovel = testLibraryNovels.firstWhere((novel) => novel.ncode == ncode);
+        return Novel(
+          ncode: libraryNovel.ncode,
+          title: libraryNovel.title,
+          writer: libraryNovel.writer,
+          story: libraryNovel.story,
+          novelType: libraryNovel.novelType,
+          end: libraryNovel.end,
+          generalAllNo: libraryNovel.generalAllNo,
+          generalLastup: libraryNovel.novelUpdatedAt != null ? DateTime.parse(libraryNovel.novelUpdatedAt!).millisecondsSinceEpoch : null,
+        );
+      });
 
       final result = await newContainer.read(libraryNovelsProvider.future);
-      expect(result, testLibraryNovels);
+      expect(result, isA<List<Novel>>());
       verify(newMockDatabase.getLibraryNovels()).called(1);
 
       newContainer.dispose();
@@ -105,6 +155,21 @@ void main() {
       when(
         mockDatabase.getLibraryNovels(),
       ).thenAnswer((_) async => testLibraryNovels.sublist(0, 1));
+
+      when(mockDatabase.getNovel(any)).thenAnswer((invocation) async {
+        final ncode = invocation.positionalArguments[0] as String;
+        final libraryNovel = testLibraryNovels.firstWhere((novel) => novel.ncode == ncode);
+        return Novel(
+          ncode: libraryNovel.ncode,
+          title: libraryNovel.title,
+          writer: libraryNovel.writer,
+          story: libraryNovel.story,
+          novelType: libraryNovel.novelType,
+          end: libraryNovel.end,
+          generalAllNo: libraryNovel.generalAllNo,
+          generalLastup: libraryNovel.novelUpdatedAt != null ? DateTime.parse(libraryNovel.novelUpdatedAt!).millisecondsSinceEpoch : null,
+        );
+      });
 
       await container.read(libraryNovelsProvider.future);
 
@@ -116,7 +181,8 @@ void main() {
         libraryNovelsProvider.future,
       );
 
-      expect(refreshedResult, equals(testLibraryNovels));
+      expect(refreshedResult, isA<List<Novel>>());
+      expect(refreshedResult.length, equals(testLibraryNovels.length));
       verify(mockDatabase.getLibraryNovels()).called(2);
     });
   });

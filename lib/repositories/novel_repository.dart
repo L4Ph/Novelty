@@ -284,6 +284,8 @@ class NovelRepository {
 
       if (hasChanges) {
         updatedNcodes.add(ncode);
+        // データベースを更新
+        await _db.updateNovelFromApi(ncode, apiNovel);
       }
     }
 

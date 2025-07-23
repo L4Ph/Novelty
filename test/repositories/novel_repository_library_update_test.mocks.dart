@@ -570,6 +570,18 @@ class MockAppDatabase extends _i1.Mock implements _i5.AppDatabase {
           as _i7.Future<int>);
 
   @override
+  _i7.Future<void> updateNovelFromApi(
+    String? ncode,
+    _i2.NovelInfo? apiNovelInfo,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateNovelFromApi, [ncode, apiNovelInfo]),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
   _i7.Future<int> addToHistory(_i5.HistoryCompanion? history) =>
       (super.noSuchMethod(
             Invocation.method(#addToHistory, [history]),

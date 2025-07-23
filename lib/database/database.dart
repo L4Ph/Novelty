@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:novelty/models/novel_content_element.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -462,6 +463,26 @@ class AppDatabase extends _$AppDatabase {
     return (delete(
       novels,
     )..where((t) => t.ncode.equals(ncode.toLowerCase()))).go();
+  }
+
+  /// APIから取得した小説情報でデータベースを更新
+  Future<void> updateNovelFromApi(String ncode, NovelInfo apiNovelInfo) async {
+    final companion = NovelsCompanion(
+      ncode: drift.Value(ncode.toLowerCase()),
+      title: drift.Value(apiNovelInfo.title),
+      writer: drift.Value(apiNovelInfo.writer),
+      story: drift.Value(apiNovelInfo.story),
+      novelType: drift.Value(apiNovelInfo.novelType),
+      end: drift.Value(apiNovelInfo.end),
+      generalAllNo: drift.Value(apiNovelInfo.generalAllNo),
+      generalLastup: drift.Value(
+        apiNovelInfo.generalLastup != null 
+          ? DateTime.parse(apiNovelInfo.generalLastup!).millisecondsSinceEpoch
+          : null,
+      ),
+    );
+
+    await into(novels).insert(companion, mode: InsertMode.insertOrReplace);
   }
 
   /// 履歴の追加

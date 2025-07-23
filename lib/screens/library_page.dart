@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/repositories/novel_repository.dart';
 
 /// 小説のライブラリを表示するためのプロバイダー。
 final libraryNovelsProvider = FutureProvider<List<Novel>>((ref) async {
@@ -81,7 +82,25 @@ class LibraryPage extends ConsumerWidget {
             return const Center(child: Text('ライブラリに小説がありません'));
           }
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(libraryNovelsProvider),
+            onRefresh: () async {
+              // ライブラリ小説更新を実行
+              final repository = ref.read(novelRepositoryProvider);
+              final updatedNcodes = await repository.updateLibraryNovels();
+              
+              // 更新があった場合の通知
+              if (updatedNcodes.isNotEmpty && context.mounted) {
+                final message = updatedNcodes.length == 1
+                    ? '1つの小説が更新されました'
+                    : '${updatedNcodes.length}つの小説が更新されました';
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(message)),
+                );
+              }
+              
+              // ライブラリ情報を再取得
+              ref.invalidate(libraryNovelsProvider);
+            },
             child: ListView.builder(
               itemCount: novels.length,
               itemBuilder: (context, index) {
