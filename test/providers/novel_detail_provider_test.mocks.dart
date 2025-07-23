@@ -490,6 +490,18 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<int>);
 
   @override
+  _i5.Future<void> updateNovelFromApi(
+    String? ncode,
+    _i6.NovelInfo? apiNovelInfo,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateNovelFromApi, [ncode, apiNovelInfo]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
   _i5.Future<int> addToHistory(_i3.HistoryCompanion? history) =>
       (super.noSuchMethod(
             Invocation.method(#addToHistory, [history]),
@@ -1277,4 +1289,12 @@ class MockNovelRepository extends _i1.Mock implements _i12.NovelRepository {
             returnValue: _i5.Stream<bool>.empty(),
           )
           as _i5.Stream<bool>);
+
+  @override
+  _i5.Future<List<String>> updateLibraryNovels() =>
+      (super.noSuchMethod(
+            Invocation.method(#updateLibraryNovels, []),
+            returnValue: _i5.Future<List<String>>.value(<String>[]),
+          )
+          as _i5.Future<List<String>>);
 }
