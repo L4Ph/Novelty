@@ -485,6 +485,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// 履歴データをリアルタイムで監視
+  /// 
+  /// データベースの履歴テーブルに変更があるたびに最新のデータを配信する。
+  /// 履歴データは閲覧日時の降順（新しい順）でソートされる。
   Stream<List<HistoryData>> watchHistory() {
     return (select(
       history,
