@@ -484,6 +484,13 @@ class AppDatabase extends _$AppDatabase {
     )..orderBy([(t) => OrderingTerm.desc(t.viewedAt)])).get();
   }
 
+  /// 履歴データをリアルタイムで監視
+  Stream<List<HistoryData>> watchHistory() {
+    return (select(
+      history,
+    )..orderBy([(t) => OrderingTerm.desc(t.viewedAt)])).watch();
+  }
+
   /// 履歴の削除
   Future<int> deleteHistory(String ncode) {
     return (delete(

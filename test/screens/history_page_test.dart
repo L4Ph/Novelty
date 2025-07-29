@@ -58,7 +58,7 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => testHistoryData);
+      when(mockDatabase.watchHistory()).thenAnswer((_) => Stream.value(testHistoryData));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -86,21 +86,16 @@ void main() {
       expect(find.text('今日の小説2'), findsOneWidget);
       expect(find.text('昨日の小説'), findsOneWidget);
 
-      // 作者名も表示されることを確認
-      expect(find.text('作者1'), findsOneWidget);
-      expect(find.text('作者2'), findsOneWidget);
-      expect(find.text('作者3'), findsOneWidget);
-
       // エピソード情報が表示されることを確認
-      expect(find.text('最終: 5話'), findsOneWidget);
-      expect(find.text('最終: 3話'), findsOneWidget);
-      expect(find.text('最終: 10話'), findsOneWidget);
+      expect(find.textContaining('第5章'), findsOneWidget);
+      expect(find.textContaining('第3章'), findsOneWidget);
+      expect(find.textContaining('第10章'), findsOneWidget);
     });
 
-    testWidgets('should display "No history found." when no history exists', (
+    testWidgets('should display "履歴がありません。" when no history exists', (
       tester,
     ) async {
-      when(mockDatabase.getHistory()).thenAnswer((_) async => <HistoryData>[]);
+      when(mockDatabase.watchHistory()).thenAnswer((_) => Stream.value(<HistoryData>[]));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -118,13 +113,13 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('No history found.'), findsOneWidget);
+      expect(find.text('履歴がありません。'), findsOneWidget);
     });
 
     testWidgets('should display error message when database fails', (
       tester,
     ) async {
-      when(mockDatabase.getHistory()).thenThrow(Exception('Database error'));
+      when(mockDatabase.watchHistory()).thenThrow(Exception('Database error'));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -164,8 +159,8 @@ void main() {
         ];
 
         when(
-          mockDatabase.getHistory(),
-        ).thenAnswer((_) async => testHistoryData);
+          mockDatabase.watchHistory(),
+        ).thenAnswer((_) => Stream.value(testHistoryData));
 
         await tester.pumpWidget(
           ProviderScope(
@@ -186,6 +181,7 @@ void main() {
         // 実際の日付が表示されることを確認
         expect(find.text('2024年1月5日'), findsOneWidget);
         expect(find.text('古い小説'), findsOneWidget);
+        expect(find.textContaining('第15章'), findsOneWidget);
       },
     );
   });

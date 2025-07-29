@@ -46,59 +46,73 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => testHistoryData);
+      when(mockDatabase.watchHistory()).thenAnswer((_) => Stream.value(testHistoryData));
 
-      final result = await container.read(historyProvider.future);
+      // StreamProviderをlistenして結果を取得
+      AsyncValue<List<HistoryData>>? result;
+      container.listen<AsyncValue<List<HistoryData>>>(
+        historyProvider,
+        (previous, next) {
+          result = next;
+        },
+      );
 
-      expect(result, equals(testHistoryData));
-      expect(result.length, equals(2));
-      expect(result[0].ncode, equals('N1234AB'));
-      expect(result[0].title, equals('テスト小説'));
-      expect(result[1].ncode, equals('N5678CD'));
-      verify(mockDatabase.getHistory()).called(1);
-    });
+      // ProviderContainerを一度読み込むことでlistenをトリガー
+      container.read(historyProvider);
+
+      // 少し待ってStreamが評価される時間を作る
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      expect(result, isA<AsyncData<List<HistoryData>>>());
+      final data = result!.asData!.value;
+      expect(data, equals(testHistoryData));
+      expect(data.length, equals(2));
+      expect(data[0].ncode, equals('N1234AB'));
+      expect(data[0].title, equals('テスト小説'));
+      expect(data[1].ncode, equals('N5678CD'));
+      verify(mockDatabase.watchHistory()).called(1);
+    }, timeout: const Timeout(Duration(seconds: 5)));
 
     test('should return empty list when no history exists', () async {
-      when(mockDatabase.getHistory()).thenAnswer((_) async => <HistoryData>[]);
+      when(mockDatabase.watchHistory()).thenAnswer((_) => Stream.value(<HistoryData>[]));
 
-      final result = await container.read(historyProvider.future);
+      AsyncValue<List<HistoryData>>? result;
+      container.listen<AsyncValue<List<HistoryData>>>(
+        historyProvider,
+        (previous, next) {
+          result = next;
+        },
+      );
 
-      expect(result, isEmpty);
-      verify(mockDatabase.getHistory()).called(1);
-    });
+      container.read(historyProvider);
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      expect(result, isA<AsyncData<List<HistoryData>>>());
+      final data = result!.asData!.value;
+      expect(data, isEmpty);
+      verify(mockDatabase.watchHistory()).called(1);
+    }, timeout: const Timeout(Duration(seconds: 5)));
 
     test('should handle database errors', () async {
-      when(mockDatabase.getHistory()).thenThrow(Exception('Database error'));
+      when(mockDatabase.watchHistory()).thenAnswer((_) => Stream.error(Exception('Database error')));
 
-      expect(
-        () => container.read(historyProvider.future),
-        throwsA(isA<Exception>()),
+      AsyncValue<List<HistoryData>>? result;
+      container.listen<AsyncValue<List<HistoryData>>>(
+        historyProvider,
+        (previous, next) {
+          result = next;
+        },
       );
-      verify(mockDatabase.getHistory()).called(1);
-    });
 
-    test('should cache results and not call database multiple times', () async {
-      final testHistoryData = [
-        HistoryData(
-          ncode: 'N1234AB',
-          title: 'テスト小説',
-          writer: 'テスト作者',
-          lastEpisode: 5,
-          viewedAt: DateTime.now().millisecondsSinceEpoch,
-          updatedAt: DateTime.now().millisecondsSinceEpoch,
-        ),
-      ];
+      container.read(historyProvider);
+      await Future.delayed(const Duration(milliseconds: 10));
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => testHistoryData);
+      expect(result, isA<AsyncError<List<HistoryData>>>());
+      expect(result!.asError!.error, isA<Exception>());
+      verify(mockDatabase.watchHistory()).called(1);
+    }, timeout: const Timeout(Duration(seconds: 5)));
 
-      final result1 = await container.read(historyProvider.future);
-      final result2 = await container.read(historyProvider.future);
-
-      expect(result1, equals(result2));
-      verify(mockDatabase.getHistory()).called(1);
-    });
-
-    test('should refresh data when provider is refreshed', () async {
+    test('should continuously emit data when stream changes', () async {
       final initialData = [
         HistoryData(
           ncode: 'N1234AB',
@@ -110,7 +124,7 @@ void main() {
         ),
       ];
 
-      final refreshedData = [
+      final updatedData = [
         HistoryData(
           ncode: 'N1234AB',
           title: 'テスト小説',
@@ -129,19 +143,31 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => initialData);
+      when(mockDatabase.watchHistory()).thenAnswer((_) => Stream.fromIterable([initialData, updatedData]));
 
-      final initialResult = await container.read(historyProvider.future);
-      expect(initialResult.length, equals(1));
+      final results = <AsyncValue<List<HistoryData>>>[];
+      container.listen<AsyncValue<List<HistoryData>>>(
+        historyProvider,
+        (previous, next) {
+          results.add(next);
+        },
+      );
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => refreshedData);
+      container.read(historyProvider);
+      await Future.delayed(const Duration(milliseconds: 100));
 
-      container.refresh(historyProvider);
-      final refreshedResult = await container.read(historyProvider.future);
-      expect(refreshedResult.length, equals(2));
-      expect(refreshedResult[1].ncode, equals('N5678CD'));
+      expect(results.length, greaterThanOrEqualTo(2));
+      expect(results[0], isA<AsyncData<List<HistoryData>>>());
+      expect(results[0].asData!.value.length, equals(1));
+      expect(results[0].asData!.value[0].lastEpisode, equals(5));
+      
+      if (results.length > 1) {
+        expect(results[1], isA<AsyncData<List<HistoryData>>>());
+        expect(results[1].asData!.value.length, equals(2));
+        expect(results[1].asData!.value[0].lastEpisode, equals(6));
+      }
 
-      verify(mockDatabase.getHistory()).called(2);
-    });
+      verify(mockDatabase.watchHistory()).called(1);
+    }, timeout: const Timeout(Duration(seconds: 5)));
   });
 }
