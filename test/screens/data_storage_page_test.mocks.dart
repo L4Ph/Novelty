@@ -109,9 +109,16 @@ class MockBackupService extends _i1.Mock implements _i2.BackupService {
           as _i3.Future<int>);
 
   @override
-  _i3.Future<int> restoreFromDownloadDirectory(String? downloadPath) =>
+  _i3.Future<int> restoreFromDownloadDirectory(
+    String? downloadPath, {
+    required bool? addToLibrary,
+  }) =>
       (super.noSuchMethod(
-            Invocation.method(#restoreFromDownloadDirectory, [downloadPath]),
+            Invocation.method(
+              #restoreFromDownloadDirectory,
+              [downloadPath],
+              {#addToLibrary: addToLibrary},
+            ),
             returnValue: _i3.Future<int>.value(0),
           )
           as _i3.Future<int>);

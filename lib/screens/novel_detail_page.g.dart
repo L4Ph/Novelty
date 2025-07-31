@@ -392,7 +392,7 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'ad6c8e3a0e77275e553bd8986f3b3673031e6272';
+String _$downloadStatusHash() => r'e2a164e59bd8d4b07f0a019270a485e4bbb6c469';
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///

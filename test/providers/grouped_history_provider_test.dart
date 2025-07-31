@@ -4,6 +4,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/providers/grouped_history_provider.dart';
+import 'package:novelty/utils/history_grouping.dart';
 
 @GenerateMocks([AppDatabase])
 import 'grouped_history_provider_test.mocks.dart';
@@ -77,48 +78,79 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => testHistoryData);
+      when(mockDatabase.watchHistory()).thenAnswer((_) => Stream.value(testHistoryData));
 
-      final result = await container.read(groupedHistoryProvider.future);
+      AsyncValue<List<HistoryGroup>>? result;
+      container.listen<AsyncValue<List<HistoryGroup>>>(
+        groupedHistoryProvider,
+        (previous, next) {
+          result = next;
+        },
+      );
 
-      expect(result.length, 3); // 今日、1日前、古い日付の3グループ
+      container.read(groupedHistoryProvider);
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      expect(result, isA<AsyncData<List<HistoryGroup>>>());
+      final groups = result!.asData!.value;
+      expect(groups.length, 3); // 今日、1日前、古い日付の3グループ
 
       // 今日のグループ
-      expect(result[0].dateLabel, '今日');
-      expect(result[0].items.length, 2);
-      expect(result[0].items[0].ncode, 'today1'); // 新しい順
-      expect(result[0].items[1].ncode, 'today2');
+      expect(groups[0].dateLabel, '今日');
+      expect(groups[0].items.length, 2);
+      expect(groups[0].items[0].ncode, 'today1'); // 新しい順
+      expect(groups[0].items[1].ncode, 'today2');
 
       // 1日前のグループ
-      expect(result[1].dateLabel, '1日前');
-      expect(result[1].items.length, 1);
-      expect(result[1].items[0].ncode, 'yesterday1');
+      expect(groups[1].dateLabel, '1日前');
+      expect(groups[1].items.length, 1);
+      expect(groups[1].items[0].ncode, 'yesterday1');
 
       // 古い日付のグループ（実際の日付が表示される）
-      expect(result[2].dateLabel, '2024年1月5日');
-      expect(result[2].items.length, 1);
-      expect(result[2].items[0].ncode, 'old1');
+      expect(groups[2].dateLabel, '2024年1月5日');
+      expect(groups[2].items.length, 1);
+      expect(groups[2].items[0].ncode, 'old1');
 
-      verify(mockDatabase.getHistory()).called(1);
-    });
+      verify(mockDatabase.watchHistory()).called(1);
+    }, timeout: const Timeout(Duration(seconds: 5)));
 
     test('should return empty list when no history exists', () async {
-      when(mockDatabase.getHistory()).thenAnswer((_) async => <HistoryData>[]);
+      when(mockDatabase.watchHistory()).thenAnswer((_) => Stream.value(<HistoryData>[]));
 
-      final result = await container.read(groupedHistoryProvider.future);
+      AsyncValue<List<HistoryGroup>>? result;
+      container.listen<AsyncValue<List<HistoryGroup>>>(
+        groupedHistoryProvider,
+        (previous, next) {
+          result = next;
+        },
+      );
 
-      expect(result, isEmpty);
-      verify(mockDatabase.getHistory()).called(1);
-    });
+      container.read(groupedHistoryProvider);
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      expect(result, isA<AsyncData<List<HistoryGroup>>>());
+      final groups = result!.asData!.value;
+      expect(groups, isEmpty);
+      verify(mockDatabase.watchHistory()).called(1);
+    }, timeout: const Timeout(Duration(seconds: 5)));
 
     test('should handle database errors', () async {
-      when(mockDatabase.getHistory()).thenThrow(Exception('Database error'));
+      when(mockDatabase.watchHistory()).thenAnswer((_) => Stream.error(Exception('Database error')));
 
-      expect(
-        () => container.read(groupedHistoryProvider.future),
-        throwsA(isA<Exception>()),
+      AsyncValue<List<HistoryGroup>>? result;
+      container.listen<AsyncValue<List<HistoryGroup>>>(
+        groupedHistoryProvider,
+        (previous, next) {
+          result = next;
+        },
       );
-      verify(mockDatabase.getHistory()).called(1);
-    });
+
+      container.read(groupedHistoryProvider);
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      expect(result, isA<AsyncError<List<HistoryGroup>>>());
+      expect(result!.asError!.error, isA<Exception>());
+      verify(mockDatabase.watchHistory()).called(1);
+    }, timeout: const Timeout(Duration(seconds: 5)));
   });
 }
