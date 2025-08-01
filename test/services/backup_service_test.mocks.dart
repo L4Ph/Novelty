@@ -10,6 +10,7 @@ import 'package:drift/src/runtime/executor/stream_queries.dart' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
 import 'package:novelty/database/database.dart' as _i3;
+import 'package:novelty/models/novel_info.dart' as _i7;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -463,6 +464,18 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
             returnValue: _i5.Future<int>.value(0),
           )
           as _i5.Future<int>);
+
+  @override
+  _i5.Future<void> updateNovelFromApi(
+    String? ncode,
+    _i7.NovelInfo? apiNovelInfo,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateNovelFromApi, [ncode, apiNovelInfo]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
 
   @override
   _i5.Future<int> addToHistory(_i3.HistoryCompanion? history) =>
