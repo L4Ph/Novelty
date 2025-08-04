@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/novel_content_element.dart';
+import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/providers/enriched_novel_provider.dart';
+import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/novel_parser.dart';
 import 'package:novelty/utils/settings_provider.dart';
@@ -64,12 +67,51 @@ class NovelRepository {
   /// ダウンロード進捗を監視するストリーム
   Stream<DownloadProgress> watchDownloadProgress(String ncode) {
     final normalizedNcode = ncode.toLowerCase();
-    _progressControllers
-        .putIfAbsent(normalizedNcode, () => StreamController.broadcast());
+    _progressControllers.putIfAbsent(
+      normalizedNcode,
+      StreamController.broadcast,
+    );
     return _progressControllers[normalizedNcode]!.stream;
   }
 
-  
+  /// 小説をライブラリに追加する。
+  ///
+  /// 既に存在する場合は何もしない。
+  /// 成功した場合はtrueを、既に存在した場合はfalseを返す。
+  Future<bool> addNovelToLibrary(String ncode) async {
+    final ncodeLower = ncode.toLowerCase();
+
+    // 既にライブラリに存在するかチェック
+    final isInLibrary = await _db.isInLibrary(ncodeLower);
+    if (isInLibrary) {
+      return false;
+    }
+
+    // ライブラリに追加
+    final novelInfo = await apiService.fetchNovelInfo(ncodeLower);
+
+    // Novelテーブルに保存
+    await _db.insertNovel(novelInfo.toDbCompanion());
+
+    // LibraryNovelsテーブルに追加
+    await _db.addToLibrary(
+      LibraryNovelsCompanion(
+        ncode: Value(ncodeLower),
+        addedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+
+    // Providersを無効化してUIを更新
+    ref
+      ..invalidate(libraryNovelsProvider)
+      ..invalidate(enrichedRankingDataProvider('d'))
+      ..invalidate(enrichedRankingDataProvider('w'))
+      ..invalidate(enrichedRankingDataProvider('m'))
+      ..invalidate(enrichedRankingDataProvider('q'))
+      ..invalidate(enrichedRankingDataProvider('all'));
+
+    return true;
+  }
 
   Future<List<NovelContentElement>> _fetchEpisodeContent(
     String ncode,
@@ -216,7 +258,7 @@ class NovelRepository {
       // エラーを再スロー
       rethrow;
     } finally {
-      progressController?.close();
+      await progressController?.close();
       _progressControllers.remove(ncodeLower);
     }
   }

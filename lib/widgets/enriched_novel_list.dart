@@ -1,12 +1,9 @@
-import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:novelty/database/database.dart';
-import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
-import 'package:novelty/screens/library_page.dart';
-import 'package:novelty/services/api_service.dart';
+import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 /// 豊富な情報（ライブラリ状態を含む）を持つ小説リストを表示するウィジェット。
@@ -27,72 +24,39 @@ class EnrichedNovelList extends HookConsumerWidget {
   /// ウィジェットを構築します。
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final apiService = ApiService();
-    final db = ref.watch(appDatabaseProvider);
-    
+    final novelRepository = ref.watch(novelRepositoryProvider);
+
     // ローカル状態の管理
     final isProcessingMap = useState<Map<String, bool>>({});
     final errorMessage = useState<String?>(null);
 
     // ライブラリ追加処理のコールバック
     final addToLibraryCallback = useCallback(
-      (EnrichedNovelData enrichedItem) async {
-        final ncode = enrichedItem.novel.ncode;
+      (RankingResponse item) async {
+        final ncode = item.ncode;
         if (isProcessingMap.value[ncode] ?? false) {
           return; // 処理中の場合は何もしない
         }
 
         // エラーメッセージをクリア
         errorMessage.value = null;
-
-        if (!context.mounted) {
-          return;
-        }
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
         try {
-          // 既にライブラリに存在するかチェック
-          if (enrichedItem.isInLibrary) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('すでにライブラリに登録されています')),
-              );
-            }
-            return;
-          }
-
           // 処理開始をマーク
-          isProcessingMap.value = {
-            ...isProcessingMap.value,
-            ncode: true,
-          };
+          isProcessingMap.value = {...isProcessingMap.value, ncode: true};
 
-          // ライブラリに追加
-          final novelInfo = await apiService.fetchNovelInfo(ncode);
-          
-          // Novelテーブルに保存（favは設定しない）
-          await db.insertNovel(novelInfo.toDbCompanion());
-          
-          // LibraryNovelsテーブルに追加
-          await db.addToLibrary(
-            LibraryNovelsCompanion(
-              ncode: Value(ncode),
-              addedAt: Value(DateTime.now().millisecondsSinceEpoch),
-            ),
-          );
+          final success = await novelRepository.addNovelToLibrary(ncode);
 
-          // Providersを無効化してUIを更新
-          ref
-            ..invalidate(libraryNovelsProvider)
-            ..invalidate(enrichedRankingDataProvider('d'))
-            ..invalidate(enrichedRankingDataProvider('w'))
-            ..invalidate(enrichedRankingDataProvider('m'))
-            ..invalidate(enrichedRankingDataProvider('q'))
-            ..invalidate(enrichedRankingDataProvider('all'));
-
-          if (context.mounted) {
+          if (!context.mounted) return;
+          if (success) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('ライブラリに追加しました')),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('すでにライブラリに登録されています')),
             );
           }
         } on Exception catch (e) {
@@ -104,13 +68,10 @@ class EnrichedNovelList extends HookConsumerWidget {
           }
         } finally {
           // 処理完了をマーク
-          isProcessingMap.value = {
-            ...isProcessingMap.value,
-            ncode: false,
-          };
+          isProcessingMap.value = {...isProcessingMap.value, ncode: false};
         }
       },
-      [apiService, db, ref],
+      [novelRepository],
     );
 
     return ListView.builder(
@@ -123,7 +84,7 @@ class EnrichedNovelList extends HookConsumerWidget {
           item: item,
           enrichedData: enrichedItem,
           isRanking: isRanking,
-          onLongPress: () => addToLibraryCallback(enrichedItem),
+          onLongPress: () => addToLibraryCallback(item),
         );
       },
     );
