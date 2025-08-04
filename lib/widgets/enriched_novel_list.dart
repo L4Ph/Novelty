@@ -24,6 +24,7 @@ class EnrichedNovelList extends HookConsumerWidget {
   /// ランキングリストかどうか。
   final bool isRanking;
 
+  /// ウィジェットを構築します。
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final apiService = ApiService();
