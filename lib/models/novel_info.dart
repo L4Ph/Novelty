@@ -182,6 +182,7 @@ extension NovelInfoEx on NovelInfo {
       rateCount: Value(allHyokaCnt),
       allPoint: Value(allPoint),
       pointCount: Value(impressionCnt),
+      dailyPoint: Value(dailyPoint),
       weeklyPoint: Value(weeklyPoint),
       monthlyPoint: Value(monthlyPoint),
       quarterPoint: Value(quarterPoint),
