@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/widgets/ruby_text_widget.dart';
 
 /// 小説のコンテンツを表示するウィジェット。
-class NovelContentView extends StatelessWidget {
+class NovelContentView extends HookWidget {
   /// コンストラクタ。
   const NovelContentView({required this.elements, super.key});
 
@@ -13,18 +14,29 @@ class NovelContentView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final defaultStyle = DefaultTextStyle.of(context).style;
+    
     // ルビの高さを考慮して、行の高さを少し多めに確保する
-    final strutStyle = StrutStyle(
-      fontSize: defaultStyle.fontSize,
-      height: 1.8, // 行間の倍率
-      forceStrutHeight: true,
+    // スタイル計算をメモ化してパフォーマンスを向上
+    final strutStyle = useMemoized(
+      () => StrutStyle(
+        fontSize: defaultStyle.fontSize,
+        height: 1.8, // 行間の倍率
+        forceStrutHeight: true,
+      ),
+      [defaultStyle.fontSize],
+    );
+
+    // span生成処理をメモ化してelementsが変更された時のみ再計算
+    final spans = useMemoized(
+      () => buildSpans(elements, defaultStyle),
+      [elements, defaultStyle],
     );
 
     return RichText(
       strutStyle: strutStyle,
       text: TextSpan(
         style: defaultStyle,
-        children: buildSpans(elements, defaultStyle),
+        children: spans,
       ),
     );
   }
