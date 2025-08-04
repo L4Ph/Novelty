@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_riverpod/misc.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
 import 'package:novelty/widgets/tategaki.dart';
+import 'package:riverpod/src/providers/future_provider.dart';
 
 /// 小説のコンテンツを取得するプロバイダー。
 final FutureProviderFamily<
@@ -44,68 +44,86 @@ class NovelContent extends HookConsumerWidget {
       novelContentProvider((ncode: ncode, episode: episode)),
     );
 
+    return SafeArea(
+      top: false, // AppBarがあるので上は不要
+      child: NovelContentBody(
+        settings: settings,
+        content: contentAsync,
+      ),
+    );
+  }
+}
+
+/// 設定とコンテンツの状態に応じて表示を切り替える内部ウィジェット。
+@visibleForTesting
+class NovelContentBody extends HookWidget {
+  /// コンストラクタ
+  const NovelContentBody({
+    required this.settings,
+    required this.content,
+    super.key,
+  });
+
+  /// 設定の状態
+  final AsyncValue<AppSettings> settings;
+
+  /// コンテンツの状態
+  final AsyncValue<List<NovelContentElement>> content;
+
+  @override
+  Widget build(BuildContext context) {
     // テーマのbrightnessとテキストカラーの計算をメモ化
     final textColor = useMemoized(() {
       final brightness = Theme.of(context).brightness;
       return brightness == Brightness.dark ? Colors.white : Colors.black;
     }, [Theme.of(context).brightness]);
 
-    // コンテンツ構築関数をメモ化
-    final buildContent = useCallback(
-      (AppSettings settings, List<NovelContentElement> content) {
-        final textStyle = settings.selectedFontTheme.copyWith(
-          fontSize: settings.fontSize,
-          color: textColor,
-        );
+    return settings.when(
+      data: (settingsData) {
+        return content.when(
+          data: (contentData) {
+            final textStyle = settingsData.selectedFontTheme.copyWith(
+              fontSize: settingsData.fontSize,
+              color: textColor,
+            );
 
-        if (settings.isVertical) {
-          return Directionality(
-            textDirection: TextDirection.rtl,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            if (settingsData.isVertical) {
+              return Directionality(
+                textDirection: TextDirection.rtl,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.all(16),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return RepaintBoundary(
+                        child: Tategaki(
+                          contentData,
+                          style: textStyle,
+                          maxHeight: constraints.maxHeight,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            }
+
+            return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return RepaintBoundary(
-                    child: Tategaki(
-                      content,
-                      style: textStyle,
-                      maxHeight: constraints.maxHeight,
-                    ),
-                  );
-                },
+              child: RepaintBoundary(
+                child: DefaultTextStyle(
+                  style: textStyle,
+                  child: NovelContentView(elements: contentData),
+                ),
               ),
-            ),
-          );
-        }
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: RepaintBoundary(
-            child: DefaultTextStyle(
-              style: textStyle,
-              child: NovelContentView(elements: content),
-            ),
-          ),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => Center(child: Text('Error: $err')),
         );
       },
-      [textColor],
-    );
-
-    // SafeAreaを適用して、ナビゲーションバーと干渉しないように
-    return SafeArea(
-      top: false, // AppBarがあるので上は不要
-      child: settings.when(
-        data: (settings) {
-          return contentAsync.when(
-            data: (content) => buildContent(settings, content),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, stack) => Center(child: Text('Error: $err')),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
-      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Error: $err')),
     );
   }
 }
