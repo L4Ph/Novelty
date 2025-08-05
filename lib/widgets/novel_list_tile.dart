@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/utils/app_constants.dart';
 
 /// 小説リストのタイルを表示するウィジェット。
-class NovelListTile extends StatelessWidget {
+class NovelListTile extends HookWidget {
   /// コンストラクタ。
   const NovelListTile({
     required this.item,
@@ -33,17 +34,39 @@ class NovelListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = item.title ?? 'タイトルなし';
-    final genreName = item.genre != null && item.genre != -1
-        ? genreList.firstWhere(
-                (g) => g['id'] == item.genre,
-                orElse: () => {'name': '不明'},
-              )['name']
-              as String
-        : '不明';
-    final status = item.end == null || item.end == -1 || item.novelType == null
-        ? '情報取得失敗'
-        : (item.novelType == 2 ? '短編' : (item.end == 0 ? '完結済' : '連載中'));
+    // タイトルの計算をメモ化してパフォーマンスを最適化
+    final title = useMemoized(
+      () => item.title ?? 'タイトルなし',
+      [item.title],
+    );
+
+    // ジャンル名の計算をメモ化
+    final genreName = useMemoized(
+      () => item.genre != null && item.genre != -1
+          ? genreList.firstWhere(
+                  (g) => g['id'] == item.genre,
+                  orElse: () => {'name': '不明'},
+                )['name']
+                as String
+          : '不明',
+      [item.genre],
+    );
+
+    // ステータスの計算をメモ化
+    final status = useMemoized(
+      () => item.end == null || item.end == -1 || item.novelType == null
+          ? '情報取得失敗'
+          : (item.novelType == 2 ? '短編' : (item.end == 0 ? '完結済' : '連載中')),
+      [item.end, item.novelType],
+    );
+
+    // デフォルトのonTapハンドラーをメモ化
+    final defaultOnTap = useCallback(
+      () {
+        context.push('/novel/${item.ncode}');
+      },
+      [item.ncode],
+    );
 
     return Card(
       elevation: 0,
@@ -61,11 +84,7 @@ class NovelListTile extends StatelessWidget {
         subtitle: Text(
           'Nコード: ${item.ncode} - ${item.allPoint ?? item.pt ?? 0}pt\nジャンル: $genreName - $status',
         ),
-        onTap:
-            onTap ??
-            () {
-              context.push('/novel/${item.ncode}');
-            },
+        onTap: onTap ?? defaultOnTap,
         onLongPress: onLongPress,
       ),
     );
