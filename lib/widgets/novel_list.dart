@@ -28,6 +28,9 @@ class NovelList extends HookConsumerWidget {
     final isProcessingMap = useState<Map<String, bool>>({});
     final errorMessage = useState<String?>(null);
 
+    // ApiServiceインスタンスをメモ化
+    final apiService = useMemoized(ApiService.new, []);
+
     // ライブラリ追加処理のコールバック
     final addToLibraryCallback = useCallback(
       (RankingResponse item) async {
@@ -85,7 +88,7 @@ class NovelList extends HookConsumerWidget {
           isProcessingMap.value = {...isProcessingMap.value, ncode: false};
         }
       },
-      [db, ref],
+      [db, ref, apiService],
     );
 
     return ListView.builder(
