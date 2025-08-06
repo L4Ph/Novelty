@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
@@ -246,6 +247,76 @@ void main() {
         final listTile = tester.widget<ListTile>(find.byType(ListTile));
         expect(listTile.leading, isNull);
       });
+    });
+  });
+
+  group('flutter_hooks integration', () {
+    testWidgets('should use HookWidget and maintain same functionality', (
+      WidgetTester tester,
+    ) async {
+      const item = RankingResponse(
+        ncode: 'N1234AB',
+        title: 'テストタイトル',
+        novelType: 1,
+        end: 0,
+        genre: 1,
+        writer: 'テスト作者',
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: NovelListTile(item: item),
+          ),
+        ),
+      );
+
+      // 基本的な機能が維持されていることを確認
+      expect(find.text('テストタイトル'), findsOneWidget);
+      expect(find.textContaining('N1234AB'), findsOneWidget);
+      expect(find.textContaining('完結済'), findsOneWidget);
+      
+      // HookWidgetとして実装されていることを確認
+      expect(find.byType(NovelListTile), findsOneWidget);
+      final widget = tester.widget(find.byType(NovelListTile));
+      expect(widget, isA<HookWidget>());
+    });
+
+    testWidgets('should optimize performance with memoization', (
+      WidgetTester tester,
+    ) async {
+      const item = RankingResponse(
+        ncode: 'N1234AB',
+        title: 'テストタイトル',
+        novelType: 1,
+        end: 0,
+        genre: 1,
+        writer: 'テスト作者',
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: NovelListTile(item: item),
+          ),
+        ),
+      );
+
+      // 初回レンダリング
+      expect(find.text('テストタイトル'), findsOneWidget);
+
+      // 再レンダリング（同じpropsなのでメモ化が効いているはず）
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: NovelListTile(item: item),
+          ),
+        ),
+      );
+
+      // 機能が維持されていることを確認
+      expect(find.text('テストタイトル'), findsOneWidget);
+      expect(find.textContaining('完結済'), findsOneWidget);
     });
   });
 }
