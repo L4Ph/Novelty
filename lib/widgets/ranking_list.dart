@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 /// ランキングリストを表示するウィジェット。
-class RankingList extends ConsumerStatefulWidget {
+class RankingList extends HookConsumerWidget {
   /// コンストラクタ。
   const RankingList({
     required this.rankingType,
@@ -24,64 +25,121 @@ class RankingList extends ConsumerStatefulWidget {
   final int? selectedGenre;
 
   @override
-  ConsumerState<RankingList> createState() => _RankingListState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Hooksでローカル状態管理
+    final allNovelData = useState<List<EnrichedNovelData>>([]);
+    final filteredNovelData = useState<List<EnrichedNovelData>>([]);
+    final isLoadingMore = useState(false);
+    final isInitialLoad = useState(true);
 
-class _RankingListState extends ConsumerState<RankingList>
-    with AutomaticKeepAliveClientMixin<RankingList> {
-  List<EnrichedNovelData> _allNovelData = [];
-  List<EnrichedNovelData> _filteredNovelData = [];
-  final _scrollController = ScrollController();
-  var _isLoadingMore = false;
-  var _isInitialLoad = true;
+    // ScrollControllerをuseMemoizedで管理
+    final scrollController = useMemoized(ScrollController.new, []);
 
-  @override
-  bool get wantKeepAlive => true;
+    // スクロールリスナーの関数
+    void onScroll() {
+      if (isLoadingMore.value || !context.mounted) return;
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
+      final maxScroll = scrollController.position.maxScrollExtent;
+      final currentScroll = scrollController.position.pixels;
+      const delta = 200.0;
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(RankingList oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.showOnlyOngoing != oldWidget.showOnlyOngoing ||
-        widget.selectedGenre != oldWidget.selectedGenre) {
-      _applyFiltersAndReset();
-    }
-  }
-
-  void _applyFiltersAndReset() {
-    _applyFilters();
-    if (mounted) {
-      setState(() {
-        _isInitialLoad = true;
-      });
-      _loadMore();
-    }
-  }
-
-  void _applyFilters() {
-    if (_allNovelData.isEmpty) {
-      if (mounted) {
-        setState(() {
-          _filteredNovelData = [];
-        });
+      if (currentScroll >= maxScroll - delta) {
+        _loadMore(
+          context,
+          ref,
+          filteredNovelData,
+          isLoadingMore,
+          isInitialLoad,
+          allNovelData,
+          rankingType,
+          showOnlyOngoing,
+          selectedGenre,
+        );
       }
+    }
+
+    // useEffectでスクロールリスナーの設定・解除
+    useEffect(() {
+      scrollController.addListener(onScroll);
+      return () {
+        scrollController
+          ..removeListener(onScroll)
+          ..dispose();
+      };
+    }, [scrollController]);
+
+    // フィルタ変更時の処理
+    useEffect(() {
+      _applyFiltersAndReset(
+        allNovelData,
+        filteredNovelData,
+        isInitialLoad,
+        isLoadingMore,
+        context,
+        ref,
+        rankingType,
+        showOnlyOngoing,
+        selectedGenre,
+      );
+      return null;
+    }, [showOnlyOngoing, selectedGenre]);
+
+    return _buildWidget(
+      context,
+      ref,
+      allNovelData,
+      filteredNovelData,
+      isLoadingMore,
+      isInitialLoad,
+      scrollController,
+      rankingType,
+      showOnlyOngoing,
+      selectedGenre,
+    );
+  }
+
+  static void _applyFiltersAndReset(
+    ValueNotifier<List<EnrichedNovelData>> allNovelData,
+    ValueNotifier<List<EnrichedNovelData>> filteredNovelData,
+    ValueNotifier<bool> isInitialLoad,
+    ValueNotifier<bool> isLoadingMore,
+    BuildContext context,
+    WidgetRef ref,
+    String rankingType,
+    bool showOnlyOngoing,
+    int? selectedGenre,
+  ) {
+    _applyFilters(allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre);
+    if (context.mounted) {
+      isInitialLoad.value = true;
+      _loadMore(
+        context,
+        ref,
+        filteredNovelData,
+        isLoadingMore,
+        isInitialLoad,
+        allNovelData,
+        rankingType,
+        showOnlyOngoing,
+        selectedGenre,
+      );
+    }
+  }
+
+  static void _applyFilters(
+    ValueNotifier<List<EnrichedNovelData>> allNovelData,
+    ValueNotifier<List<EnrichedNovelData>> filteredNovelData,
+    bool showOnlyOngoing,
+    int? selectedGenre,
+  ) {
+    if (allNovelData.value.isEmpty) {
+      filteredNovelData.value = [];
       return;
     }
 
-    var filtered = List<EnrichedNovelData>.from(_allNovelData);
+    var filtered = List<EnrichedNovelData>.from(allNovelData.value);
 
-    if (widget.showOnlyOngoing) {
+    if (showOnlyOngoing) {
       filtered = filtered.where((enrichedNovel) {
         final novel = enrichedNovel.novel;
         // Allow items with null end status to pass through initially
@@ -90,63 +148,53 @@ class _RankingListState extends ConsumerState<RankingList>
       }).toList();
     }
 
-    if (widget.selectedGenre != null) {
+    if (selectedGenre != null) {
       filtered = filtered.where((enrichedNovel) {
         final novel = enrichedNovel.novel;
         // Allow items with null genre to pass through initially
         // They will be filtered properly after details are loaded
-        return novel.genre == null || novel.genre == widget.selectedGenre;
+        return novel.genre == null || novel.genre == selectedGenre;
       }).toList();
     }
 
-    if (mounted) {
-      setState(() {
-        _filteredNovelData = filtered;
-      });
-    }
+    filteredNovelData.value = filtered;
   }
 
-  void _onScroll() {
-    if (_isLoadingMore || !mounted) return;
+  static Future<void> _loadMore(
+    BuildContext context,
+    WidgetRef ref,
+    ValueNotifier<List<EnrichedNovelData>> filteredNovelData,
+    ValueNotifier<bool> isLoadingMore,
+    ValueNotifier<bool> isInitialLoad,
+    ValueNotifier<List<EnrichedNovelData>> allNovelData,
+    String rankingType,
+    bool showOnlyOngoing,
+    int? selectedGenre,
+  ) async {
+    if (isLoadingMore.value || !context.mounted) return;
 
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.position.pixels;
-    const delta = 200.0;
-
-    if (currentScroll >= maxScroll - delta) {
-      _loadMore();
-    }
-  }
-
-  Future<void> _loadMore() async {
-    if (_isLoadingMore || !mounted) return;
-
-    final itemsToLoad = _isInitialLoad ? 20 : 10;
-    final currentLoadedCount = _filteredNovelData
+    final itemsToLoad = isInitialLoad.value ? 20 : 10;
+    final currentLoadedCount = filteredNovelData.value
         .where((n) => n.novel.title != null)
         .length;
 
-    if (currentLoadedCount >= _filteredNovelData.length) {
+    if (currentLoadedCount >= filteredNovelData.value.length) {
       return; // All items loaded
     }
 
-    setState(() {
-      _isLoadingMore = true;
-      if (_isInitialLoad) {
-        _isInitialLoad = false;
-      }
-    });
+    isLoadingMore.value = true;
+    if (isInitialLoad.value) {
+      isInitialLoad.value = false;
+    }
 
-    final nextNcodeSlice = _filteredNovelData
+    final nextNcodeSlice = filteredNovelData.value
         .where((n) => n.novel.title == null)
         .take(itemsToLoad)
         .map((n) => n.novel.ncode)
         .toList();
 
     if (nextNcodeSlice.isEmpty) {
-      setState(() {
-        _isLoadingMore = false;
-      });
+      isLoadingMore.value = false;
       return;
     }
 
@@ -155,92 +203,108 @@ class _RankingListState extends ConsumerState<RankingList>
       nextNcodeSlice,
     );
 
-    if (!mounted) return;
+    if (!context.mounted) return;
 
-    // Update both _filteredNovelData and _allNovelData with complete information
-    setState(() {
-      _filteredNovelData = _filteredNovelData.map((enrichedNovel) {
-        final novel = enrichedNovel.novel;
-        if (novelDetails.containsKey(novel.ncode)) {
-          final details = novelDetails[novel.ncode]!;
-          return EnrichedNovelData(
-            novel: novel.copyWith(
-              title: details.title,
-              writer: details.writer,
-              story: details.story,
-              novelType: details.novelType,
-              end: details.end,
-              genre: details.genre,
-              generalAllNo: details.generalAllNo,
-              keyword: details.keyword,
-              allPoint: details.allPoint,
-            ),
-            isInLibrary: enrichedNovel.isInLibrary,
-          );
-        }
-        return enrichedNovel;
-      }).toList();
+    // Update both filteredNovelData and allNovelData with complete information
+    filteredNovelData.value = filteredNovelData.value.map((enrichedNovel) {
+      final novel = enrichedNovel.novel;
+      if (novelDetails.containsKey(novel.ncode)) {
+        final details = novelDetails[novel.ncode]!;
+        return EnrichedNovelData(
+          novel: novel.copyWith(
+            title: details.title,
+            writer: details.writer,
+            story: details.story,
+            novelType: details.novelType,
+            end: details.end,
+            genre: details.genre,
+            generalAllNo: details.generalAllNo,
+            keyword: details.keyword,
+            allPoint: details.allPoint,
+          ),
+          isInLibrary: enrichedNovel.isInLibrary,
+        );
+      }
+      return enrichedNovel;
+    }).toList();
 
-      // Also update the source data
-      _allNovelData = _allNovelData.map((enrichedNovel) {
-        final novel = enrichedNovel.novel;
-        if (novelDetails.containsKey(novel.ncode)) {
-          final details = novelDetails[novel.ncode]!;
-          return EnrichedNovelData(
-            novel: novel.copyWith(
-              title: details.title,
-              writer: details.writer,
-              story: details.story,
-              novelType: details.novelType,
-              end: details.end,
-              genre: details.genre,
-              generalAllNo: details.generalAllNo,
-              keyword: details.keyword,
-              allPoint: details.allPoint,
-            ),
-            isInLibrary: enrichedNovel.isInLibrary,
-          );
-        }
-        return enrichedNovel;
-      }).toList();
+    // Also update the source data
+    allNovelData.value = allNovelData.value.map((enrichedNovel) {
+      final novel = enrichedNovel.novel;
+      if (novelDetails.containsKey(novel.ncode)) {
+        final details = novelDetails[novel.ncode]!;
+        return EnrichedNovelData(
+          novel: novel.copyWith(
+            title: details.title,
+            writer: details.writer,
+            story: details.story,
+            novelType: details.novelType,
+            end: details.end,
+            genre: details.genre,
+            generalAllNo: details.generalAllNo,
+            keyword: details.keyword,
+            allPoint: details.allPoint,
+          ),
+          isInLibrary: enrichedNovel.isInLibrary,
+        );
+      }
+      return enrichedNovel;
+    }).toList();
 
-      _isLoadingMore = false;
-    });
+    isLoadingMore.value = false;
 
     // Reapply filters after loading details if filters are active
-    final hasActiveFilters =
-        widget.showOnlyOngoing || widget.selectedGenre != null;
+    final hasActiveFilters = showOnlyOngoing || selectedGenre != null;
     if (hasActiveFilters) {
-      _applyFilters();
+      _applyFilters(allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
+  static Widget _buildWidget(
+    BuildContext context,
+    WidgetRef ref,
+    ValueNotifier<List<EnrichedNovelData>> allNovelData,
+    ValueNotifier<List<EnrichedNovelData>> filteredNovelData,
+    ValueNotifier<bool> isLoadingMore,
+    ValueNotifier<bool> isInitialLoad,
+    ScrollController scrollController,
+    String rankingType,
+    bool showOnlyOngoing,
+    int? selectedGenre,
+  ) {
     final enrichedRankingDataAsync = ref.watch(
-      enrichedRankingDataProvider(widget.rankingType),
+      enrichedRankingDataProvider(rankingType),
     );
 
     return enrichedRankingDataAsync.when<Widget>(
       data: (enrichedRankingData) {
-        if (_allNovelData.map((e) => e.novel.ncode).join() !=
+        if (allNovelData.value.map((e) => e.novel.ncode).join() !=
             enrichedRankingData.map((e) => e.novel.ncode).join()) {
-          _allNovelData = enrichedRankingData;
-          _applyFiltersAndReset();
+          allNovelData.value = enrichedRankingData;
+          _applyFiltersAndReset(
+            allNovelData,
+            filteredNovelData,
+            isInitialLoad,
+            isLoadingMore,
+            context,
+            ref,
+            rankingType,
+            showOnlyOngoing,
+            selectedGenre,
+          );
         }
 
-        final displayData = _filteredNovelData
+        final displayData = filteredNovelData.value
             .where((n) => n.novel.title != null)
             .toList();
-        final hasMore = displayData.length < _filteredNovelData.length;
+        final hasMore = displayData.length < filteredNovelData.value.length;
 
         return RefreshIndicator(
           onRefresh: () async {
-            ref.invalidate(enrichedRankingDataProvider(widget.rankingType));
+            ref.invalidate(enrichedRankingDataProvider(rankingType));
           },
           child: ListView.builder(
-            controller: _scrollController,
+            controller: scrollController,
             itemCount: displayData.length + (hasMore ? 1 : 0),
             itemBuilder: (context, index) {
               if (index == displayData.length) {
