@@ -35,8 +35,26 @@ class RankingList extends HookConsumerWidget {
     // ScrollControllerをuseMemoizedで管理
     final scrollController = useMemoized(ScrollController.new, []);
 
-    // スクロールリスナーの関数
-    void onScroll() {
+    // コールバック関数をuseCallbackでメモ化
+    final applyFiltersAndReset = useCallback(() {
+      _applyFilters(allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre);
+      if (context.mounted) {
+        isInitialLoad.value = true;
+        _loadMore(
+          context,
+          ref,
+          filteredNovelData,
+          isLoadingMore,
+          isInitialLoad,
+          allNovelData,
+          rankingType,
+          showOnlyOngoing,
+          selectedGenre,
+        );
+      }
+    }, [allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre]);
+
+    final onScroll = useCallback(() {
       if (isLoadingMore.value || !context.mounted) return;
 
       final maxScroll = scrollController.position.maxScrollExtent;
@@ -56,7 +74,7 @@ class RankingList extends HookConsumerWidget {
           selectedGenre,
         );
       }
-    }
+    }, [isLoadingMore, filteredNovelData, allNovelData]);
 
     // useEffectでスクロールリスナーの設定・解除
     useEffect(() {
@@ -66,23 +84,13 @@ class RankingList extends HookConsumerWidget {
           ..removeListener(onScroll)
           ..dispose();
       };
-    }, [scrollController]);
+    }, [scrollController, onScroll]);
 
     // フィルタ変更時の処理
     useEffect(() {
-      _applyFiltersAndReset(
-        allNovelData,
-        filteredNovelData,
-        isInitialLoad,
-        isLoadingMore,
-        context,
-        ref,
-        rankingType,
-        showOnlyOngoing,
-        selectedGenre,
-      );
+      applyFiltersAndReset();
       return null;
-    }, [showOnlyOngoing, selectedGenre]);
+    }, [showOnlyOngoing, selectedGenre, applyFiltersAndReset]);
 
     return _buildWidget(
       context,
@@ -90,40 +98,10 @@ class RankingList extends HookConsumerWidget {
       allNovelData,
       filteredNovelData,
       isLoadingMore,
-      isInitialLoad,
       scrollController,
       rankingType,
-      showOnlyOngoing,
-      selectedGenre,
+      applyFiltersAndReset,
     );
-  }
-
-  static void _applyFiltersAndReset(
-    ValueNotifier<List<EnrichedNovelData>> allNovelData,
-    ValueNotifier<List<EnrichedNovelData>> filteredNovelData,
-    ValueNotifier<bool> isInitialLoad,
-    ValueNotifier<bool> isLoadingMore,
-    BuildContext context,
-    WidgetRef ref,
-    String rankingType,
-    bool showOnlyOngoing,
-    int? selectedGenre,
-  ) {
-    _applyFilters(allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre);
-    if (context.mounted) {
-      isInitialLoad.value = true;
-      _loadMore(
-        context,
-        ref,
-        filteredNovelData,
-        isLoadingMore,
-        isInitialLoad,
-        allNovelData,
-        rankingType,
-        showOnlyOngoing,
-        selectedGenre,
-      );
-    }
   }
 
   static void _applyFilters(
@@ -266,11 +244,9 @@ class RankingList extends HookConsumerWidget {
     ValueNotifier<List<EnrichedNovelData>> allNovelData,
     ValueNotifier<List<EnrichedNovelData>> filteredNovelData,
     ValueNotifier<bool> isLoadingMore,
-    ValueNotifier<bool> isInitialLoad,
     ScrollController scrollController,
     String rankingType,
-    bool showOnlyOngoing,
-    int? selectedGenre,
+    VoidCallback applyFiltersAndReset,
   ) {
     final enrichedRankingDataAsync = ref.watch(
       enrichedRankingDataProvider(rankingType),
@@ -281,17 +257,7 @@ class RankingList extends HookConsumerWidget {
         if (allNovelData.value.map((e) => e.novel.ncode).join() !=
             enrichedRankingData.map((e) => e.novel.ncode).join()) {
           allNovelData.value = enrichedRankingData;
-          _applyFiltersAndReset(
-            allNovelData,
-            filteredNovelData,
-            isInitialLoad,
-            isLoadingMore,
-            context,
-            ref,
-            rankingType,
-            showOnlyOngoing,
-            selectedGenre,
-          );
+          applyFiltersAndReset();
         }
 
         final displayData = filteredNovelData.value

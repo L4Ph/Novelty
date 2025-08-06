@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:mockito/annotations.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
-import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/ranking_list.dart';
-
-import 'ranking_list_hooks_test.mocks.dart';
-
-@GenerateMocks([ApiService])
 void main() {
   group('RankingList HookConsumerWidget Tests', () {
     testWidgets('should be a HookConsumerWidget and render successfully', (WidgetTester tester) async {
