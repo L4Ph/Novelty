@@ -35,25 +35,44 @@ class RankingList extends HookConsumerWidget {
     // ScrollControllerをuseMemoizedで管理
     final scrollController = useMemoized(ScrollController.new, []);
 
-    // コールバック関数をuseCallbackでメモ化
-    final applyFiltersAndReset = useCallback(() {
+    // フィルタ適用関数
+    final applyFilters = useCallback(() {
       _applyFilters(allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre);
-      if (context.mounted) {
-        isInitialLoad.value = true;
-        _loadMore(
-          context,
-          ref,
-          filteredNovelData,
-          isLoadingMore,
-          isInitialLoad,
-          allNovelData,
-          rankingType,
-          showOnlyOngoing,
-          selectedGenre,
-        );
-      }
     }, [allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre]);
 
+    // ローディング処理
+    final loadMore = useCallback(() async {
+      await _loadMore(
+        context,
+        ref,
+        filteredNovelData,
+        isLoadingMore,
+        isInitialLoad,
+        allNovelData,
+        rankingType,
+        showOnlyOngoing,
+        selectedGenre,
+      );
+    }, [
+      filteredNovelData,
+      isLoadingMore,
+      isInitialLoad,
+      allNovelData,
+      rankingType,
+      showOnlyOngoing,
+      selectedGenre,
+    ]);
+
+    // フィルタ適用とリセット処理
+    final applyFiltersAndReset = useCallback(() {
+      applyFilters();
+      if (context.mounted) {
+        isInitialLoad.value = true;
+        loadMore();
+      }
+    }, [applyFilters, loadMore]);
+
+    // スクロールリスナー
     final onScroll = useCallback(() {
       if (isLoadingMore.value || !context.mounted) return;
 
@@ -62,35 +81,34 @@ class RankingList extends HookConsumerWidget {
       const delta = 200.0;
 
       if (currentScroll >= maxScroll - delta) {
-        _loadMore(
-          context,
-          ref,
-          filteredNovelData,
-          isLoadingMore,
-          isInitialLoad,
-          allNovelData,
-          rankingType,
-          showOnlyOngoing,
-          selectedGenre,
-        );
+        loadMore();
       }
-    }, [isLoadingMore, filteredNovelData, allNovelData]);
+    }, [isLoadingMore, loadMore]);
 
-    // useEffectでスクロールリスナーの設定・解除
-    useEffect(() {
+    // フィルタ変更の検知と処理
+    final previousShowOnlyOngoing = usePrevious(showOnlyOngoing);
+    final previousSelectedGenre = usePrevious(selectedGenre);
+
+    // フィルタ変更時の自動処理
+    if (previousShowOnlyOngoing != null &&
+        (previousShowOnlyOngoing != showOnlyOngoing ||
+            previousSelectedGenre != selectedGenre)) {
+      // フィルタが変更された場合、次のフレームで処理を実行
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          applyFiltersAndReset();
+        }
+      });
+    }
+
+    // スクロールリスナーの管理
+    final hasRegisteredListener = useState(false);
+    
+    // スクロールリスナーを一度だけ登録
+    if (!hasRegisteredListener.value) {
       scrollController.addListener(onScroll);
-      return () {
-        scrollController
-          ..removeListener(onScroll)
-          ..dispose();
-      };
-    }, [scrollController, onScroll]);
-
-    // フィルタ変更時の処理
-    useEffect(() {
-      applyFiltersAndReset();
-      return null;
-    }, [showOnlyOngoing, selectedGenre, applyFiltersAndReset]);
+      hasRegisteredListener.value = true;
+    }
 
     return _buildWidget(
       context,
@@ -101,6 +119,8 @@ class RankingList extends HookConsumerWidget {
       scrollController,
       rankingType,
       applyFiltersAndReset,
+      showOnlyOngoing,
+      selectedGenre,
     );
   }
 
@@ -247,6 +267,8 @@ class RankingList extends HookConsumerWidget {
     ScrollController scrollController,
     String rankingType,
     VoidCallback applyFiltersAndReset,
+    bool showOnlyOngoing,
+    int? selectedGenre,
   ) {
     final enrichedRankingDataAsync = ref.watch(
       enrichedRankingDataProvider(rankingType),
