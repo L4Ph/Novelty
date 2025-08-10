@@ -104,10 +104,22 @@ class Tategaki extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    // メトリクス計算をuseMemoizedでメモ化
+    // テキストスタイルの計算をメモ化
+    final effectiveTextStyle = useMemoized(() {
+      return style ?? DefaultTextStyle.of(context).style;
+    }, [style, DefaultTextStyle.of(context).style]);
+
+    // ルビテキストスタイルの計算をメモ化
+    final rubyTextStyle = useMemoized(() {
+      return effectiveTextStyle.copyWith(
+        fontSize: (effectiveTextStyle.fontSize ?? 14) * 0.6,
+      );
+    }, [effectiveTextStyle]);
+
+    // メトリクス計算をメモ化
     final metrics = useMemoized(() {
-      return _calculateMetrics(context);
-    }, [content, style, space, maxHeight, Theme.of(context)]);
+      return _calculateMetrics(effectiveTextStyle, rubyTextStyle);
+    }, [content, effectiveTextStyle, rubyTextStyle, space, maxHeight]);
 
     if (content.isEmpty || metrics == null) {
       return const SizedBox.shrink();
@@ -123,13 +135,10 @@ class Tategaki extends HookWidget {
   }
 
   /// メトリクスを計算する
-  _TategakiMetrics? _calculateMetrics(BuildContext context) {
-    final effectiveTextStyle =
-        style ?? DefaultTextStyle.of(context).style;
-    final rubyTextStyle = effectiveTextStyle.copyWith(
-      fontSize: (effectiveTextStyle.fontSize ?? 14) * 0.6,
-    );
-
+  _TategakiMetrics? _calculateMetrics(
+    TextStyle effectiveTextStyle,
+    TextStyle rubyTextStyle,
+  ) {
     final columns = <_TategakiColumn>[];
     var totalWidth = 0.0;
 
@@ -148,6 +157,18 @@ class Tategaki extends HookWidget {
       currentColumnWidth = 0.0;
     }
 
+    void addToColumn(_Paintable item) {
+      if (currentColumnHeight + item.height > maxHeight &&
+          currentColumnItems.isNotEmpty) {
+        endColumn();
+      }
+      currentColumnItems.add(item);
+      currentColumnHeight += item.height;
+      if (item.width > currentColumnWidth) {
+        currentColumnWidth = item.width;
+      }
+    }
+
     for (final element in content) {
       switch (element) {
         case PlainText():
@@ -158,68 +179,11 @@ class Tategaki extends HookWidget {
               text: TextSpan(text: rotatedChar, style: effectiveTextStyle),
               textDirection: TextDirection.ltr,
             )..layout();
-            final item = _PaintableChar(painter);
-
-            if (currentColumnHeight + item.height > maxHeight &&
-                currentColumnItems.isNotEmpty) {
-              endColumn();
-            }
-            currentColumnItems.add(item);
-            currentColumnHeight += item.height;
-            if (item.width > currentColumnWidth) {
-              currentColumnWidth = item.width;
-            }
+            addToColumn(_PaintableChar(painter));
           }
         case RubyText():
-          final basePainters = <TextPainter>[];
-          var baseWidth = 0.0;
-          for (final char in element.base.runes) {
-            final character = String.fromCharCode(char);
-            final rotatedChar = VerticalRotated.map[character] ?? character;
-            final painter = TextPainter(
-              text: TextSpan(text: rotatedChar, style: effectiveTextStyle),
-              textDirection: TextDirection.ltr,
-            )..layout();
-            basePainters.add(painter);
-            if (painter.width > baseWidth) {
-              baseWidth = painter.width;
-            }
-          }
-
-          final rubyPainters = <TextPainter>[];
-          var rubyWidth = 0.0;
-          var rubyHeight = 0.0;
-          for (final char in element.ruby.runes) {
-            final character = String.fromCharCode(char);
-            final rotatedChar = VerticalRotated.map[character] ?? character;
-            final painter = TextPainter(
-              text: TextSpan(text: rotatedChar, style: rubyTextStyle),
-              textDirection: TextDirection.ltr,
-            )..layout();
-            rubyPainters.add(painter);
-            rubyHeight += painter.height;
-            if (painter.width > rubyWidth) {
-              rubyWidth = painter.width;
-            }
-          }
-
-          final item = _PaintableRuby(
-            basePainters,
-            rubyPainters,
-            baseWidth,
-            rubyWidth,
-            rubyHeight,
-          );
-
-          if (currentColumnHeight + item.height > maxHeight &&
-              currentColumnItems.isNotEmpty) {
-            endColumn();
-          }
-          currentColumnItems.add(item);
-          currentColumnHeight += item.height;
-          if (item.width > currentColumnWidth) {
-            currentColumnWidth = item.width;
-          }
+          final item = _createRubyItem(element, effectiveTextStyle, rubyTextStyle);
+          addToColumn(item);
         case NewLine():
           endColumn();
           columns.add(_TategakiColumn([], 0));
@@ -233,6 +197,53 @@ class Tategaki extends HookWidget {
     return _TategakiMetrics(
       columns: columns,
       size: Size(totalWidth, maxHeight),
+    );
+  }
+
+  /// ルビアイテムを作成する
+  _PaintableRuby _createRubyItem(
+    RubyText element,
+    TextStyle effectiveTextStyle,
+    TextStyle rubyTextStyle,
+  ) {
+    final basePainters = <TextPainter>[];
+    var baseWidth = 0.0;
+    for (final char in element.base.runes) {
+      final character = String.fromCharCode(char);
+      final rotatedChar = VerticalRotated.map[character] ?? character;
+      final painter = TextPainter(
+        text: TextSpan(text: rotatedChar, style: effectiveTextStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      basePainters.add(painter);
+      if (painter.width > baseWidth) {
+        baseWidth = painter.width;
+      }
+    }
+
+    final rubyPainters = <TextPainter>[];
+    var rubyWidth = 0.0;
+    var rubyHeight = 0.0;
+    for (final char in element.ruby.runes) {
+      final character = String.fromCharCode(char);
+      final rotatedChar = VerticalRotated.map[character] ?? character;
+      final painter = TextPainter(
+        text: TextSpan(text: rotatedChar, style: rubyTextStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      rubyPainters.add(painter);
+      rubyHeight += painter.height;
+      if (painter.width > rubyWidth) {
+        rubyWidth = painter.width;
+      }
+    }
+
+    return _PaintableRuby(
+      basePainters,
+      rubyPainters,
+      baseWidth,
+      rubyWidth,
+      rubyHeight,
     );
   }
 }
