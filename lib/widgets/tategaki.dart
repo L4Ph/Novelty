@@ -7,6 +7,15 @@ abstract class _Paintable {
   double get height;
   double get width;
   void paint(Canvas canvas, Offset offset);
+  
+  /// ルビ付きテキストかどうかを判定
+  bool get isRuby => false;
+  
+  /// ベーステキストの幅（ルビ付きテキストのみ）
+  double get baseWidth => width;
+  
+  /// ルビテキストの幅（ルビ付きテキストのみ）
+  double get rubyWidth => 0;
 }
 
 class _PaintableChar extends _Paintable {
@@ -28,34 +37,45 @@ class _PaintableRuby extends _Paintable {
   _PaintableRuby(
     this.basePainters,
     this.rubyPainters,
-    this.baseWidth,
-    this.rubyWidth,
+    this._baseWidth,
+    this._rubyWidth,
     this.rubyHeight,
   );
   final List<TextPainter> basePainters;
   final List<TextPainter> rubyPainters;
-  final double baseWidth;
-  final double rubyWidth;
+  final double _baseWidth;
+  final double _rubyWidth;
   final double rubyHeight;
 
   @override
   double get height => basePainters.fold(0, (prev, p) => prev + p.height);
 
   @override
-  double get width => baseWidth + rubyWidth;
+  double get width => _baseWidth + _rubyWidth;
+  
+  @override
+  bool get isRuby => true;
+  
+  @override
+  double get baseWidth => _baseWidth;
+  
+  @override
+  double get rubyWidth => _rubyWidth;
 
   @override
   void paint(Canvas canvas, Offset offset) {
     var baseDy = offset.dy;
     for (final p in basePainters) {
-      final charDx = offset.dx + (baseWidth - p.width) / 2;
+      // ベーステキストを左寄せで配置（通常の文字位置と同じ）
+      final charDx = offset.dx + (_baseWidth - p.width) / 2;
       p.paint(canvas, Offset(charDx, baseDy));
       baseDy += p.height;
     }
 
     var rubyDy = offset.dy + (height - rubyHeight) / 2;
     for (final p in rubyPainters) {
-      final charDx = offset.dx + baseWidth + (rubyWidth - p.width) / 2;
+      // ルビテキストをベーステキストの右側に配置
+      final charDx = offset.dx + _baseWidth + (_rubyWidth - p.width) / 2;
       p.paint(canvas, Offset(charDx, rubyDy));
       rubyDy += p.height;
     }
@@ -268,7 +288,11 @@ class _TategakiPainter extends CustomPainter {
       if (column.items.isNotEmpty) {
         var dy = 0.0;
         for (final item in column.items) {
-          final dx = currentColumnX + space + (column.width - item.width) / 2;
+          final dx = item.isRuby
+              // ルビ付きテキストの場合、ベーステキストが通常位置に来るように調整
+              ? currentColumnX + space + (column.width - item.baseWidth) / 2 - item.rubyWidth
+              // 通常テキストの場合、中央寄せ
+              : currentColumnX + space + (column.width - item.width) / 2;
           item.paint(canvas, Offset(dx, dy));
           dy += item.height;
         }
