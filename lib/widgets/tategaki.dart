@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/utils/vertical_rotated.dart';
 
@@ -78,7 +79,7 @@ class _TategakiMetrics {
 }
 
 /// 縦書きの小説コンテンツを表示するウィジェット。
-class Tategaki extends StatefulWidget {
+class Tategaki extends HookWidget {
   /// コンストラクタ。
   const Tategaki(
     this.content, {
@@ -102,32 +103,29 @@ class Tategaki extends StatefulWidget {
   final double maxHeight;
 
   @override
-  State<Tategaki> createState() => _TategakiState();
-}
+  Widget build(BuildContext context) {
+    // メトリクス計算をuseMemoizedでメモ化
+    final metrics = useMemoized(() {
+      return _calculateMetrics(context);
+    }, [content, style, space, maxHeight, Theme.of(context)]);
 
-class _TategakiState extends State<Tategaki> {
-  _TategakiMetrics? _metrics;
-
-  @override
-  void initState() {
-    super.initState();
-    _calculateMetrics();
-  }
-
-  @override
-  void didUpdateWidget(Tategaki oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.content != oldWidget.content ||
-        widget.style != oldWidget.style ||
-        widget.space != oldWidget.space ||
-        widget.maxHeight != oldWidget.maxHeight) {
-      _calculateMetrics();
+    if (content.isEmpty || metrics == null) {
+      return const SizedBox.shrink();
     }
+
+    return CustomPaint(
+      size: metrics.size,
+      painter: _TategakiPainter(
+        metrics: metrics,
+        space: space,
+      ),
+    );
   }
 
-  void _calculateMetrics() {
+  /// メトリクスを計算する
+  _TategakiMetrics? _calculateMetrics(BuildContext context) {
     final effectiveTextStyle =
-        widget.style ?? DefaultTextStyle.of(context).style;
+        style ?? DefaultTextStyle.of(context).style;
     final rubyTextStyle = effectiveTextStyle.copyWith(
       fontSize: (effectiveTextStyle.fontSize ?? 14) * 0.6,
     );
@@ -143,14 +141,14 @@ class _TategakiState extends State<Tategaki> {
       if (currentColumnItems.isNotEmpty) {
         final column = _TategakiColumn(currentColumnItems, currentColumnWidth);
         columns.add(column);
-        totalWidth += column.width + widget.space;
+        totalWidth += column.width + space;
       }
       currentColumnItems = [];
       currentColumnHeight = 0.0;
       currentColumnWidth = 0.0;
     }
 
-    for (final element in widget.content) {
+    for (final element in content) {
       switch (element) {
         case PlainText():
           for (final char in element.text.runes) {
@@ -162,7 +160,7 @@ class _TategakiState extends State<Tategaki> {
             )..layout();
             final item = _PaintableChar(painter);
 
-            if (currentColumnHeight + item.height > widget.maxHeight &&
+            if (currentColumnHeight + item.height > maxHeight &&
                 currentColumnItems.isNotEmpty) {
               endColumn();
             }
@@ -213,7 +211,7 @@ class _TategakiState extends State<Tategaki> {
             rubyHeight,
           );
 
-          if (currentColumnHeight + item.height > widget.maxHeight &&
+          if (currentColumnHeight + item.height > maxHeight &&
               currentColumnItems.isNotEmpty) {
             endColumn();
           }
@@ -225,33 +223,16 @@ class _TategakiState extends State<Tategaki> {
         case NewLine():
           endColumn();
           columns.add(_TategakiColumn([], 0));
-          totalWidth += widget.space;
+          totalWidth += space;
       }
     }
     if (currentColumnItems.isNotEmpty) {
       endColumn();
     }
 
-    setState(() {
-      _metrics = _TategakiMetrics(
-        columns: columns,
-        size: Size(totalWidth, widget.maxHeight),
-      );
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.content.isEmpty || _metrics == null) {
-      return const SizedBox.shrink();
-    }
-
-    return CustomPaint(
-      size: _metrics!.size,
-      painter: _TategakiPainter(
-        metrics: _metrics!,
-        space: widget.space,
-      ),
+    return _TategakiMetrics(
+      columns: columns,
+      size: Size(totalWidth, maxHeight),
     );
   }
 }
