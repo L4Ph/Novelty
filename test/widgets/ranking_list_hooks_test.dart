@@ -4,11 +4,14 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/widgets/ranking_list.dart';
+
 void main() {
   group('RankingList HookConsumerWidget Tests', () {
-    testWidgets('should be a HookConsumerWidget and render successfully', (WidgetTester tester) async {
+    testWidgets('should be a HookConsumerWidget and render successfully', (
+      WidgetTester tester,
+    ) async {
       // ダミーデータの準備
-      final testEnrichedNovel = EnrichedNovelData(
+      const testEnrichedNovel = EnrichedNovelData(
         novel: const RankingResponse(
           rank: 1,
           pt: 100,
@@ -47,12 +50,14 @@ void main() {
 
       // ウィジェットが正常に描画されることを確認
       expect(find.byType(RankingList), findsOneWidget);
-      
+
       // HookConsumerWidgetとして機能していることを確認
       expect(find.byType(ListView), findsOneWidget);
     });
 
-    testWidgets('should handle empty data gracefully', (WidgetTester tester) async {
+    testWidgets('should handle empty data gracefully', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -75,7 +80,9 @@ void main() {
       expect(find.byType(ListView), findsOneWidget);
     });
 
-    testWidgets('should show error message on error', (WidgetTester tester) async {
+    testWidgets('should show error message on error', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [

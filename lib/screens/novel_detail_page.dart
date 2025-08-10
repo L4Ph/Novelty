@@ -725,7 +725,6 @@ Widget _buildDownloadButton(
       context,
       icon: Icons.downloading,
       label: 'ダウンロード中',
-      onPressed: null,
     );
   }
 

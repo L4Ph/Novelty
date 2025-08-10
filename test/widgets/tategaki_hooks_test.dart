@@ -24,7 +24,6 @@ void main() {
                   testContent,
                   maxHeight: 300,
                   style: const TextStyle(fontSize: 16),
-                  space: 12,
                 );
               },
             ),
@@ -34,7 +33,7 @@ void main() {
 
       // Then: ウィジェットが正常に表示される
       expect(find.byType(Tategaki), findsOneWidget);
-      
+
       // Tategakiウィジェット内のCustomPaintを確認
       final tategakiFinder = find.byType(Tategaki);
       final customPaintFinder = find.descendant(
@@ -60,7 +59,6 @@ void main() {
                   testContent,
                   maxHeight: 300,
                   style: const TextStyle(fontSize: 16),
-                  space: 12,
                 );
               },
             ),
@@ -81,10 +79,10 @@ void main() {
       final initialContent = <NovelContentElement>[
         NovelContentElement.plainText('初期テキスト'),
       ];
-      
+
       // リビルド回数をカウントするためのキー
       var rebuildCount = 0;
-      
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -97,7 +95,6 @@ void main() {
                       initialContent,
                       maxHeight: 300,
                       style: const TextStyle(fontSize: 16),
-                      space: 12,
                     );
                   },
                 );
@@ -129,7 +126,6 @@ void main() {
                       updatedContent,
                       maxHeight: 300,
                       style: const TextStyle(fontSize: 16),
-                      space: 12,
                     );
                   },
                 );
@@ -158,7 +154,6 @@ void main() {
               content,
               maxHeight: 300,
               style: const TextStyle(fontSize: 16),
-              space: 12,
             );
           },
         );
@@ -172,7 +167,7 @@ void main() {
       );
 
       expect(find.byType(Tategaki), findsOneWidget);
-      
+
       // 同じプロパティで再ビルド
       firstBuild = false;
       await tester.pumpWidget(
@@ -199,7 +194,6 @@ void main() {
                   emptyContent,
                   maxHeight: 300,
                   style: const TextStyle(fontSize: 16),
-                  space: 12,
                 );
               },
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
@@ -7,7 +8,6 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_list.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'novel_list_test.mocks.dart';
 
@@ -71,7 +71,7 @@ void main() {
         ),
       ];
 
-      final mockNovelInfo = NovelInfo(
+      const mockNovelInfo = NovelInfo(
         title: 'テスト小説1',
         ncode: 'n1234ab',
         writer: 'テスト作者',
@@ -85,11 +85,12 @@ void main() {
 
       // モックの設定
       when(mockDatabase.getNovel('n1234ab')).thenAnswer((_) async => null);
-      
+
       // Create a mock for ApiService and inject it directly
       final mockApiServiceInstance = MockApiService();
-      when(mockApiServiceInstance.fetchNovelInfo('n1234ab'))
-          .thenAnswer((_) async => mockNovelInfo);
+      when(
+        mockApiServiceInstance.fetchNovelInfo('n1234ab'),
+      ).thenAnswer((_) async => mockNovelInfo);
 
       await tester.pumpWidget(
         ProviderScope(
@@ -129,13 +130,15 @@ void main() {
       ];
 
       // 既に登録済みの小説を模擬
-      final existingNovel = Novel(
+      const existingNovel = Novel(
         ncode: 'n1234ab',
         title: 'テスト小説1',
         writer: 'テスト作者',
       );
 
-      when(mockDatabase.getNovel('n1234ab')).thenAnswer((_) async => existingNovel);
+      when(
+        mockDatabase.getNovel('n1234ab'),
+      ).thenAnswer((_) async => existingNovel);
 
       await tester.pumpWidget(
         ProviderScope(
