@@ -9,8 +9,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 // ignore: unused_import
 import 'settings_provider_test.mocks.dart';
 
+import '../test_helper.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setupMockPathProvider();
+
   group('Settings Provider', () {
     late ProviderContainer container;
 

@@ -11,11 +11,10 @@ void main() {
       ),
     );
 
-    // Pump a few frames to allow initial rendering
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    // settingsProviderが解決するまで待つ
+    await tester.pumpAndSettle();
 
-    // Should find MaterialApp after initial pump
+    // MaterialAppが表示されることを確認
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 
