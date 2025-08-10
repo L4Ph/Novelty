@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_redundant_argument_values
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -22,7 +20,7 @@ void main() {
   late MockApiService mockApiService;
 
   // テスト用のダミーデータ
-  final testRankingResponse = RankingResponse(
+  const testRankingResponse = RankingResponse(
     rank: 1,
     pt: 100,
     ncode: 'n1111a',
@@ -37,12 +35,12 @@ void main() {
     allPoint: 200,
   );
 
-  final testEnrichedNovel = EnrichedNovelData(
+  const testEnrichedNovel = EnrichedNovelData(
     novel: testRankingResponse,
     isInLibrary: false,
   );
 
-  final testNovelInfo = NovelInfo(
+  const testNovelInfo = NovelInfo(
     title: 'Test Novel 1',
     ncode: 'n1111a',
     writer: 'Test Writer 1',
