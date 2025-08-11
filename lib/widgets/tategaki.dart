@@ -7,13 +7,13 @@ abstract class _Paintable {
   double get height;
   double get width;
   void paint(Canvas canvas, Offset offset);
-  
+
   /// ルビ付きテキストかどうかを判定
   bool get isRuby => false;
-  
+
   /// ベーステキストの幅（ルビ付きテキストのみ）
   double get baseWidth => width;
-  
+
   /// ルビテキストの幅（ルビ付きテキストのみ）
   double get rubyWidth => 0;
 }
@@ -52,13 +52,13 @@ class _PaintableRuby extends _Paintable {
 
   @override
   double get width => _baseWidth + _rubyWidth;
-  
+
   @override
   bool get isRuby => true;
-  
+
   @override
   double get baseWidth => _baseWidth;
-  
+
   @override
   double get rubyWidth => _rubyWidth;
 
@@ -83,9 +83,10 @@ class _PaintableRuby extends _Paintable {
 }
 
 class _TategakiColumn {
-  _TategakiColumn(this.items, this.width);
+  _TategakiColumn(this.items, this.width, this.baseWidth);
   final List<_Paintable> items;
   final double width;
+  final double baseWidth;
 }
 
 class _TategakiMetrics {
@@ -164,17 +165,30 @@ class Tategaki extends HookWidget {
 
     var currentColumnItems = <_Paintable>[];
     var currentColumnHeight = 0.0;
-    var currentColumnWidth = 0.0;
+    var currentColumnBaseWidth = 0.0;
 
     void endColumn() {
       if (currentColumnItems.isNotEmpty) {
-        final column = _TategakiColumn(currentColumnItems, currentColumnWidth);
+        var requiredWidth = currentColumnBaseWidth;
+        for (final item in currentColumnItems) {
+          final baseOffset = (currentColumnBaseWidth - item.baseWidth) / 2;
+          final itemTotalWidth = baseOffset + item.width;
+          if (itemTotalWidth > requiredWidth) {
+            requiredWidth = itemTotalWidth;
+          }
+        }
+
+        final column = _TategakiColumn(
+          currentColumnItems,
+          requiredWidth,
+          currentColumnBaseWidth,
+        );
         columns.add(column);
         totalWidth += column.width + space;
       }
       currentColumnItems = [];
       currentColumnHeight = 0.0;
-      currentColumnWidth = 0.0;
+      currentColumnBaseWidth = 0.0;
     }
 
     void addToColumn(_Paintable item) {
@@ -184,8 +198,8 @@ class Tategaki extends HookWidget {
       }
       currentColumnItems.add(item);
       currentColumnHeight += item.height;
-      if (item.width > currentColumnWidth) {
-        currentColumnWidth = item.width;
+      if (item.baseWidth > currentColumnBaseWidth) {
+        currentColumnBaseWidth = item.baseWidth;
       }
     }
 
@@ -202,11 +216,15 @@ class Tategaki extends HookWidget {
             addToColumn(_PaintableChar(painter));
           }
         case RubyText():
-          final item = _createRubyItem(element, effectiveTextStyle, rubyTextStyle);
+          final item = _createRubyItem(
+            element,
+            effectiveTextStyle,
+            rubyTextStyle,
+          );
           addToColumn(item);
         case NewLine():
           endColumn();
-          columns.add(_TategakiColumn([], 0));
+          columns.add(_TategakiColumn([], 0, 0));
           totalWidth += space;
       }
     }
@@ -288,11 +306,9 @@ class _TategakiPainter extends CustomPainter {
       if (column.items.isNotEmpty) {
         var dy = 0.0;
         for (final item in column.items) {
-          final dx = item.isRuby
-              // ルビ付きテキストの場合、ベーステキストが通常位置に来るように調整
-              ? currentColumnX + space + (column.width - item.baseWidth) / 2 - item.rubyWidth
-              // 通常テキストの場合、中央寄せ
-              : currentColumnX + space + (column.width - item.width) / 2;
+          // ベース文字が column.baseWidth の中で中央に来るように dx を計算
+          final dx =
+              currentColumnX + space + (column.baseWidth - item.baseWidth) / 2;
           item.paint(canvas, Offset(dx, dy));
           dy += item.height;
         }
