@@ -5,13 +5,13 @@ import 'package:novelty/services/api_service.dart';
 void main() {
   group('ApiService', () {
     group('累計ランキング制限値', () {
-      test('defaultRankingLimitは500であること', () {
-        expect(defaultRankingLimit, equals(500));
+      test('allTimeRankingLimitは500であること', () {
+        expect(allTimeRankingLimit, equals(500));
       });
 
       test('累計ランキングクエリのlimが500であること', () {
         // _fetchAllTimeRankingメソッドで使用されるクエリを検証
-        const query = NovelSearchQuery(order: 'hyoka', lim: defaultRankingLimit);
+        const query = NovelSearchQuery(order: 'hyoka', lim: allTimeRankingLimit);
         expect(query.lim, equals(500));
       });
 
