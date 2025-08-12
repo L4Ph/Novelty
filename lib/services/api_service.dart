@@ -13,7 +13,7 @@ import 'package:novelty/models/ranking_response.dart';
 import 'package:riverpod/src/providers/future_provider.dart';
 
 /// 定数として使用するランキングのデフォルト制限値
-const int defaultRankingLimit = 100;
+const int defaultRankingLimit = 500;
 
 /// APIサービスのプロバイダー
 final Provider<ApiService> apiServiceProvider = Provider((ref) => ApiService());
