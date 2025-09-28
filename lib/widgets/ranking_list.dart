@@ -172,28 +172,67 @@ class RankingList extends HookConsumerWidget {
     if (isLoadingMore.value || !context.mounted) return;
 
     final itemsToLoad = isInitialLoad.value ? 20 : 10;
-    final currentLoadedCount = filteredNovelData.value
-        .where((n) => n.novel.title != null)
-        .length;
+    final hasActiveFilters = showOnlyOngoing || selectedGenre != null;
+    
+    late final List<String> nextNcodeSlice;
+    
+    // For filtered data, use different logic
+    if (hasActiveFilters) {
+      final currentLoadedCount = filteredNovelData.value
+          .where((n) => n.novel.title != null)
+          .length;
 
-    if (currentLoadedCount >= filteredNovelData.value.length) {
-      return; // All items loaded
-    }
+      // Check if we have more items that could potentially match filters
+      final unloadedSourceItems = allNovelData.value
+          .where((n) => n.novel.title == null)
+          .toList();
 
-    isLoadingMore.value = true;
-    if (isInitialLoad.value) {
-      isInitialLoad.value = false;
-    }
+      // If no more items to load from source data, stop loading
+      if (unloadedSourceItems.isEmpty) {
+        isLoadingMore.value = false;
+        return;
+      }
 
-    final nextNcodeSlice = filteredNovelData.value
-        .where((n) => n.novel.title == null)
-        .take(itemsToLoad)
-        .map((n) => n.novel.ncode)
-        .toList();
+      isLoadingMore.value = true;
+      if (isInitialLoad.value) {
+        isInitialLoad.value = false;
+      }
 
-    if (nextNcodeSlice.isEmpty) {
-      isLoadingMore.value = false;
-      return;
+      // Take items from unloaded source data
+      nextNcodeSlice = unloadedSourceItems
+          .take(itemsToLoad)
+          .map((n) => n.novel.ncode)
+          .toList();
+
+      if (nextNcodeSlice.isEmpty) {
+        isLoadingMore.value = false;
+        return;
+      }
+    } else {
+      // Original logic for non-filtered data
+      final currentLoadedCount = filteredNovelData.value
+          .where((n) => n.novel.title != null)
+          .length;
+
+      if (currentLoadedCount >= filteredNovelData.value.length) {
+        return; // All items loaded
+      }
+
+      isLoadingMore.value = true;
+      if (isInitialLoad.value) {
+        isInitialLoad.value = false;
+      }
+
+      nextNcodeSlice = filteredNovelData.value
+          .where((n) => n.novel.title == null)
+          .take(itemsToLoad)
+          .map((n) => n.novel.ncode)
+          .toList();
+
+      if (nextNcodeSlice.isEmpty) {
+        isLoadingMore.value = false;
+        return;
+      }
     }
 
     final apiService = ref.read(apiServiceProvider);
@@ -202,60 +241,81 @@ class RankingList extends HookConsumerWidget {
     );
 
     if (!context.mounted) return;
+    
+    if (hasActiveFilters) {
+      // For filtered data, update source data first, then reapply filters
+      allNovelData.value = allNovelData.value.map((enrichedNovel) {
+        final novel = enrichedNovel.novel;
+        if (novelDetails.containsKey(novel.ncode)) {
+          final details = novelDetails[novel.ncode]!;
+          return EnrichedNovelData(
+            novel: novel.copyWith(
+              title: details.title,
+              writer: details.writer,
+              story: details.story,
+              novelType: details.novelType,
+              end: details.end,
+              genre: details.genre,
+              generalAllNo: details.generalAllNo,
+              keyword: details.keyword,
+              allPoint: details.allPoint,
+            ),
+            isInLibrary: enrichedNovel.isInLibrary,
+          );
+        }
+        return enrichedNovel;
+      }).toList();
 
-    // Update both filteredNovelData and allNovelData with complete information
-    filteredNovelData.value = filteredNovelData.value.map((enrichedNovel) {
-      final novel = enrichedNovel.novel;
-      if (novelDetails.containsKey(novel.ncode)) {
-        final details = novelDetails[novel.ncode]!;
-        return EnrichedNovelData(
-          novel: novel.copyWith(
-            title: details.title,
-            writer: details.writer,
-            story: details.story,
-            novelType: details.novelType,
-            end: details.end,
-            genre: details.genre,
-            generalAllNo: details.generalAllNo,
-            keyword: details.keyword,
-            allPoint: details.allPoint,
-          ),
-          isInLibrary: enrichedNovel.isInLibrary,
-        );
-      }
-      return enrichedNovel;
-    }).toList();
+      // Reapply filters after loading details
+      _applyFilters(allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre);
+    } else {
+      // Original logic for non-filtered data: update both datasets
+      filteredNovelData.value = filteredNovelData.value.map((enrichedNovel) {
+        final novel = enrichedNovel.novel;
+        if (novelDetails.containsKey(novel.ncode)) {
+          final details = novelDetails[novel.ncode]!;
+          return EnrichedNovelData(
+            novel: novel.copyWith(
+              title: details.title,
+              writer: details.writer,
+              story: details.story,
+              novelType: details.novelType,
+              end: details.end,
+              genre: details.genre,
+              generalAllNo: details.generalAllNo,
+              keyword: details.keyword,
+              allPoint: details.allPoint,
+            ),
+            isInLibrary: enrichedNovel.isInLibrary,
+          );
+        }
+        return enrichedNovel;
+      }).toList();
 
-    // Also update the source data
-    allNovelData.value = allNovelData.value.map((enrichedNovel) {
-      final novel = enrichedNovel.novel;
-      if (novelDetails.containsKey(novel.ncode)) {
-        final details = novelDetails[novel.ncode]!;
-        return EnrichedNovelData(
-          novel: novel.copyWith(
-            title: details.title,
-            writer: details.writer,
-            story: details.story,
-            novelType: details.novelType,
-            end: details.end,
-            genre: details.genre,
-            generalAllNo: details.generalAllNo,
-            keyword: details.keyword,
-            allPoint: details.allPoint,
-          ),
-          isInLibrary: enrichedNovel.isInLibrary,
-        );
-      }
-      return enrichedNovel;
-    }).toList();
+      allNovelData.value = allNovelData.value.map((enrichedNovel) {
+        final novel = enrichedNovel.novel;
+        if (novelDetails.containsKey(novel.ncode)) {
+          final details = novelDetails[novel.ncode]!;
+          return EnrichedNovelData(
+            novel: novel.copyWith(
+              title: details.title,
+              writer: details.writer,
+              story: details.story,
+              novelType: details.novelType,
+              end: details.end,
+              genre: details.genre,
+              generalAllNo: details.generalAllNo,
+              keyword: details.keyword,
+              allPoint: details.allPoint,
+            ),
+            isInLibrary: enrichedNovel.isInLibrary,
+          );
+        }
+        return enrichedNovel;
+      }).toList();
+    }
 
     isLoadingMore.value = false;
-
-    // Reapply filters after loading details if filters are active
-    final hasActiveFilters = showOnlyOngoing || selectedGenre != null;
-    if (hasActiveFilters) {
-      _applyFilters(allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre);
-    }
   }
 
   static Widget _buildWidget(
@@ -285,7 +345,21 @@ class RankingList extends HookConsumerWidget {
         final displayData = filteredNovelData.value
             .where((n) => n.novel.title != null)
             .toList();
-        final hasMore = displayData.length < filteredNovelData.value.length;
+            
+        // Determine if there are more items to load
+        final hasActiveFilters = showOnlyOngoing || selectedGenre != null;
+        final bool hasMore;
+        
+        if (hasActiveFilters) {
+          // For filtered data, check if source has more unloaded items
+          final unloadedSourceItems = allNovelData.value
+              .where((n) => n.novel.title == null)
+              .length;
+          hasMore = unloadedSourceItems > 0;
+        } else {
+          // Original logic for non-filtered data
+          hasMore = displayData.length < filteredNovelData.value.length;
+        }
 
         return RefreshIndicator(
           onRefresh: () async {
