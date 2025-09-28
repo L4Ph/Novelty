@@ -46,25 +46,16 @@ void main() {
         NewLine(),
       ];
 
-      // HookWidgetかどうかをテストするためのカウンター
-      var buildCount = 0;
-      late NovelContentView widget;
-
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: HookBuilder(
-              builder: (context) {
-                buildCount++;
-                widget = NovelContentView(elements: elements);
-                return widget;
-              },
-            ),
+            body: NovelContentView(elements: elements),
           ),
         ),
       );
 
       // ウィジェットがHookWidgetであることを確認
+      final widget = tester.widget<NovelContentView>(find.byType(NovelContentView));
       expect(widget, isA<HookWidget>());
 
       // RichTextが正しく表示されていることを確認

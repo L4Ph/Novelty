@@ -49,7 +49,7 @@ dependencies:
   path: ^1.9.0
   path_provider: ^2.1.2
   permission_handler: ^12.0.1
-  riverpod_annotation: ^3.0.0-dev.16
+  riverpod_annotation: ^3.0.0
   shared_preferences: ^2.5.3
   sqlite3_flutter_libs: ^0.5.20
   url_launcher: ^6.3.2
@@ -63,9 +63,9 @@ dev_dependencies:
   json_serializable: ^6.9.0
   mockito: ^5.4.4
   pedantic_mono: ^1.32.0
-  riverpod_generator: ^3.0.0-dev.16
-  riverpod_lint: ^3.0.0-dev.16
-  very_good_analysis: ^9.0.0
+  riverpod_generator: ^3.0.0
+  riverpod_lint: ^3.0.0
+  very_good_analysis: ^10.0.0
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

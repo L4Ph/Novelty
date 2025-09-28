@@ -1,16 +1,24 @@
 {
-  "theme": "ANSI Light",
-  "checkpointing": true,
+  "general": {
+    "checkpointing": true
+  },
   "mcpServers": {
     "serena": {
       "command": "uvx",
       "args": [
-        "--from", "git+https://github.com/oraios/serena",
+        "--from",
+        "git+https://github.com/oraios/serena",
         "serena-mcp-server",
-        "--context", "ide-assistant",
-        "--enable-web-dashboard", "false",
-        "--project", "${PWD}"
+        "--context",
+        "ide-assistant",
+        "--enable-web-dashboard",
+        "false",
+        "--project",
+        "${PWD}"
       ]
     }
+  },
+  "ui": {
+    "theme": "ANSI Light"
   }
 }

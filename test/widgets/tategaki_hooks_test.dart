@@ -146,7 +146,6 @@ void main() {
         NovelContentElement.plainText('固定テキスト'),
       ];
 
-      var firstBuild = true;
       Widget buildTategaki() {
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -169,7 +168,6 @@ void main() {
       expect(find.byType(Tategaki), findsOneWidget);
 
       // 同じプロパティで再ビルド
-      firstBuild = false;
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(body: buildTategaki()),
