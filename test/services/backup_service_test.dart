@@ -157,7 +157,7 @@ void main() {
         when(mockDatabase.addToLibrary(any)).thenAnswer((_) async => 1);
 
         // 復元処理の実行
-        final result = await backupService.restoreFromDownloadDirectory(testDownloadPath);
+        final result = await backupService.restoreFromDownloadDirectory(testDownloadPath, addToLibrary: true);
 
         // 結果の確認
         expect(result, equals(2)); // 2つの小説が復元された
@@ -179,7 +179,7 @@ void main() {
         await normalFile.writeAsString('normal content');
 
         // 復元処理の実行
-        final result = await backupService.restoreFromDownloadDirectory(testDownloadPath);
+        final result = await backupService.restoreFromDownloadDirectory(testDownloadPath, addToLibrary: true);
 
         // 結果の確認
         expect(result, equals(0)); // 復元された小説は0個
@@ -215,7 +215,7 @@ void main() {
         when(mockDatabase.addToLibrary(any)).thenAnswer((_) async => 1);
 
         // 復元処理の実行
-        final result = await backupService.restoreFromDownloadDirectory(testDownloadPath);
+        final result = await backupService.restoreFromDownloadDirectory(testDownloadPath, addToLibrary: true);
 
         // 結果の確認：有効な1つの小説のみが復元される
         expect(result, equals(1));
@@ -229,7 +229,7 @@ void main() {
         const nonExistentPath = '/non/existent/path';
         
         // 復元処理の実行
-        final result = await backupService.restoreFromDownloadDirectory(nonExistentPath);
+        final result = await backupService.restoreFromDownloadDirectory(nonExistentPath, addToLibrary: true);
 
         // 結果の確認
         expect(result, equals(0));

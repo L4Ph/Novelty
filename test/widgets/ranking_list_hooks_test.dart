@@ -12,7 +12,7 @@ void main() {
     ) async {
       // ダミーデータの準備
       const testEnrichedNovel = EnrichedNovelData(
-        novel: const RankingResponse(
+        novel: RankingResponse(
           rank: 1,
           pt: 100,
           ncode: 'n1111a',

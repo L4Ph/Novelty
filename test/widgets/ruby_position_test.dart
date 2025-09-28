@@ -13,7 +13,7 @@ void main() {
         NovelContentElement.plainText('普通'),
       ];
 
-      // When: Tategakiウィジェットをレンダリング
+      // When: Tategakiウィジェットをレンリング
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(

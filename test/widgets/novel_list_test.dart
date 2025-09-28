@@ -15,11 +15,9 @@ import 'novel_list_test.mocks.dart';
 void main() {
   group('NovelList', () {
     late MockAppDatabase mockDatabase;
-    late MockApiService mockApiService;
 
     setUp(() {
       mockDatabase = MockAppDatabase();
-      mockApiService = MockApiService();
     });
 
     testWidgets('小説リストを正しく表示する', (WidgetTester tester) async {

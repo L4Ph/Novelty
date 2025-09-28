@@ -305,8 +305,7 @@ class ApiService {
 
       currentPage++;
     }
-    info = info.copyWith(episodes: allEpisodes);
-    return info;
+    return info.copyWith(episodes: allEpisodes);
   }
 
   /// 小説のエピソードを取得するメソッド。
@@ -362,19 +361,17 @@ class ApiService {
         .map((s) => int.tryParse(s.trim()));
     final currentEpisode = episodeNumberParts?.elementAt(0);
 
-    final body = document
-        .querySelectorAll(
-          '.p-novel__text:not(.p-novel__text--preface):not(.p-novel__text--afterword)',
-        )
-        .map((el) => el.innerHtml)
-        // ignore: avoid_redundant_argument_values
-        .join('');
-
     return Episode(
       ncode: ncode.toLowerCase(),
       index: currentEpisode,
       subtitle: episodeTitle,
-      body: body,
+      body: document
+          .querySelectorAll(
+            '.p-novel__text:not(.p-novel__text--preface):not(.p-novel__text--afterword)',
+          )
+          .map((el) => el.innerHtml)
+          // ignore: avoid_redundant_argument_values
+          .join(''),
     );
   }
 
@@ -591,12 +588,10 @@ class ApiService {
       }
 
       // ランキング順位を追加
-      results = [
+      return [
         for (var i = 0; i < results.length; i++)
           results[i].copyWith(rank: i + 1, pt: results[i].allPoint),
       ];
-
-      return results;
     } on Exception catch (e) {
       if (kDebugMode) {
         print('Failed to fetch all-time ranking: $e');
