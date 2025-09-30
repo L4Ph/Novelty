@@ -1,121 +1,238 @@
 # 言語
 コミットメッセージ、Pull Requestの説明、タイトル、ドキュメント類、実装のコメント、あなたの考えはすべて日本語で記述、実施してください。
 
-# 役割と専門知識
+# プロジェクト概要
 
-あなたはケント・ベックのテスト駆動開発（TDD）と「Tidy First」原則を遵守するシニアソフトウェアエンジニアです。あなたの役割は、これらの開発手法を厳密に遵守しながら開発プロセスを指導することです。
+Noveltyは「小説家になろう」のクロスプラットフォーム小説ビューアーです。以下の技術スタックを使用しています：
 
-# 中核となる開発原則
+- **Framework**: Flutter 3.8.1+ with Dart
+- **State Management**: Riverpod (flutter_riverpod, hooks_riverpod)
+- **Routing**: GoRouter
+- **Database**: Drift (SQLite)
+- **API Client**: Dio
+- **Code Generation**: build_runner (freezed, json_annotation)
+- **Testing**: flutter_test, mockito
+- **Version Management**: FVM
 
-- 常にTDDサイクル（Red→Green→Refactor）を遵守すること
-- 最初に最もシンプルな失敗テストを記述すること
-- テストを通過させるために必要な最小限のコードを実装すること
-- テストが通過した後にのみリファクタリングを行うこと
-- ベックの「Tidy First」アプローチに従い、構造変更と振る舞い変更を明確に分離すること
-- 開発プロセス全体を通じて高いコード品質を維持すること
+# アーキテクチャ
 
-# TDD手法に関する指導方針
+プロジェクトは以下のディレクトリ構造で整理されています：
 
-- まずは機能の小さな単位を定義する失敗テストを記述することから開始すること
-- 動作内容を明確に記述した意味のあるテスト名を使用すること（例："shouldSumTwoPositiveNumbers"）
-- テストの失敗状態が明確で有益な情報を提供すること
-- テストを通過させるために必要な最小限のコードのみを実装すること - それ以上は不要
-- テストが通過したら、リファクタリングの必要性を検討すること
-- 新しい機能ごとにこのサイクルを繰り返すこと
-- 不具合修正を行う場合は、まずAPIレベルの失敗テストを記述し、問題を再現する最小単位のテストを作成した上で、両方のテストを通過させること
+- `lib/database/` - Drift データベース関連
+- `lib/models/` - データモデル (Freezed使用)
+- `lib/providers/` - Riverpodプロバイダー
+- `lib/repositories/` - データアクセス層
+- `lib/screens/` - UI画面
+- `lib/services/` - ビジネスロジック
+- `lib/widgets/` - 再利用可能コンポーネント
+- `lib/utils/` - ユーティリティ関数
+- `docs/` - APIドキュメント
 
-# 「Tidy First」アプローチ
+# 開発原則
 
-- すべての変更を以下の2種類に明確に分類すること：
-  1. 構造変更：動作を変更せずにコードを再配置する変更（リネーム、メソッドの抽出、コードの移動など）
-  2. 振る舞い変更：実際の機能を追加または変更する変更
-- 構造変更と振る舞い変更を同一コミットに混在させないこと
-- 両方の変更が必要な場合は、まず構造変更を先に行うこと
-- 構造変更が動作に影響を与えないことを検証するため、変更前後でテストを実行すること
+## コード品質
+- `very_good_analysis` パッケージのルールセット適用
+- `custom_lint` プラグインによる追加チェック
+- 1行の文字数制限は緩やか（80文字以上を許容）
+- 生成ファイル（`*.g.dart`, `*.freezed.dart`）やモック（`**.mocks.dart`）は静的解析の対象外
 
-# コミット規律
+## テスト駆動開発
+- 新機能はテストファーストで実装
+- テスト名は動作を明確に表現（日本語推奨）
+- モックは`mockito`を使用し、必要なスタブを適切に設定
+- コード変更後は必ずテストを実行
 
-- 以下の条件がすべて満たされた場合にのみコミットすること：
-  1. すべてのテストが通過していること
-  2. すべてのコンパイラ/リンター警告が解決されていること
-  3. 変更が論理的に一貫した作業単位を表していること
-  4. コミットメッセージに、構造変更か振る舞い変更のいずれが含まれているかを明確に記載すること
-- 大規模な変更を少数行うよりも、小規模な変更を頻繁に行うこと
+# 開発ワークフロー
 
-# コード品質基準
+## 必須コマンド
 
-- 重複コードは徹底的に排除すること
-- 命名と構造を通じて意図を明確に表現すること
-- 依存関係を明示的に定義すること
-- メソッドは小さく、単一の責務に集中させること
-- 状態変数と副作用を最小限に抑えること
-- 可能な限りシンプルな解決策を採用すること
-
-# リファクタリングガイドライン
-
-- テストが通過している状態（「Green」フェーズ）でのみリファクタリングを行うこと
-- 確立されたリファクタリングパターンを使用し、適切な名称で実施すること
-- 一度に1つのリファクタリング変更のみを行うこと
-- 各リファクタリングステップの後にテストを実行すること
-- 重複の除去や可読性向上につながるリファクタリングを優先すること
-
-# 具体例
-
-新しい機能に取り組む際の手順：
-
-1. 機能の小さな部分について、シンプルな失敗テストを記述する
-2. テストを通過させるために必要な最小限のコードを実装する
-3. テストを実行して通過していることを確認する（Green状態）
-4. 必要に応じて構造変更を実施する（Tidy Firstアプローチに従い、変更ごとにテストを実行）
-5. 構造変更を別のコミットとしてコミットする
-6. 次の機能の小さな単位について新たなテストを追加する
-7. 機能が完成するまでこのプロセスを繰り返し、振る舞い変更と構造変更を別々にコミットする
-
-このプロセスを厳密に遵守し、迅速な実装よりもクリーンで十分にテストされたコードを常に優先してください。
-
-常に1つのテストを記述し、それを実行可能にした上で構造を改善すること。毎回、すべてのテスト（長時間実行されるテストを除く）を実行することを忘れないでください。
-
-# Hooks / command
-
-## fvm
-常にflutterのコマンドを実行する際は、先頭に`fvm`を追加して実行してください。
-
-## Linterのエラー
-Linterのエラー、警告がないかを、
+### 依存関係のインストール
+```bash
+fvm flutter pub get
 ```
+
+### 静的解析（Linter）
+コードの品質チェック。info レベルは必要に応じて修正：
+```bash
 fvm dart analyze
 ```
-を実行して、定期的にlinterエラーを確認して修正してください。(infoについては後述のものだけ適宜修正してください。)
 
-
-## `public_member_api_docs`について
-このアナライザーは、パッケージの公開 API の一部の宣言にドキュメントコメントがない場合、この診断メッセージを出力します。
-ファイルを変更した際に、該当のファイルにてこのLinterのinfoが表示されていた場合は追加、修正を行ってください。
-下記は例です。
-
-before
-```dart
-class C {}
-```
-
-after
-```dart
-/// Documentation comment.
-class C {}
-```
-
-## モデル
-モデルが更新された場合、下記を実行してください。
-```
+### コード生成
+モデルやDIコンテナ更新後に実行：
+```bash
 fvm dart run build_runner build -d
 ```
 
-# APIドキュメント
+### テスト実行
+```bash
+fvm flutter test
+```
 
-## なろう小説のhtml
-- [{ncode}へのリクエスト](../docs/narou_html/{ncode}.md)
-- [{ncode}/{episodes}へのリクエスト](../docs/narou_html/{ncode}/{episodes}.md)
+### アプリケーション実行
+```bash
+fvm flutter run
+```
 
-## なろう小説
-- [なろう小説API](../docs/narou_api/novel_api.md)
-- [なろう小説ランキングAPI](../docs/narou_api/ranking_api.md)
+## Riverpod パターン
+
+### プロバイダー作成
+```dart
+// StateNotifierProvider の場合
+final exampleProvider = StateNotifierProvider<ExampleNotifier, ExampleState>((ref) {
+  return ExampleNotifier();
+});
+
+// FutureProvider の場合  
+final dataProvider = FutureProvider<Data>((ref) async {
+  return await ref.read(repositoryProvider).fetchData();
+});
+```
+
+### HookWidget でのプロバイダー使用
+```dart
+class ExampleWidget extends HookConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(exampleProvider);
+    // HookWidgetの場合、useStateやuseMemoizedが使用可能
+    return Container();
+  }
+}
+```
+
+## データモデル
+
+### Freezed クラスの基本形
+```dart
+@freezed
+class ExampleModel with _$ExampleModel {
+  const factory ExampleModel({
+    required String id,
+    required String title,
+    @Default([]) List<String> tags,
+  }) = _ExampleModel;
+  
+  factory ExampleModel.fromJson(Map<String, dynamic> json) =>
+      _$ExampleModelFromJson(json);
+}
+```
+
+## 重要なコーディング規約
+
+### public_member_api_docs 対応
+公開API（ライブラリの外部から使用されるクラス・メソッド）には必ずドキュメントコメントを追加：
+
+```dart
+/// ユーザー情報を管理するクラス
+class UserManager {
+  /// ユーザーIDから詳細情報を取得する
+  Future<User> fetchUser(String userId) async {
+    // 実装
+  }
+}
+```
+
+### 非同期処理のベストプラクティス
+- 戻り値を使わないFuture呼び出しには `unawaited` を使用
+- discarded_futures 警告の対応例：
+```dart
+import 'dart:async';
+
+void example() {
+  // NG
+  someFuture();
+  
+  // OK
+  unawaited(someFuture());
+  
+  // または
+  someFuture().ignore();
+}
+```
+
+# プロジェクト固有の情報
+
+## データベース（Drift）
+
+### テーブル定義の例
+```dart
+class Users extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().withLength(min: 1, max: 50)();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+```
+
+### DAO パターン
+```dart
+@DriftAccessor(tables: [Users])
+class UserDao extends DatabaseAccessor<AppDatabase> with _$UserDaoMixin {
+  UserDao(AppDatabase db) : super(db);
+  
+  Future<User> findUserById(int id) =>
+      (select(users)..where((u) => u.id.equals(id))).getSingle();
+}
+```
+
+## APIドキュメント
+
+### なろう小説のHTML構造
+- [作品トップページ（{ncode}）](../docs/narou_html/{ncode}.md)
+- [話別ページ（{ncode}/{episodes}）](../docs/narou_html/{ncode}/{episodes}.md)
+
+### なろう小説API
+- [小説情報API](../docs/narou_api/novel_api.md)
+- [ランキングAPI](../docs/narou_api/ranking_api.md)
+
+## テスト戦略
+
+### ウィジェットテストのパターン
+```dart
+testWidgets('ウィジェットの動作説明', (tester) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      child: MaterialApp(
+        home: YourWidget(),
+      ),
+    ),
+  );
+  
+  expect(find.text('期待するテキスト'), findsOneWidget);
+});
+```
+
+### Mockito の使用
+```dart
+@GenerateMocks([Repository])
+void main() {
+  group('ServiceTest', () {
+    late MockRepository mockRepo;
+    
+    setUp(() {
+      mockRepo = MockRepository();
+    });
+    
+    test('メソッドの動作説明', () {
+      when(mockRepo.getData()).thenAnswer((_) async => testData);
+      // テスト実装
+    });
+  });
+}
+```
+
+# コミットとPR
+
+## コミットメッセージ規約
+- 機能追加: `✨ 新機能の説明`
+- バグ修正: `🐛 修正内容の説明`
+- ドキュメント: `📄 ドキュメント更新の説明`
+- リファクタリング: `♻️ リファクタリング内容の説明`
+- テスト: `✅ テスト内容の説明`
+- 設定変更: `🔧 設定変更の説明`
+
+## 変更前チェックリスト
+1. `fvm dart analyze` でlintエラーなし
+2. `fvm flutter test` で全テスト通過
+3. 新機能にはテスト追加
+4. 公開APIにドキュメントコメント追加
+5. コード生成が必要な場合は `fvm dart run build_runner build -d` 実行済み
