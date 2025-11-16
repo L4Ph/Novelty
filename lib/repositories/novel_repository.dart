@@ -118,6 +118,48 @@ class NovelRepository {
     return true;
   }
 
+  /// 小説をライブラリから削除する。
+  Future<void> removeFromLibrary(String ncode) async {
+    final ncodeLower = ncode.toLowerCase();
+    await _db.removeFromLibrary(ncodeLower);
+
+    // Providersを無効化してUIを更新
+    ref
+      ..invalidate(libraryNovelsProvider)
+      ..invalidate(enrichedRankingDataProvider('d'))
+      ..invalidate(enrichedRankingDataProvider('w'))
+      ..invalidate(enrichedRankingDataProvider('m'))
+      ..invalidate(enrichedRankingDataProvider('q'))
+      ..invalidate(enrichedRankingDataProvider('all'));
+  }
+
+  /// 小説を閲覧履歴に追加する。
+  Future<void> addToHistory({
+    required String ncode,
+    required String title,
+    required String writer,
+    required int lastEpisode,
+  }) async {
+    final normalizedNcode = ncode.toLowerCase();
+    final validEpisode = lastEpisode > 0 ? lastEpisode : 1;
+
+    await _db.addToHistory(
+      HistoryCompanion(
+        ncode: Value(normalizedNcode),
+        title: Value(title),
+        writer: Value(writer),
+        lastEpisode: Value(validEpisode),
+        viewedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+  }
+
+  /// 指定したncodeの閲覧履歴を削除する。
+  Future<void> deleteHistory(String ncode) async {
+    final normalizedNcode = ncode.toLowerCase();
+    await _db.deleteHistory(normalizedNcode);
+  }
+
   Future<List<NovelContentElement>> _fetchEpisodeContent(
     String ncode,
     int episode,

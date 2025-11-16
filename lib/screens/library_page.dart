@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/repositories/novel_repository.dart';
 
 /// "ライブラリ"ページのウィジェット。
 class LibraryPage extends ConsumerWidget {
@@ -97,7 +98,7 @@ class LibraryPage extends ConsumerWidget {
                             TextButton(
                               onPressed: () async {
                                 await ref
-                                    .read(appDatabaseProvider)
+                                    .read(novelRepositoryProvider)
                                     .removeFromLibrary(novel.ncode);
                                 if (context.mounted) {
                                   Navigator.pop(context);

@@ -1253,6 +1253,43 @@ class MockNovelRepository extends _i1.Mock implements _i13.NovelRepository {
           as _i5.Future<bool>);
 
   @override
+  _i5.Future<void> removeFromLibrary(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#removeFromLibrary, [ncode]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> addToHistory({
+    required String? ncode,
+    required String? title,
+    required String? writer,
+    required int? lastEpisode,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#addToHistory, [], {
+              #ncode: ncode,
+              #title: title,
+              #writer: writer,
+              #lastEpisode: lastEpisode,
+            }),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteHistory(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteHistory, [ncode]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
   _i5.Future<List<_i17.NovelContentElement>> getEpisode(
     String? ncode,
     int? episode,

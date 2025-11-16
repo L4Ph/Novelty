@@ -1,9 +1,7 @@
 import 'dart:async';
 
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
@@ -136,20 +134,12 @@ class NovelPage extends ConsumerWidget {
   }
 
   void _updateHistory(WidgetRef ref, NovelInfo novelInfo, int episode) {
-    // lastEpisodeが0以下の場合は1に設定
-    final validEpisode = episode > 0 ? episode : 1;
-
     unawaited(
-      ref
-          .read(appDatabaseProvider)
-          .addToHistory(
-            HistoryCompanion(
-              ncode: drift.Value(ncode),
-              title: drift.Value(novelInfo.title),
-              writer: drift.Value(novelInfo.writer),
-              lastEpisode: drift.Value(validEpisode),
-              viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
-            ),
+      ref.read(novelRepositoryProvider).addToHistory(
+            ncode: ncode,
+            title: novelInfo.title ?? '',
+            writer: novelInfo.writer ?? '',
+            lastEpisode: episode,
           ),
     );
   }

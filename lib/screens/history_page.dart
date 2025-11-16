@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/repositories/novel_repository.dart';
 
 /// "履歴"ページのウィジェット。
 class HistoryPage extends ConsumerWidget {
@@ -67,7 +68,7 @@ class HistoryPage extends ConsumerWidget {
                         icon: const Icon(Icons.delete_outline),
                         onPressed: () {
                           unawaited(
-                            ref.read(appDatabaseProvider).deleteHistory(ncode),
+                            ref.read(novelRepositoryProvider).deleteHistory(ncode),
                           );
                         },
                       ),
