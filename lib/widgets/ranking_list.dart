@@ -185,10 +185,16 @@ class RankingList extends HookConsumerWidget {
                   child: Center(
                     child: isLoadingMore.value
                         ? const CircularProgressIndicator()
-                        : ElevatedButton.icon(
+                        : TextButton(
                             onPressed: () => loadMore(enrichedData),
-                            icon: const Icon(Icons.expand_more),
-                            label: const Text('もっと見る'),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('もっと見る'),
+                                SizedBox(width: 4),
+                                Icon(Icons.expand_more, size: 20),
+                              ],
+                            ),
                           ),
                   ),
                 ),
