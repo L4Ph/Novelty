@@ -20,18 +20,16 @@ part 'api_service.g.dart';
 /// なろう小説APIの制限値（最大500件）を最大限活用
 const int allTimeRankingLimit = 500;
 
+@riverpod
 /// APIサービスのプロバイダー
-final Provider<ApiService> apiServiceProvider = Provider((ref) => ApiService());
+ApiService apiService(Ref ref) => ApiService();
 
+@riverpod
 /// ランキングデータのプロバイダー
-// ignore: specify_nonobvious_property_types
-final rankingDataProvider = FutureProvider.autoDispose
-    .family<List<RankingResponse>, String>(
-      (ref, rankingType) {
-        final apiService = ref.watch(apiServiceProvider);
-        return apiService.fetchRanking(rankingType);
-      },
-    );
+Future<List<RankingResponse>> rankingData(Ref ref, String rankingType) {
+  final apiService = ref.watch(apiServiceProvider);
+  return apiService.fetchRanking(rankingType);
+}
 
 /// APIサービスクラス。
 class ApiService {

@@ -8,6 +8,146 @@ part of 'novel_repository.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// 小説のダウンロードと管理を行うリポジトリ。
+
+@ProviderFor(novelRepository)
+const novelRepositoryProvider = NovelRepositoryProvider._();
+
+/// 小説のダウンロードと管理を行うリポジトリ。
+
+final class NovelRepositoryProvider
+    extends
+        $FunctionalProvider<NovelRepository, NovelRepository, NovelRepository>
+    with $Provider<NovelRepository> {
+  /// 小説のダウンロードと管理を行うリポジトリ。
+  const NovelRepositoryProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'novelRepositoryProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$novelRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<NovelRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  NovelRepository create(Ref ref) {
+    return novelRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(NovelRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<NovelRepository>(value),
+    );
+  }
+}
+
+String _$novelRepositoryHash() => r'2e5398c23a6f338f7d37b8928e2cce71860f7f06';
+
+/// 小説のコンテンツを取得するプロバイダー。
+
+@ProviderFor(novelContent)
+const novelContentProvider = NovelContentFamily._();
+
+/// 小説のコンテンツを取得するプロバイダー。
+
+final class NovelContentProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<NovelContentElement>>,
+          List<NovelContentElement>,
+          FutureOr<List<NovelContentElement>>
+        >
+    with
+        $FutureModifier<List<NovelContentElement>>,
+        $FutureProvider<List<NovelContentElement>> {
+  /// 小説のコンテンツを取得するプロバイダー。
+  const NovelContentProvider._({
+    required NovelContentFamily super.from,
+    required ({String ncode, int episode}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'novelContentProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$novelContentHash();
+
+  @override
+  String toString() {
+    return r'novelContentProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<NovelContentElement>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<NovelContentElement>> create(Ref ref) {
+    final argument = this.argument as ({String ncode, int episode});
+    return novelContent(ref, ncode: argument.ncode, episode: argument.episode);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is NovelContentProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$novelContentHash() => r'bbb3060ae5dc4ee6701daaf77eb1c3a030ad973a';
+
+/// 小説のコンテンツを取得するプロバイダー。
+
+final class NovelContentFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<List<NovelContentElement>>,
+          ({String ncode, int episode})
+        > {
+  const NovelContentFamily._()
+    : super(
+        retry: null,
+        name: r'novelContentProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// 小説のコンテンツを取得するプロバイダー。
+
+  NovelContentProvider call({required String ncode, required int episode}) =>
+      NovelContentProvider._(
+        argument: (ncode: ncode, episode: episode),
+        from: this,
+      );
+
+  @override
+  String toString() => r'novelContentProvider';
+}
+
 /// 小説のライブラリ状態を管理するプロバイダー。
 
 @ProviderFor(LibraryStatus)

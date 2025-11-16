@@ -3,6 +3,9 @@ import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'novel_enrichment.g.dart';
 
 /// APIデータとローカルライブラリの状態の両方を含む、充実した新規データ
 class EnrichedNovelData {
@@ -26,58 +29,58 @@ class EnrichedNovelData {
   }
 }
 
+@riverpod
 /// 豊富な小説データをデータベースから取得するプロバイダー
-// ignore: specify_nonobvious_property_types
-final enrichedRankingDataProvider = FutureProvider.autoDispose
-    .family<List<EnrichedNovelData>, String>(
-      (ref, rankingType) async {
-        final db = ref.watch(appDatabaseProvider);
+Future<List<EnrichedNovelData>> enrichedRankingData(
+  Ref ref,
+  String rankingType,
+) async {
+  final db = ref.watch(appDatabaseProvider);
 
-        // Get ranking data from API
-        final rankingData = await ref.watch(
-          rankingDataProvider(rankingType).future,
-        );
+  // Get ranking data from API
+  final rankingData = await ref.watch(
+    rankingDataProvider(rankingType).future,
+  );
 
-        // Get all library novels at once for efficient lookup
-        final libraryNovels = await db.getLibraryNovels();
-        final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
+  // Get all library novels at once for efficient lookup
+  final libraryNovels = await db.getLibraryNovels();
+  final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
 
-        // Enrich each novel with library status
-        final enrichedData = rankingData.map((novel) {
-          final isInLibrary = libraryNcodes.contains(novel.ncode);
-          return EnrichedNovelData(
-            novel: novel,
-            isInLibrary: isInLibrary,
-          );
-        }).toList();
-
-        return enrichedData;
-      },
+  // Enrich each novel with library status
+  final enrichedData = rankingData.map((novel) {
+    final isInLibrary = libraryNcodes.contains(novel.ncode);
+    return EnrichedNovelData(
+      novel: novel,
+      isInLibrary: isInLibrary,
     );
+  }).toList();
 
+  return enrichedData;
+}
+
+@riverpod
 /// 検索結果をデータベースのライブラリ状態で強化するプロバイダー
-// ignore: specify_nonobvious_property_types
-final enrichedSearchDataProvider = FutureProvider.autoDispose
-    .family<List<EnrichedNovelData>, List<RankingResponse>>(
-      (ref, searchResults) async {
-        final db = ref.watch(appDatabaseProvider);
+Future<List<EnrichedNovelData>> enrichedSearchData(
+  Ref ref,
+  List<RankingResponse> searchResults,
+) async {
+  final db = ref.watch(appDatabaseProvider);
 
-        // すべてのライブラリ小説を一度に取得して効率的に検索
-        final libraryNovels = await db.getLibraryNovels();
-        final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
+  // すべてのライブラリ小説を一度に取得して効率的に検索
+  final libraryNovels = await db.getLibraryNovels();
+  final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
 
-        // 検索結果の各小説をライブラリ状態で強化
-        final enrichedData = searchResults.map((novel) {
-          final isInLibrary = libraryNcodes.contains(novel.ncode);
-          return EnrichedNovelData(
-            novel: novel,
-            isInLibrary: isInLibrary,
-          );
-        }).toList();
-
-        return enrichedData;
-      },
+  // 検索結果の各小説をライブラリ状態で強化
+  final enrichedData = searchResults.map((novel) {
+    final isInLibrary = libraryNcodes.contains(novel.ncode);
+    return EnrichedNovelData(
+      novel: novel,
+      isInLibrary: isInLibrary,
     );
+  }).toList();
+
+  return enrichedData;
+}
 
 /// 小説のライブラリ状態を取得するヘルパー関数
 Future<bool> getNovelLibraryStatus(WidgetRef ref, String ncode) async {
@@ -92,28 +95,25 @@ Future<Set<String>> getLibraryNcodes(WidgetRef ref) async {
   return libraryNovels.map((novel) => novel.ncode).toSet();
 }
 
+@riverpod
 /// ncodeから単一の豊富な小説データを取得するプロバイダー
-// ignore: specify_nonobvious_property_types
-final enrichedNovelProvider = FutureProvider.autoDispose
-    .family<EnrichedNovelData, String>(
-      (ref, ncode) async {
-        final apiService = ref.watch(apiServiceProvider);
-        final db = ref.watch(appDatabaseProvider);
+Future<EnrichedNovelData> enrichedNovel(Ref ref, String ncode) async {
+  final apiService = ref.watch(apiServiceProvider);
+  final db = ref.watch(appDatabaseProvider);
 
-        // APIから小説データを取得
-        final query = NovelSearchQuery(ncode: [ncode], lim: 1);
-        final searchResult = await apiService.searchNovels(query);
-        if (searchResult.isEmpty) {
-          throw Exception('Novel not found for ncode: $ncode');
-        }
-        final novel = searchResult.first;
+  // APIから小説データを取得
+  final query = NovelSearchQuery(ncode: [ncode], lim: 1);
+  final searchResult = await apiService.searchNovels(query);
+  if (searchResult.isEmpty) {
+    throw Exception('Novel not found for ncode: $ncode');
+  }
+  final novel = searchResult.first;
 
-        // ライブラリ状態を確認
-        final isInLibrary = await db.isInLibrary(ncode);
+  // ライブラリ状態を確認
+  final isInLibrary = await db.isInLibrary(ncode);
 
-        return EnrichedNovelData(
-          novel: novel,
-          isInLibrary: isInLibrary,
-        );
-      },
-    );
+  return EnrichedNovelData(
+    novel: novel,
+    isInLibrary: isInLibrary,
+  );
+}

@@ -8,6 +8,138 @@ part of 'api_service.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// APIサービスのプロバイダー
+
+@ProviderFor(apiService)
+const apiServiceProvider = ApiServiceProvider._();
+
+/// APIサービスのプロバイダー
+
+final class ApiServiceProvider
+    extends $FunctionalProvider<ApiService, ApiService, ApiService>
+    with $Provider<ApiService> {
+  /// APIサービスのプロバイダー
+  const ApiServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'apiServiceProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$apiServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<ApiService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ApiService create(Ref ref) {
+    return apiService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ApiService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ApiService>(value),
+    );
+  }
+}
+
+String _$apiServiceHash() => r'01c3d99362f3730b98e29079977950009cd07601';
+
+/// ランキングデータのプロバイダー
+
+@ProviderFor(rankingData)
+const rankingDataProvider = RankingDataFamily._();
+
+/// ランキングデータのプロバイダー
+
+final class RankingDataProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<RankingResponse>>,
+          List<RankingResponse>,
+          FutureOr<List<RankingResponse>>
+        >
+    with
+        $FutureModifier<List<RankingResponse>>,
+        $FutureProvider<List<RankingResponse>> {
+  /// ランキングデータのプロバイダー
+  const RankingDataProvider._({
+    required RankingDataFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'rankingDataProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$rankingDataHash();
+
+  @override
+  String toString() {
+    return r'rankingDataProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<RankingResponse>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<RankingResponse>> create(Ref ref) {
+    final argument = this.argument as String;
+    return rankingData(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is RankingDataProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$rankingDataHash() => r'82f5d31dbb04f4d9c041c5005fa632e3e07eb0c7';
+
+/// ランキングデータのプロバイダー
+
+final class RankingDataFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<RankingResponse>>, String> {
+  const RankingDataFamily._()
+    : super(
+        retry: null,
+        name: r'rankingDataProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// ランキングデータのプロバイダー
+
+  RankingDataProvider call(String rankingType) =>
+      RankingDataProvider._(argument: rankingType, from: this);
+
+  @override
+  String toString() => r'rankingDataProvider';
+}
+
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 
 @ProviderFor(novelInfo)

@@ -9,15 +9,8 @@ import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/utils/history_grouping.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'database.g.dart';
-
-@riverpod
-/// アプリケーションのデータベース
-AppDatabase appDatabase(Ref ref) {
-  return AppDatabase();
-}
 
 /// 小説のコンテンツをデータベースに保存するための変換クラス
 class ContentConverter
@@ -639,6 +632,9 @@ LazyDatabase _openConnection() {
 }
 
 // ==================== Providers ====================
+
+/// アプリケーションのデータベースプロバイダー
+final appDatabaseProvider = Provider<AppDatabase>((ref) => AppDatabase());
 
 /// 小説のライブラリを表示するためのプロバイダー。
 ///

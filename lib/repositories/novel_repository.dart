@@ -17,8 +17,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'novel_repository.g.dart';
 
+@Riverpod(keepAlive: true)
 /// 小説のダウンロードと管理を行うリポジトリ。
-final novelRepositoryProvider = Provider<NovelRepository>((ref) {
+NovelRepository novelRepository(Ref ref) {
   final apiService = ref.watch(apiServiceProvider);
   final settings = ref.watch(settingsProvider);
   final db = ref.watch(appDatabaseProvider);
@@ -32,7 +33,7 @@ final novelRepositoryProvider = Provider<NovelRepository>((ref) {
   ref.onDispose(repository.dispose);
 
   return repository;
-});
+}
 
 /// 小説のダウンロードと管理を行うリポジトリクラス。
 class NovelRepository {
@@ -386,16 +387,17 @@ class NovelRepository {
 
 // ==================== Providers ====================
 
+@riverpod
 /// 小説のコンテンツを取得するプロバイダー。
-final novelContentProvider = FutureProvider.autoDispose
-    .family<List<NovelContentElement>, ({String ncode, int episode})>((
-      ref,
-      params,
-    ) async {
-      final normalizedNcode = params.ncode.toLowerCase();
-      final repository = ref.read(novelRepositoryProvider);
-      return repository.getEpisode(normalizedNcode, params.episode);
-    });
+Future<List<NovelContentElement>> novelContent(
+  Ref ref, {
+  required String ncode,
+  required int episode,
+}) async {
+  final normalizedNcode = ncode.toLowerCase();
+  final repository = ref.read(novelRepositoryProvider);
+  return repository.getEpisode(normalizedNcode, episode);
+}
 
 @riverpod
 /// 小説のライブラリ状態を管理するプロバイダー。

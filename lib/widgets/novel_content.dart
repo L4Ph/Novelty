@@ -26,7 +26,7 @@ class NovelContent extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final contentAsync = ref.watch(
-      novelContentProvider((ncode: ncode, episode: episode)),
+      novelContentProvider(ncode: ncode, episode: episode),
     );
 
     return SafeArea(
