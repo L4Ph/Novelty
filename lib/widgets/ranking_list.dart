@@ -37,6 +37,9 @@ class RankingList extends HookConsumerWidget {
     // フィルタ状態を取得
     final filterState = ref.watch(rankingFilterStateProvider(rankingType));
 
+    // 最新のenrichedDataを保持するref（スクロールリスナー用）
+    final enrichedDataRef = useRef<List<EnrichedNovelData>>([]);
+
     // ローディング処理
     Future<void> loadMore(List<EnrichedNovelData> enrichedData) async {
       if (isLoadingMore.value || !context.mounted) return;
@@ -117,9 +120,10 @@ class RankingList extends HookConsumerWidget {
           const delta = 200.0;
 
           if (currentScroll >= maxScroll - delta) {
-            enrichedDataAsync.whenData((enrichedData) {
-              unawaited(loadMore(enrichedData));
-            });
+            // 最新のenrichedDataを使用
+            if (enrichedDataRef.value.isNotEmpty) {
+              unawaited(loadMore(enrichedDataRef.value));
+            }
           }
         }
 
@@ -131,11 +135,29 @@ class RankingList extends HookConsumerWidget {
 
     return enrichedDataAsync.when(
       data: (enrichedData) {
+        // 最新のデータをrefに保存
+        enrichedDataRef.value = enrichedData;
+
         // 初回ロードを実行
         if (isInitialLoad.value && !isLoadingMore.value) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               unawaited(loadMore(enrichedData));
+            }
+          });
+        }
+
+        // 初回ロード完了後、画面を満たすまで追加ロード
+        if (!isInitialLoad.value && !isLoadingMore.value) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!context.mounted) return;
+            // スクロール可能かチェック
+            if (scrollController.hasClients) {
+              final maxScroll = scrollController.position.maxScrollExtent;
+              // スクロール不可能（画面に収まっている）なら追加ロード
+              if (maxScroll <= 0 && loadedData.value.isNotEmpty) {
+                unawaited(loadMore(enrichedData));
+              }
             }
           });
         }
