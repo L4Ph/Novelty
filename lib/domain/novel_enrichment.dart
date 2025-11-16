@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/services/api_service.dart';
@@ -116,4 +117,51 @@ Future<EnrichedNovelData> enrichedNovel(Ref ref, String ncode) async {
     novel: novel,
     isInLibrary: isInLibrary,
   );
+}
+
+@riverpod
+/// フィルタリングされた豊富なランキングデータを取得するプロバイダー
+Future<List<EnrichedNovelData>> filteredEnrichedRankingData(
+  Ref ref,
+  String rankingType,
+) async {
+  // 元のランキングデータを取得
+  final enrichedData = await ref.watch(
+    enrichedRankingDataProvider(rankingType).future,
+  );
+
+  // フィルタ状態を取得
+  final filterState = ref.watch(
+    rankingFilterStateProvider(rankingType),
+  );
+
+  // フィルタが設定されていない場合は元のデータをそのまま返す
+  if (!filterState.showOnlyOngoing && filterState.selectedGenre == null) {
+    return enrichedData;
+  }
+
+  // フィルタリングを適用
+  var filtered = enrichedData;
+
+  // 連載中フィルタ
+  if (filterState.showOnlyOngoing) {
+    filtered = filtered.where((enrichedNovel) {
+      final novel = enrichedNovel.novel;
+      // 詳細未読み込み（title == null）のアイテムはフィルタリング対象外
+      // 詳細読み込み済みのアイテムのみフィルタ条件を適用
+      return novel.title == null || novel.end == 1;
+    }).toList();
+  }
+
+  // ジャンルフィルタ
+  if (filterState.selectedGenre != null) {
+    filtered = filtered.where((enrichedNovel) {
+      final novel = enrichedNovel.novel;
+      // 詳細未読み込み（title == null）のアイテムはフィルタリング対象外
+      // 詳細読み込み済みのアイテムのみフィルタ条件を適用
+      return novel.title == null || novel.genre == filterState.selectedGenre;
+    }).toList();
+  }
+
+  return filtered;
 }

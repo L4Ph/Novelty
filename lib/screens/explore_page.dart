@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/domain/novel_enrichment.dart';
+import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/enriched_novel_list.dart';
@@ -25,9 +26,6 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
   var _isLoading = false;
   var _isSearching = false;
   late final VoidCallback _tabListener;
-
-  var _showOnlyOngoing = false;
-  int? _selectedGenre;
 
   @override
   void initState() {
@@ -227,10 +225,22 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
   }
 
   void _showRankingFilterDialog() {
+    // 現在のタブのランキングタイプを取得
+    final rankingTypes = ['d', 'w', 'm', 'q', 'all'];
+    final currentRankingType = rankingTypes[_tabController.index];
+
+    // 現在のフィルタ状態を取得
+    final currentFilter = ref.read(
+      rankingFilterStateProvider(currentRankingType),
+    );
+
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (BuildContext context) {
+        var tempShowOnlyOngoing = currentFilter.showOnlyOngoing;
+        var tempSelectedGenre = currentFilter.selectedGenre;
+
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return SizedBox(
@@ -239,15 +249,15 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
                 children: <Widget>[
                   CheckboxListTile(
                     title: const Text('連載中のみ'),
-                    value: _showOnlyOngoing,
+                    value: tempShowOnlyOngoing,
                     onChanged: (bool? value) {
                       setState(() {
-                        _showOnlyOngoing = value ?? false;
+                        tempShowOnlyOngoing = value ?? false;
                       });
                     },
                   ),
                   DropdownButton<int?>(
-                    value: _selectedGenre,
+                    value: tempSelectedGenre,
                     hint: const Text('ジャンルを選択'),
                     isExpanded: true,
                     items: [
@@ -263,7 +273,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
                     ],
                     onChanged: (int? newValue) {
                       setState(() {
-                        _selectedGenre = newValue;
+                        tempSelectedGenre = newValue;
                       });
                     },
                   ),
@@ -280,7 +290,19 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
                         TextButton(
                           child: const Text('適用'),
                           onPressed: () {
-                            this.setState(() {});
+                            // Providerの状態を更新
+                            ref
+                                .read(
+                                  rankingFilterStateProvider(currentRankingType)
+                                      .notifier,
+                                )
+                                .setShowOnlyOngoing(value: tempShowOnlyOngoing);
+                            ref
+                                .read(
+                                  rankingFilterStateProvider(currentRankingType)
+                                      .notifier,
+                                )
+                                .setSelectedGenre(tempSelectedGenre);
                             Navigator.of(context).pop();
                           },
                         ),
@@ -352,36 +374,26 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
                   : _EnrichedSearchResults(searchResults: _searchResults)
             : TabBarView(
                 controller: _tabController,
-                children: [
+                children: const [
                   RankingList(
                     rankingType: 'd',
-                    key: const PageStorageKey('d'),
-                    showOnlyOngoing: _showOnlyOngoing,
-                    selectedGenre: _selectedGenre,
+                    key: PageStorageKey('d'),
                   ),
                   RankingList(
                     rankingType: 'w',
-                    key: const PageStorageKey('w'),
-                    showOnlyOngoing: _showOnlyOngoing,
-                    selectedGenre: _selectedGenre,
+                    key: PageStorageKey('w'),
                   ),
                   RankingList(
                     rankingType: 'm',
-                    key: const PageStorageKey('m'),
-                    showOnlyOngoing: _showOnlyOngoing,
-                    selectedGenre: _selectedGenre,
+                    key: PageStorageKey('m'),
                   ),
                   RankingList(
                     rankingType: 'q',
-                    key: const PageStorageKey('q'),
-                    showOnlyOngoing: _showOnlyOngoing,
-                    selectedGenre: _selectedGenre,
+                    key: PageStorageKey('q'),
                   ),
                   RankingList(
                     rankingType: 'all',
-                    key: const PageStorageKey('all'),
-                    showOnlyOngoing: _showOnlyOngoing,
-                    selectedGenre: _selectedGenre,
+                    key: PageStorageKey('all'),
                   ),
                 ],
               ),
