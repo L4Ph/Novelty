@@ -172,7 +172,22 @@ class RankingList extends HookConsumerWidget {
             })
             .toList();
 
-        final hasMore = displayData.length < enrichedData.where((n) => n.novel.title != null || loadedData.value.containsKey(n.novel.ncode)).length;
+        // フィルタ適用後の総アイテム数を計算（詳細未ロードのアイテムも含む）
+        final filteredTotalCount = enrichedData.where((n) {
+          final novel = n.novel;
+          // 詳細未ロードのアイテムは含める（フィルタ判定できないため）
+          if (novel.title == null) return true;
+          // 連載中フィルタ
+          if (filterState.showOnlyOngoing && novel.end != 1) return false;
+          // ジャンルフィルタ
+          if (filterState.selectedGenre != null &&
+              novel.genre != filterState.selectedGenre) {
+            return false;
+          }
+          return true;
+        }).length;
+
+        final hasMore = displayData.length < filteredTotalCount;
 
         return RefreshIndicator(
           onRefresh: () async {
