@@ -105,7 +105,7 @@ final libraryStatusProvider = NotifierProvider<LibraryStatus, AsyncValue<bool>>(
 - `settingsProvider` - User preferences (font, font size, vertical reading)
 - `enrichedNovelProvider` - Combines API data with library status
 - `novelRepositoryProvider` - Novel operations and download progress management
-- `historyProvider` - Reading history
+- `historyProvider` - Reading history (リアルタイム更新、StreamProvider)
 
 **Provider Invalidation Pattern**:
 When adding/removing from library, invalidate multiple providers to refresh UI:
