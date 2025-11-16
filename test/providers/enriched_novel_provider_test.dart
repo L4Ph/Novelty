@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/providers/enriched_novel_provider.dart';
+import 'package:novelty/domain/novel_enrichment.dart';
 
 /// Mock for AppDatabase
 class MockAppDatabase extends Mock implements AppDatabase {}

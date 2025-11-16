@@ -5,9 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/providers/current_episode_provider.dart';
-import 'package:novelty/providers/episode_provider.dart';
-import 'package:novelty/providers/novel_info_provider.dart';
+import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
@@ -68,8 +67,8 @@ class NovelPage extends ConsumerWidget {
                         return Text(
                           novelInfo.novelType == 2
                               ? (subtitle.isNotEmpty
-                                  ? subtitle
-                                  : novelInfo.title ?? '')
+                                    ? subtitle
+                                    : novelInfo.title ?? '')
                               : '${novelInfo.title} - $subtitle',
                           overflow: TextOverflow.ellipsis,
                         );
@@ -81,8 +80,9 @@ class NovelPage extends ConsumerWidget {
                 ),
               ),
               body: PageView.builder(
-                scrollDirection:
-                    settings.isVertical ? Axis.vertical : Axis.horizontal,
+                scrollDirection: settings.isVertical
+                    ? Axis.vertical
+                    : Axis.horizontal,
                 controller: pageController,
                 itemCount: totalEpisodes,
                 onPageChanged: (index) {
@@ -140,7 +140,9 @@ class NovelPage extends ConsumerWidget {
     final validEpisode = episode > 0 ? episode : 1;
 
     unawaited(
-      ref.read(appDatabaseProvider).addToHistory(
+      ref
+          .read(appDatabaseProvider)
+          .addToHistory(
             HistoryCompanion(
               ncode: drift.Value(ncode),
               title: drift.Value(novelInfo.title),

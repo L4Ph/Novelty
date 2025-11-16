@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/providers/enriched_novel_provider.dart';
+import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 

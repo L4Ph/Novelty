@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/providers/grouped_history_provider.dart';
 import 'package:novelty/screens/history_page.dart';
 
 @GenerateMocks([AppDatabase])

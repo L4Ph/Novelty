@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/providers/enriched_novel_provider.dart';
-import 'package:novelty/providers/library_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
@@ -23,7 +22,7 @@ class NovelList extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(appDatabaseProvider);
-    
+
     // ローカル状態管理
     final isProcessingMap = useState<Map<String, bool>>({});
     final errorMessage = useState<String?>(null);
@@ -61,7 +60,7 @@ class NovelList extends HookConsumerWidget {
           final apiService = ApiService();
           final novelInfo = await apiService.fetchNovelInfo(item.ncode);
           await db.insertNovel(novelInfo.toDbCompanion());
-          
+
           // Invalidate providers to refresh UI
           ref
             ..invalidate(libraryNovelsProvider)
@@ -70,7 +69,7 @@ class NovelList extends HookConsumerWidget {
             ..invalidate(enrichedRankingDataProvider('m'))
             ..invalidate(enrichedRankingDataProvider('q'))
             ..invalidate(enrichedRankingDataProvider('all'));
-            
+
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('ライブラリに追加しました')),

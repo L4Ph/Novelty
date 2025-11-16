@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/providers/library_provider.dart';
 
 /// "ライブラリ"ページのウィジェット。
 class LibraryPage extends ConsumerWidget {

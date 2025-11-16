@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/providers/enriched_novel_provider.dart';
+import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 void main() {
