@@ -6,14 +6,10 @@ import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
 import 'package:novelty/widgets/tategaki.dart';
-import 'package:riverpod/src/providers/future_provider.dart';
 
 /// 小説のコンテンツを取得するプロバイダー。
-final FutureProviderFamily<
-  List<NovelContentElement>,
-  ({int episode, String ncode})
->
-novelContentProvider = FutureProvider.autoDispose
+// ignore: specify_nonobvious_property_types
+final novelContentProvider = FutureProvider.autoDispose
     .family<List<NovelContentElement>, ({String ncode, int episode})>((
       ref,
       params,
