@@ -337,7 +337,7 @@ final class FilteredEnrichedRankingDataProvider
 }
 
 String _$filteredEnrichedRankingDataHash() =>
-    r'f08f7ab7ab5a70f302f2b4f19d0f83fce10715bf';
+    r'5e3e97cf96c9461d0a8a27ed5d515440e5c7b775';
 
 /// フィルタリングされた豊富なランキングデータを取得するプロバイダー
 

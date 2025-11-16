@@ -12,6 +12,7 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/utils/ncode_utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'api_service.g.dart';
@@ -71,7 +72,7 @@ class ApiService {
 
   Future<NovelInfo> _fetchNovelInfoFromNarou(String ncode) async {
     final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
-      'ncode': ncode.toLowerCase(),
+      'ncode': ncode.toNormalizedNcode(),
       'out': 'json',
       'gzip': '5',
       'of':
@@ -118,7 +119,7 @@ class ApiService {
         i + chunkSize > ncodes.length ? ncodes.length : i + chunkSize,
       );
 
-      final ncodesParam = chunk.map((ncode) => ncode.toLowerCase()).join('-');
+      final ncodesParam = chunk.map((ncode) => ncode.toNormalizedNcode()).join('-');
       final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
         'ncode': ncodesParam,
         'out': 'json',
@@ -148,15 +149,15 @@ class ApiService {
                   episodes: [
                     Episode(
                       subtitle: novelInfo.title,
-                      url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
-                      ncode: ncode.toLowerCase(),
+                      url: 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/',
+                      ncode: ncode.toNormalizedNcode(),
                       index: 1,
                     ),
                   ],
                 );
               }
 
-              result[ncode.toLowerCase()] = novelInfo;
+              result[ncode.toNormalizedNcode()] = novelInfo;
             }
           }
         }
@@ -197,8 +198,8 @@ class ApiService {
         episodes: [
           Episode(
             subtitle: info.title,
-            url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
-            ncode: ncode.toLowerCase(),
+            url: 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/',
+            ncode: ncode.toNormalizedNcode(),
             index: 1,
           ),
         ],
@@ -211,8 +212,8 @@ class ApiService {
   /// 小説のエピソードを取得するメソッド。
   Future<List<Episode>> fetchEpisodeList(String ncode, int page) async {
     final pageUrl = page == 1
-        ? 'https://ncode.syosetu.com/${ncode.toLowerCase()}/'
-        : 'https://ncode.syosetu.com/${ncode.toLowerCase()}/?p=$page';
+        ? 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/'
+        : 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/?p=$page';
 
     final response = await _fetchWithCache(pageUrl);
 
@@ -252,8 +253,8 @@ class ApiService {
         episodes: [
           Episode(
             subtitle: info.title,
-            url: 'https://ncode.syosetu.com/${ncode.toLowerCase()}/',
-            ncode: ncode.toLowerCase(),
+            url: 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/',
+            ncode: ncode.toNormalizedNcode(),
             index: 1,
           ),
         ],
@@ -261,7 +262,7 @@ class ApiService {
       return info;
     }
 
-    final firstPageUrl = 'https://ncode.syosetu.com/${ncode.toLowerCase()}/';
+    final firstPageUrl = 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/';
     final firstPageResponse = await _fetchWithCache(firstPageUrl);
 
     if (firstPageResponse.statusCode != 200) {
@@ -279,7 +280,7 @@ class ApiService {
     var currentPage = 2;
     while (true) {
       final pageUrl =
-          'https://ncode.syosetu.com/${ncode.toLowerCase()}/?p=$currentPage';
+          'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/?p=$currentPage';
       final response = await _fetchWithCache(pageUrl);
 
       if (response.statusCode != 200) {
@@ -339,8 +340,8 @@ class ApiService {
 
     // 短編小説の場合は、エピソード番号を含まないURLを使用する
     final url = isShortStory
-        ? 'https://ncode.syosetu.com/${ncode.toLowerCase()}/'
-        : 'https://ncode.syosetu.com/${ncode.toLowerCase()}/$episode/';
+        ? 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/'
+        : 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/$episode/';
 
     final response = await _fetchWithCache(url);
 
@@ -365,7 +366,7 @@ class ApiService {
     final currentEpisode = episodeNumberParts?.elementAt(0);
 
     return Episode(
-      ncode: ncode.toLowerCase(),
+      ncode: ncode.toNormalizedNcode(),
       index: currentEpisode,
       subtitle: episodeTitle,
       body: document
@@ -635,7 +636,7 @@ class ApiService {
 @riverpod
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 Future<NovelInfo> novelInfo(Ref ref, String ncode) {
-  final normalizedNcode = ncode.toLowerCase();
+  final normalizedNcode = ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
   return apiService.fetchNovelInfo(normalizedNcode);
 }
@@ -645,7 +646,7 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) {
 ///
 /// APIから小説情報を取得し、既存のfavステータスを保持しながらDBに保存する。
 Future<NovelInfo> novelInfoWithCache(Ref ref, String ncode) async {
-  final normalizedNcode = ncode.toLowerCase();
+  final normalizedNcode = ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
 
@@ -669,7 +670,7 @@ Future<Episode> episode(
   required String ncode,
   required int episode,
 }) {
-  final normalizedNcode = ncode.toLowerCase();
+  final normalizedNcode = ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
   return apiService.fetchEpisode(normalizedNcode, episode);
 }

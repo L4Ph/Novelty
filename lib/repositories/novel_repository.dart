@@ -10,6 +10,7 @@ import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/novel_parser.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -72,7 +73,7 @@ class NovelRepository {
 
   /// ダウンロード進捗を監視するストリーム
   Stream<DownloadProgress> watchDownloadProgress(String ncode) {
-    final normalizedNcode = ncode.toLowerCase();
+    final normalizedNcode = ncode.toNormalizedNcode();
     _progressControllers.putIfAbsent(
       normalizedNcode,
       StreamController.broadcast,
@@ -85,7 +86,7 @@ class NovelRepository {
   /// 既に存在する場合は何もしない。
   /// 成功した場合はtrueを、既に存在した場合はfalseを返す。
   Future<bool> addNovelToLibrary(String ncode) async {
-    final ncodeLower = ncode.toLowerCase();
+    final ncodeLower = ncode.toNormalizedNcode();
 
     // 既にライブラリに存在するかチェック
     final isInLibrary = await _db.isInLibrary(ncodeLower);
@@ -121,7 +122,7 @@ class NovelRepository {
 
   /// 小説をライブラリから削除する。
   Future<void> removeFromLibrary(String ncode) async {
-    final ncodeLower = ncode.toLowerCase();
+    final ncodeLower = ncode.toNormalizedNcode();
     await _db.removeFromLibrary(ncodeLower);
 
     // Providersを無効化してUIを更新
@@ -141,7 +142,7 @@ class NovelRepository {
     required String writer,
     required int lastEpisode,
   }) async {
-    final normalizedNcode = ncode.toLowerCase();
+    final normalizedNcode = ncode.toNormalizedNcode();
     final validEpisode = lastEpisode > 0 ? lastEpisode : 1;
 
     await _db.addToHistory(
@@ -157,7 +158,7 @@ class NovelRepository {
 
   /// 指定したncodeの閲覧履歴を削除する。
   Future<void> deleteHistory(String ncode) async {
-    final normalizedNcode = ncode.toLowerCase();
+    final normalizedNcode = ncode.toNormalizedNcode();
     await _db.deleteHistory(normalizedNcode);
   }
 
@@ -166,7 +167,7 @@ class NovelRepository {
     int episode,
   ) async {
     final episodeData = await apiService.fetchEpisode(
-      ncode.toLowerCase(),
+      ncode.toNormalizedNcode(),
       episode,
     );
     if (episodeData.body == null) {
@@ -208,7 +209,7 @@ class NovelRepository {
     String ncode,
     int totalEpisodes,
   ) async {
-    final ncodeLower = ncode.toLowerCase();
+    final ncodeLower = ncode.toNormalizedNcode();
     final progressController = _progressControllers[ncodeLower];
 
     try {
@@ -376,7 +377,7 @@ class NovelRepository {
       await downloadNovel(ncode, totalEpisodes);
 
       // ライブラリに追加されているかをチェック
-      final isInLibrary = await _db.isInLibrary(ncode.toLowerCase());
+      final isInLibrary = await _db.isInLibrary(ncode.toNormalizedNcode());
 
       return DownloadResult.success(needsLibraryAddition: !isInLibrary);
     } on Exception catch (e) {
@@ -394,7 +395,7 @@ Future<List<NovelContentElement>> novelContent(
   required String ncode,
   required int episode,
 }) async {
-  final normalizedNcode = ncode.toLowerCase();
+  final normalizedNcode = ncode.toNormalizedNcode();
   final repository = ref.read(novelRepositoryProvider);
   return repository.getEpisode(normalizedNcode, episode);
 }
@@ -404,7 +405,7 @@ Future<List<NovelContentElement>> novelContent(
 class LibraryStatus extends _$LibraryStatus {
   @override
   Stream<bool> build(String ncode) {
-    final normalizedNcode = ncode.toLowerCase();
+    final normalizedNcode = ncode.toNormalizedNcode();
     final db = ref.watch(appDatabaseProvider);
     return db.watchIsInLibrary(normalizedNcode);
   }
@@ -450,7 +451,7 @@ class LibraryStatus extends _$LibraryStatus {
 @riverpod
 /// 小説のダウンロード進捗を監視するプロバイダー。
 Stream<DownloadProgress?> downloadProgress(Ref ref, String ncode) {
-  final normalizedNcode = ncode.toLowerCase();
+  final normalizedNcode = ncode.toNormalizedNcode();
   final repo = ref.watch(novelRepositoryProvider);
   return repo.watchDownloadProgress(normalizedNcode);
 }

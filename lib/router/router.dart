@@ -10,6 +10,7 @@ import 'package:novelty/screens/novel_detail_page.dart';
 import 'package:novelty/screens/novel_page.dart';
 import 'package:novelty/screens/scaffold_page.dart';
 import 'package:novelty/screens/settings_page.dart';
+import 'package:novelty/utils/ncode_utils.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -84,14 +85,14 @@ final router = GoRouter(
       path: '/novel/:ncode',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
-        final ncode = state.pathParameters['ncode']!.toLowerCase();
+        final ncode = state.pathParameters['ncode']!.toNormalizedNcode();
         return NovelDetailPage(ncode: ncode);
       },
       routes: [
         GoRoute(
           path: ':episode',
           builder: (BuildContext context, GoRouterState state) {
-            final ncode = state.pathParameters['ncode']!.toLowerCase();
+            final ncode = state.pathParameters['ncode']!.toNormalizedNcode();
             final episode =
                 int.tryParse(state.pathParameters['episode'] ?? '1') ?? 1;
             return NovelPage(ncode: ncode, episode: episode);

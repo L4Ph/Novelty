@@ -7,6 +7,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/utils/history_grouping.dart';
+import 'package:novelty/utils/ncode_utils.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -396,7 +397,7 @@ class AppDatabase extends _$AppDatabase {
   Future<Novel?> getNovel(String ncode) {
     return (select(
       novels,
-    )..where((t) => t.ncode.equals(ncode.toLowerCase()))).getSingleOrNull();
+    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).getSingleOrNull();
   }
 
   /// ライブラリに小説を追加
@@ -411,7 +412,7 @@ class AppDatabase extends _$AppDatabase {
   Future<int> removeFromLibrary(String ncode) {
     return (delete(
       libraryNovels,
-    )..where((t) => t.ncode.equals(ncode.toLowerCase()))).go();
+    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).go();
   }
 
   /// ライブラリの小説リストを取得（追加日時の降順）
@@ -448,21 +449,21 @@ class AppDatabase extends _$AppDatabase {
   Future<bool> isInLibrary(String ncode) async {
     final result = await (select(
       libraryNovels,
-    )..where((t) => t.ncode.equals(ncode.toLowerCase()))).getSingleOrNull();
+    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).getSingleOrNull();
     return result != null;
   }
 
   /// ライブラリ登録状態の監視（新しいメソッド）
   Stream<bool> watchIsInLibrary(String ncode) {
     return (select(libraryNovels)
-          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .watchSingleOrNull()
         .map((novel) => novel != null);
   }
 
   /// ライブラリ登録状態の監視（既存メソッドは残す - 削除予定）
   Stream<bool> watchIsFavorite(String ncode) {
-    return (select(novels)..where((t) => t.ncode.equals(ncode.toLowerCase())))
+    return (select(novels)..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .watchSingleOrNull()
         .map((novel) => novel != null && novel.fav == 1);
   }
@@ -479,7 +480,7 @@ class AppDatabase extends _$AppDatabase {
   Future<int> deleteNovel(String ncode) {
     return (delete(
       novels,
-    )..where((t) => t.ncode.equals(ncode.toLowerCase()))).go();
+    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).go();
   }
 
   /// 履歴の追加
@@ -513,7 +514,7 @@ class AppDatabase extends _$AppDatabase {
   Future<int> deleteHistory(String ncode) {
     return (delete(
       history,
-    )..where((t) => t.ncode.equals(ncode.toLowerCase()))).go();
+    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).go();
   }
 
   /// 履歴の全削除
@@ -533,7 +534,7 @@ class AppDatabase extends _$AppDatabase {
   Future<Episode?> getEpisode(String ncode, int episode) {
     return (select(episodes)..where(
           (t) =>
-              t.ncode.equals(ncode.toLowerCase()) & t.episode.equals(episode),
+              t.ncode.equals(ncode.toNormalizedNcode()) & t.episode.equals(episode),
         ))
         .getSingleOrNull();
   }
@@ -550,7 +551,7 @@ class AppDatabase extends _$AppDatabase {
   Future<DownloadedEpisode?> getDownloadedEpisode(String ncode, int episode) {
     return (select(downloadedEpisodes)..where(
           (t) =>
-              t.ncode.equals(ncode.toLowerCase()) & t.episode.equals(episode),
+              t.ncode.equals(ncode.toNormalizedNcode()) & t.episode.equals(episode),
         ))
         .getSingleOrNull();
   }
@@ -561,7 +562,7 @@ class AppDatabase extends _$AppDatabase {
           downloadedEpisodes,
         )..where(
           (t) =>
-              t.ncode.equals(ncode.toLowerCase()) & t.episode.equals(episode),
+              t.ncode.equals(ncode.toNormalizedNcode()) & t.episode.equals(episode),
         ))
         .go();
   }
@@ -577,21 +578,21 @@ class AppDatabase extends _$AppDatabase {
   /// ダウンロード小説情報を取得
   Future<DownloadedNovel?> getDownloadedNovel(String ncode) {
     return (select(downloadedNovels)
-          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .getSingleOrNull();
   }
 
   /// ダウンロード小説情報を監視
   Stream<DownloadedNovel?> watchDownloadedNovel(String ncode) {
     return (select(downloadedNovels)
-          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .watchSingleOrNull();
   }
 
   /// ダウンロード小説を削除
   Future<int> deleteDownloadedNovel(String ncode) {
     return (delete(downloadedNovels)
-          ..where((t) => t.ncode.equals(ncode.toLowerCase())))
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .go();
   }
 
@@ -606,7 +607,7 @@ class AppDatabase extends _$AppDatabase {
   /// ブックマークの取得
   Future<List<Bookmark>> getBookmarks(String ncode) {
     return (select(bookmarks)
-          ..where((t) => t.ncode.equals(ncode.toLowerCase()))
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))
           ..orderBy([(t) => OrderingTerm.asc(t.episode)]))
         .get();
   }
@@ -615,7 +616,7 @@ class AppDatabase extends _$AppDatabase {
   Future<int> deleteBookmark(String ncode, int episode, int position) {
     return (delete(bookmarks)..where(
           (t) =>
-              t.ncode.equals(ncode.toLowerCase()) &
+              t.ncode.equals(ncode.toNormalizedNcode()) &
               t.episode.equals(episode) &
               t.position.equals(position),
         ))

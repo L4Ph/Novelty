@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:novelty/models/string_to_int_converter.dart';
+import 'package:novelty/utils/ncode_utils.dart';
 
 part 'ranking_response.freezed.dart';
 part 'ranking_response.g.dart';
@@ -76,6 +77,6 @@ abstract class RankingResponse with _$RankingResponse {
   factory RankingResponse.fromJson(Map<String, dynamic> json) =>
       _$RankingResponseFromJson({
         ...json,
-        if (json['ncode'] is String) 'ncode': (json['ncode'] as String).toLowerCase(),
+        if (json['ncode'] is String) 'ncode': (json['ncode'] as String).toNormalizedNcode(),
       });
 }

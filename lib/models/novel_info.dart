@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/string_to_int_converter.dart';
+import 'package:novelty/utils/ncode_utils.dart';
 
 part 'novel_info.freezed.dart';
 part 'novel_info.g.dart';
@@ -158,7 +159,7 @@ abstract class NovelInfo with _$NovelInfo {
   /// JSONから[NovelInfo]を生成するファクトリコンストラクタ
   factory NovelInfo.fromJson(Map<String, dynamic> json) => _$NovelInfoFromJson({
         ...json,
-        if (json['ncode'] is String) 'ncode': (json['ncode'] as String).toLowerCase(),
+        if (json['ncode'] is String) 'ncode': (json['ncode'] as String).toNormalizedNcode(),
       });
 }
 
