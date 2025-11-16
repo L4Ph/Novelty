@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/providers/ranking_filter_state.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

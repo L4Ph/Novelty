@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
+import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/providers/ranking_filter_state.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/enriched_novel_list.dart';

@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/providers/ranking_filter_state.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
