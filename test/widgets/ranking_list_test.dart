@@ -60,8 +60,9 @@ void main() {
       );
 
       // Wait for initial data to load
-      await tester.pump();
-      await tester.pump();
+      await tester.pump(); // Initial frame
+      await tester.pump(); // Provider resolution
+      await tester.pump(const Duration(milliseconds: 100)); // Post frame callbacks
 
       // Verify initial items are displayed
       expect(find.text('Test Novel 1'), findsOneWidget);
@@ -160,6 +161,7 @@ void main() {
 
       await tester.pump();
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Should show ongoing novels only after details are loaded
       expect(find.text('Ongoing Novel'), findsOneWidget);
@@ -189,6 +191,7 @@ void main() {
 
       await tester.pump();
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Should show only fantasy novels after details are loaded
       expect(find.text('Ongoing Novel'), findsOneWidget);
@@ -221,6 +224,7 @@ void main() {
 
       await tester.pump();
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Should show only ongoing fantasy novels
       expect(find.text('Ongoing Novel'), findsOneWidget);

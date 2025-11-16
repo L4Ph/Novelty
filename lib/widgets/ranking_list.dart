@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
+import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
@@ -28,18 +29,34 @@ class RankingList extends HookConsumerWidget {
     // ScrollControllerをuseMemoizedで管理
     final scrollController = useMemoized(ScrollController.new, []);
 
-    // Providerからフィルタリングされたデータを取得
-    final filteredDataAsync = ref.watch(
-      filteredEnrichedRankingDataProvider(rankingType),
+    // Providerからデータを取得（フィルタリング前）
+    final enrichedDataAsync = ref.watch(
+      enrichedRankingDataProvider(rankingType),
     );
 
+    // フィルタ状態を取得
+    final filterState = ref.watch(rankingFilterStateProvider(rankingType));
+
     // ローディング処理
-    Future<void> loadMore(List<EnrichedNovelData> filteredData) async {
+    Future<void> loadMore(List<EnrichedNovelData> enrichedData) async {
       if (isLoadingMore.value || !context.mounted) return;
 
       final itemsToLoad = isInitialLoad.value ? 20 : 10;
 
-      // フィルタリングされたデータから未ロードのアイテムを取得
+      // フィルタ適用後のデータから未ロードのアイテムを取得
+      final filteredData = enrichedData.where((n) {
+        final novel = n.novel;
+        // 連載中フィルタ
+        if (filterState.showOnlyOngoing && novel.title != null && novel.end != 1) {
+          return false;
+        }
+        // ジャンルフィルタ
+        if (filterState.selectedGenre != null && novel.title != null && novel.genre != filterState.selectedGenre) {
+          return false;
+        }
+        return true;
+      }).toList();
+
       final unloadedItems = filteredData
           .where((n) => n.novel.title == null && !loadedData.value.containsKey(n.novel.ncode))
           .take(itemsToLoad)
@@ -84,9 +101,6 @@ class RankingList extends HookConsumerWidget {
           }
         }
         loadedData.value = newLoadedData;
-
-        // Providerを更新して再フィルタリングを促す
-        ref.invalidate(enrichedRankingDataProvider(rankingType));
       } finally {
         isLoadingMore.value = false;
       }
@@ -103,8 +117,8 @@ class RankingList extends HookConsumerWidget {
           const delta = 200.0;
 
           if (currentScroll >= maxScroll - delta) {
-            filteredDataAsync.whenData((filteredData) {
-              unawaited(loadMore(filteredData));
+            enrichedDataAsync.whenData((enrichedData) {
+              unawaited(loadMore(enrichedData));
             });
           }
         }
@@ -115,24 +129,50 @@ class RankingList extends HookConsumerWidget {
       [isLoadingMore],
     );
 
-    return filteredDataAsync.when(
-      data: (filteredData) {
+    return enrichedDataAsync.when(
+      data: (enrichedData) {
         // 初回ロードを実行
         if (isInitialLoad.value && !isLoadingMore.value) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
-              unawaited(loadMore(filteredData));
+              unawaited(loadMore(enrichedData));
             }
           });
         }
 
-        // 表示するデータ：フィルタリングされたデータのうち、詳細がロード済みのもの
-        final displayData = filteredData
-            .where((n) => loadedData.value.containsKey(n.novel.ncode))
-            .map((n) => loadedData.value[n.novel.ncode]!)
+        // 表示するデータ：
+        // 1. 既に詳細データを持つアイテム（title != null）
+        // 2. loadedDataに含まれるアイテム（プログレッシブローディング済み）
+        // さらに、詳細ロード後にフィルタ条件を再適用
+        final displayData = enrichedData
+            .map((n) {
+              // loadedDataに詳細があればそれを使う、なければ元のデータを使う
+              if (loadedData.value.containsKey(n.novel.ncode)) {
+                return loadedData.value[n.novel.ncode]!;
+              } else if (n.novel.title != null) {
+                // 既に詳細データを持っている場合はそのまま使う
+                return n;
+              }
+              // 詳細未ロードのアイテムは除外
+              return null;
+            })
+            .whereType<EnrichedNovelData>()
+            .where((enrichedNovel) {
+              final novel = enrichedNovel.novel;
+              // 連載中フィルタ
+              if (filterState.showOnlyOngoing && novel.end != 1) {
+                return false;
+              }
+              // ジャンルフィルタ
+              if (filterState.selectedGenre != null &&
+                  novel.genre != filterState.selectedGenre) {
+                return false;
+              }
+              return true;
+            })
             .toList();
 
-        final hasMore = displayData.length < filteredData.where((n) => n.novel.title != null || loadedData.value.containsKey(n.novel.ncode)).length;
+        final hasMore = displayData.length < enrichedData.where((n) => n.novel.title != null || loadedData.value.containsKey(n.novel.ncode)).length;
 
         return RefreshIndicator(
           onRefresh: () async {
