@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:novelty/utils/ncode_utils.dart';
 
 part 'novel_search_query.freezed.dart';
 part 'novel_search_query.g.dart';
@@ -242,7 +243,7 @@ extension NovelSearchQueryEx on NovelSearchQuery {
       'mintime': mintime,
       'maxtime': maxtime,
       'time': time,
-      'ncode': ncode?.map((n) => n.toLowerCase()).join('-'),
+      'ncode': ncode?.map((n) => n.toNormalizedNcode()).join('-'),
       'type': type,
       'buntai': buntai?.join('-'),
       'stop': stop,

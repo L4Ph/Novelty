@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/utils/ncode_utils.dart';
 import 'package:path/path.dart' as p;
 
 /// バックアップ・復元サービス
@@ -328,7 +329,7 @@ class BackupService {
               if (addToLibrary) {
                 await _database.addToLibrary(
                   LibraryNovelsCompanion(
-                    ncode: Value(novelInfo.ncode!.toLowerCase()),
+                    ncode: Value(novelInfo.ncode!.toNormalizedNcode()),
                     title: Value(novelInfo.title),
                     writer: Value(novelInfo.writer),
                     story: Value(novelInfo.story),
@@ -406,7 +407,7 @@ class BackupService {
   /// NovelInfoからNovelsCompanionに変換する
   NovelsCompanion _novelInfoToNovelCompanion(NovelInfo novelInfo) {
     return NovelsCompanion(
-      ncode: Value(novelInfo.ncode!.toLowerCase()),
+      ncode: Value(novelInfo.ncode!.toNormalizedNcode()),
       title: Value(novelInfo.title),
       writer: Value(novelInfo.writer),
       story: Value(novelInfo.story),

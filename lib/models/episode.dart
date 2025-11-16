@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:novelty/utils/ncode_utils.dart';
 
 part 'episode.freezed.dart';
 part 'episode.g.dart';
@@ -48,6 +49,6 @@ abstract class Episode with _$Episode {
   /// JSONから[Episode]を生成するファクトリコンストラクタ
   factory Episode.fromJson(Map<String, dynamic> json) => _$EpisodeFromJson({
         ...json,
-        if (json['ncode'] is String) 'ncode': (json['ncode'] as String).toLowerCase(),
+        if (json['ncode'] is String) 'ncode': (json['ncode'] as String).toNormalizedNcode(),
       });
 }
