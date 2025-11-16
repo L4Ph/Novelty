@@ -426,6 +426,17 @@ class AppDatabase extends _$AppDatabase {
     )..orderBy([(t) => OrderingTerm.desc(t.addedAt)])).get();
   }
 
+  /// ライブラリに登録された小説の詳細情報を取得(JOINクエリで最適化)
+  Future<List<Novel>> getLibraryNovelsWithDetails() async {
+    final query = select(libraryNovels).join([
+      innerJoin(novels, novels.ncode.equalsExp(libraryNovels.ncode)),
+    ])
+      ..orderBy([OrderingTerm.desc(libraryNovels.addedAt)]);
+
+    final results = await query.get();
+    return results.map((row) => row.readTable(novels)).toList();
+  }
+
   /// 小説がライブラリに追加されているかを確認
   Future<bool> isInLibrary(String ncode) async {
     final result = await (select(

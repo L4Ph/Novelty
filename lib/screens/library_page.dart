@@ -2,24 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
-
-/// 小説のライブラリを表示するためのプロバイダー。
-final libraryNovelsProvider = FutureProvider<List<Novel>>((ref) async {
-  final db = ref.watch(appDatabaseProvider);
-
-  // LibraryNovelsテーブルとNovelsテーブルをJOINして詳細情報を取得
-  final libraryNovels = await db.getLibraryNovels();
-  final novels = <Novel>[];
-
-  for (final libNovel in libraryNovels) {
-    final novel = await db.getNovel(libNovel.ncode);
-    if (novel != null) {
-      novels.add(novel);
-    }
-  }
-
-  return novels;
-});
+import 'package:novelty/providers/library_provider.dart';
 
 /// "ライブラリ"ページのウィジェット。
 class LibraryPage extends ConsumerWidget {

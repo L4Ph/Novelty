@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/download_progress.dart';
+import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
@@ -11,6 +13,7 @@ import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/novel_parser.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// 小説のダウンロードと管理を行うリポジトリ。
 final novelRepositoryProvider = Provider<NovelRepository>((ref) {
@@ -291,5 +294,48 @@ class NovelRepository {
   Stream<bool> isNovelDownloaded(String ncode) async* {
     final novel = await _db.getDownloadedNovel(ncode);
     yield novel != null && novel.downloadStatus == 2;
+  }
+
+  /// Permission処理を含む小説のダウンロードを行うメソッド。
+  ///
+  /// 戻り値の[DownloadResult]によって、UIでの処理を判断する。
+  Future<DownloadResult> downloadNovelWithPermission(
+    String ncode,
+    int totalEpisodes,
+  ) async {
+    // Permissionチェック
+    var hasPermission = false;
+    if (Platform.isAndroid) {
+      final status = await Permission.manageExternalStorage.status;
+      if (status.isGranted) {
+        hasPermission = true;
+      } else {
+        final result = await Permission.manageExternalStorage.request();
+        hasPermission = result.isGranted;
+      }
+    } else {
+      final status = await Permission.storage.status;
+      if (status.isGranted) {
+        hasPermission = true;
+      } else {
+        final result = await Permission.storage.request();
+        hasPermission = result.isGranted;
+      }
+    }
+
+    if (!hasPermission) {
+      return const DownloadResult.permissionDenied();
+    }
+
+    try {
+      await downloadNovel(ncode, totalEpisodes);
+
+      // ライブラリに追加されているかをチェック
+      final isInLibrary = await _db.isInLibrary(ncode.toLowerCase());
+
+      return DownloadResult.success(needsLibraryAddition: !isInLibrary);
+    } on Exception catch (e) {
+      return DownloadResult.error(e.toString());
+    }
   }
 }
