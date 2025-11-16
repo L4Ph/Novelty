@@ -35,12 +35,11 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
         title: const Text('データとストレージ'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
         children: [
           _buildBackupSection(),
-          const SizedBox(height: 24),
+          const Divider(),
           _buildRestoreSection(),
-          const SizedBox(height: 24),
+          const Divider(),
           _buildDownloadRestoreSection(),
         ],
       ),
@@ -49,77 +48,65 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
 
   /// バックアップセクションを構築
   Widget _buildBackupSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'バックアップ',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'データをJSONファイルとしてエクスポートします',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.library_books),
-              title: const Text('ライブラリデータをエクスポート'),
-              subtitle: const Text('購読中の小説データを保存'),
-              enabled: !_isProcessing,
-              onTap: _exportLibraryData,
-            ),
-            ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text('履歴データをエクスポート'),
-              subtitle: const Text('閲覧履歴データを保存'),
-              enabled: !_isProcessing,
-              onTap: _exportHistoryData,
-            ),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            'バックアップ',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
         ),
-      ),
+        ListTile(
+          leading: const Icon(Icons.library_books),
+          title: const Text('ライブラリデータをエクスポート'),
+          subtitle: const Text('購読中の小説データを保存'),
+          enabled: !_isProcessing,
+          onTap: _exportLibraryData,
+        ),
+        ListTile(
+          leading: const Icon(Icons.history),
+          title: const Text('履歴データをエクスポート'),
+          subtitle: const Text('閲覧履歴データを保存'),
+          enabled: !_isProcessing,
+          onTap: _exportHistoryData,
+        ),
+      ],
     );
   }
 
   /// 復元セクションを構築
   Widget _buildRestoreSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '復元',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'バックアップファイルからデータを復元します',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.upload_file),
-              title: const Text('ライブラリデータをインポート'),
-              subtitle: const Text('ライブラリバックアップファイルを選択'),
-              enabled: !_isProcessing,
-              onTap: _importLibraryData,
-            ),
-            ListTile(
-              leading: const Icon(Icons.upload_file),
-              title: const Text('履歴データをインポート'),
-              subtitle: const Text('履歴バックアップファイルを選択'),
-              enabled: !_isProcessing,
-              onTap: _importHistoryData,
-            ),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            '復元',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
         ),
-      ),
+        ListTile(
+          leading: const Icon(Icons.upload_file),
+          title: const Text('ライブラリデータをインポート'),
+          subtitle: const Text('ライブラリバックアップファイルを選択'),
+          enabled: !_isProcessing,
+          onTap: _importLibraryData,
+        ),
+        ListTile(
+          leading: const Icon(Icons.upload_file),
+          title: const Text('履歴データをインポート'),
+          subtitle: const Text('履歴バックアップファイルを選択'),
+          enabled: !_isProcessing,
+          onTap: _importHistoryData,
+        ),
+      ],
     );
   }
 
@@ -388,32 +375,33 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
 
   /// ダウンロードデータ復元セクションを構築
   Widget _buildDownloadRestoreSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'ダウンロードデータの復元',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'ダウンロードフォルダから小説データを復元します',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.folder_open),
-              title: const Text('ダウンロードデータを復元'),
-              subtitle: const Text('現在のダウンロードフォルダから小説データをライブラリに復元'),
-              enabled: !_isProcessing,
-              onTap: _restoreFromDownloadDirectory,
-            ),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            'ダウンロードデータの復元',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Text(
+            'ダウンロードフォルダから小説データを復元します',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.folder_open),
+          title: const Text('ダウンロードデータを復元'),
+          subtitle: const Text('現在のダウンロードフォルダから小説データをライブラリに復元'),
+          enabled: !_isProcessing,
+          onTap: _restoreFromDownloadDirectory,
+        ),
+      ],
     );
   }
 }

@@ -632,6 +632,22 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<int>);
 
   @override
+  _i5.Stream<List<_i2.TypedResult>> watchDownloadingNovels() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchDownloadingNovels, []),
+            returnValue: _i5.Stream<List<_i2.TypedResult>>.empty(),
+          )
+          as _i5.Stream<List<_i2.TypedResult>>);
+
+  @override
+  _i5.Stream<List<_i2.TypedResult>> watchCompletedDownloads() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchCompletedDownloads, []),
+            returnValue: _i5.Stream<List<_i2.TypedResult>>.empty(),
+          )
+          as _i5.Stream<List<_i2.TypedResult>>);
+
+  @override
   _i5.Future<int> addBookmark(_i3.BookmarksCompanion? bookmark) =>
       (super.noSuchMethod(
             Invocation.method(#addBookmark, [bookmark]),

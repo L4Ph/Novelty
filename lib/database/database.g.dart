@@ -76,6 +76,17 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const drift.VerificationMeta _genreMeta = const drift.VerificationMeta(
+    'genre',
+  );
+  @override
+  late final drift.GeneratedColumn<int> genre = drift.GeneratedColumn<int>(
+    'genre',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const drift.VerificationMeta _isr15Meta = const drift.VerificationMeta(
     'isr15',
   );
@@ -329,6 +340,7 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
     story,
     novelType,
     end,
+    genre,
     isr15,
     isbl,
     isgl,
@@ -401,6 +413,12 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
       context.handle(
         _endMeta,
         end.isAcceptableOrUnknown(data['end']!, _endMeta),
+      );
+    }
+    if (data.containsKey('genre')) {
+      context.handle(
+        _genreMeta,
+        genre.isAcceptableOrUnknown(data['genre']!, _genreMeta),
       );
     }
     if (data.containsKey('isr15')) {
@@ -604,6 +622,10 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
         DriftSqlType.int,
         data['${effectivePrefix}end'],
       ),
+      genre: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}genre'],
+      ),
       isr15: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}isr15'],
@@ -726,6 +748,9 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   /// 0: 短編 or 完結済 1: 連載中
   final int? end;
 
+  /// ジャンル
+  final int? genre;
+
   /// 作品に含まれる要素に「R15」が含まれる場合は1、それ以外は0
   final int? isr15;
 
@@ -802,6 +827,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     this.story,
     this.novelType,
     this.end,
+    this.genre,
     this.isr15,
     this.isbl,
     this.isgl,
@@ -844,6 +870,9 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     }
     if (!nullToAbsent || end != null) {
       map['end'] = drift.Variable<int>(end);
+    }
+    if (!nullToAbsent || genre != null) {
+      map['genre'] = drift.Variable<int>(genre);
     }
     if (!nullToAbsent || isr15 != null) {
       map['isr15'] = drift.Variable<int>(isr15);
@@ -935,6 +964,9 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       end: end == null && nullToAbsent
           ? const drift.Value.absent()
           : drift.Value(end),
+      genre: genre == null && nullToAbsent
+          ? const drift.Value.absent()
+          : drift.Value(genre),
       isr15: isr15 == null && nullToAbsent
           ? const drift.Value.absent()
           : drift.Value(isr15),
@@ -1019,6 +1051,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       story: serializer.fromJson<String?>(json['story']),
       novelType: serializer.fromJson<int?>(json['novelType']),
       end: serializer.fromJson<int?>(json['end']),
+      genre: serializer.fromJson<int?>(json['genre']),
       isr15: serializer.fromJson<int?>(json['isr15']),
       isbl: serializer.fromJson<int?>(json['isbl']),
       isgl: serializer.fromJson<int?>(json['isgl']),
@@ -1054,6 +1087,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       'story': serializer.toJson<String?>(story),
       'novelType': serializer.toJson<int?>(novelType),
       'end': serializer.toJson<int?>(end),
+      'genre': serializer.toJson<int?>(genre),
       'isr15': serializer.toJson<int?>(isr15),
       'isbl': serializer.toJson<int?>(isbl),
       'isgl': serializer.toJson<int?>(isgl),
@@ -1087,6 +1121,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     drift.Value<String?> story = const drift.Value.absent(),
     drift.Value<int?> novelType = const drift.Value.absent(),
     drift.Value<int?> end = const drift.Value.absent(),
+    drift.Value<int?> genre = const drift.Value.absent(),
     drift.Value<int?> isr15 = const drift.Value.absent(),
     drift.Value<int?> isbl = const drift.Value.absent(),
     drift.Value<int?> isgl = const drift.Value.absent(),
@@ -1117,6 +1152,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     story: story.present ? story.value : this.story,
     novelType: novelType.present ? novelType.value : this.novelType,
     end: end.present ? end.value : this.end,
+    genre: genre.present ? genre.value : this.genre,
     isr15: isr15.present ? isr15.value : this.isr15,
     isbl: isbl.present ? isbl.value : this.isbl,
     isgl: isgl.present ? isgl.value : this.isgl,
@@ -1155,6 +1191,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       story: data.story.present ? data.story.value : this.story,
       novelType: data.novelType.present ? data.novelType.value : this.novelType,
       end: data.end.present ? data.end.value : this.end,
+      genre: data.genre.present ? data.genre.value : this.genre,
       isr15: data.isr15.present ? data.isr15.value : this.isr15,
       isbl: data.isbl.present ? data.isbl.value : this.isbl,
       isgl: data.isgl.present ? data.isgl.value : this.isgl,
@@ -1214,6 +1251,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
           ..write('story: $story, ')
           ..write('novelType: $novelType, ')
           ..write('end: $end, ')
+          ..write('genre: $genre, ')
           ..write('isr15: $isr15, ')
           ..write('isbl: $isbl, ')
           ..write('isgl: $isgl, ')
@@ -1249,6 +1287,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     story,
     novelType,
     end,
+    genre,
     isr15,
     isbl,
     isgl,
@@ -1283,6 +1322,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
           other.story == this.story &&
           other.novelType == this.novelType &&
           other.end == this.end &&
+          other.genre == this.genre &&
           other.isr15 == this.isr15 &&
           other.isbl == this.isbl &&
           other.isgl == this.isgl &&
@@ -1315,6 +1355,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
   final drift.Value<String?> story;
   final drift.Value<int?> novelType;
   final drift.Value<int?> end;
+  final drift.Value<int?> genre;
   final drift.Value<int?> isr15;
   final drift.Value<int?> isbl;
   final drift.Value<int?> isgl;
@@ -1346,6 +1387,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     this.story = const drift.Value.absent(),
     this.novelType = const drift.Value.absent(),
     this.end = const drift.Value.absent(),
+    this.genre = const drift.Value.absent(),
     this.isr15 = const drift.Value.absent(),
     this.isbl = const drift.Value.absent(),
     this.isgl = const drift.Value.absent(),
@@ -1378,6 +1420,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     this.story = const drift.Value.absent(),
     this.novelType = const drift.Value.absent(),
     this.end = const drift.Value.absent(),
+    this.genre = const drift.Value.absent(),
     this.isr15 = const drift.Value.absent(),
     this.isbl = const drift.Value.absent(),
     this.isgl = const drift.Value.absent(),
@@ -1410,6 +1453,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     drift.Expression<String>? story,
     drift.Expression<int>? novelType,
     drift.Expression<int>? end,
+    drift.Expression<int>? genre,
     drift.Expression<int>? isr15,
     drift.Expression<int>? isbl,
     drift.Expression<int>? isgl,
@@ -1442,6 +1486,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
       if (story != null) 'story': story,
       if (novelType != null) 'novel_type': novelType,
       if (end != null) 'end': end,
+      if (genre != null) 'genre': genre,
       if (isr15 != null) 'isr15': isr15,
       if (isbl != null) 'isbl': isbl,
       if (isgl != null) 'isgl': isgl,
@@ -1476,6 +1521,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     drift.Value<String?>? story,
     drift.Value<int?>? novelType,
     drift.Value<int?>? end,
+    drift.Value<int?>? genre,
     drift.Value<int?>? isr15,
     drift.Value<int?>? isbl,
     drift.Value<int?>? isgl,
@@ -1508,6 +1554,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
       story: story ?? this.story,
       novelType: novelType ?? this.novelType,
       end: end ?? this.end,
+      genre: genre ?? this.genre,
       isr15: isr15 ?? this.isr15,
       isbl: isbl ?? this.isbl,
       isgl: isgl ?? this.isgl,
@@ -1555,6 +1602,9 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     }
     if (end.present) {
       map['end'] = drift.Variable<int>(end.value);
+    }
+    if (genre.present) {
+      map['genre'] = drift.Variable<int>(genre.value);
     }
     if (isr15.present) {
       map['isr15'] = drift.Variable<int>(isr15.value);
@@ -1640,6 +1690,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
           ..write('story: $story, ')
           ..write('novelType: $novelType, ')
           ..write('end: $end, ')
+          ..write('genre: $genre, ')
           ..write('isr15: $isr15, ')
           ..write('isbl: $isbl, ')
           ..write('isgl: $isgl, ')
@@ -4248,6 +4299,7 @@ typedef $$NovelsTableCreateCompanionBuilder =
       drift.Value<String?> story,
       drift.Value<int?> novelType,
       drift.Value<int?> end,
+      drift.Value<int?> genre,
       drift.Value<int?> isr15,
       drift.Value<int?> isbl,
       drift.Value<int?> isgl,
@@ -4281,6 +4333,7 @@ typedef $$NovelsTableUpdateCompanionBuilder =
       drift.Value<String?> story,
       drift.Value<int?> novelType,
       drift.Value<int?> end,
+      drift.Value<int?> genre,
       drift.Value<int?> isr15,
       drift.Value<int?> isbl,
       drift.Value<int?> isgl,
@@ -4343,6 +4396,11 @@ class $$NovelsTableFilterComposer
 
   drift.ColumnFilters<int> get end => $composableBuilder(
     column: $table.end,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+
+  drift.ColumnFilters<int> get genre => $composableBuilder(
+    column: $table.genre,
     builder: (column) => drift.ColumnFilters(column),
   );
 
@@ -4501,6 +4559,11 @@ class $$NovelsTableOrderingComposer
     builder: (column) => drift.ColumnOrderings(column),
   );
 
+  drift.ColumnOrderings<int> get genre => $composableBuilder(
+    column: $table.genre,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
+
   drift.ColumnOrderings<int> get isr15 => $composableBuilder(
     column: $table.isr15,
     builder: (column) => drift.ColumnOrderings(column),
@@ -4644,6 +4707,9 @@ class $$NovelsTableAnnotationComposer
   drift.GeneratedColumn<int> get end =>
       $composableBuilder(column: $table.end, builder: (column) => column);
 
+  drift.GeneratedColumn<int> get genre =>
+      $composableBuilder(column: $table.genre, builder: (column) => column);
+
   drift.GeneratedColumn<int> get isr15 =>
       $composableBuilder(column: $table.isr15, builder: (column) => column);
 
@@ -4772,6 +4838,7 @@ class $$NovelsTableTableManager
                 drift.Value<String?> story = const drift.Value.absent(),
                 drift.Value<int?> novelType = const drift.Value.absent(),
                 drift.Value<int?> end = const drift.Value.absent(),
+                drift.Value<int?> genre = const drift.Value.absent(),
                 drift.Value<int?> isr15 = const drift.Value.absent(),
                 drift.Value<int?> isbl = const drift.Value.absent(),
                 drift.Value<int?> isgl = const drift.Value.absent(),
@@ -4804,6 +4871,7 @@ class $$NovelsTableTableManager
                 story: story,
                 novelType: novelType,
                 end: end,
+                genre: genre,
                 isr15: isr15,
                 isbl: isbl,
                 isgl: isgl,
@@ -4837,6 +4905,7 @@ class $$NovelsTableTableManager
                 drift.Value<String?> story = const drift.Value.absent(),
                 drift.Value<int?> novelType = const drift.Value.absent(),
                 drift.Value<int?> end = const drift.Value.absent(),
+                drift.Value<int?> genre = const drift.Value.absent(),
                 drift.Value<int?> isr15 = const drift.Value.absent(),
                 drift.Value<int?> isbl = const drift.Value.absent(),
                 drift.Value<int?> isgl = const drift.Value.absent(),
@@ -4869,6 +4938,7 @@ class $$NovelsTableTableManager
                 story: story,
                 novelType: novelType,
                 end: end,
+                genre: genre,
                 isr15: isr15,
                 isbl: isbl,
                 isgl: isgl,

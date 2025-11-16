@@ -27,6 +27,13 @@ class MorePage extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.download),
+            title: const Text('ダウンロード'),
+            onTap: () {
+              context.go('/more/downloads');
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('このアプリについて'),
             onTap: () {

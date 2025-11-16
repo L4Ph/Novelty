@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/screens/about_page.dart';
 import 'package:novelty/screens/data_storage_page.dart';
+import 'package:novelty/screens/download_manager_page.dart';
 import 'package:novelty/screens/explore_page.dart';
 import 'package:novelty/screens/history_page.dart';
 import 'package:novelty/screens/library_page.dart';
@@ -73,6 +74,12 @@ final router = GoRouter(
                   path: 'about',
                   builder: (BuildContext context, GoRouterState state) {
                     return const AboutPage();
+                  },
+                ),
+                GoRoute(
+                  path: 'downloads',
+                  builder: (BuildContext context, GoRouterState state) {
+                    return const DownloadManagerPage();
                   },
                 ),
               ],

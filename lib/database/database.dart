@@ -62,6 +62,9 @@ class Novels extends Table {
   /// 0: 短編 or 完結済 1: 連載中
   IntColumn get end => integer().nullable()();
 
+  /// ジャンル
+  IntColumn get genre => integer().nullable()();
+
   /// 作品に含まれる要素に「R15」が含まれる場合は1、それ以外は0
   IntColumn get isr15 => integer().nullable()();
 
@@ -303,7 +306,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration {
@@ -388,6 +391,10 @@ class AppDatabase extends _$AppDatabase {
           await m.issueCustomQuery(
             'ALTER TABLE downloaded_episodes_new RENAME TO downloaded_episodes',
           );
+        }
+        if (from <= 6) {
+          // novelsテーブルにgenreカラムを追加
+          await m.addColumn(novels, novels.genre);
         }
       },
     );
@@ -594,6 +601,48 @@ class AppDatabase extends _$AppDatabase {
     return (delete(downloadedNovels)
           ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .go();
+  }
+
+  /// ダウンロード中の小説を監視
+  ///
+  /// downloadStatus = 1（ダウンロード中）の小説を取得し、
+  /// LibraryNovelsとNovelsテーブルをLEFT JOINして小説情報も含める。
+  Stream<List<TypedResult>> watchDownloadingNovels() {
+    final query = select(downloadedNovels).join([
+      leftOuterJoin(
+        libraryNovels,
+        libraryNovels.ncode.equalsExp(downloadedNovels.ncode),
+      ),
+      leftOuterJoin(
+        novels,
+        novels.ncode.equalsExp(downloadedNovels.ncode),
+      ),
+    ])
+      ..where(downloadedNovels.downloadStatus.equals(1))
+      ..orderBy([OrderingTerm.desc(downloadedNovels.downloadedAt)]);
+
+    return query.watch();
+  }
+
+  /// 完了済みダウンロード小説を監視
+  ///
+  /// downloadStatus = 2（完了）の小説を取得し、
+  /// LibraryNovelsとNovelsテーブルをLEFT JOINして小説情報も含める。
+  Stream<List<TypedResult>> watchCompletedDownloads() {
+    final query = select(downloadedNovels).join([
+      leftOuterJoin(
+        libraryNovels,
+        libraryNovels.ncode.equalsExp(downloadedNovels.ncode),
+      ),
+      leftOuterJoin(
+        novels,
+        novels.ncode.equalsExp(downloadedNovels.ncode),
+      ),
+    ])
+      ..where(downloadedNovels.downloadStatus.equals(2))
+      ..orderBy([OrderingTerm.desc(downloadedNovels.downloadedAt)]);
+
+    return query.watch();
   }
 
   /// ブックマークの追加
