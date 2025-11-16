@@ -5,6 +5,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/providers/ranking_filter_state.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
@@ -59,7 +60,8 @@ void main() {
       );
 
       // Wait for initial data to load
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
       // Verify initial items are displayed
       expect(find.text('Test Novel 1'), findsOneWidget);
@@ -141,12 +143,14 @@ void main() {
           overrides: [
             apiServiceProvider.overrideWithValue(mockApiService),
             rankingDataProvider('d').overrideWith((ref) async => mockRankingData),
+            rankingFilterStateProvider('d').overrideWithValue(
+              const RankingFilterState(showOnlyOngoing: true),
+            ),
           ],
           child: const MaterialApp(
             home: Scaffold(
               body: RankingList(
                 rankingType: 'd',
-                showOnlyOngoing: true,
                 key: PageStorageKey('test_ongoing'),
               ),
             ),
@@ -154,7 +158,8 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
       // Should show ongoing novels only after details are loaded
       expect(find.text('Ongoing Novel'), findsOneWidget);
@@ -167,12 +172,14 @@ void main() {
           overrides: [
             apiServiceProvider.overrideWithValue(mockApiService),
             rankingDataProvider('d').overrideWith((ref) async => mockRankingData),
+            rankingFilterStateProvider('d').overrideWithValue(
+              const RankingFilterState(selectedGenre: 1), // Fantasy
+            ),
           ],
           child: const MaterialApp(
             home: Scaffold(
               body: RankingList(
                 rankingType: 'd',
-                selectedGenre: 1, // Fantasy
                 key: PageStorageKey('test_genre'),
               ),
             ),
@@ -180,7 +187,8 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
       // Should show only fantasy novels after details are loaded
       expect(find.text('Ongoing Novel'), findsOneWidget);
@@ -193,13 +201,17 @@ void main() {
           overrides: [
             apiServiceProvider.overrideWithValue(mockApiService),
             rankingDataProvider('d').overrideWith((ref) async => mockRankingData),
+            rankingFilterStateProvider('d').overrideWithValue(
+              const RankingFilterState(
+                showOnlyOngoing: true,
+                selectedGenre: 1, // Fantasy
+              ),
+            ),
           ],
           child: const MaterialApp(
             home: Scaffold(
               body: RankingList(
                 rankingType: 'd',
-                showOnlyOngoing: true,
-                selectedGenre: 1, // Fantasy
                 key: PageStorageKey('test_both'),
               ),
             ),
@@ -207,7 +219,8 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
       // Should show only ongoing fantasy novels
       expect(find.text('Ongoing Novel'), findsOneWidget);
@@ -239,7 +252,8 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
       // Should show empty list without crashing
       expect(find.byType(ListView), findsOneWidget);
@@ -270,10 +284,12 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
       // Should show error message
       expect(find.textContaining('エラーが発生しました'), findsOneWidget);
     });
+
   });
 }
