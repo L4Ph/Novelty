@@ -9,11 +9,10 @@ import 'package:novelty/widgets/tategaki.dart';
 
 /// テスト用のデフォルトAppSettingsインスタンス。
 AppSettings get defaultTestSettings => const AppSettings(
-      isVertical: false,
-      fontSize: 16,
-      selectedFont: 'Noto Sans JP',
-      novelDownloadPath: '/fake/path',
-    );
+  isVertical: false,
+  fontSize: 16,
+  novelDownloadPath: '/fake/path',
+);
 
 void main() {
   // ダミーの小説コンテンツデータ
@@ -40,8 +39,9 @@ void main() {
     );
   }
 
-  testWidgets('設定とコンテンツがローディング中の場合、CircularProgressIndicatorが表示されること',
-      (tester) async {
+  testWidgets('設定とコンテンツがローディング中の場合、CircularProgressIndicatorが表示されること', (
+    tester,
+  ) async {
     await pumpWidget(
       tester,
       contentValue: const AsyncLoading(),

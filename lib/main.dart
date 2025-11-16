@@ -1,7 +1,6 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:novelty/router/router.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
@@ -43,11 +42,9 @@ class MyApp extends ConsumerWidget {
             title: 'Novelty',
             theme: ThemeData(
               colorScheme: colorScheme,
-              fontFamily: GoogleFonts.notoSansJp().fontFamily,
             ),
             darkTheme: ThemeData(
               colorScheme: darkColorSchema,
-              fontFamily: GoogleFonts.notoSansJp().fontFamily,
             ),
             routerConfig: router,
           );

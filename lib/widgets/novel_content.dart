@@ -67,7 +67,7 @@ class NovelContentBody extends HookWidget {
       data: (settingsData) {
         return content.when(
           data: (contentData) {
-            final textStyle = settingsData.selectedFontTheme.copyWith(
+            final textStyle = TextStyle(
               fontSize: settingsData.fontSize,
               color: textColor,
             );

@@ -448,6 +448,14 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<List<_i3.Novel>>);
 
   @override
+  _i5.Stream<List<_i3.Novel>> watchLibraryNovelsWithDetails() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchLibraryNovelsWithDetails, []),
+            returnValue: _i5.Stream<List<_i3.Novel>>.empty(),
+          )
+          as _i5.Stream<List<_i3.Novel>>);
+
+  @override
   _i5.Future<bool> isInLibrary(String? ncode) =>
       (super.noSuchMethod(
             Invocation.method(#isInLibrary, [ncode]),
