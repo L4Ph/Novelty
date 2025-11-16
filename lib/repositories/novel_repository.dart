@@ -392,8 +392,9 @@ final novelContentProvider = FutureProvider.autoDispose
       ref,
       params,
     ) async {
+      final normalizedNcode = params.ncode.toLowerCase();
       final repository = ref.read(novelRepositoryProvider);
-      return repository.getEpisode(params.ncode, params.episode);
+      return repository.getEpisode(normalizedNcode, params.episode);
     });
 
 @riverpod
@@ -401,8 +402,9 @@ final novelContentProvider = FutureProvider.autoDispose
 class LibraryStatus extends _$LibraryStatus {
   @override
   Stream<bool> build(String ncode) {
+    final normalizedNcode = ncode.toLowerCase();
     final db = ref.watch(appDatabaseProvider);
-    return db.watchIsInLibrary(ncode);
+    return db.watchIsInLibrary(normalizedNcode);
   }
 
   /// ライブラリの状態をトグルするメソッド。
@@ -446,8 +448,9 @@ class LibraryStatus extends _$LibraryStatus {
 @riverpod
 /// 小説のダウンロード進捗を監視するプロバイダー。
 Stream<DownloadProgress?> downloadProgress(Ref ref, String ncode) {
+  final normalizedNcode = ncode.toLowerCase();
   final repo = ref.watch(novelRepositoryProvider);
-  return repo.watchDownloadProgress(ncode);
+  return repo.watchDownloadProgress(normalizedNcode);
 }
 
 @riverpod

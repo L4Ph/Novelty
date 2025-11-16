@@ -637,8 +637,9 @@ class ApiService {
 @riverpod
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 Future<NovelInfo> novelInfo(Ref ref, String ncode) {
+  final normalizedNcode = ncode.toLowerCase();
   final apiService = ref.read(apiServiceProvider);
-  return apiService.fetchNovelInfo(ncode);
+  return apiService.fetchNovelInfo(normalizedNcode);
 }
 
 @riverpod
@@ -646,13 +647,14 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) {
 ///
 /// APIから小説情報を取得し、既存のfavステータスを保持しながらDBに保存する。
 Future<NovelInfo> novelInfoWithCache(Ref ref, String ncode) async {
+  final normalizedNcode = ncode.toLowerCase();
   final apiService = ref.read(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
 
-  final novelInfo = await apiService.fetchNovelInfo(ncode);
+  final novelInfo = await apiService.fetchNovelInfo(normalizedNcode);
 
   // Upsert novel data, preserving fav status
-  final existing = await db.getNovel(ncode);
+  final existing = await db.getNovel(normalizedNcode);
   await db.insertNovel(
     novelInfo.toDbCompanion().copyWith(
       fav: drift.Value(existing?.fav ?? 0),
@@ -669,8 +671,9 @@ Future<Episode> episode(
   required String ncode,
   required int episode,
 }) {
+  final normalizedNcode = ncode.toLowerCase();
   final apiService = ref.read(apiServiceProvider);
-  return apiService.fetchEpisode(ncode, episode);
+  return apiService.fetchEpisode(normalizedNcode, episode);
 }
 
 @riverpod
