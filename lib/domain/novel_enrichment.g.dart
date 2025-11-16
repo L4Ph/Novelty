@@ -271,3 +271,92 @@ final class EnrichedNovelFamily extends $Family
   @override
   String toString() => r'enrichedNovelProvider';
 }
+
+/// フィルタリングされた豊富なランキングデータを取得するプロバイダー
+
+@ProviderFor(filteredEnrichedRankingData)
+const filteredEnrichedRankingDataProvider =
+    FilteredEnrichedRankingDataFamily._();
+
+/// フィルタリングされた豊富なランキングデータを取得するプロバイダー
+
+final class FilteredEnrichedRankingDataProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<EnrichedNovelData>>,
+          List<EnrichedNovelData>,
+          FutureOr<List<EnrichedNovelData>>
+        >
+    with
+        $FutureModifier<List<EnrichedNovelData>>,
+        $FutureProvider<List<EnrichedNovelData>> {
+  /// フィルタリングされた豊富なランキングデータを取得するプロバイダー
+  const FilteredEnrichedRankingDataProvider._({
+    required FilteredEnrichedRankingDataFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'filteredEnrichedRankingDataProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$filteredEnrichedRankingDataHash();
+
+  @override
+  String toString() {
+    return r'filteredEnrichedRankingDataProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<EnrichedNovelData>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<EnrichedNovelData>> create(Ref ref) {
+    final argument = this.argument as String;
+    return filteredEnrichedRankingData(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FilteredEnrichedRankingDataProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$filteredEnrichedRankingDataHash() =>
+    r'f08f7ab7ab5a70f302f2b4f19d0f83fce10715bf';
+
+/// フィルタリングされた豊富なランキングデータを取得するプロバイダー
+
+final class FilteredEnrichedRankingDataFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<EnrichedNovelData>>, String> {
+  const FilteredEnrichedRankingDataFamily._()
+    : super(
+        retry: null,
+        name: r'filteredEnrichedRankingDataProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// フィルタリングされた豊富なランキングデータを取得するプロバイダー
+
+  FilteredEnrichedRankingDataProvider call(String rankingType) =>
+      FilteredEnrichedRankingDataProvider._(argument: rankingType, from: this);
+
+  @override
+  String toString() => r'filteredEnrichedRankingDataProvider';
+}
