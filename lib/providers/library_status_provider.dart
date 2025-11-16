@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
-import 'package:novelty/screens/library_page.dart';
+import 'package:novelty/providers/library_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'library_status_provider.g.dart';

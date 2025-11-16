@@ -9,7 +9,7 @@ import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
-import 'package:novelty/screens/library_page.dart';
+import 'package:novelty/providers/library_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/novel_parser.dart';
 import 'package:novelty/utils/settings_provider.dart';
