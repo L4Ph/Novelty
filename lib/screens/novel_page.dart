@@ -2,17 +2,13 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart' hide Episode;
-import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/current_episode_provider.dart';
 import 'package:novelty/providers/episode_provider.dart';
 import 'package:novelty/providers/history_provider.dart';
 import 'package:novelty/providers/novel_info_provider.dart';
-import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
-
-part 'novel_page.g.dart';
 
 /// 小説のページを表示するウィジェット。
 class NovelPage extends ConsumerWidget {

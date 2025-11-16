@@ -6,11 +6,15 @@ part of 'database_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 /// データベースサービスのプロバイダー。
+
 @ProviderFor(databaseService)
 const databaseServiceProvider = DatabaseServiceProvider._();
 
 /// データベースサービスのプロバイダー。
+
 final class DatabaseServiceProvider
     extends
         $FunctionalProvider<DatabaseService, DatabaseService, DatabaseService>
@@ -50,6 +54,3 @@ final class DatabaseServiceProvider
 }
 
 String _$databaseServiceHash() => r'e8030c9073ab43c46071b0972fe395b93b032be3';
-
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
