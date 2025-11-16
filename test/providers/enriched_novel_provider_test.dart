@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
+import 'package:novelty/models/ranking_response.dart';
 
 /// Mock for AppDatabase
 class MockAppDatabase extends Mock implements AppDatabase {}
