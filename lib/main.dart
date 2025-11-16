@@ -42,9 +42,11 @@ class MyApp extends ConsumerWidget {
             title: 'Novelty',
             theme: ThemeData(
               colorScheme: colorScheme,
+              fontFamily: 'NotoSansJP',
             ),
             darkTheme: ThemeData(
               colorScheme: darkColorSchema,
+              fontFamily: 'NotoSansJP',
             ),
             routerConfig: router,
           );
