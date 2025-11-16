@@ -26,9 +26,6 @@ class RankingList extends HookConsumerWidget {
     final isLoadingMore = useState(false);
     final isInitialLoad = useState(true);
 
-    // ScrollControllerをuseMemoizedで管理
-    final scrollController = useMemoized(ScrollController.new, []);
-
     // Providerからデータを取得（フィルタリング前）
     final enrichedDataAsync = ref.watch(
       enrichedRankingDataProvider(rankingType),
@@ -37,14 +34,16 @@ class RankingList extends HookConsumerWidget {
     // フィルタ状態を取得
     final filterState = ref.watch(rankingFilterStateProvider(rankingType));
 
-    // 最新のenrichedDataを保持するref（スクロールリスナー用）
-    final enrichedDataRef = useRef<List<EnrichedNovelData>>([]);
-
     // ローディング処理
     Future<void> loadMore(List<EnrichedNovelData> enrichedData) async {
       if (isLoadingMore.value || !context.mounted) return;
 
       final itemsToLoad = isInitialLoad.value ? 20 : 10;
+
+      // 初回ロードフラグをクリア（全時間ランキングなど、すでに詳細データがある場合も対応）
+      if (isInitialLoad.value) {
+        isInitialLoad.value = false;
+      }
 
       // フィルタ適用後のデータから未ロードのアイテムを取得
       final filteredData = enrichedData.where((n) {
@@ -70,9 +69,6 @@ class RankingList extends HookConsumerWidget {
       }
 
       isLoadingMore.value = true;
-      if (isInitialLoad.value) {
-        isInitialLoad.value = false;
-      }
 
       final ncodes = unloadedItems.map((n) => n.novel.ncode).toList();
 
@@ -109,55 +105,13 @@ class RankingList extends HookConsumerWidget {
       }
     }
 
-    // スクロールリスナー
-    useEffect(
-      () {
-        void onScroll() {
-          if (isLoadingMore.value || !context.mounted) return;
-
-          final maxScroll = scrollController.position.maxScrollExtent;
-          final currentScroll = scrollController.position.pixels;
-          const delta = 200.0;
-
-          if (currentScroll >= maxScroll - delta) {
-            // 最新のenrichedDataを使用
-            if (enrichedDataRef.value.isNotEmpty) {
-              unawaited(loadMore(enrichedDataRef.value));
-            }
-          }
-        }
-
-        scrollController.addListener(onScroll);
-        return () => scrollController.removeListener(onScroll);
-      },
-      [isLoadingMore],
-    );
-
     return enrichedDataAsync.when(
       data: (enrichedData) {
-        // 最新のデータをrefに保存
-        enrichedDataRef.value = enrichedData;
-
         // 初回ロードを実行
         if (isInitialLoad.value && !isLoadingMore.value) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               unawaited(loadMore(enrichedData));
-            }
-          });
-        }
-
-        // 初回ロード完了後、画面を満たすまで追加ロード
-        if (!isInitialLoad.value && !isLoadingMore.value) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!context.mounted) return;
-            // スクロール可能かチェック
-            if (scrollController.hasClients) {
-              final maxScroll = scrollController.position.maxScrollExtent;
-              // スクロール不可能（画面に収まっている）なら追加ロード
-              if (maxScroll <= 0 && loadedData.value.isNotEmpty) {
-                unawaited(loadMore(enrichedData));
-              }
             }
           });
         }
@@ -217,23 +171,27 @@ class RankingList extends HookConsumerWidget {
             isInitialLoad.value = true;
             ref.invalidate(enrichedRankingDataProvider(rankingType));
           },
-          child: ListView.builder(
-            controller: scrollController,
-            itemCount: displayData.length + (hasMore ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index == displayData.length) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              final enrichedItem = displayData[index];
-              return NovelListTile(
+          child: ListView(
+            children: [
+              ...displayData.map((enrichedItem) => NovelListTile(
                 item: enrichedItem.novel,
                 enrichedData: enrichedItem,
                 isRanking: true,
-              );
-            },
+              )),
+              if (hasMore)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: isLoadingMore.value
+                        ? const CircularProgressIndicator()
+                        : ElevatedButton.icon(
+                            onPressed: () => loadMore(enrichedData),
+                            icon: const Icon(Icons.expand_more),
+                            label: const Text('もっと見る'),
+                          ),
+                  ),
+                ),
+            ],
           ),
         );
       },
