@@ -5,7 +5,7 @@ import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
-import 'package:novelty/screens/library_page.dart';
+import 'package:novelty/providers/library_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 

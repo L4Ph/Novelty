@@ -3,7 +3,6 @@ import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:riverpod/src/providers/future_provider.dart';
 
 /// APIデータとローカルライブラリの状態の両方を含む、充実した新規データ
 class EnrichedNovelData {
@@ -28,8 +27,8 @@ class EnrichedNovelData {
 }
 
 /// 豊富な小説データをデータベースから取得するプロバイダー
-final FutureProviderFamily<List<EnrichedNovelData>, String>
-enrichedRankingDataProvider = FutureProvider.autoDispose
+// ignore: specify_nonobvious_property_types
+final enrichedRankingDataProvider = FutureProvider.autoDispose
     .family<List<EnrichedNovelData>, String>(
       (ref, rankingType) async {
         final db = ref.watch(appDatabaseProvider);
@@ -57,8 +56,8 @@ enrichedRankingDataProvider = FutureProvider.autoDispose
     );
 
 /// 検索結果をデータベースのライブラリ状態で強化するプロバイダー
-final FutureProviderFamily<List<EnrichedNovelData>, List<RankingResponse>>
-enrichedSearchDataProvider = FutureProvider.autoDispose
+// ignore: specify_nonobvious_property_types
+final enrichedSearchDataProvider = FutureProvider.autoDispose
     .family<List<EnrichedNovelData>, List<RankingResponse>>(
       (ref, searchResults) async {
         final db = ref.watch(appDatabaseProvider);
@@ -94,8 +93,9 @@ Future<Set<String>> getLibraryNcodes(WidgetRef ref) async {
 }
 
 /// ncodeから単一の豊富な小説データを取得するプロバイダー
-final FutureProviderFamily<EnrichedNovelData, String> enrichedNovelProvider =
-    FutureProvider.autoDispose.family<EnrichedNovelData, String>(
+// ignore: specify_nonobvious_property_types
+final enrichedNovelProvider = FutureProvider.autoDispose
+    .family<EnrichedNovelData, String>(
       (ref, ncode) async {
         final apiService = ref.watch(apiServiceProvider);
         final db = ref.watch(appDatabaseProvider);

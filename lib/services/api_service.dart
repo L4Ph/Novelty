@@ -10,7 +10,6 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:riverpod/src/providers/future_provider.dart';
 
 /// 累計ランキングの表示上限数
 /// なろう小説APIの制限値（最大500件）を最大限活用
@@ -20,8 +19,9 @@ const int allTimeRankingLimit = 500;
 final Provider<ApiService> apiServiceProvider = Provider((ref) => ApiService());
 
 /// ランキングデータのプロバイダー
-final FutureProviderFamily<List<RankingResponse>, String> rankingDataProvider =
-    FutureProvider.autoDispose.family<List<RankingResponse>, String>(
+// ignore: specify_nonobvious_property_types
+final rankingDataProvider = FutureProvider.autoDispose
+    .family<List<RankingResponse>, String>(
       (ref, rankingType) {
         final apiService = ref.watch(apiServiceProvider);
         return apiService.fetchRanking(rankingType);
@@ -580,7 +580,7 @@ class ApiService {
     const query = NovelSearchQuery(order: 'hyoka', lim: allTimeRankingLimit);
 
     try {
-      var results = await searchNovels(query);
+      final results = await searchNovels(query);
       if (kDebugMode) {
         print(
           'Successfully fetched all-time ranking, count: ${results.length}',
