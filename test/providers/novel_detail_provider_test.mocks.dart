@@ -632,6 +632,22 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<int>);
 
   @override
+  _i5.Stream<List<_i2.TypedResult>> watchDownloadingNovels() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchDownloadingNovels, []),
+            returnValue: _i5.Stream<List<_i2.TypedResult>>.empty(),
+          )
+          as _i5.Stream<List<_i2.TypedResult>>);
+
+  @override
+  _i5.Stream<List<_i2.TypedResult>> watchCompletedDownloads() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchCompletedDownloads, []),
+            returnValue: _i5.Stream<List<_i2.TypedResult>>.empty(),
+          )
+          as _i5.Stream<List<_i2.TypedResult>>);
+
+  @override
   _i5.Future<int> addBookmark(_i3.BookmarksCompanion? bookmark) =>
       (super.noSuchMethod(
             Invocation.method(#addBookmark, [bookmark]),
@@ -1288,6 +1304,14 @@ class MockNovelRepository extends _i1.Mock implements _i13.NovelRepository {
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
           as _i5.Future<void>);
+
+  @override
+  _i5.Future<bool> downloadSingleEpisode(String? ncode, int? episode) =>
+      (super.noSuchMethod(
+            Invocation.method(#downloadSingleEpisode, [ncode, episode]),
+            returnValue: _i5.Future<bool>.value(false),
+          )
+          as _i5.Future<bool>);
 
   @override
   _i5.Future<List<_i17.NovelContentElement>> getEpisode(

@@ -174,6 +174,7 @@ extension NovelInfoEx on NovelInfo {
       story: Value(story),
       novelType: Value(novelType),
       end: Value(end),
+      genre: Value(genre),
       generalAllNo: Value(generalAllNo),
       keyword: Value(keyword),
       generalFirstup: Value(int.tryParse(generalFirstup ?? '')),

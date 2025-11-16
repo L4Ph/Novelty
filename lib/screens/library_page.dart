@@ -2,9 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/widgets/novel_list_tile.dart';
 
 /// "ライブラリ"ページのウィジェット。
 class LibraryPage extends ConsumerWidget {
@@ -71,52 +72,53 @@ class LibraryPage extends ConsumerWidget {
             itemCount: novels.length,
             itemBuilder: (context, index) {
               final novel = novels[index];
-              return Card(
-                elevation: 0,
-                margin: const EdgeInsets.symmetric(
-                  vertical: 4,
-                  horizontal: 8,
-                ),
-                child: ListTile(
-                  title: Text(novel.title ?? ''),
-                  subtitle: Text(novel.writer ?? ''),
-                  onTap: () {
-                    unawaited(context.push('/novel/${novel.ncode}'));
-                  },
-                  onLongPress: () {
-                    unawaited(
-                      showDialog<void>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('削除の確認'),
-                          content: Text('"${novel.title}"をライブラリから削除しますか？'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('キャンセル'),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                await ref
-                                    .read(novelRepositoryProvider)
-                                    .removeFromLibrary(novel.ncode);
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('ライブラリから削除しました'),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: const Text('削除'),
-                            ),
-                          ],
-                        ),
+
+              // NovelListTileを使用するため、RankingResponseに変換
+              final novelData = RankingResponse(
+                ncode: novel.ncode,
+                title: novel.title,
+                writer: novel.writer,
+                genre: novel.genre,
+                novelType: novel.novelType,
+                end: novel.end,
+                allPoint: novel.allPoint,
+              );
+
+              return NovelListTile(
+                item: novelData,
+                onLongPress: () {
+                  unawaited(
+                    showDialog<void>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('削除の確認'),
+                        content: Text('"${novel.title}"をライブラリから削除しますか？'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('キャンセル'),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              await ref
+                                  .read(novelRepositoryProvider)
+                                  .removeFromLibrary(novel.ncode);
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('ライブラリから削除しました'),
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text('削除'),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               );
             },
           );
