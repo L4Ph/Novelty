@@ -7,18 +7,12 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/current_episode_provider.dart';
 import 'package:novelty/providers/episode_provider.dart';
 import 'package:novelty/providers/history_provider.dart';
+import 'package:novelty/providers/novel_info_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'novel_page.g.dart';
-
-@riverpod
-/// 小説の情報を取得するプロバイダー。
-Future<NovelInfo> novelInfo(Ref ref, String ncode) {
-  return ApiService().fetchNovelInfo(ncode);
-}
 
 /// 小説のページを表示するウィジェット。
 class NovelPage extends ConsumerWidget {

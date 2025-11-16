@@ -11,6 +11,7 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/download_provider.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
 import 'package:novelty/providers/episode_provider.dart';
+import 'package:novelty/providers/novel_info_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
@@ -19,25 +20,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 part 'novel_detail_page.g.dart';
-
-@riverpod
-/// 小説の情報を取得するプロバイダー。
-Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
-  final apiService = ref.read(apiServiceProvider);
-  final db = ref.watch(appDatabaseProvider);
-
-  final novelInfo = await apiService.fetchNovelInfo(ncode);
-
-  // Upsert novel data, preserving fav status
-  final existing = await db.getNovel(ncode);
-  await db.insertNovel(
-    novelInfo.toDbCompanion().copyWith(
-      fav: drift.Value(existing?.fav ?? 0),
-    ),
-  );
-
-  return novelInfo;
-}
 
 @riverpod
 /// 小説のライブラリ状態を管理するプロバイダー。
@@ -246,7 +228,7 @@ class NovelDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final novelInfoAsync = ref.watch(novelInfoProvider(ncode));
+    final novelInfoAsync = ref.watch(novelInfoWithCacheProvider(ncode));
 
     return novelInfoAsync.when(
       data: (novelInfo) => _buildContent(context, ref, novelInfo),
