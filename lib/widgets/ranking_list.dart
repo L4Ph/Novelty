@@ -37,14 +37,30 @@ class RankingList extends HookConsumerWidget {
 
     // フィルタ適用関数
     final applyFilters = useCallback(() {
-      _applyFilters(allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre);
+      _applyFilters(
+        allNovelData,
+        filteredNovelData,
+        showOnlyOngoing,
+        selectedGenre,
+      );
     }, [allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre]);
 
     // ローディング処理
-    final loadMore = useCallback(() async {
-      await _loadMore(
-        context,
-        ref,
+    final loadMore = useCallback(
+      () async {
+        await _loadMore(
+          context,
+          ref,
+          filteredNovelData,
+          isLoadingMore,
+          isInitialLoad,
+          allNovelData,
+          rankingType,
+          showOnlyOngoing,
+          selectedGenre,
+        );
+      },
+      [
         filteredNovelData,
         isLoadingMore,
         isInitialLoad,
@@ -52,16 +68,8 @@ class RankingList extends HookConsumerWidget {
         rankingType,
         showOnlyOngoing,
         selectedGenre,
-      );
-    }, [
-      filteredNovelData,
-      isLoadingMore,
-      isInitialLoad,
-      allNovelData,
-      rankingType,
-      showOnlyOngoing,
-      selectedGenre,
-    ]);
+      ],
+    );
 
     // フィルタ適用とリセット処理
     final applyFiltersAndReset = useCallback(() {
@@ -103,7 +111,7 @@ class RankingList extends HookConsumerWidget {
 
     // スクロールリスナーの管理
     final hasRegisteredListener = useState(false);
-    
+
     // スクロールリスナーを一度だけ登録
     if (!hasRegisteredListener.value) {
       scrollController.addListener(onScroll);
@@ -254,7 +262,12 @@ class RankingList extends HookConsumerWidget {
     // Reapply filters after loading details if filters are active
     final hasActiveFilters = showOnlyOngoing || selectedGenre != null;
     if (hasActiveFilters) {
-      _applyFilters(allNovelData, filteredNovelData, showOnlyOngoing, selectedGenre);
+      _applyFilters(
+        allNovelData,
+        filteredNovelData,
+        showOnlyOngoing,
+        selectedGenre,
+      );
     }
   }
 

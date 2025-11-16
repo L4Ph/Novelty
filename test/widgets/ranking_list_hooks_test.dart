@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
+import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
 void main() {
