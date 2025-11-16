@@ -199,6 +199,16 @@ class DownloadedEpisodes extends Table {
   /// ダウンロード日時
   IntColumn get downloadedAt => integer()();
 
+  /// ダウンロード状態
+  /// 2: 成功, 3: 失敗
+  IntColumn get status => integer().withDefault(const Constant(2))();
+
+  /// 失敗時のエラーメッセージ
+  TextColumn get errorMessage => text().nullable()();
+
+  /// 最終試行日時
+  IntColumn get lastAttemptAt => integer().nullable()();
+
   @override
   Set<Column> get primaryKey => {ncode, episode};
 }
@@ -306,7 +316,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration {
@@ -395,6 +405,18 @@ class AppDatabase extends _$AppDatabase {
         if (from <= 6) {
           // novelsテーブルにgenreカラムを追加
           await m.addColumn(novels, novels.genre);
+        }
+        if (from <= 7) {
+          // downloadedEpisodesテーブルにstatus, errorMessage, lastAttemptAtカラムを追加
+          await m.addColumn(downloadedEpisodes, downloadedEpisodes.status);
+          await m.addColumn(
+            downloadedEpisodes,
+            downloadedEpisodes.errorMessage,
+          );
+          await m.addColumn(
+            downloadedEpisodes,
+            downloadedEpisodes.lastAttemptAt,
+          );
         }
       },
     );

@@ -178,6 +178,57 @@ class NovelRepository {
     return parsedContent;
   }
 
+  /// 単一エピソードのダウンロードを実行するメソッド。
+  ///
+  /// 既にダウンロード成功済み（status=2）の場合はスキップする。
+  /// 戻り値: ダウンロードに成功した場合true、失敗した場合false。
+  Future<bool> downloadSingleEpisode(String ncode, int episode) async {
+    final ncodeLower = ncode.toNormalizedNcode();
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    // 既にダウンロード成功済みかチェック
+    final existing = await _db.getDownloadedEpisode(ncodeLower, episode);
+    if (existing != null && existing.status == 2) {
+      // 既に成功している場合はスキップ
+      return true;
+    }
+
+    try {
+      // エピソードをフェッチ
+      final content = await _fetchEpisodeContent(ncodeLower, episode);
+
+      // データベースに保存（成功）
+      await _db.insertDownloadedEpisode(
+        DownloadedEpisodesCompanion(
+          ncode: Value(ncodeLower),
+          episode: Value(episode),
+          content: Value(content),
+          downloadedAt: Value(now),
+          status: const Value(2), // 2: 成功
+          errorMessage: const Value(null),
+          lastAttemptAt: Value(now),
+        ),
+      );
+
+      return true;
+    } on Exception catch (e) {
+      // データベースに保存（失敗）
+      await _db.insertDownloadedEpisode(
+        DownloadedEpisodesCompanion(
+          ncode: Value(ncodeLower),
+          episode: Value(episode),
+          content: const Value([]), // 空のコンテンツ
+          downloadedAt: Value(now),
+          status: const Value(3), // 3: 失敗
+          errorMessage: Value(e.toString()),
+          lastAttemptAt: Value(now),
+        ),
+      );
+
+      return false;
+    }
+  }
+
   /// 小説のエピソードを取得するメソッド。
   Future<List<NovelContentElement>> getEpisode(
     String ncode,
@@ -205,6 +256,9 @@ class NovelRepository {
   }
 
   /// 小説のダウンロードを行うメソッド。
+  ///
+  /// 各エピソードのダウンロードを試み、失敗したエピソードがあっても継続する。
+  /// 全エピソードのダウンロード試行後、成功数に応じてステータスを更新する。
   Future<void> downloadNovel(
     String ncode,
     int totalEpisodes,
@@ -231,18 +285,18 @@ class NovelRepository {
         ),
       );
 
-      for (var i = 1; i <= totalEpisodes; i++) {
-        final content = await _fetchEpisodeContent(ncodeLower, i);
+      var successCount = 0;
+      var failureCount = 0;
 
-        // データベースに保存
-        await _db.insertDownloadedEpisode(
-          DownloadedEpisodesCompanion(
-            ncode: Value(ncodeLower),
-            episode: Value(i),
-            content: Value(content),
-            downloadedAt: Value(DateTime.now().millisecondsSinceEpoch),
-          ),
-        );
+      // 各エピソードをダウンロード
+      for (var i = 1; i <= totalEpisodes; i++) {
+        final success = await downloadSingleEpisode(ncodeLower, i);
+
+        if (success) {
+          successCount++;
+        } else {
+          failureCount++;
+        }
 
         // DownloadedNovelsテーブルの進捗を更新
         await _db.upsertDownloadedNovel(
@@ -251,39 +305,41 @@ class NovelRepository {
             downloadStatus: const Value(1), // 1: ダウンロード中
             downloadedAt: Value(DateTime.now().millisecondsSinceEpoch),
             totalEpisodes: Value(totalEpisodes),
-            downloadedEpisodes: Value(i),
+            downloadedEpisodes: Value(successCount),
           ),
         );
 
         // 進捗を通知
         progressController?.add(
           DownloadProgress(
-            currentEpisode: i,
+            currentEpisode: successCount,
             totalEpisodes: totalEpisodes,
             isDownloading: true,
           ),
         );
       }
 
-      // ダウンロード完了をDBに記録
+      // 全エピソード処理完了後、ステータスを更新
+      final finalStatus = failureCount == 0 ? 2 : 3; // 全成功なら2、一部失敗なら3
       await _db.upsertDownloadedNovel(
         DownloadedNovelsCompanion(
           ncode: Value(ncodeLower),
-          downloadStatus: const Value(2), // 2: 完了
+          downloadStatus: Value(finalStatus),
           downloadedAt: Value(DateTime.now().millisecondsSinceEpoch),
           totalEpisodes: Value(totalEpisodes),
-          downloadedEpisodes: Value(totalEpisodes),
+          downloadedEpisodes: Value(successCount),
         ),
       );
       progressController?.add(
         DownloadProgress(
-          currentEpisode: totalEpisodes,
+          currentEpisode: successCount,
           totalEpisodes: totalEpisodes,
           isDownloading: false,
+          errorMessage: failureCount > 0 ? '$failureCount話のダウンロードに失敗しました' : null,
         ),
       );
-    } catch (e) {
-      // ダウンロード失敗をDBに記録
+    } on Exception catch (e) {
+      // 予期しないエラーが発生した場合
       final existing = await _db.getDownloadedNovel(ncodeLower);
       await _db.upsertDownloadedNovel(
         DownloadedNovelsCompanion(

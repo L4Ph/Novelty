@@ -2993,12 +2993,48 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
         type: DriftSqlType.int,
         requiredDuringInsert: true,
       );
+  static const drift.VerificationMeta _statusMeta =
+      const drift.VerificationMeta('status');
+  @override
+  late final drift.GeneratedColumn<int> status = drift.GeneratedColumn<int>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const drift.Constant(2),
+  );
+  static const drift.VerificationMeta _errorMessageMeta =
+      const drift.VerificationMeta('errorMessage');
+  @override
+  late final drift.GeneratedColumn<String> errorMessage =
+      drift.GeneratedColumn<String>(
+        'error_message',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const drift.VerificationMeta _lastAttemptAtMeta =
+      const drift.VerificationMeta('lastAttemptAt');
+  @override
+  late final drift.GeneratedColumn<int> lastAttemptAt =
+      drift.GeneratedColumn<int>(
+        'last_attempt_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
   @override
   List<drift.GeneratedColumn> get $columns => [
     ncode,
     episode,
     content,
     downloadedAt,
+    status,
+    errorMessage,
+    lastAttemptAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3039,6 +3075,30 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
     } else if (isInserting) {
       context.missing(_downloadedAtMeta);
     }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    }
+    if (data.containsKey('error_message')) {
+      context.handle(
+        _errorMessageMeta,
+        errorMessage.isAcceptableOrUnknown(
+          data['error_message']!,
+          _errorMessageMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_attempt_at')) {
+      context.handle(
+        _lastAttemptAtMeta,
+        lastAttemptAt.isAcceptableOrUnknown(
+          data['last_attempt_at']!,
+          _lastAttemptAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -3066,6 +3126,18 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
         DriftSqlType.int,
         data['${effectivePrefix}downloaded_at'],
       )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}status'],
+      )!,
+      errorMessage: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}error_message'],
+      ),
+      lastAttemptAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_attempt_at'],
+      ),
     );
   }
 
@@ -3092,11 +3164,24 @@ class DownloadedEpisode extends drift.DataClass
 
   /// ダウンロード日時
   final int downloadedAt;
+
+  /// ダウンロード状態
+  /// 2: 成功, 3: 失敗
+  final int status;
+
+  /// 失敗時のエラーメッセージ
+  final String? errorMessage;
+
+  /// 最終試行日時
+  final int? lastAttemptAt;
   const DownloadedEpisode({
     required this.ncode,
     required this.episode,
     required this.content,
     required this.downloadedAt,
+    required this.status,
+    this.errorMessage,
+    this.lastAttemptAt,
   });
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
@@ -3109,6 +3194,13 @@ class DownloadedEpisode extends drift.DataClass
       );
     }
     map['downloaded_at'] = drift.Variable<int>(downloadedAt);
+    map['status'] = drift.Variable<int>(status);
+    if (!nullToAbsent || errorMessage != null) {
+      map['error_message'] = drift.Variable<String>(errorMessage);
+    }
+    if (!nullToAbsent || lastAttemptAt != null) {
+      map['last_attempt_at'] = drift.Variable<int>(lastAttemptAt);
+    }
     return map;
   }
 
@@ -3118,6 +3210,13 @@ class DownloadedEpisode extends drift.DataClass
       episode: drift.Value(episode),
       content: drift.Value(content),
       downloadedAt: drift.Value(downloadedAt),
+      status: drift.Value(status),
+      errorMessage: errorMessage == null && nullToAbsent
+          ? const drift.Value.absent()
+          : drift.Value(errorMessage),
+      lastAttemptAt: lastAttemptAt == null && nullToAbsent
+          ? const drift.Value.absent()
+          : drift.Value(lastAttemptAt),
     );
   }
 
@@ -3131,6 +3230,9 @@ class DownloadedEpisode extends drift.DataClass
       episode: serializer.fromJson<int>(json['episode']),
       content: serializer.fromJson<List<NovelContentElement>>(json['content']),
       downloadedAt: serializer.fromJson<int>(json['downloadedAt']),
+      status: serializer.fromJson<int>(json['status']),
+      errorMessage: serializer.fromJson<String?>(json['errorMessage']),
+      lastAttemptAt: serializer.fromJson<int?>(json['lastAttemptAt']),
     );
   }
   @override
@@ -3141,6 +3243,9 @@ class DownloadedEpisode extends drift.DataClass
       'episode': serializer.toJson<int>(episode),
       'content': serializer.toJson<List<NovelContentElement>>(content),
       'downloadedAt': serializer.toJson<int>(downloadedAt),
+      'status': serializer.toJson<int>(status),
+      'errorMessage': serializer.toJson<String?>(errorMessage),
+      'lastAttemptAt': serializer.toJson<int?>(lastAttemptAt),
     };
   }
 
@@ -3149,11 +3254,19 @@ class DownloadedEpisode extends drift.DataClass
     int? episode,
     List<NovelContentElement>? content,
     int? downloadedAt,
+    int? status,
+    drift.Value<String?> errorMessage = const drift.Value.absent(),
+    drift.Value<int?> lastAttemptAt = const drift.Value.absent(),
   }) => DownloadedEpisode(
     ncode: ncode ?? this.ncode,
     episode: episode ?? this.episode,
     content: content ?? this.content,
     downloadedAt: downloadedAt ?? this.downloadedAt,
+    status: status ?? this.status,
+    errorMessage: errorMessage.present ? errorMessage.value : this.errorMessage,
+    lastAttemptAt: lastAttemptAt.present
+        ? lastAttemptAt.value
+        : this.lastAttemptAt,
   );
   DownloadedEpisode copyWithCompanion(DownloadedEpisodesCompanion data) {
     return DownloadedEpisode(
@@ -3163,6 +3276,13 @@ class DownloadedEpisode extends drift.DataClass
       downloadedAt: data.downloadedAt.present
           ? data.downloadedAt.value
           : this.downloadedAt,
+      status: data.status.present ? data.status.value : this.status,
+      errorMessage: data.errorMessage.present
+          ? data.errorMessage.value
+          : this.errorMessage,
+      lastAttemptAt: data.lastAttemptAt.present
+          ? data.lastAttemptAt.value
+          : this.lastAttemptAt,
     );
   }
 
@@ -3172,13 +3292,24 @@ class DownloadedEpisode extends drift.DataClass
           ..write('ncode: $ncode, ')
           ..write('episode: $episode, ')
           ..write('content: $content, ')
-          ..write('downloadedAt: $downloadedAt')
+          ..write('downloadedAt: $downloadedAt, ')
+          ..write('status: $status, ')
+          ..write('errorMessage: $errorMessage, ')
+          ..write('lastAttemptAt: $lastAttemptAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(ncode, episode, content, downloadedAt);
+  int get hashCode => Object.hash(
+    ncode,
+    episode,
+    content,
+    downloadedAt,
+    status,
+    errorMessage,
+    lastAttemptAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3186,7 +3317,10 @@ class DownloadedEpisode extends drift.DataClass
           other.ncode == this.ncode &&
           other.episode == this.episode &&
           other.content == this.content &&
-          other.downloadedAt == this.downloadedAt);
+          other.downloadedAt == this.downloadedAt &&
+          other.status == this.status &&
+          other.errorMessage == this.errorMessage &&
+          other.lastAttemptAt == this.lastAttemptAt);
 }
 
 class DownloadedEpisodesCompanion
@@ -3195,12 +3329,18 @@ class DownloadedEpisodesCompanion
   final drift.Value<int> episode;
   final drift.Value<List<NovelContentElement>> content;
   final drift.Value<int> downloadedAt;
+  final drift.Value<int> status;
+  final drift.Value<String?> errorMessage;
+  final drift.Value<int?> lastAttemptAt;
   final drift.Value<int> rowid;
   const DownloadedEpisodesCompanion({
     this.ncode = const drift.Value.absent(),
     this.episode = const drift.Value.absent(),
     this.content = const drift.Value.absent(),
     this.downloadedAt = const drift.Value.absent(),
+    this.status = const drift.Value.absent(),
+    this.errorMessage = const drift.Value.absent(),
+    this.lastAttemptAt = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
   });
   DownloadedEpisodesCompanion.insert({
@@ -3208,6 +3348,9 @@ class DownloadedEpisodesCompanion
     required int episode,
     required List<NovelContentElement> content,
     required int downloadedAt,
+    this.status = const drift.Value.absent(),
+    this.errorMessage = const drift.Value.absent(),
+    this.lastAttemptAt = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
   }) : ncode = drift.Value(ncode),
        episode = drift.Value(episode),
@@ -3218,6 +3361,9 @@ class DownloadedEpisodesCompanion
     drift.Expression<int>? episode,
     drift.Expression<String>? content,
     drift.Expression<int>? downloadedAt,
+    drift.Expression<int>? status,
+    drift.Expression<String>? errorMessage,
+    drift.Expression<int>? lastAttemptAt,
     drift.Expression<int>? rowid,
   }) {
     return drift.RawValuesInsertable({
@@ -3225,6 +3371,9 @@ class DownloadedEpisodesCompanion
       if (episode != null) 'episode': episode,
       if (content != null) 'content': content,
       if (downloadedAt != null) 'downloaded_at': downloadedAt,
+      if (status != null) 'status': status,
+      if (errorMessage != null) 'error_message': errorMessage,
+      if (lastAttemptAt != null) 'last_attempt_at': lastAttemptAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3234,6 +3383,9 @@ class DownloadedEpisodesCompanion
     drift.Value<int>? episode,
     drift.Value<List<NovelContentElement>>? content,
     drift.Value<int>? downloadedAt,
+    drift.Value<int>? status,
+    drift.Value<String?>? errorMessage,
+    drift.Value<int?>? lastAttemptAt,
     drift.Value<int>? rowid,
   }) {
     return DownloadedEpisodesCompanion(
@@ -3241,6 +3393,9 @@ class DownloadedEpisodesCompanion
       episode: episode ?? this.episode,
       content: content ?? this.content,
       downloadedAt: downloadedAt ?? this.downloadedAt,
+      status: status ?? this.status,
+      errorMessage: errorMessage ?? this.errorMessage,
+      lastAttemptAt: lastAttemptAt ?? this.lastAttemptAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3262,6 +3417,15 @@ class DownloadedEpisodesCompanion
     if (downloadedAt.present) {
       map['downloaded_at'] = drift.Variable<int>(downloadedAt.value);
     }
+    if (status.present) {
+      map['status'] = drift.Variable<int>(status.value);
+    }
+    if (errorMessage.present) {
+      map['error_message'] = drift.Variable<String>(errorMessage.value);
+    }
+    if (lastAttemptAt.present) {
+      map['last_attempt_at'] = drift.Variable<int>(lastAttemptAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = drift.Variable<int>(rowid.value);
     }
@@ -3275,6 +3439,9 @@ class DownloadedEpisodesCompanion
           ..write('episode: $episode, ')
           ..write('content: $content, ')
           ..write('downloadedAt: $downloadedAt, ')
+          ..write('status: $status, ')
+          ..write('errorMessage: $errorMessage, ')
+          ..write('lastAttemptAt: $lastAttemptAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5637,6 +5804,9 @@ typedef $$DownloadedEpisodesTableCreateCompanionBuilder =
       required int episode,
       required List<NovelContentElement> content,
       required int downloadedAt,
+      drift.Value<int> status,
+      drift.Value<String?> errorMessage,
+      drift.Value<int?> lastAttemptAt,
       drift.Value<int> rowid,
     });
 typedef $$DownloadedEpisodesTableUpdateCompanionBuilder =
@@ -5645,6 +5815,9 @@ typedef $$DownloadedEpisodesTableUpdateCompanionBuilder =
       drift.Value<int> episode,
       drift.Value<List<NovelContentElement>> content,
       drift.Value<int> downloadedAt,
+      drift.Value<int> status,
+      drift.Value<String?> errorMessage,
+      drift.Value<int?> lastAttemptAt,
       drift.Value<int> rowid,
     });
 
@@ -5681,6 +5854,21 @@ class $$DownloadedEpisodesTableFilterComposer
     column: $table.downloadedAt,
     builder: (column) => drift.ColumnFilters(column),
   );
+
+  drift.ColumnFilters<int> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+
+  drift.ColumnFilters<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+
+  drift.ColumnFilters<int> get lastAttemptAt => $composableBuilder(
+    column: $table.lastAttemptAt,
+    builder: (column) => drift.ColumnFilters(column),
+  );
 }
 
 class $$DownloadedEpisodesTableOrderingComposer
@@ -5711,6 +5899,21 @@ class $$DownloadedEpisodesTableOrderingComposer
     column: $table.downloadedAt,
     builder: (column) => drift.ColumnOrderings(column),
   );
+
+  drift.ColumnOrderings<int> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
+
+  drift.ColumnOrderings<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
+
+  drift.ColumnOrderings<int> get lastAttemptAt => $composableBuilder(
+    column: $table.lastAttemptAt,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
 }
 
 class $$DownloadedEpisodesTableAnnotationComposer
@@ -5734,6 +5937,19 @@ class $$DownloadedEpisodesTableAnnotationComposer
 
   drift.GeneratedColumn<int> get downloadedAt => $composableBuilder(
     column: $table.downloadedAt,
+    builder: (column) => column,
+  );
+
+  drift.GeneratedColumn<int> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  drift.GeneratedColumn<String> get errorMessage => $composableBuilder(
+    column: $table.errorMessage,
+    builder: (column) => column,
+  );
+
+  drift.GeneratedColumn<int> get lastAttemptAt => $composableBuilder(
+    column: $table.lastAttemptAt,
     builder: (column) => column,
   );
 }
@@ -5783,12 +5999,18 @@ class $$DownloadedEpisodesTableTableManager
                 drift.Value<List<NovelContentElement>> content =
                     const drift.Value.absent(),
                 drift.Value<int> downloadedAt = const drift.Value.absent(),
+                drift.Value<int> status = const drift.Value.absent(),
+                drift.Value<String?> errorMessage = const drift.Value.absent(),
+                drift.Value<int?> lastAttemptAt = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => DownloadedEpisodesCompanion(
                 ncode: ncode,
                 episode: episode,
                 content: content,
                 downloadedAt: downloadedAt,
+                status: status,
+                errorMessage: errorMessage,
+                lastAttemptAt: lastAttemptAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -5797,12 +6019,18 @@ class $$DownloadedEpisodesTableTableManager
                 required int episode,
                 required List<NovelContentElement> content,
                 required int downloadedAt,
+                drift.Value<int> status = const drift.Value.absent(),
+                drift.Value<String?> errorMessage = const drift.Value.absent(),
+                drift.Value<int?> lastAttemptAt = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => DownloadedEpisodesCompanion.insert(
                 ncode: ncode,
                 episode: episode,
                 content: content,
                 downloadedAt: downloadedAt,
+                status: status,
+                errorMessage: errorMessage,
+                lastAttemptAt: lastAttemptAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
