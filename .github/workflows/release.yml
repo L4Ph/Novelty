@@ -15,9 +15,17 @@ jobs:
       contents: write
 
     steps:
+      - name: Generate GitHub App Token
+        id: generate_token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          token: ${{ steps.generate_token.outputs.token }}
           fetch-tags: true
           fetch-depth: 0
 
@@ -49,11 +57,15 @@ jobs:
           git add pubspec.yaml
           git commit -m "chore: Update pubspec.yaml version to ${{ steps.calculate_version.outputs.new_version }} [skip ci]"
           git push origin main
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Create and push tag
         run: |
           git tag ${{ steps.calculate_version.outputs.tag_name }}
           git push origin ${{ steps.calculate_version.outputs.tag_name }}
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Set up Flutter
         run: |
