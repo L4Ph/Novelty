@@ -580,7 +580,7 @@ class ApiService {
     const query = NovelSearchQuery(order: 'hyoka', lim: allTimeRankingLimit);
 
     try {
-      var results = await searchNovels(query);
+      final results = await searchNovels(query);
       if (kDebugMode) {
         print(
           'Successfully fetched all-time ranking, count: ${results.length}',

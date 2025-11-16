@@ -160,7 +160,7 @@ class DownloadStatus extends _$DownloadStatus {
           ),
         );
 
-        if (confirmed == true) {
+        if (confirmed ?? false) {
           await repo.deleteDownloadedNovel(novelInfo.ncode!);
           ref.invalidateSelf();
         } else {
