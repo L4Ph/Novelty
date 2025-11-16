@@ -17,11 +17,9 @@ class SettingsPage extends ConsumerWidget {
       body: settings.when(
         data: (settings) => ListView(
           children: [
-            _buildFontSetting(context, ref, settings),
             _buildFontSizeSetting(context, ref, settings),
             _buildVerticalSetting(context, ref, settings),
             _buildDownloadPathSetting(context, ref, settings),
-            // _buildThemeColorSetting(context, ref, settings),
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -39,19 +37,7 @@ class SettingsPage extends ConsumerWidget {
       title: const Text('縦書き'),
       value: settings.isVertical,
       onChanged: (value) =>
-          ref.read(settingsProvider.notifier).setIsVertical(value),
-    );
-  }
-
-  Widget _buildFontSetting(
-    BuildContext context,
-    WidgetRef ref,
-    AppSettings settings,
-  ) {
-    return ListTile(
-      title: const Text('フォント'),
-      subtitle: Text(settings.selectedFont),
-      onTap: () => _showFontSelectionDialog(context, ref, settings),
+          ref.read(settingsProvider.notifier).setIsVertical(isVertical: value),
     );
   }
 
@@ -86,44 +72,6 @@ class SettingsPage extends ConsumerWidget {
         if (path != null) {
           await ref.read(settingsProvider.notifier).setNovelDownloadPath(path);
         }
-      },
-    );
-  }
-
-  void _showFontSelectionDialog(
-    BuildContext context,
-    WidgetRef ref,
-    AppSettings settings,
-  ) {
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('フォントを選択'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: Settings.availableFonts.length,
-              itemBuilder: (context, index) {
-                final font = Settings.availableFonts[index];
-                return RadioListTile<String>(
-                  title: Text(font),
-                  value: font,
-                  groupValue: settings.selectedFont,
-                  onChanged: (value) {
-                    if (value != null) {
-                      ref
-                          .read(settingsProvider.notifier)
-                          .setSelectedFont(value);
-                      Navigator.of(context).pop();
-                    }
-                  },
-                );
-              },
-            ),
-          ),
-        );
       },
     );
   }
