@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,7 +7,6 @@ import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/current_episode_provider.dart';
 import 'package:novelty/providers/episode_provider.dart';
-import 'package:novelty/providers/history_provider.dart';
 import 'package:novelty/providers/novel_info_provider.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
@@ -138,17 +139,16 @@ class NovelPage extends ConsumerWidget {
     // lastEpisodeが0以下の場合は1に設定
     final validEpisode = episode > 0 ? episode : 1;
 
-    ref
-        .read(appDatabaseProvider)
-        .addToHistory(
-          HistoryCompanion(
-            ncode: drift.Value(ncode),
-            title: drift.Value(novelInfo.title),
-            writer: drift.Value(novelInfo.writer),
-            lastEpisode: drift.Value(validEpisode),
-            viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
+    unawaited(
+      ref.read(appDatabaseProvider).addToHistory(
+            HistoryCompanion(
+              ncode: drift.Value(ncode),
+              title: drift.Value(novelInfo.title),
+              writer: drift.Value(novelInfo.writer),
+              lastEpisode: drift.Value(validEpisode),
+              viewedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
+            ),
           ),
-        )
-        .then((_) => ref.refresh(historyProvider));
+    );
   }
 }

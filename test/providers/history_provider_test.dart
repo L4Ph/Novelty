@@ -46,7 +46,8 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => testHistoryData);
+      when(mockDatabase.watchHistory())
+          .thenAnswer((_) => Stream.value(testHistoryData));
 
       final result = await container.read(historyProvider.future);
 
@@ -55,26 +56,29 @@ void main() {
       expect(result[0].ncode, equals('N1234AB'));
       expect(result[0].title, equals('テスト小説'));
       expect(result[1].ncode, equals('N5678CD'));
-      verify(mockDatabase.getHistory()).called(1);
+      verify(mockDatabase.watchHistory()).called(1);
     });
 
     test('should return empty list when no history exists', () async {
-      when(mockDatabase.getHistory()).thenAnswer((_) async => <HistoryData>[]);
+      when(mockDatabase.watchHistory())
+          .thenAnswer((_) => Stream.value(<HistoryData>[]));
 
       final result = await container.read(historyProvider.future);
 
       expect(result, isEmpty);
-      verify(mockDatabase.getHistory()).called(1);
+      verify(mockDatabase.watchHistory()).called(1);
     });
 
     test('should handle database errors', () async {
-      when(mockDatabase.getHistory()).thenThrow(Exception('Database error'));
+      when(mockDatabase.watchHistory()).thenAnswer(
+        (_) => Stream.error(Exception('Database error')),
+      );
 
       expect(
         () => container.read(historyProvider.future),
         throwsA(isA<Exception>()),
       );
-      verify(mockDatabase.getHistory()).called(1);
+      verify(mockDatabase.watchHistory()).called(1);
     });
 
     test('should cache results and not call database multiple times', () async {
@@ -89,13 +93,14 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => testHistoryData);
+      when(mockDatabase.watchHistory())
+          .thenAnswer((_) => Stream.value(testHistoryData));
 
       final result1 = await container.read(historyProvider.future);
       final result2 = await container.read(historyProvider.future);
 
       expect(result1, equals(result2));
-      verify(mockDatabase.getHistory()).called(1);
+      verify(mockDatabase.watchHistory()).called(1);
     });
 
     test('should refresh data when provider is refreshed', () async {
@@ -129,19 +134,21 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => initialData);
+      when(mockDatabase.watchHistory())
+          .thenAnswer((_) => Stream.value(initialData));
 
       final initialResult = await container.read(historyProvider.future);
       expect(initialResult.length, equals(1));
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => refreshedData);
+      when(mockDatabase.watchHistory())
+          .thenAnswer((_) => Stream.value(refreshedData));
 
       container.refresh(historyProvider);
       final refreshedResult = await container.read(historyProvider.future);
       expect(refreshedResult.length, equals(2));
       expect(refreshedResult[1].ncode, equals('N5678CD'));
 
-      verify(mockDatabase.getHistory()).called(2);
+      verify(mockDatabase.watchHistory()).called(2);
     });
   });
 }

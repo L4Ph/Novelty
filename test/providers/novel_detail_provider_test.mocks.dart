@@ -523,6 +523,14 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<List<_i3.HistoryData>>);
 
   @override
+  _i5.Stream<List<_i3.HistoryData>> watchHistory() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchHistory, []),
+            returnValue: _i5.Stream<List<_i3.HistoryData>>.empty(),
+          )
+          as _i5.Stream<List<_i3.HistoryData>>);
+
+  @override
   _i5.Future<int> deleteHistory(String? ncode) =>
       (super.noSuchMethod(
             Invocation.method(#deleteHistory, [ncode]),

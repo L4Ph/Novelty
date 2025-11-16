@@ -87,7 +87,7 @@ void main() {
         appDatabaseProvider.overrideWithValue(mockDb),
         apiServiceProvider.overrideWithValue(mockApiService),
         // InvalidateされるProviderたちをダミーでオーバーライド
-        libraryNovelsProvider.overrideWith((ref) => []),
+        libraryNovelsProvider.overrideWith((ref) => Stream.value([])),
         enrichedRankingDataProvider('d').overrideWith((ref) => []),
         enrichedRankingDataProvider('w').overrideWith((ref) => []),
         enrichedRankingDataProvider('m').overrideWith((ref) => []),

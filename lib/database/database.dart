@@ -437,6 +437,18 @@ class AppDatabase extends _$AppDatabase {
     return results.map((row) => row.readTable(novels)).toList();
   }
 
+  /// ライブラリに登録された小説の詳細情報を監視(JOINクエリで最適化)
+  Stream<List<Novel>> watchLibraryNovelsWithDetails() {
+    final query = select(libraryNovels).join([
+      innerJoin(novels, novels.ncode.equalsExp(libraryNovels.ncode)),
+    ])
+      ..orderBy([OrderingTerm.desc(libraryNovels.addedAt)]);
+
+    return query.watch().map(
+          (rows) => rows.map((row) => row.readTable(novels)).toList(),
+        );
+  }
+
   /// 小説がライブラリに追加されているかを確認
   Future<bool> isInLibrary(String ncode) async {
     final result = await (select(
@@ -493,6 +505,13 @@ class AppDatabase extends _$AppDatabase {
     return (select(
       history,
     )..orderBy([(t) => OrderingTerm.desc(t.viewedAt)])).get();
+  }
+
+  /// 履歴の監視（リアルタイム更新）
+  Stream<List<HistoryData>> watchHistory() {
+    return (select(
+      history,
+    )..orderBy([(t) => OrderingTerm.desc(t.viewedAt)])).watch();
   }
 
   /// 履歴の削除

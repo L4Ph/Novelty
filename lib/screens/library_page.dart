@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,35 +26,37 @@ class LibraryPage extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
-              showModalBottomSheet<void>(
-                context: context,
-                showDragHandle: true,
-                builder: (BuildContext context) {
-                  return const DefaultTabController(
-                    length: 2,
-                    child: SizedBox(
-                      height: 300,
-                      child: Column(
-                        children: <Widget>[
-                          TabBar(
-                            tabs: <Widget>[
-                              Tab(text: '絞り込み'),
-                              Tab(text: '並び替え'),
-                            ],
-                          ),
-                          Expanded(
-                            child: TabBarView(
-                              children: <Widget>[
-                                Center(child: Text('絞り込みオプション')),
-                                Center(child: Text('並び替えオプション')),
+              unawaited(
+                showModalBottomSheet<void>(
+                  context: context,
+                  showDragHandle: true,
+                  builder: (BuildContext context) {
+                    return const DefaultTabController(
+                      length: 2,
+                      child: SizedBox(
+                        height: 300,
+                        child: Column(
+                          children: <Widget>[
+                            TabBar(
+                              tabs: <Widget>[
+                                Tab(text: '絞り込み'),
+                                Tab(text: '並び替え'),
                               ],
                             ),
-                          ),
-                        ],
+                            Expanded(
+                              child: TabBarView(
+                                children: <Widget>[
+                                  Center(child: Text('絞り込みオプション')),
+                                  Center(child: Text('並び替えオプション')),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               );
             },
           ),
@@ -63,25 +67,24 @@ class LibraryPage extends ConsumerWidget {
           if (novels.isEmpty) {
             return const Center(child: Text('ライブラリに小説がありません'));
           }
-          return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(libraryNovelsProvider),
-            child: ListView.builder(
-              itemCount: novels.length,
-              itemBuilder: (context, index) {
-                final novel = novels[index];
-                return Card(
-                  elevation: 0,
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 4,
-                    horizontal: 8,
-                  ),
-                  child: ListTile(
-                    title: Text(novel.title ?? ''),
-                    subtitle: Text(novel.writer ?? ''),
-                    onTap: () {
-                      context.push('/novel/${novel.ncode}');
-                    },
-                    onLongPress: () {
+          return ListView.builder(
+            itemCount: novels.length,
+            itemBuilder: (context, index) {
+              final novel = novels[index];
+              return Card(
+                elevation: 0,
+                margin: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 8,
+                ),
+                child: ListTile(
+                  title: Text(novel.title ?? ''),
+                  subtitle: Text(novel.writer ?? ''),
+                  onTap: () {
+                    unawaited(context.push('/novel/${novel.ncode}'));
+                  },
+                  onLongPress: () {
+                    unawaited(
                       showDialog<void>(
                         context: context,
                         builder: (context) => AlertDialog(
@@ -110,12 +113,12 @@ class LibraryPage extends ConsumerWidget {
                             ),
                           ],
                         ),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

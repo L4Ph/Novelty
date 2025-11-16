@@ -77,7 +77,8 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => testHistoryData);
+      when(mockDatabase.watchHistory())
+          .thenAnswer((_) => Stream.value(testHistoryData));
 
       final result = await container.read(groupedHistoryProvider.future);
 
@@ -99,26 +100,29 @@ void main() {
       expect(result[2].items.length, 1);
       expect(result[2].items[0].ncode, 'old1');
 
-      verify(mockDatabase.getHistory()).called(1);
+      verify(mockDatabase.watchHistory()).called(1);
     });
 
     test('should return empty list when no history exists', () async {
-      when(mockDatabase.getHistory()).thenAnswer((_) async => <HistoryData>[]);
+      when(mockDatabase.watchHistory())
+          .thenAnswer((_) => Stream.value(<HistoryData>[]));
 
       final result = await container.read(groupedHistoryProvider.future);
 
       expect(result, isEmpty);
-      verify(mockDatabase.getHistory()).called(1);
+      verify(mockDatabase.watchHistory()).called(1);
     });
 
     test('should handle database errors', () async {
-      when(mockDatabase.getHistory()).thenThrow(Exception('Database error'));
+      when(mockDatabase.watchHistory()).thenAnswer(
+        (_) => Stream.error(Exception('Database error')),
+      );
 
       expect(
         () => container.read(groupedHistoryProvider.future),
         throwsA(isA<Exception>()),
       );
-      verify(mockDatabase.getHistory()).called(1);
+      verify(mockDatabase.watchHistory()).called(1);
     });
   });
 }
