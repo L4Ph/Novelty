@@ -4,7 +4,6 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/providers/novel_info_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
 

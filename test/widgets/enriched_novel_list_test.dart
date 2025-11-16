@@ -4,10 +4,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/providers/enriched_novel_provider.dart';
-import 'package:novelty/providers/library_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/enriched_novel_list.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
@@ -84,6 +83,7 @@ void main() {
   Widget createTestWidget(List<EnrichedNovelData> novels) {
     return ProviderScope(
       overrides: [
+        // ignore: scoped_providers_should_specify_dependencies
         appDatabaseProvider.overrideWithValue(mockDb),
         apiServiceProvider.overrideWithValue(mockApiService),
         // InvalidateされるProviderたちをダミーでオーバーライド

@@ -7,6 +7,7 @@ import 'dart:async' as _i5;
 
 import 'package:drift/drift.dart' as _i2;
 import 'package:drift/src/runtime/executor/stream_queries.dart' as _i4;
+import 'package:flutter_riverpod/flutter_riverpod.dart' as _i14;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i10;
 import 'package:novelty/database/database.dart' as _i3;
@@ -20,7 +21,6 @@ import 'package:novelty/models/ranking_response.dart' as _i11;
 import 'package:novelty/repositories/novel_repository.dart' as _i13;
 import 'package:novelty/services/api_service.dart' as _i8;
 import 'package:novelty/utils/settings_provider.dart' as _i15;
-import 'package:riverpod_annotation/riverpod_annotation.dart' as _i14;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -1251,6 +1251,43 @@ class MockNovelRepository extends _i1.Mock implements _i13.NovelRepository {
             returnValue: _i5.Future<bool>.value(false),
           )
           as _i5.Future<bool>);
+
+  @override
+  _i5.Future<void> removeFromLibrary(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#removeFromLibrary, [ncode]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> addToHistory({
+    required String? ncode,
+    required String? title,
+    required String? writer,
+    required int? lastEpisode,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#addToHistory, [], {
+              #ncode: ncode,
+              #title: title,
+              #writer: writer,
+              #lastEpisode: lastEpisode,
+            }),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteHistory(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteHistory, [ncode]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
 
   @override
   _i5.Future<List<_i17.NovelContentElement>> getEpisode(

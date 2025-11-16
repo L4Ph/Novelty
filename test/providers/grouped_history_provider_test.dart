@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/providers/grouped_history_provider.dart';
 
 @GenerateMocks([AppDatabase])
 import 'grouped_history_provider_test.mocks.dart';
@@ -16,7 +15,7 @@ void main() {
 
     setUp(() {
       mockDatabase = MockAppDatabase();
-      fixedTime = DateTime(2024, 1, 15, 12, 0);
+      fixedTime = DateTime(2024, 1, 15, 12);
       container = ProviderContainer(
         overrides: [
           appDatabaseProvider.overrideWithValue(mockDatabase),
@@ -77,8 +76,9 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.watchHistory())
-          .thenAnswer((_) => Stream.value(testHistoryData));
+      when(
+        mockDatabase.watchHistory(),
+      ).thenAnswer((_) => Stream.value(testHistoryData));
 
       final result = await container.read(groupedHistoryProvider.future);
 
@@ -104,8 +104,9 @@ void main() {
     });
 
     test('should return empty list when no history exists', () async {
-      when(mockDatabase.watchHistory())
-          .thenAnswer((_) => Stream.value(<HistoryData>[]));
+      when(
+        mockDatabase.watchHistory(),
+      ).thenAnswer((_) => Stream.value(<HistoryData>[]));
 
       final result = await container.read(groupedHistoryProvider.future);
 

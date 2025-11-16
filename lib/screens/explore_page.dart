@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/providers/enriched_novel_provider.dart';
+import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/enriched_novel_list.dart';
@@ -20,7 +20,6 @@ class ExplorePage extends ConsumerStatefulWidget {
 class _ExplorePageState extends ConsumerState<ExplorePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final _apiService = ApiService();
   var _searchQuery = const NovelSearchQuery();
   List<RankingResponse> _searchResults = [];
   var _isLoading = false;
@@ -63,7 +62,8 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
       _isSearching = true;
     });
 
-    final results = await _apiService.searchNovels(_searchQuery);
+    final apiService = ref.read(apiServiceProvider);
+    final results = await apiService.searchNovels(_searchQuery);
 
     setState(() {
       _searchResults = results;

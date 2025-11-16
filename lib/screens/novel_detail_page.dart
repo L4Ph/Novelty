@@ -5,11 +5,8 @@ import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/providers/download_provider.dart';
-import 'package:novelty/providers/download_status_provider.dart';
-import 'package:novelty/providers/episode_provider.dart';
-import 'package:novelty/providers/library_status_provider.dart';
-import 'package:novelty/providers/novel_info_provider.dart';
+import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/services/api_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 

@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/providers/history_provider.dart';
 
 @GenerateMocks([AppDatabase])
 import 'history_provider_test.mocks.dart';
@@ -46,8 +45,9 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.watchHistory())
-          .thenAnswer((_) => Stream.value(testHistoryData));
+      when(
+        mockDatabase.watchHistory(),
+      ).thenAnswer((_) => Stream.value(testHistoryData));
 
       final result = await container.read(historyProvider.future);
 
@@ -60,8 +60,9 @@ void main() {
     });
 
     test('should return empty list when no history exists', () async {
-      when(mockDatabase.watchHistory())
-          .thenAnswer((_) => Stream.value(<HistoryData>[]));
+      when(
+        mockDatabase.watchHistory(),
+      ).thenAnswer((_) => Stream.value(<HistoryData>[]));
 
       final result = await container.read(historyProvider.future);
 
@@ -93,8 +94,9 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.watchHistory())
-          .thenAnswer((_) => Stream.value(testHistoryData));
+      when(
+        mockDatabase.watchHistory(),
+      ).thenAnswer((_) => Stream.value(testHistoryData));
 
       final result1 = await container.read(historyProvider.future);
       final result2 = await container.read(historyProvider.future);
@@ -134,14 +136,16 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.watchHistory())
-          .thenAnswer((_) => Stream.value(initialData));
+      when(
+        mockDatabase.watchHistory(),
+      ).thenAnswer((_) => Stream.value(initialData));
 
       final initialResult = await container.read(historyProvider.future);
       expect(initialResult.length, equals(1));
 
-      when(mockDatabase.watchHistory())
-          .thenAnswer((_) => Stream.value(refreshedData));
+      when(
+        mockDatabase.watchHistory(),
+      ).thenAnswer((_) => Stream.value(refreshedData));
 
       container.refresh(historyProvider);
       final refreshedResult = await container.read(historyProvider.future);

@@ -4,18 +4,13 @@ import 'dart:io';
 import 'package:drift/drift.dart' as drift;
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/models/novel_content_element.dart';
+import 'package:novelty/utils/history_grouping.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'database.g.dart';
-
-@riverpod
-/// アプリケーションのデータベース
-AppDatabase appDatabase(Ref ref) {
-  return AppDatabase();
-}
 
 /// 小説のコンテンツをデータベースに保存するための変換クラス
 class ContentConverter
@@ -635,3 +630,45 @@ LazyDatabase _openConnection() {
     return NativeDatabase.createInBackground(file);
   });
 }
+
+// ==================== Providers ====================
+
+/// アプリケーションのデータベースプロバイダー
+final appDatabaseProvider = Provider<AppDatabase>((ref) => AppDatabase());
+
+/// 小説のライブラリを表示するためのプロバイダー。
+///
+/// JOINクエリを使用してN+1クエリ問題を回避している。
+/// keepAlive: アプリ起動中ずっとStreamを保持し、画面遷移時の再ロードを防ぐ
+final libraryNovelsProvider = StreamProvider<List<Novel>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  ref.keepAlive();
+  return db.watchLibraryNovelsWithDetails();
+});
+
+/// 履歴データをリアルタイムで提供するプロバイダー
+///
+/// keepAlive: アプリ起動中ずっとStreamを保持し、画面遷移時の再ロードを防ぐ
+final historyProvider = StreamProvider<List<HistoryData>>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  ref.keepAlive();
+  return db.watchHistory();
+});
+
+/// 現在時刻を提供するプロバイダー（テスト時にオーバーライド可能）
+final currentTimeProvider = Provider<DateTime>((ref) => DateTime.now());
+
+/// 日付でグルーピングされた履歴データをリアルタイムで提供するプロバイダー
+///
+/// keepAlive: アプリ起動中ずっとStreamを保持し、画面遷移時の再ロードを防ぐ
+final groupedHistoryProvider = StreamProvider<List<HistoryGroup>>((ref) {
+  // 現在の日時を取得
+  final now = ref.watch(currentTimeProvider);
+
+  // データベースのwatchHistory()を直接使用し、グルーピング処理を適用
+  final db = ref.watch(appDatabaseProvider);
+  ref.keepAlive();
+  return db.watchHistory().map((historyItems) {
+    return HistoryGrouping.groupByDate(historyItems, now);
+  });
+});

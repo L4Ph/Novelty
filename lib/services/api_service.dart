@@ -1,32 +1,35 @@
 import 'dart:convert';
 
 import 'package:archive/archive.dart';
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
+import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'api_service.g.dart';
 
 /// 累計ランキングの表示上限数
 /// なろう小説APIの制限値（最大500件）を最大限活用
 const int allTimeRankingLimit = 500;
 
+@riverpod
 /// APIサービスのプロバイダー
-final Provider<ApiService> apiServiceProvider = Provider((ref) => ApiService());
+ApiService apiService(Ref ref) => ApiService();
 
+@riverpod
 /// ランキングデータのプロバイダー
-// ignore: specify_nonobvious_property_types
-final rankingDataProvider = FutureProvider.autoDispose
-    .family<List<RankingResponse>, String>(
-      (ref, rankingType) {
-        final apiService = ref.watch(apiServiceProvider);
-        return apiService.fetchRanking(rankingType);
-      },
-    );
+Future<List<RankingResponse>> rankingData(Ref ref, String rankingType) {
+  final apiService = ref.watch(apiServiceProvider);
+  return apiService.fetchRanking(rankingType);
+}
 
 /// APIサービスクラス。
 class ApiService {
@@ -625,4 +628,63 @@ class ApiService {
     }
     return novelData;
   }
+}
+
+// ==================== Providers ====================
+
+@riverpod
+/// 小説の情報を取得するプロバイダー（シンプル版）。
+Future<NovelInfo> novelInfo(Ref ref, String ncode) {
+  final normalizedNcode = ncode.toLowerCase();
+  final apiService = ref.read(apiServiceProvider);
+  return apiService.fetchNovelInfo(normalizedNcode);
+}
+
+@riverpod
+/// 小説の情報を取得し、DBにキャッシュするプロバイダー。
+///
+/// APIから小説情報を取得し、既存のfavステータスを保持しながらDBに保存する。
+Future<NovelInfo> novelInfoWithCache(Ref ref, String ncode) async {
+  final normalizedNcode = ncode.toLowerCase();
+  final apiService = ref.read(apiServiceProvider);
+  final db = ref.watch(appDatabaseProvider);
+
+  final novelInfo = await apiService.fetchNovelInfo(normalizedNcode);
+
+  // Upsert novel data, preserving fav status
+  final existing = await db.getNovel(normalizedNcode);
+  await db.insertNovel(
+    novelInfo.toDbCompanion().copyWith(
+      fav: drift.Value(existing?.fav ?? 0),
+    ),
+  );
+
+  return novelInfo;
+}
+
+@riverpod
+/// 小説のエピソードを取得するプロバイダー。
+Future<Episode> episode(
+  Ref ref, {
+  required String ncode,
+  required int episode,
+}) {
+  final normalizedNcode = ncode.toLowerCase();
+  final apiService = ref.read(apiServiceProvider);
+  return apiService.fetchEpisode(normalizedNcode, episode);
+}
+
+@riverpod
+/// 小説のエピソードリストを取得するプロバイダー。
+Future<List<Episode>> episodeList(Ref ref, String key) async {
+  final parts = key.split('_');
+  if (parts.length != 2) {
+    throw ArgumentError('Invalid episode list key format: $key');
+  }
+
+  final ncode = parts[0];
+  final page = int.parse(parts[1]);
+
+  final apiService = ref.read(apiServiceProvider);
+  return apiService.fetchEpisodeList(ncode, page);
 }

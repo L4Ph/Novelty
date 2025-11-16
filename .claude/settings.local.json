@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(fvm flutter test:*)",
+      "Bash(fvm dart analyze:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
