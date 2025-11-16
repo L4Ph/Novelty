@@ -295,25 +295,9 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
 
           if (episodeIndex < _episodes.length) {
             final episode = _episodes[episodeIndex];
-            final episodeTitle = episode.subtitle ?? 'No Title';
-            return ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              title: Text(episodeTitle),
-              subtitle: episode.update != null
-                  ? Text('更新日: ${episode.update}')
-                  : null,
-              onTap: () {
-                final episodeUrl = episode.url;
-                if (episodeUrl != null) {
-                  final match = RegExp(r'/(\d+)/').firstMatch(episodeUrl);
-                  if (match != null) {
-                    final episodeNumber = match.group(1);
-                    if (episodeNumber != null) {
-                      context.push('/novel/${widget.ncode}/$episodeNumber');
-                    }
-                  }
-                }
-              },
+            return _EpisodeListTile(
+              episode: episode,
+              ncode: widget.ncode,
             );
           }
 
@@ -647,4 +631,142 @@ Widget _buildActionButton(
       ),
     ],
   );
+}
+
+/// エピソードリストの各アイテムを表示するウィジェット
+class _EpisodeListTile extends ConsumerWidget {
+  const _EpisodeListTile({
+    required this.episode,
+    required this.ncode,
+  });
+
+  final Episode episode;
+  final String ncode;
+
+  int? _extractEpisodeNumber(String? url) {
+    if (url == null) return null;
+    final match = RegExp(r'/(\d+)/').firstMatch(url);
+    if (match != null) {
+      final episodeNumber = match.group(1);
+      if (episodeNumber != null) {
+        return int.tryParse(episodeNumber);
+      }
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final episodeNumber = _extractEpisodeNumber(episode.url);
+    final episodeTitle = episode.subtitle ?? 'No Title';
+
+    // エピソード番号がない場合は通常のListTileを表示
+    if (episodeNumber == null) {
+      return ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        title: Text(episodeTitle),
+        subtitle: episode.update != null ? Text('更新日: ${episode.update}') : null,
+      );
+    }
+
+    final downloadStatusAsync = ref.watch(
+      episodeDownloadStatusProvider(ncode: ncode, episode: episodeNumber),
+    );
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      title: Text(episodeTitle),
+      subtitle:
+          episode.update != null ? Text('更新日: ${episode.update}') : null,
+      trailing: downloadStatusAsync.when(
+        data: (status) {
+          if (status == 2) {
+            // ダウンロード成功
+            return IconButton(
+              icon: Icon(
+                Icons.download_done,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              onPressed: null, // 無効化
+            );
+          } else if (status == 3) {
+            // ダウンロード失敗
+            return IconButton(
+              icon: Icon(
+                Icons.download,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              onPressed: () => _handleDownload(context, ref, episodeNumber),
+            );
+          } else {
+            // 未ダウンロード
+            return IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: () => _handleDownload(context, ref, episodeNumber),
+            );
+          }
+        },
+        loading: () => const SizedBox(
+          width: 48,
+          height: 48,
+          child: Center(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+        error: (e, s) => IconButton(
+          icon: const Icon(Icons.download),
+          onPressed: () => _handleDownload(context, ref, episodeNumber),
+        ),
+      ),
+      onTap: () {
+        context.push('/novel/$ncode/$episodeNumber');
+      },
+    );
+  }
+
+  Future<void> _handleDownload(
+    BuildContext context,
+    WidgetRef ref,
+    int episodeNumber,
+  ) async {
+    final repo = ref.read(novelRepositoryProvider);
+
+    try {
+      final success = await repo.downloadSingleEpisode(ncode, episodeNumber);
+
+      if (!context.mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('第$episodeNumber話をダウンロードしました'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+        // プロバイダーを無効化して状態を更新
+        ref.invalidate(
+          episodeDownloadStatusProvider(ncode: ncode, episode: episodeNumber),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('第$episodeNumber話のダウンロードに失敗しました'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } on Exception catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('エラー: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+  }
 }

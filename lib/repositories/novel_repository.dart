@@ -587,3 +587,18 @@ class CurrentEpisode extends _$CurrentEpisode {
   /// 現在のエピソード番号を設定するメソッド。
   void set(int value) => state = value;
 }
+
+@riverpod
+/// エピソードのダウンロード状態を監視するプロバイダー。
+///
+/// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
+Future<int?> episodeDownloadStatus(
+  Ref ref, {
+  required String ncode,
+  required int episode,
+}) async {
+  final normalizedNcode = ncode.toNormalizedNcode();
+  final db = ref.watch(appDatabaseProvider);
+  final downloaded = await db.getDownloadedEpisode(normalizedNcode, episode);
+  return downloaded?.status;
+}

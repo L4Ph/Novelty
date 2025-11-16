@@ -1306,6 +1306,14 @@ class MockNovelRepository extends _i1.Mock implements _i13.NovelRepository {
           as _i5.Future<void>);
 
   @override
+  _i5.Future<bool> downloadSingleEpisode(String? ncode, int? episode) =>
+      (super.noSuchMethod(
+            Invocation.method(#downloadSingleEpisode, [ncode, episode]),
+            returnValue: _i5.Future<bool>.value(false),
+          )
+          as _i5.Future<bool>);
+
+  @override
   _i5.Future<List<_i17.NovelContentElement>> getEpisode(
     String? ncode,
     int? episode,

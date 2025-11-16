@@ -504,3 +504,105 @@ abstract class _$CurrentEpisode extends $Notifier<int> {
     element.handleValue(ref, created);
   }
 }
+
+/// エピソードのダウンロード状態を監視するプロバイダー。
+///
+/// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
+
+@ProviderFor(episodeDownloadStatus)
+const episodeDownloadStatusProvider = EpisodeDownloadStatusFamily._();
+
+/// エピソードのダウンロード状態を監視するプロバイダー。
+///
+/// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
+
+final class EpisodeDownloadStatusProvider
+    extends $FunctionalProvider<AsyncValue<int?>, int?, FutureOr<int?>>
+    with $FutureModifier<int?>, $FutureProvider<int?> {
+  /// エピソードのダウンロード状態を監視するプロバイダー。
+  ///
+  /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
+  const EpisodeDownloadStatusProvider._({
+    required EpisodeDownloadStatusFamily super.from,
+    required ({String ncode, int episode}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'episodeDownloadStatusProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$episodeDownloadStatusHash();
+
+  @override
+  String toString() {
+    return r'episodeDownloadStatusProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<int?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int?> create(Ref ref) {
+    final argument = this.argument as ({String ncode, int episode});
+    return episodeDownloadStatus(
+      ref,
+      ncode: argument.ncode,
+      episode: argument.episode,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EpisodeDownloadStatusProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$episodeDownloadStatusHash() =>
+    r'ca2df1351facb21732b51139098dffae2a3435a0';
+
+/// エピソードのダウンロード状態を監視するプロバイダー。
+///
+/// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
+
+final class EpisodeDownloadStatusFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<int?>,
+          ({String ncode, int episode})
+        > {
+  const EpisodeDownloadStatusFamily._()
+    : super(
+        retry: null,
+        name: r'episodeDownloadStatusProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// エピソードのダウンロード状態を監視するプロバイダー。
+  ///
+  /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
+
+  EpisodeDownloadStatusProvider call({
+    required String ncode,
+    required int episode,
+  }) => EpisodeDownloadStatusProvider._(
+    argument: (ncode: ncode, episode: episode),
+    from: this,
+  );
+
+  @override
+  String toString() => r'episodeDownloadStatusProvider';
+}
