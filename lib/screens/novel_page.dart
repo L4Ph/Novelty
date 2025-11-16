@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/providers/current_episode_provider.dart';
+import 'package:novelty/providers/episode_provider.dart';
 import 'package:novelty/providers/history_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
@@ -16,27 +18,6 @@ part 'novel_page.g.dart';
 /// 小説の情報を取得するプロバイダー。
 Future<NovelInfo> novelInfo(Ref ref, String ncode) {
   return ApiService().fetchNovelInfo(ncode);
-}
-
-@riverpod
-/// 小説のエピソードを取得するプロバイダー。
-Future<Episode> episode(
-  Ref ref, {
-  required String ncode,
-  required int episode,
-}) {
-  final apiService = ApiService();
-  return apiService.fetchEpisode(ncode, episode);
-}
-
-@riverpod
-/// 現在のエピソード番号を管理するプロバイダー。
-class CurrentEpisode extends _$CurrentEpisode {
-  @override
-  int build() => 1;
-
-  /// 現在のエピソード番号を設定するメソッド。
-  void set(int value) => state = value;
 }
 
 /// 小説のページを表示するウィジェット。

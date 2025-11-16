@@ -8,7 +8,9 @@ import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/providers/download_provider.dart';
 import 'package:novelty/providers/enriched_novel_provider.dart';
+import 'package:novelty/providers/episode_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/services/api_service.dart';
@@ -17,13 +19,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 part 'novel_detail_page.g.dart';
-
-@riverpod
-/// 小説のダウンロード進捗を監視するプロバイダー。
-Stream<DownloadProgress?> downloadProgress(Ref ref, String ncode) {
-  final repo = ref.watch(novelRepositoryProvider);
-  return repo.watchDownloadProgress(ncode);
-}
 
 @riverpod
 /// 小説の情報を取得するプロバイダー。
@@ -42,21 +37,6 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   );
 
   return novelInfo;
-}
-
-@riverpod
-/// 小説のエピソードを取得するプロバイダー。
-Future<List<Episode>> episodeList(Ref ref, String key) async {
-  final parts = key.split('_');
-  if (parts.length != 2) {
-    throw ArgumentError('Invalid episode list key format: $key');
-  }
-
-  final ncode = parts[0];
-  final page = int.parse(parts[1]);
-
-  final apiService = ref.read(apiServiceProvider);
-  return apiService.fetchEpisodeList(ncode, page);
 }
 
 @riverpod
