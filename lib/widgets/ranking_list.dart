@@ -123,8 +123,9 @@ class RankingList extends HookConsumerWidget {
         final displayData = enrichedData
             .map((n) {
               // loadedDataに詳細があればそれを使う、なければ元のデータを使う
-              if (loadedData.value.containsKey(n.novel.ncode)) {
-                return loadedData.value[n.novel.ncode]!;
+              final loaded = loadedData.value[n.novel.ncode];
+              if (loaded != null) {
+                return loaded;
               } else if (n.novel.title != null) {
                 // 既に詳細データを持っている場合はそのまま使う
                 return n;
