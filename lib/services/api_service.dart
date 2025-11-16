@@ -637,7 +637,8 @@ class ApiService {
 @riverpod
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 Future<NovelInfo> novelInfo(Ref ref, String ncode) {
-  return ApiService().fetchNovelInfo(ncode);
+  final apiService = ref.read(apiServiceProvider);
+  return apiService.fetchNovelInfo(ncode);
 }
 
 @riverpod
@@ -668,7 +669,7 @@ Future<Episode> episode(
   required String ncode,
   required int episode,
 }) {
-  final apiService = ApiService();
+  final apiService = ref.read(apiServiceProvider);
   return apiService.fetchEpisode(ncode, episode);
 }
 

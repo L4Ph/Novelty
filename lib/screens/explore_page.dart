@@ -20,7 +20,6 @@ class ExplorePage extends ConsumerStatefulWidget {
 class _ExplorePageState extends ConsumerState<ExplorePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final _apiService = ApiService();
   var _searchQuery = const NovelSearchQuery();
   List<RankingResponse> _searchResults = [];
   var _isLoading = false;
@@ -63,7 +62,8 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
       _isSearching = true;
     });
 
-    final results = await _apiService.searchNovels(_searchQuery);
+    final apiService = ref.read(apiServiceProvider);
+    final results = await apiService.searchNovels(_searchQuery);
 
     setState(() {
       _searchResults = results;
