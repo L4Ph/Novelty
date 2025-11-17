@@ -68,8 +68,11 @@ class _AboutPageState extends State<AboutPage> {
             onTap: () =>
                 _launchUrl('https://github.com/L4Ph/Novelty/releases/latest'),
           ),
-          const ListTile(
-            title: Text('プライバシーポリシー'),
+          ListTile(
+            title: const Text('プライバシーポリシー'),
+            onTap: () => _launchUrl(
+              'https://github.com/L4Ph/Novelty/blob/main/PRIVACY_POLICY.md',
+            ),
           ),
           ListTile(
             title: const Text('オープンソースライセンス'),

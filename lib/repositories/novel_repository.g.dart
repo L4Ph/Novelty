@@ -446,65 +446,6 @@ abstract class _$DownloadStatus extends $StreamNotifier<bool> {
   }
 }
 
-/// 現在のエピソード番号を管理するプロバイダー。
-
-@ProviderFor(CurrentEpisode)
-const currentEpisodeProvider = CurrentEpisodeProvider._();
-
-/// 現在のエピソード番号を管理するプロバイダー。
-final class CurrentEpisodeProvider
-    extends $NotifierProvider<CurrentEpisode, int> {
-  /// 現在のエピソード番号を管理するプロバイダー。
-  const CurrentEpisodeProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'currentEpisodeProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$currentEpisodeHash();
-
-  @$internal
-  @override
-  CurrentEpisode create() => CurrentEpisode();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<int>(value),
-    );
-  }
-}
-
-String _$currentEpisodeHash() => r'b524bb5851aa7661c96937fb4f8c96a303eded20';
-
-/// 現在のエピソード番号を管理するプロバイダー。
-
-abstract class _$CurrentEpisode extends $Notifier<int> {
-  int build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final created = build();
-    final ref = this.ref as $Ref<int, int>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<int, int>,
-              int,
-              Object?,
-              Object?
-            >;
-    element.handleValue(ref, created);
-  }
-}
-
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
 /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）

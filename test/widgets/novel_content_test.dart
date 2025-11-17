@@ -31,6 +31,8 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: NovelContentBody(
+            ncode: 'n1234ab',
+            episode: 1,
             content: contentValue,
             settings: settingsValue,
           ),

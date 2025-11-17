@@ -536,16 +536,6 @@ class DownloadStatus extends _$DownloadStatus {
 }
 
 @riverpod
-/// 現在のエピソード番号を管理するプロバイダー。
-class CurrentEpisode extends _$CurrentEpisode {
-  @override
-  int build() => 1;
-
-  /// 現在のエピソード番号を設定するメソッド。
-  void set(int value) => state = value;
-}
-
-@riverpod
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
 /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）

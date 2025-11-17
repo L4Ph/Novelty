@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
@@ -9,7 +10,7 @@ import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
 /// 小説のページを表示するウィジェット。
-class NovelPage extends ConsumerWidget {
+class NovelPage extends HookConsumerWidget {
   /// コンストラクタ。
   const NovelPage({required this.ncode, super.key, this.episode});
 
@@ -26,55 +27,64 @@ class NovelPage extends ConsumerWidget {
     final novelInfoAsync = ref.watch(novelInfoProvider(ncode));
     final initialEpisode = episode ?? 1;
 
-    // initialEpisodeをproviderに設定
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(currentEpisodeProvider.notifier).set(initialEpisode);
-    });
+    // 現在のエピソード番号をローカル状態で管理
+    final currentEpisode = useState(initialEpisode);
+
+    // 初回履歴追加フラグ（重複追加を防ぐ）
+    final hasAddedInitialHistory = useRef(false);
+
+    // 最初の履歴追加（novelInfoが読み込まれたら実行）
+    useEffect(() {
+      if (novelInfoAsync.hasValue && !hasAddedInitialHistory.value) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _updateHistory(ref, novelInfoAsync.value!, currentEpisode.value);
+          hasAddedInitialHistory.value = true;
+        });
+      }
+      return null;
+    }, [novelInfoAsync.hasValue]);
 
     return novelInfoAsync.when(
       data: (novelInfo) {
         final totalEpisodes = novelInfo.generalAllNo ?? 1;
         final settings = ref.watch(settingsProvider);
 
+        // PageViewのitemCountとinitialPageを動的に決定
+        final itemCount = _getItemCount(currentEpisode.value, totalEpisodes);
+        final initialPageIndex = _getInitialPage(currentEpisode.value);
+
+        // PageControllerをメモ化（itemCountが変わったときのみ再作成）
+        final pageController = useMemoized(
+          () => PageController(initialPage: initialPageIndex),
+          [itemCount],
+        );
+
+        // itemCountが変わったらページ位置をリセット
+        useEffect(() {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (pageController.hasClients) {
+              final targetPage = _getInitialPage(currentEpisode.value);
+              if (pageController.page?.round() != targetPage) {
+                pageController.jumpToPage(targetPage);
+              }
+            }
+          });
+          return null;
+        }, [itemCount]);
+
         return settings.when(
           data: (settings) {
-            final pageController = PageController(
-              initialPage: initialEpisode - 1,
-            );
-
-            // 最初の履歴追加
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _updateHistory(ref, novelInfo, initialEpisode);
-            });
-
             return Scaffold(
               appBar: AppBar(
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
-                title: Consumer(
-                  builder: (context, ref, child) {
-                    final currentEpisode = ref.watch(currentEpisodeProvider);
-                    final episodeAsync = ref.watch(
-                      episodeProvider(ncode: ncode, episode: currentEpisode),
-                    );
-                    return episodeAsync.when(
-                      data: (ep) {
-                        final subtitle = ep.subtitle ?? '';
-                        return Text(
-                          novelInfo.novelType == 2
-                              ? (subtitle.isNotEmpty
-                                    ? subtitle
-                                    : novelInfo.title ?? '')
-                              : '${novelInfo.title} - $subtitle',
-                          overflow: TextOverflow.ellipsis,
-                        );
-                      },
-                      loading: () => Text(novelInfo.title ?? ''),
-                      error: (e, s) => Text(novelInfo.title ?? ''),
-                    );
-                  },
+                title: Text(
+                  novelInfo.novelType == 2
+                      ? novelInfo.title ?? ''
+                      : '${novelInfo.title} - 第${currentEpisode.value}話',
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               body: PageView.builder(
@@ -82,14 +92,24 @@ class NovelPage extends ConsumerWidget {
                     ? Axis.vertical
                     : Axis.horizontal,
                 controller: pageController,
-                itemCount: totalEpisodes,
+                itemCount: itemCount,
                 onPageChanged: (index) {
-                  final newEpisode = index + 1;
-                  ref.read(currentEpisodeProvider.notifier).set(newEpisode);
-                  _updateHistory(ref, novelInfo, newEpisode);
+                  _handlePageChanged(
+                    index,
+                    currentEpisode,
+                    totalEpisodes,
+                    pageController,
+                    ref,
+                    novelInfo,
+                  );
                 },
                 itemBuilder: (context, index) {
-                  final episodeNum = index + 1;
+                  final episodeNum = _getEpisodeNumber(
+                    index,
+                    currentEpisode.value,
+                    totalEpisodes,
+                  );
+
                   return RepaintBoundary(
                     child: NovelContent(
                       ncode: ncode,
@@ -142,5 +162,95 @@ class NovelPage extends ConsumerWidget {
             lastEpisode: episode,
           ),
     );
+  }
+
+  /// PageViewのアイテム数を決定する。
+  ///
+  /// - 1話だけの小説: 1ページ
+  /// - 第1話（2話以上）: 2ページ（現在 + 次）
+  /// - 最終話: 2ページ（前 + 現在）
+  /// - 中間エピソード: 3ページ（前 + 現在 + 次）
+  static int _getItemCount(int currentEpisode, int totalEpisodes) {
+    if (totalEpisodes == 1) return 1;
+    if (currentEpisode == 1) return 2;
+    if (currentEpisode == totalEpisodes) return 2;
+    return 3;
+  }
+
+  /// PageControllerの初期ページインデックスを決定する。
+  ///
+  /// - 第1話: 0（最初のページ）
+  /// - それ以外: 1（中央のページ）
+  static int _getInitialPage(int currentEpisode) {
+    return currentEpisode == 1 ? 0 : 1;
+  }
+
+  /// PageViewのindexから実際のエピソード番号を計算する。
+  static int _getEpisodeNumber(
+    int index,
+    int currentEpisode,
+    int totalEpisodes,
+  ) {
+    if (totalEpisodes == 1) return 1;
+
+    if (currentEpisode == 1) {
+      // 第1話: [1話, 2話]
+      return index + 1;
+    }
+
+    if (currentEpisode == totalEpisodes) {
+      // 最終話: [totalEpisodes-1話, totalEpisodes話]
+      return totalEpisodes - 1 + index;
+    }
+
+    // 中間エピソード: [current-1話, current話, current+1話]
+    return currentEpisode - 1 + index;
+  }
+
+  /// ページ変更時の処理を行う。
+  void _handlePageChanged(
+    int index,
+    ValueNotifier<int> currentEpisode,
+    int totalEpisodes,
+    PageController pageController,
+    WidgetRef ref,
+    NovelInfo novelInfo,
+  ) {
+    final current = currentEpisode.value;
+
+    if (current == 1) {
+      // 第1話から第2話へ移動
+      if (index == 1 && totalEpisodes > 1) {
+        currentEpisode.value = 2;
+        _updateHistory(ref, novelInfo, 2);
+      }
+    } else if (current == totalEpisodes) {
+      // 最終話から前のエピソードへ移動
+      if (index == 0 && totalEpisodes > 1) {
+        currentEpisode.value = totalEpisodes - 1;
+        _updateHistory(ref, novelInfo, totalEpisodes - 1);
+      }
+    } else {
+      // 中間エピソードの通常処理
+      if (index == 0) {
+        // 前のエピソードへ
+        currentEpisode.value--;
+        _updateHistory(ref, novelInfo, currentEpisode.value);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (pageController.hasClients) {
+            pageController.jumpToPage(1);
+          }
+        });
+      } else if (index == 2) {
+        // 次のエピソードへ
+        currentEpisode.value++;
+        _updateHistory(ref, novelInfo, currentEpisode.value);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (pageController.hasClients) {
+            pageController.jumpToPage(1);
+          }
+        });
+      }
+    }
   }
 }
