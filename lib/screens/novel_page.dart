@@ -30,15 +30,19 @@ class NovelPage extends HookConsumerWidget {
     // 現在のエピソード番号をローカル状態で管理
     final currentEpisode = useState(initialEpisode);
 
-    // 最初の履歴追加
+    // 初回履歴追加フラグ（重複追加を防ぐ）
+    final hasAddedInitialHistory = useRef(false);
+
+    // 最初の履歴追加（novelInfoが読み込まれたら実行）
     useEffect(() {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (novelInfoAsync.hasValue) {
+      if (novelInfoAsync.hasValue && !hasAddedInitialHistory.value) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
           _updateHistory(ref, novelInfoAsync.value!, currentEpisode.value);
-        }
-      });
+          hasAddedInitialHistory.value = true;
+        });
+      }
       return null;
-    }, []);
+    }, [novelInfoAsync.hasValue]);
 
     return novelInfoAsync.when(
       data: (novelInfo) {
