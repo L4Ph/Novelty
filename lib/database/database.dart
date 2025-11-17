@@ -271,28 +271,6 @@ class LibraryNovels extends Table {
   Set<Column> get primaryKey => {ncode};
 }
 
-/// ブックマークを格納するテーブル(使用されていない?)
-class Bookmarks extends Table {
-  /// 小説のncode
-  TextColumn get ncode => text()();
-
-  /// エピソード番号
-  IntColumn get episode => integer()();
-
-  /// ブックマークの位置
-  IntColumn get position => integer()();
-
-  /// ブックマークの内容
-  TextColumn get content => text().nullable()();
-
-  /// ブックマークの作成日時
-  /// UNIXタイムスタンプ形式で���存される
-  IntColumn get createdAt => integer()();
-
-  @override
-  Set<Column> get primaryKey => {ncode, episode, position};
-}
-
 @DriftDatabase(
   tables: [
     Novels,
@@ -301,11 +279,10 @@ class Bookmarks extends Table {
     DownloadedNovels,
     DownloadedEpisodes,
     LibraryNovels,
-    Bookmarks,
   ],
 )
 /// アプリケーションのデータベース
-/// 小説情報、閲覧履歴、エピソード、ダウンロード済みエピソード、ブックマークを管理
+/// 小説情報、閲覧履歴、エピソード、ダウンロード済みエピソードを管理
 class AppDatabase extends _$AppDatabase {
   /// コンストラクタ
   /// データベースの接続を初期化
@@ -316,7 +293,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration {
@@ -326,7 +303,7 @@ class AppDatabase extends _$AppDatabase {
       },
       onUpgrade: (Migrator m, int from, int to) async {
         if (from == 1) {
-          await m.issueCustomQuery(
+          await customStatement(
             'ALTER TABLE novels RENAME COLUMN poin_count TO point_count;',
           );
         }
@@ -335,7 +312,7 @@ class AppDatabase extends _$AppDatabase {
           await m.createTable(libraryNovels);
 
           // 既存のfav=1の小説をLibraryNovelsテーブルに移行
-          await m.issueCustomQuery('''
+          await customStatement('''
             INSERT INTO library_novels (ncode, added_at)
             SELECT ncode, cached_at
             FROM novels
@@ -353,7 +330,7 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(libraryNovels, libraryNovels.novelUpdatedAt);
 
           // データをnovelsテーブルからコピー
-          await m.issueCustomQuery('''
+          await customStatement('''
             UPDATE library_novels
             SET
               title = (SELECT title FROM novels WHERE novels.ncode = library_novels.ncode),
@@ -368,7 +345,7 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from <= 4) {
           await m.addColumn(history, history.updatedAt);
-          await m.issueCustomQuery(
+          await customStatement(
             'UPDATE history SET updated_at = viewed_at;',
           );
         }
@@ -378,7 +355,7 @@ class AppDatabase extends _$AppDatabase {
 
           // DownloadedEpisodesテーブルからtitleカラムを削除するためのマイグレーション
           // 1. 新しい構造で一時テーブルを作成
-          await m.issueCustomQuery('''
+          await customStatement('''
             CREATE TABLE downloaded_episodes_new (
               ncode TEXT NOT NULL,
               episode INTEGER NOT NULL,
@@ -389,16 +366,16 @@ class AppDatabase extends _$AppDatabase {
           ''');
 
           // 2. データを一時テーブルにコピー
-          await m.issueCustomQuery('''
+          await customStatement('''
             INSERT INTO downloaded_episodes_new (ncode, episode, content, downloaded_at)
             SELECT ncode, episode, content, downloaded_at FROM downloaded_episodes
           ''');
 
           // 3. 古いテーブルを削除
-          await m.issueCustomQuery('DROP TABLE downloaded_episodes');
+          await customStatement('DROP TABLE downloaded_episodes');
 
           // 4. 一時テーブルをリネーム
-          await m.issueCustomQuery(
+          await customStatement(
             'ALTER TABLE downloaded_episodes_new RENAME TO downloaded_episodes',
           );
         }
@@ -418,6 +395,10 @@ class AppDatabase extends _$AppDatabase {
             downloadedEpisodes.lastAttemptAt,
           );
         }
+        if (from <= 8) {
+          // bookmarksテーブルを削除（使用されていないため）
+          await customStatement('DROP TABLE IF EXISTS bookmarks');
+        }
       },
     );
   }
@@ -425,8 +406,9 @@ class AppDatabase extends _$AppDatabase {
   /// 小説情報の取得
   Future<Novel?> getNovel(String ncode) {
     return (select(
-      novels,
-    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).getSingleOrNull();
+          novels,
+        )..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
+        .getSingleOrNull();
   }
 
   /// ライブラリに小説を追加
@@ -455,8 +437,7 @@ class AppDatabase extends _$AppDatabase {
   Future<List<Novel>> getLibraryNovelsWithDetails() async {
     final query = select(libraryNovels).join([
       innerJoin(novels, novels.ncode.equalsExp(libraryNovels.ncode)),
-    ])
-      ..orderBy([OrderingTerm.desc(libraryNovels.addedAt)]);
+    ])..orderBy([OrderingTerm.desc(libraryNovels.addedAt)]);
 
     final results = await query.get();
     return results.map((row) => row.readTable(novels)).toList();
@@ -466,19 +447,20 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<Novel>> watchLibraryNovelsWithDetails() {
     final query = select(libraryNovels).join([
       innerJoin(novels, novels.ncode.equalsExp(libraryNovels.ncode)),
-    ])
-      ..orderBy([OrderingTerm.desc(libraryNovels.addedAt)]);
+    ])..orderBy([OrderingTerm.desc(libraryNovels.addedAt)]);
 
     return query.watch().map(
-          (rows) => rows.map((row) => row.readTable(novels)).toList(),
-        );
+      (rows) => rows.map((row) => row.readTable(novels)).toList(),
+    );
   }
 
   /// 小説がライブラリに追加されているかを確認
   Future<bool> isInLibrary(String ncode) async {
-    final result = await (select(
-      libraryNovels,
-    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).getSingleOrNull();
+    final result =
+        await (select(
+              libraryNovels,
+            )..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
+            .getSingleOrNull();
     return result != null;
   }
 
@@ -492,7 +474,8 @@ class AppDatabase extends _$AppDatabase {
 
   /// ライブラリ登録状態の監視（既存メソッドは残す - 削除予定）
   Stream<bool> watchIsFavorite(String ncode) {
-    return (select(novels)..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
+    return (select(novels)
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .watchSingleOrNull()
         .map((novel) => novel != null && novel.fav == 1);
   }
@@ -563,7 +546,8 @@ class AppDatabase extends _$AppDatabase {
   Future<Episode?> getEpisode(String ncode, int episode) {
     return (select(episodes)..where(
           (t) =>
-              t.ncode.equals(ncode.toNormalizedNcode()) & t.episode.equals(episode),
+              t.ncode.equals(ncode.toNormalizedNcode()) &
+              t.episode.equals(episode),
         ))
         .getSingleOrNull();
   }
@@ -580,7 +564,8 @@ class AppDatabase extends _$AppDatabase {
   Future<DownloadedEpisode?> getDownloadedEpisode(String ncode, int episode) {
     return (select(downloadedEpisodes)..where(
           (t) =>
-              t.ncode.equals(ncode.toNormalizedNcode()) & t.episode.equals(episode),
+              t.ncode.equals(ncode.toNormalizedNcode()) &
+              t.episode.equals(episode),
         ))
         .getSingleOrNull();
   }
@@ -591,7 +576,8 @@ class AppDatabase extends _$AppDatabase {
           downloadedEpisodes,
         )..where(
           (t) =>
-              t.ncode.equals(ncode.toNormalizedNcode()) & t.episode.equals(episode),
+              t.ncode.equals(ncode.toNormalizedNcode()) &
+              t.episode.equals(episode),
         ))
         .go();
   }
@@ -620,9 +606,9 @@ class AppDatabase extends _$AppDatabase {
 
   /// ダウンロード小説を削除
   Future<int> deleteDownloadedNovel(String ncode) {
-    return (delete(downloadedNovels)
-          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
-        .go();
+    return (delete(
+      downloadedNovels,
+    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).go();
   }
 
   /// ダウンロード中の小説を監視
@@ -630,18 +616,19 @@ class AppDatabase extends _$AppDatabase {
   /// downloadStatus = 1（ダウンロード中）の小説を取得し、
   /// LibraryNovelsとNovelsテーブルをLEFT JOINして小説情報も含める。
   Stream<List<TypedResult>> watchDownloadingNovels() {
-    final query = select(downloadedNovels).join([
-      leftOuterJoin(
-        libraryNovels,
-        libraryNovels.ncode.equalsExp(downloadedNovels.ncode),
-      ),
-      leftOuterJoin(
-        novels,
-        novels.ncode.equalsExp(downloadedNovels.ncode),
-      ),
-    ])
-      ..where(downloadedNovels.downloadStatus.equals(1))
-      ..orderBy([OrderingTerm.desc(downloadedNovels.downloadedAt)]);
+    final query =
+        select(downloadedNovels).join([
+            leftOuterJoin(
+              libraryNovels,
+              libraryNovels.ncode.equalsExp(downloadedNovels.ncode),
+            ),
+            leftOuterJoin(
+              novels,
+              novels.ncode.equalsExp(downloadedNovels.ncode),
+            ),
+          ])
+          ..where(downloadedNovels.downloadStatus.equals(1))
+          ..orderBy([OrderingTerm.desc(downloadedNovels.downloadedAt)]);
 
     return query.watch();
   }
@@ -651,47 +638,21 @@ class AppDatabase extends _$AppDatabase {
   /// downloadStatus = 2（完了）の小説を取得し、
   /// LibraryNovelsとNovelsテーブルをLEFT JOINして小説情報も含める。
   Stream<List<TypedResult>> watchCompletedDownloads() {
-    final query = select(downloadedNovels).join([
-      leftOuterJoin(
-        libraryNovels,
-        libraryNovels.ncode.equalsExp(downloadedNovels.ncode),
-      ),
-      leftOuterJoin(
-        novels,
-        novels.ncode.equalsExp(downloadedNovels.ncode),
-      ),
-    ])
-      ..where(downloadedNovels.downloadStatus.equals(2))
-      ..orderBy([OrderingTerm.desc(downloadedNovels.downloadedAt)]);
+    final query =
+        select(downloadedNovels).join([
+            leftOuterJoin(
+              libraryNovels,
+              libraryNovels.ncode.equalsExp(downloadedNovels.ncode),
+            ),
+            leftOuterJoin(
+              novels,
+              novels.ncode.equalsExp(downloadedNovels.ncode),
+            ),
+          ])
+          ..where(downloadedNovels.downloadStatus.equals(2))
+          ..orderBy([OrderingTerm.desc(downloadedNovels.downloadedAt)]);
 
     return query.watch();
-  }
-
-  /// ブックマークの追加
-  Future<int> addBookmark(BookmarksCompanion bookmark) {
-    return into(bookmarks).insert(
-      bookmark.copyWith(ncode: drift.Value(bookmark.ncode.value.toLowerCase())),
-      mode: InsertMode.insertOrReplace,
-    );
-  }
-
-  /// ブックマークの取得
-  Future<List<Bookmark>> getBookmarks(String ncode) {
-    return (select(bookmarks)
-          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))
-          ..orderBy([(t) => OrderingTerm.asc(t.episode)]))
-        .get();
-  }
-
-  /// ブックマークの削除
-  Future<int> deleteBookmark(String ncode, int episode, int position) {
-    return (delete(bookmarks)..where(
-          (t) =>
-              t.ncode.equals(ncode.toNormalizedNcode()) &
-              t.episode.equals(episode) &
-              t.position.equals(position),
-        ))
-        .go();
   }
 }
 
