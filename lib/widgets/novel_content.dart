@@ -70,6 +70,7 @@ class NovelContentBody extends HookWidget {
             final textStyle = TextStyle(
               fontSize: settingsData.fontSize,
               color: textColor,
+              fontFamily: 'NotoSansJP',
             );
 
             if (settingsData.isVertical) {
