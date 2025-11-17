@@ -32,6 +32,8 @@ class NovelContent extends HookConsumerWidget {
     return SafeArea(
       top: false, // AppBarがあるので上は不要
       child: NovelContentBody(
+        ncode: ncode,
+        episode: episode,
         settings: settings,
         content: contentAsync,
       ),
@@ -44,10 +46,18 @@ class NovelContent extends HookConsumerWidget {
 class NovelContentBody extends HookWidget {
   /// コンストラクタ
   const NovelContentBody({
+    required this.ncode,
+    required this.episode,
     required this.settings,
     required this.content,
     super.key,
   });
+
+  /// 小説のncode
+  final String ncode;
+
+  /// 小説のエピソード番号
+  final int episode;
 
   /// 設定の状態
   final AsyncValue<AppSettings> settings;
@@ -77,6 +87,7 @@ class NovelContentBody extends HookWidget {
               return Directionality(
                 textDirection: TextDirection.rtl,
                 child: SingleChildScrollView(
+                  key: PageStorageKey<String>('novel_vertical_${ncode}_$episode'),
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.all(16),
                   child: LayoutBuilder(
@@ -95,6 +106,7 @@ class NovelContentBody extends HookWidget {
             }
 
             return SingleChildScrollView(
+              key: PageStorageKey<String>('novel_horizontal_${ncode}_$episode'),
               padding: const EdgeInsets.all(16),
               child: RepaintBoundary(
                 child: DefaultTextStyle(
