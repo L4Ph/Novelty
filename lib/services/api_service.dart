@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:archive/archive.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
@@ -119,7 +118,9 @@ class ApiService {
         i + chunkSize > ncodes.length ? ncodes.length : i + chunkSize,
       );
 
-      final ncodesParam = chunk.map((ncode) => ncode.toNormalizedNcode()).join('-');
+      final ncodesParam = chunk
+          .map((ncode) => ncode.toNormalizedNcode())
+          .join('-');
       final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
         'ncode': ncodesParam,
         'out': 'json',
@@ -149,7 +150,8 @@ class ApiService {
                   episodes: [
                     Episode(
                       subtitle: novelInfo.title,
-                      url: 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/',
+                      url:
+                          'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/',
                       ncode: ncode.toNormalizedNcode(),
                       index: 1,
                     ),
@@ -262,7 +264,8 @@ class ApiService {
       return info;
     }
 
-    final firstPageUrl = 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/';
+    final firstPageUrl =
+        'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/';
     final firstPageResponse = await _fetchWithCache(firstPageUrl);
 
     if (firstPageResponse.statusCode != 200) {
@@ -465,7 +468,10 @@ class ApiService {
         final yesterday = now.subtract(const Duration(days: 1));
         return '${yesterday.year}${_twoDigits(yesterday.month)}${_twoDigits(yesterday.day)}';
       case 'w':
-        var date = now;
+        // 週間ランキングは毎週火曜日に公開されるが、
+        // 今日が火曜日の場合はまだ公開されていない可能性があるため、
+        // 必ず前週の火曜日を取得する
+        var date = now.subtract(const Duration(days: 1)); // 1日前から開始
         while (date.weekday != DateTime.tuesday) {
           date = date.subtract(const Duration(days: 1));
         }
