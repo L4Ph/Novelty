@@ -1,7 +1,7 @@
-import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/models/novel_download_summary.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
@@ -45,7 +45,7 @@ class _DownloadingTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(appDatabaseProvider);
 
-    return StreamBuilder<List<TypedResult>>(
+    return StreamBuilder<List<NovelDownloadSummary>>(
       stream: db.watchDownloadingNovels(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -67,13 +67,10 @@ class _DownloadingTab extends ConsumerWidget {
         return ListView.builder(
           itemCount: downloads.length,
           itemBuilder: (context, index) {
-            final row = downloads[index];
-            final downloadInfo = row.readTable(db.downloadedNovels);
-            final novelInfo = row.readTableOrNull(db.novels);
+            final summary = downloads[index];
 
             return _DownloadListItem(
-              downloadInfo: downloadInfo,
-              novelInfo: novelInfo,
+              summary: summary,
             );
           },
         );
@@ -91,7 +88,7 @@ class _CompletedTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(appDatabaseProvider);
 
-    return StreamBuilder<List<TypedResult>>(
+    return StreamBuilder<List<NovelDownloadSummary>>(
       stream: db.watchCompletedDownloads(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -113,13 +110,10 @@ class _CompletedTab extends ConsumerWidget {
         return ListView.builder(
           itemCount: downloads.length,
           itemBuilder: (context, index) {
-            final row = downloads[index];
-            final downloadInfo = row.readTable(db.downloadedNovels);
-            final novelInfo = row.readTableOrNull(db.novels);
+            final summary = downloads[index];
 
             return _CompletedListItem(
-              downloadInfo: downloadInfo,
-              novelInfo: novelInfo,
+              summary: summary,
             );
           },
         );
@@ -132,135 +126,143 @@ class _CompletedTab extends ConsumerWidget {
 class _DownloadListItem extends ConsumerWidget {
   /// コンストラクタ
   const _DownloadListItem({
-    required this.downloadInfo,
-    this.novelInfo,
+    required this.summary,
   });
 
-  /// ダウンロード情報
-  final DownloadedNovel downloadInfo;
-
-  /// 小説情報
-  final Novel? novelInfo;
+  /// ダウンロード状態の集計情報
+  final NovelDownloadSummary summary;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // NovelListTileを使用するため、RankingResponseに変換
-    final novelData = RankingResponse(
-      ncode: downloadInfo.ncode,
-      title: novelInfo?.title ?? downloadInfo.ncode,
-      writer: novelInfo?.writer,
-      genre: novelInfo?.genre,
-      novelType: novelInfo?.novelType,
-      end: novelInfo?.end,
-      allPoint: novelInfo?.allPoint,
-    );
+    final db = ref.watch(appDatabaseProvider);
 
-    final progressAsync = ref.watch(
-      downloadProgressProvider(downloadInfo.ncode),
-    );
+    return FutureBuilder<Novel?>(
+      future: db.getNovel(summary.ncode),
+      builder: (context, snapshot) {
+        final novelInfo = snapshot.data;
 
-    return Column(
-      children: [
-        NovelListTile(item: novelData),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: progressAsync.when(
-            data: (progress) {
-              final current =
-                  progress?.currentEpisode ?? downloadInfo.downloadedEpisodes;
-              final total =
-                  progress?.totalEpisodes ?? downloadInfo.totalEpisodes;
-              final progressValue = total > 0 ? current / total : 0.0;
+        // NovelListTileを使用するため、RankingResponseに変換
+        final novelData = RankingResponse(
+          ncode: summary.ncode,
+          title: novelInfo?.title ?? summary.ncode,
+          writer: novelInfo?.writer,
+          genre: novelInfo?.genre,
+          novelType: novelInfo?.novelType,
+          end: novelInfo?.end,
+          allPoint: novelInfo?.allPoint,
+        );
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LinearProgressIndicator(
-                    value: progressValue,
-                    minHeight: 8,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '$current / $total 話',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              );
-            },
-            loading: () {
-              final current = downloadInfo.downloadedEpisodes;
-              final total = downloadInfo.totalEpisodes;
-              final progressValue = total > 0 ? current / total : 0.0;
+        final progressAsync = ref.watch(
+          downloadProgressProvider(summary.ncode),
+        );
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LinearProgressIndicator(
-                    value: progressValue,
-                    minHeight: 8,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '$current / $total 話',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              );
-            },
-            error: (e, s) {
-              final current = downloadInfo.downloadedEpisodes;
-              final total = downloadInfo.totalEpisodes;
-              final progressValue = total > 0 ? current / total : 0.0;
+        return Column(
+          children: [
+            NovelListTile(item: novelData),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: progressAsync.when(
+                data: (progress) {
+                  final current = progress?.currentEpisode ?? summary.successCount;
+                  final total = progress?.totalEpisodes ?? summary.totalEpisodes;
+                  final progressValue = total > 0 ? current / total : 0.0;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  LinearProgressIndicator(
-                    value: progressValue,
-                    minHeight: 8,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '$current / $total 話',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ],
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      LinearProgressIndicator(
+                        value: progressValue,
+                        minHeight: 8,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '$current / $total 話',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  );
+                },
+                loading: () {
+                  final current = summary.successCount;
+                  final total = summary.totalEpisodes;
+                  final progressValue = total > 0 ? current / total : 0.0;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      LinearProgressIndicator(
+                        value: progressValue,
+                        minHeight: 8,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '$current / $total 話',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  );
+                },
+                error: (e, s) {
+                  final current = summary.successCount;
+                  final total = summary.totalEpisodes;
+                  final progressValue = total > 0 ? current / total : 0.0;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      LinearProgressIndicator(
+                        value: progressValue,
+                        minHeight: 8,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '$current / $total 話',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
 /// 完了リストアイテム
-class _CompletedListItem extends StatelessWidget {
+class _CompletedListItem extends ConsumerWidget {
   /// コンストラクタ
   const _CompletedListItem({
-    required this.downloadInfo,
-    this.novelInfo,
+    required this.summary,
   });
 
-  /// ダウンロード情報
-  final DownloadedNovel downloadInfo;
-
-  /// 小説情報
-  final Novel? novelInfo;
+  /// ダウンロード状態の集計情報
+  final NovelDownloadSummary summary;
 
   @override
-  Widget build(BuildContext context) {
-    // NovelListTileを使用するため、RankingResponseに変換
-    final novelData = RankingResponse(
-      ncode: downloadInfo.ncode,
-      title: novelInfo?.title ?? downloadInfo.ncode,
-      writer: novelInfo?.writer,
-      genre: novelInfo?.genre,
-      novelType: novelInfo?.novelType,
-      end: novelInfo?.end,
-      allPoint: novelInfo?.allPoint,
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final db = ref.watch(appDatabaseProvider);
 
-    return NovelListTile(item: novelData);
+    return FutureBuilder<Novel?>(
+      future: db.getNovel(summary.ncode),
+      builder: (context, snapshot) {
+        final novelInfo = snapshot.data;
+
+        // NovelListTileを使用するため、RankingResponseに変換
+        final novelData = RankingResponse(
+          ncode: summary.ncode,
+          title: novelInfo?.title ?? summary.ncode,
+          writer: novelInfo?.writer,
+          genre: novelInfo?.genre,
+          novelType: novelInfo?.novelType,
+          end: novelInfo?.end,
+          allPoint: novelInfo?.allPoint,
+        );
+
+        return NovelListTile(item: novelData);
+      },
+    );
   }
 }
