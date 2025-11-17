@@ -6,6 +6,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/models/novel_content_element.dart';
+import 'package:novelty/models/novel_download_summary.dart';
 import 'package:novelty/utils/history_grouping.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:path/path.dart' as p;
@@ -213,27 +214,6 @@ class DownloadedEpisodes extends Table {
   Set<Column> get primaryKey => {ncode, episode};
 }
 
-/// ダウンロード済み小説を管理するテーブル
-class DownloadedNovels extends Table {
-  /// 小説のncode
-  TextColumn get ncode => text()();
-
-  /// ダウンロード状態
-  /// 0: 未ダウンロード, 1: ダウンロード中, 2: 完了, 3: 失敗
-  IntColumn get downloadStatus => integer()();
-
-  /// ダウンロード完了日時
-  IntColumn get downloadedAt => integer()();
-
-  /// ダウンロード対象の総話数
-  IntColumn get totalEpisodes => integer()();
-
-  /// ダウンロード済みの話数
-  IntColumn get downloadedEpisodes => integer()();
-
-  @override
-  Set<Column> get primaryKey => {ncode};
-}
 
 /// ライブラリに追加された小説を格納するテーブル
 class LibraryNovels extends Table {
@@ -276,7 +256,6 @@ class LibraryNovels extends Table {
     Novels,
     History,
     Episodes,
-    DownloadedNovels,
     DownloadedEpisodes,
     LibraryNovels,
   ],
@@ -293,7 +272,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration {
@@ -350,8 +329,16 @@ class AppDatabase extends _$AppDatabase {
           );
         }
         if (from <= 5) {
-          // DownloadedNovelsテーブルを作成
-          await m.createTable(downloadedNovels);
+          // DownloadedNovelsテーブルを作成（v10で削除される）
+          await customStatement('''
+            CREATE TABLE IF NOT EXISTS downloaded_novels (
+              ncode TEXT NOT NULL PRIMARY KEY,
+              download_status INTEGER NOT NULL,
+              downloaded_at INTEGER NOT NULL,
+              total_episodes INTEGER NOT NULL,
+              downloaded_episodes INTEGER NOT NULL
+            )
+          ''');
 
           // DownloadedEpisodesテーブルからtitleカラムを削除するためのマイグレーション
           // 1. 新しい構造で一時テーブルを作成
@@ -398,6 +385,11 @@ class AppDatabase extends _$AppDatabase {
         if (from <= 8) {
           // bookmarksテーブルを削除（使用されていないため）
           await customStatement('DROP TABLE IF EXISTS bookmarks');
+        }
+        if (from <= 9) {
+          // downloaded_novelsテーブルを削除
+          // ダウンロード状態はdownloaded_episodesから動的に計算するように変更
+          await customStatement('DROP TABLE IF EXISTS downloaded_novels');
         }
       },
     );
@@ -582,77 +574,153 @@ class AppDatabase extends _$AppDatabase {
         .go();
   }
 
-  /// ダウンロード小説情報を挿入/更新
-  Future<int> upsertDownloadedNovel(DownloadedNovelsCompanion novel) {
-    return into(downloadedNovels).insert(
-      novel.copyWith(ncode: drift.Value(novel.ncode.value.toLowerCase())),
-      mode: InsertMode.insertOrReplace,
+  /// 小説のダウンロード状態の集計情報を取得
+  Future<NovelDownloadSummary?> getNovelDownloadSummary(String ncode) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+
+    // 小説情報からtotalEpisodesを取得
+    final novel = await getNovel(normalizedNcode);
+    if (novel?.generalAllNo == null) {
+      return null;
+    }
+    final totalEpisodes = novel!.generalAllNo!;
+
+    // ダウンロード済みエピソードを取得
+    final episodes = await (select(downloadedEpisodes)
+          ..where((e) => e.ncode.equals(normalizedNcode)))
+        .get();
+
+    // 成功・失敗数をカウント
+    final successCount = episodes.where((e) => e.status == 2).length;
+    final failureCount = episodes.where((e) => e.status == 3).length;
+
+    return NovelDownloadSummary(
+      ncode: normalizedNcode,
+      successCount: successCount,
+      failureCount: failureCount,
+      totalEpisodes: totalEpisodes,
     );
   }
 
-  /// ダウンロード小説情報を取得
-  Future<DownloadedNovel?> getDownloadedNovel(String ncode) {
-    return (select(downloadedNovels)
-          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
-        .getSingleOrNull();
+  /// 小説のダウンロード状態の集計情報を監視
+  Stream<NovelDownloadSummary?> watchNovelDownloadSummary(String ncode) {
+    final normalizedNcode = ncode.toNormalizedNcode();
+
+    // DownloadedEpisodesの変更を監視
+    return (select(downloadedEpisodes)
+          ..where((e) => e.ncode.equals(normalizedNcode)))
+        .watch()
+        .asyncMap((episodes) async {
+      // 小説情報からtotalEpisodesを取得
+      final novel = await getNovel(normalizedNcode);
+      if (novel?.generalAllNo == null) {
+        return null;
+      }
+      final totalEpisodes = novel!.generalAllNo!;
+
+      // 成功・失敗数をカウント
+      final successCount = episodes.where((e) => e.status == 2).length;
+      final failureCount = episodes.where((e) => e.status == 3).length;
+
+      return NovelDownloadSummary(
+        ncode: normalizedNcode,
+        successCount: successCount,
+        failureCount: failureCount,
+        totalEpisodes: totalEpisodes,
+      );
+    });
   }
 
-  /// ダウンロード小説情報を監視
-  Stream<DownloadedNovel?> watchDownloadedNovel(String ncode) {
-    return (select(downloadedNovels)
-          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
-        .watchSingleOrNull();
-  }
-
-  /// ダウンロード小説を削除
-  Future<int> deleteDownloadedNovel(String ncode) {
-    return (delete(
-      downloadedNovels,
-    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).go();
-  }
 
   /// ダウンロード中の小説を監視
   ///
-  /// downloadStatus = 1（ダウンロード中）の小説を取得し、
-  /// LibraryNovelsとNovelsテーブルをLEFT JOINして小説情報も含める。
-  Stream<List<TypedResult>> watchDownloadingNovels() {
-    final query =
-        select(downloadedNovels).join([
-            leftOuterJoin(
-              libraryNovels,
-              libraryNovels.ncode.equalsExp(downloadedNovels.ncode),
-            ),
-            leftOuterJoin(
-              novels,
-              novels.ncode.equalsExp(downloadedNovels.ncode),
-            ),
-          ])
-          ..where(downloadedNovels.downloadStatus.equals(1))
-          ..orderBy([OrderingTerm.desc(downloadedNovels.downloadedAt)]);
+  /// DownloadedEpisodesから集計し、ダウンロード中（status=1）の小説を取得。
+  /// NovelsテーブルとLEFT JOINして小説情報も含める。
+  Stream<List<NovelDownloadSummary>> watchDownloadingNovels() {
+    // DownloadedEpisodesから異なるncodeのリストを取得
+    return select(downloadedEpisodes)
+        .watch()
+        .asyncMap((allEpisodes) async {
+      // ncodeでグループ化
+      final ncodeMap = <String, List<DownloadedEpisode>>{};
+      for (final episode in allEpisodes) {
+        ncodeMap.putIfAbsent(episode.ncode, () => []).add(episode);
+      }
 
-    return query.watch();
+      // 各小説の集計情報を作成
+      final summaries = <NovelDownloadSummary>[];
+      for (final entry in ncodeMap.entries) {
+        final ncode = entry.key;
+        final episodes = entry.value;
+
+        // 小説情報からtotalEpisodesを取得
+        final novel = await getNovel(ncode);
+        if (novel?.generalAllNo == null) continue;
+
+        final totalEpisodes = novel!.generalAllNo!;
+        final successCount = episodes.where((e) => e.status == 2).length;
+        final failureCount = episodes.where((e) => e.status == 3).length;
+
+        final summary = NovelDownloadSummary(
+          ncode: ncode,
+          successCount: successCount,
+          failureCount: failureCount,
+          totalEpisodes: totalEpisodes,
+        );
+
+        // ダウンロード中（status=1）のみ追加
+        if (summary.downloadStatus == 1) {
+          summaries.add(summary);
+        }
+      }
+
+      return summaries;
+    });
   }
 
   /// 完了済みダウンロード小説を監視
   ///
-  /// downloadStatus = 2（完了）の小説を取得し、
-  /// LibraryNovelsとNovelsテーブルをLEFT JOINして小説情報も含める。
-  Stream<List<TypedResult>> watchCompletedDownloads() {
-    final query =
-        select(downloadedNovels).join([
-            leftOuterJoin(
-              libraryNovels,
-              libraryNovels.ncode.equalsExp(downloadedNovels.ncode),
-            ),
-            leftOuterJoin(
-              novels,
-              novels.ncode.equalsExp(downloadedNovels.ncode),
-            ),
-          ])
-          ..where(downloadedNovels.downloadStatus.equals(2))
-          ..orderBy([OrderingTerm.desc(downloadedNovels.downloadedAt)]);
+  /// DownloadedEpisodesから集計し、完了済み（status=2）の小説を取得。
+  Stream<List<NovelDownloadSummary>> watchCompletedDownloads() {
+    // DownloadedEpisodesから異なるncodeのリストを取得
+    return select(downloadedEpisodes)
+        .watch()
+        .asyncMap((allEpisodes) async {
+      // ncodeでグループ化
+      final ncodeMap = <String, List<DownloadedEpisode>>{};
+      for (final episode in allEpisodes) {
+        ncodeMap.putIfAbsent(episode.ncode, () => []).add(episode);
+      }
 
-    return query.watch();
+      // 各小説の集計情報を作成
+      final summaries = <NovelDownloadSummary>[];
+      for (final entry in ncodeMap.entries) {
+        final ncode = entry.key;
+        final episodes = entry.value;
+
+        // 小説情報からtotalEpisodesを取得
+        final novel = await getNovel(ncode);
+        if (novel?.generalAllNo == null) continue;
+
+        final totalEpisodes = novel!.generalAllNo!;
+        final successCount = episodes.where((e) => e.status == 2).length;
+        final failureCount = episodes.where((e) => e.status == 3).length;
+
+        final summary = NovelDownloadSummary(
+          ncode: ncode,
+          successCount: successCount,
+          failureCount: failureCount,
+          totalEpisodes: totalEpisodes,
+        );
+
+        // 完了済み（status=2）のみ追加
+        if (summary.downloadStatus == 2) {
+          summaries.add(summary);
+        }
+      }
+
+      return summaries;
+    });
   }
 }
 

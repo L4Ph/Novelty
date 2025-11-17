@@ -258,7 +258,7 @@ class NovelRepository {
   /// 小説のダウンロードを行うメソッド。
   ///
   /// 各エピソードのダウンロードを試み、失敗したエピソードがあっても継続する。
-  /// 全エピソードのダウンロード試行後、成功数に応じてステータスを更新する。
+  /// ダウンロード状態はDownloadedEpisodesテーブルから自動的に計算される。
   Future<void> downloadNovel(
     String ncode,
     int totalEpisodes,
@@ -267,16 +267,7 @@ class NovelRepository {
     final progressController = _progressControllers[ncodeLower];
 
     try {
-      // ダウンロード開始をDBに記録
-      await _db.upsertDownloadedNovel(
-        DownloadedNovelsCompanion(
-          ncode: Value(ncodeLower),
-          downloadStatus: const Value(1), // 1: ダウンロード中
-          downloadedAt: Value(DateTime.now().millisecondsSinceEpoch),
-          totalEpisodes: Value(totalEpisodes),
-          downloadedEpisodes: const Value(0),
-        ),
-      );
+      // 初期進捗を通知
       progressController?.add(
         DownloadProgress(
           currentEpisode: 0,
@@ -298,17 +289,6 @@ class NovelRepository {
           failureCount++;
         }
 
-        // DownloadedNovelsテーブルの進捗を更新
-        await _db.upsertDownloadedNovel(
-          DownloadedNovelsCompanion(
-            ncode: Value(ncodeLower),
-            downloadStatus: const Value(1), // 1: ダウンロード中
-            downloadedAt: Value(DateTime.now().millisecondsSinceEpoch),
-            totalEpisodes: Value(totalEpisodes),
-            downloadedEpisodes: Value(successCount),
-          ),
-        );
-
         // 進捗を通知
         progressController?.add(
           DownloadProgress(
@@ -319,17 +299,7 @@ class NovelRepository {
         );
       }
 
-      // 全エピソード処理完了後、ステータスを更新
-      final finalStatus = failureCount == 0 ? 2 : 3; // 全成功なら2、一部失敗なら3
-      await _db.upsertDownloadedNovel(
-        DownloadedNovelsCompanion(
-          ncode: Value(ncodeLower),
-          downloadStatus: Value(finalStatus),
-          downloadedAt: Value(DateTime.now().millisecondsSinceEpoch),
-          totalEpisodes: Value(totalEpisodes),
-          downloadedEpisodes: Value(successCount),
-        ),
-      );
+      // 完了通知
       progressController?.add(
         DownloadProgress(
           currentEpisode: successCount,
@@ -340,22 +310,11 @@ class NovelRepository {
       );
     } on Exception catch (e) {
       // 予期しないエラーが発生した場合
-      final existing = await _db.getDownloadedNovel(ncodeLower);
-      await _db.upsertDownloadedNovel(
-        DownloadedNovelsCompanion(
-          ncode: Value(ncodeLower),
-          downloadStatus: const Value(3), // 3: 失敗
-          downloadedAt: Value(
-            existing?.downloadedAt ?? DateTime.now().millisecondsSinceEpoch,
-          ),
-          totalEpisodes: Value(existing?.totalEpisodes ?? totalEpisodes),
-          downloadedEpisodes: Value(existing?.downloadedEpisodes ?? 0),
-        ),
-      );
+      final summary = await _db.getNovelDownloadSummary(ncodeLower);
       progressController?.add(
         DownloadProgress(
-          currentEpisode: existing?.downloadedEpisodes ?? 0,
-          totalEpisodes: existing?.totalEpisodes ?? totalEpisodes,
+          currentEpisode: summary?.successCount ?? 0,
+          totalEpisodes: summary?.totalEpisodes ?? totalEpisodes,
           isDownloading: false,
           errorMessage: e.toString(),
         ),
@@ -374,16 +333,12 @@ class NovelRepository {
   }
 
   /// ダウンロード済み小説を削除するメソッド。
+  ///
+  /// 該当ncodeのすべてのダウンロード済みエピソードを一括削除する。
   Future<void> deleteDownloadedNovel(String ncode) async {
-    final novel = await _db.getDownloadedNovel(ncode);
-    if (novel == null) {
-      return;
-    }
-
-    for (var i = 1; i <= novel.totalEpisodes; i++) {
-      await _db.deleteDownloadedEpisode(ncode, i);
-    }
-    await _db.deleteDownloadedNovel(ncode);
+    await (_db.delete(_db.downloadedEpisodes)
+          ..where((e) => e.ncode.equals(ncode.toNormalizedNcode())))
+        .go();
   }
 
   /// ダウンロードパスを取得するメソッド。
@@ -393,9 +348,11 @@ class NovelRepository {
   }
 
   /// 小説がダウンロードされているかを確認するメソッド。
+  ///
+  /// DownloadedEpisodesから集計した状態を確認する。
   Stream<bool> isNovelDownloaded(String ncode) async* {
-    final novel = await _db.getDownloadedNovel(ncode);
-    yield novel != null && novel.downloadStatus == 2;
+    final summary = await _db.getNovelDownloadSummary(ncode);
+    yield summary != null && summary.downloadStatus == 2;
   }
 
   /// Permission処理を含む小説のダウンロードを行うメソッド。
