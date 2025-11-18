@@ -32,7 +32,7 @@ void main() {
       expect(find.text('データとストレージ'), findsOneWidget);
     });
 
-    testWidgets('バックアップセクションが表示される', (WidgetTester tester) async {
+    testWidgets('データベースバックアップセクションが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
@@ -41,46 +41,14 @@ void main() {
         ),
       );
 
-      expect(find.text('バックアップ'), findsOneWidget);
-      expect(find.text('ライブラリデータをエクスポート'), findsOneWidget);
-      expect(find.text('履歴データをエクスポート'), findsOneWidget);
+      expect(find.text('データベースのバックアップ'), findsOneWidget);
+      expect(find.text('データベースをエクスポート'), findsOneWidget);
+      expect(find.text('データベースをインポート'), findsOneWidget);
     });
 
-    testWidgets('復元セクションが表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: DataStoragePage(backupService: mockBackupService),
-          ),
-        ),
-      );
-
-      expect(find.text('復元'), findsOneWidget);
-      expect(find.text('ライブラリデータをインポート'), findsOneWidget);
-      expect(find.text('履歴データをインポート'), findsOneWidget);
-    });
-
-    testWidgets('ダウンロードデータ復元セクションが表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: DataStoragePage(backupService: mockBackupService),
-          ),
-        ),
-      );
-
-      // プロバイダーが読み込まれるまで待機
-      await tester.pumpAndSettle();
-
-      // ダウンロードデータ復元セクションの存在を確認
-      expect(find.text('ダウンロードデータの復元'), findsOneWidget);
-      expect(find.text('ダウンロードデータを復元'), findsOneWidget);
-      expect(find.text('現在のダウンロードフォルダから小説データをライブラリに復元'), findsOneWidget);
-    });
-
-    testWidgets('ライブラリエクスポートボタンをタップできる', (WidgetTester tester) async {
-      when(mockBackupService.exportLibraryToFile()).thenAnswer(
-        (_) async => '/test/path/backup.json',
+    testWidgets('データベースエクスポートボタンをタップできる', (WidgetTester tester) async {
+      when(mockBackupService.exportDatabaseToFile()).thenAnswer(
+        (_) async => '/test/path/novelty_backup.db',
       );
 
       await tester.pumpWidget(
@@ -93,19 +61,19 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      final exportButton = find.text('ライブラリデータをエクスポート');
+      final exportButton = find.text('データベースをエクスポート');
       expect(exportButton, findsOneWidget);
 
       await tester.tap(exportButton);
       await tester.pumpAndSettle();
 
       // バックアップサービスが呼び出されることを確認
-      verify(mockBackupService.exportLibraryToFile()).called(1);
+      verify(mockBackupService.exportDatabaseToFile()).called(1);
     });
 
-    testWidgets('履歴エクスポートボタンをタップできる', (WidgetTester tester) async {
-      when(mockBackupService.exportHistoryToFile()).thenAnswer(
-        (_) async => '/test/path/history.json',
+    testWidgets('データベースインポート確認ダイアログが表示される', (WidgetTester tester) async {
+      when(mockBackupService.importDatabaseFromFile()).thenAnswer(
+        (_) async => true,
       );
 
       await tester.pumpWidget(
@@ -118,48 +86,16 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      final exportButton = find.text('履歴データをエクスポート');
-      expect(exportButton, findsOneWidget);
+      final importButton = find.text('データベースをインポート');
+      expect(importButton, findsOneWidget);
 
-      await tester.tap(exportButton);
+      await tester.tap(importButton);
       await tester.pumpAndSettle();
 
-      verify(mockBackupService.exportHistoryToFile()).called(1);
-    });
-
-    testWidgets('ダウンロードデータ復元ボタンをタップできる', (WidgetTester tester) async {
-      // SharedPreferencesのモック設定
-      SharedPreferences.setMockInitialValues({
-        'novel_download_path': '/test/path',
-      });
-
-      // モックの設定
-      when(mockBackupService.validateDownloadPath(any)).thenAnswer(
-        (_) async => const DownloadPathValidationResult(
-          isValid: false,
-          foundNovelsCount: 0,
-          sampleNcodes: [],
-        ),
-      );
-
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: DataStoragePage(backupService: mockBackupService),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // ダウンロードデータ復元ボタンをタップ
-      final restoreButton = find.text('ダウンロードデータを復元');
-
-      await tester.tap(restoreButton);
-      await tester.pumpAndSettle();
-
-      // バリデーションメソッドが呼ばれたことを確認
-      verify(mockBackupService.validateDownloadPath(any)).called(1);
+      // 確認ダイアログが表示されることを確認
+      expect(find.text('データベースを復元しますか?'), findsOneWidget);
+      expect(find.text('キャンセル'), findsOneWidget);
+      expect(find.text('復元する'), findsOneWidget);
     });
   });
 }

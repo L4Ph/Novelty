@@ -22,14 +22,6 @@ import 'package:novelty/services/backup_service.dart' as _i2;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
-class _FakeDownloadPathValidationResult_0 extends _i1.SmartFake
-    implements _i2.DownloadPathValidationResult {
-  _FakeDownloadPathValidationResult_0(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(parent, parentInvocation);
-}
-
 /// A class which mocks [BackupService].
 ///
 /// See the documentation for Mockito's code generation for more information.
@@ -39,102 +31,18 @@ class MockBackupService extends _i1.Mock implements _i2.BackupService {
   }
 
   @override
-  _i3.Future<Map<String, dynamic>> exportLibraryData() =>
+  _i3.Future<String?> exportDatabaseToFile() =>
       (super.noSuchMethod(
-            Invocation.method(#exportLibraryData, []),
-            returnValue: _i3.Future<Map<String, dynamic>>.value(
-              <String, dynamic>{},
-            ),
-          )
-          as _i3.Future<Map<String, dynamic>>);
-
-  @override
-  _i3.Future<Map<String, dynamic>> exportHistoryData() =>
-      (super.noSuchMethod(
-            Invocation.method(#exportHistoryData, []),
-            returnValue: _i3.Future<Map<String, dynamic>>.value(
-              <String, dynamic>{},
-            ),
-          )
-          as _i3.Future<Map<String, dynamic>>);
-
-  @override
-  _i3.Future<void> importLibraryData(Map<String, dynamic>? jsonData) =>
-      (super.noSuchMethod(
-            Invocation.method(#importLibraryData, [jsonData]),
-            returnValue: _i3.Future<void>.value(),
-            returnValueForMissingStub: _i3.Future<void>.value(),
-          )
-          as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> importHistoryData(Map<String, dynamic>? jsonData) =>
-      (super.noSuchMethod(
-            Invocation.method(#importHistoryData, [jsonData]),
-            returnValue: _i3.Future<void>.value(),
-            returnValueForMissingStub: _i3.Future<void>.value(),
-          )
-          as _i3.Future<void>);
-
-  @override
-  _i3.Future<String?> exportLibraryToFile() =>
-      (super.noSuchMethod(
-            Invocation.method(#exportLibraryToFile, []),
+            Invocation.method(#exportDatabaseToFile, []),
             returnValue: _i3.Future<String?>.value(),
           )
           as _i3.Future<String?>);
 
   @override
-  _i3.Future<String?> exportHistoryToFile() =>
+  _i3.Future<bool> importDatabaseFromFile() =>
       (super.noSuchMethod(
-            Invocation.method(#exportHistoryToFile, []),
-            returnValue: _i3.Future<String?>.value(),
+            Invocation.method(#importDatabaseFromFile, []),
+            returnValue: _i3.Future<bool>.value(false),
           )
-          as _i3.Future<String?>);
-
-  @override
-  _i3.Future<int> importLibraryFromFile() =>
-      (super.noSuchMethod(
-            Invocation.method(#importLibraryFromFile, []),
-            returnValue: _i3.Future<int>.value(0),
-          )
-          as _i3.Future<int>);
-
-  @override
-  _i3.Future<int> importHistoryFromFile() =>
-      (super.noSuchMethod(
-            Invocation.method(#importHistoryFromFile, []),
-            returnValue: _i3.Future<int>.value(0),
-          )
-          as _i3.Future<int>);
-
-  @override
-  _i3.Future<int> restoreFromDownloadDirectory(
-    String? downloadPath, {
-    required bool? addToLibrary,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(
-              #restoreFromDownloadDirectory,
-              [downloadPath],
-              {#addToLibrary: addToLibrary},
-            ),
-            returnValue: _i3.Future<int>.value(0),
-          )
-          as _i3.Future<int>);
-
-  @override
-  _i3.Future<_i2.DownloadPathValidationResult> validateDownloadPath(
-    String? downloadPath,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#validateDownloadPath, [downloadPath]),
-            returnValue: _i3.Future<_i2.DownloadPathValidationResult>.value(
-              _FakeDownloadPathValidationResult_0(
-                this,
-                Invocation.method(#validateDownloadPath, [downloadPath]),
-              ),
-            ),
-          )
-          as _i3.Future<_i2.DownloadPathValidationResult>);
+          as _i3.Future<bool>);
 }
