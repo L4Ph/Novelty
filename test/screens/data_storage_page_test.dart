@@ -73,7 +73,7 @@ void main() {
 
     testWidgets('データベースインポート確認ダイアログが表示される', (WidgetTester tester) async {
       when(mockBackupService.importDatabaseFromFile()).thenAnswer(
-        (_) async => true,
+        (_) async => const ImportResult(success: true),
       );
 
       await tester.pumpWidget(

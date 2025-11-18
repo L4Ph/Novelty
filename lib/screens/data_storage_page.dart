@@ -125,14 +125,15 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
     });
 
     try {
-      final success = await _backupService.importDatabaseFromFile();
-      if (success && mounted) {
+      final result = await _backupService.importDatabaseFromFile();
+      if (result.success && mounted) {
         // データベースプロバイダーを再初期化
         ref.invalidate(appDatabaseProvider);
 
-        _showSuccessDialog(
-          'データベースのインポートが完了しました',
-          'すべてのデータが復元されました。\nアプリを再起動することをお勧めします。',
+        // マイグレーション情報を含めて再起動ダイアログを表示
+        _showRestartRequiredDialog(
+          requiresMigration: result.requiresMigration,
+          backupVersion: result.backupVersion,
         );
       }
     } on Exception catch (e) {
@@ -200,6 +201,40 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 再起動が必要なことを通知するダイアログを表示
+  void _showRestartRequiredDialog({
+    bool requiresMigration = false,
+    int? backupVersion,
+  }) {
+    // メッセージを構築
+    String message = 'すべてのデータが復元されました。\n\n';
+
+    if (requiresMigration && backupVersion != null) {
+      message +=
+          '※ このバックアップは古いバージョン(v$backupVersion)のものです。\n'
+          'アプリ起動時に自動的に最新バージョンへ移行されます。\n\n';
+    }
+
+    message += '変更を反映するため、アプリを終了して再起動してください。';
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('復元が完了しました'),
+        content: Text(message),
+        actions: [
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
             child: const Text('OK'),
           ),
         ],

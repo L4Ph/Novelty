@@ -14,6 +14,9 @@ class BackupService {
   /// データベースインスタンス
   final AppDatabase _database;
 
+  /// 現在のスキーマバージョン
+  static const int currentSchemaVersion = 10;
+
   /// データベース全体をエクスポートする
   ///
   /// すべてのテーブル(Novels, LibraryNovels, History, Episodes, DownloadedEpisodes)を
@@ -38,8 +41,9 @@ class BackupService {
       final dbFolder = await getApplicationDocumentsDirectory();
       final dbFile = File(p.join(dbFolder.path, 'novelty.db'));
 
-      // バックアップファイル名を生成
-      final fileName = 'novelty_backup_${_formatDateTime(DateTime.now())}.db';
+      // バックアップファイル名を生成(スキーマバージョンを含める)
+      final fileName =
+          'novelty_backup_${_formatDateTime(DateTime.now())}_v$currentSchemaVersion.db';
       final backupPath = p.join(selectedDirectory, fileName);
 
       // データベースファイルをコピー
@@ -57,8 +61,8 @@ class BackupService {
   /// バックアップファイルからデータベース全体を復元する
   /// 既存のデータベースは上書きされる
   ///
-  /// 戻り値: 復元が成功した場合はtrue
-  Future<bool> importDatabaseFromFile() async {
+  /// 戻り値: インポート結果
+  Future<ImportResult> importDatabaseFromFile() async {
     // バックアップファイルを選択
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -67,8 +71,12 @@ class BackupService {
     );
 
     if (result == null || result.files.isEmpty) {
-      return false;
+      return const ImportResult(success: false);
     }
+
+    // ファイル名からスキーマバージョンを抽出
+    final fileName = result.files.single.name;
+    final backupVersion = _extractVersionFromFileName(fileName);
 
     // データベース接続を閉じる
     await _database.close();
@@ -88,15 +96,52 @@ class BackupService {
       final selectedFile = File(result.files.single.path!);
       await selectedFile.copy(dbFile.path);
 
-      return true;
+      return ImportResult(
+        success: true,
+        backupVersion: backupVersion,
+        requiresMigration:
+            backupVersion != null && backupVersion < currentSchemaVersion,
+      );
     } finally {
       // データベースを再初期化するため、何もしない
       // 呼び出し側でプロバイダーをinvalidateする必要がある
     }
   }
 
+  /// ファイル名からスキーマバージョンを抽出
+  ///
+  /// ファイル名の形式: novelty_backup_YYYYMMDD_HHMMSS_vN.db
+  /// 戻り値: バージョン番号、抽出できない場合はnull
+  int? _extractVersionFromFileName(String fileName) {
+    final versionPattern = RegExp(r'_v(\d+)\.db$');
+    final match = versionPattern.firstMatch(fileName);
+    if (match != null) {
+      return int.tryParse(match.group(1)!);
+    }
+    return null;
+  }
+
   /// 日時をファイル名用にフォーマットする
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}${dateTime.month.toString().padLeft(2, '0')}${dateTime.day.toString().padLeft(2, '0')}_${dateTime.hour.toString().padLeft(2, '0')}${dateTime.minute.toString().padLeft(2, '0')}${dateTime.second.toString().padLeft(2, '0')}';
   }
+}
+
+/// データベースインポートの結果
+class ImportResult {
+  /// コンストラクタ
+  const ImportResult({
+    required this.success,
+    this.backupVersion,
+    this.requiresMigration = false,
+  });
+
+  /// インポートが成功したかどうか
+  final bool success;
+
+  /// バックアップファイルのスキーマバージョン
+  final int? backupVersion;
+
+  /// マイグレーションが必要かどうか
+  final bool requiresMigration;
 }
