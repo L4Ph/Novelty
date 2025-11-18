@@ -62,7 +62,7 @@ dev_dependencies:
   json_serializable: ^6.9.0
   mockito: ^5.4.4
   path_provider_platform_interface: ^2.1.2
-  pedantic_mono: ^1.32.0
+  pedantic_mono: ^1.35.0
   plugin_platform_interface: ^2.1.8
   riverpod_generator: ^3.0.0
   riverpod_lint: ^3.0.0
