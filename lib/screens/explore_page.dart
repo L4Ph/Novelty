@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:novelty/database/database.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/domain/search_state.dart';
@@ -384,67 +386,114 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
 }
 
 /// 検索結果を表示するヘルパーウィジェット
-class _EnrichedSearchResults extends ConsumerWidget {
+class _EnrichedSearchResults extends HookConsumerWidget {
   const _EnrichedSearchResults();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final searchState = ref.watch(searchStateProvider);
-    final enrichedResults = ref.watch(
-      enrichedSearchDataProvider(searchState.results),
+
+    // ローカル状態で強化済みデータを管理（フラッシュ防止）
+    final enrichedData = useState<List<EnrichedNovelData>>([]);
+    final isEnriching = useState(false);
+    final lastEnrichedCount = useState(0);
+
+    // 新しい結果が追加されたときに強化処理を実行
+    useEffect(
+      () {
+        Future<void> enrichNewResults() async {
+          final results = searchState.results;
+          final alreadyEnriched = lastEnrichedCount.value;
+
+          // 新しい結果がない場合はスキップ
+          if (results.length <= alreadyEnriched) {
+            // リセットされた場合（結果が減った場合）
+            if (results.isEmpty && enrichedData.value.isNotEmpty) {
+              enrichedData.value = [];
+              lastEnrichedCount.value = 0;
+            }
+            return;
+          }
+
+          isEnriching.value = true;
+
+          try {
+            // データベースからライブラリ状態を取得
+            final db = ref.read(appDatabaseProvider);
+            final libraryNovels = await db.getLibraryNovels();
+            final libraryNcodes =
+                libraryNovels.map((novel) => novel.ncode).toSet();
+
+            // 新しい結果のみを強化
+            final newResults = results.sublist(alreadyEnriched);
+            final newEnrichedData = newResults.map((novel) {
+              final isInLibrary = libraryNcodes.contains(novel.ncode);
+              return EnrichedNovelData(
+                novel: novel,
+                isInLibrary: isInLibrary,
+              );
+            }).toList();
+
+            // 既存のデータに追加
+            enrichedData.value = [...enrichedData.value, ...newEnrichedData];
+            lastEnrichedCount.value = results.length;
+          } finally {
+            isEnriching.value = false;
+          }
+        }
+
+        unawaited(enrichNewResults());
+        return null;
+      },
+      [searchState.results.length],
     );
 
-    return enrichedResults.when(
-      skipLoadingOnReload: true,
-      data: (data) {
-        // リストの最後に「もっと見る」ボタンを追加するため、itemCountを調整
-        final hasMore = searchState.hasMore;
-        final itemCount = data.length + (hasMore ? 1 : 0);
+    // 初回ローディング中
+    if (searchState.isLoading && enrichedData.value.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-        return ListView.builder(
-          key: const PageStorageKey('search_results'),
-          itemCount: itemCount,
-          itemBuilder: (context, index) {
-            // 最後のアイテムは「もっと見る」ボタン
-            if (hasMore && index == data.length) {
-              return Padding(
-                padding: const EdgeInsets.all(16),
-                child: Center(
-                  child: searchState.isLoading
-                      ? const CircularProgressIndicator()
-                      : TextButton(
-                          onPressed: () {
-                            unawaited(
-                              ref
-                                  .read(searchStateProvider.notifier)
-                                  .loadMore(),
-                            );
-                          },
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('もっと見る'),
-                              SizedBox(width: 4),
-                              Icon(Icons.expand_more, size: 20),
-                            ],
-                          ),
-                        ),
-                ),
-              );
-            }
+    // データがない場合
+    if (enrichedData.value.isEmpty && !isEnriching.value) {
+      return const Center(child: Text('検索結果がありません'));
+    }
 
-            // 通常の小説アイテム
-            final enrichedItem = data[index];
-            return NovelListTile(
-              item: enrichedItem.novel,
-              enrichedData: enrichedItem,
-              isRanking: false,
-            );
-          },
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(child: Text('Error: $error')),
+    final hasMore = searchState.hasMore;
+    final data = enrichedData.value;
+
+    return ListView(
+      key: const PageStorageKey('search_results'),
+      children: [
+        ...data.map(
+          (enrichedItem) => NovelListTile(
+            item: enrichedItem.novel,
+            enrichedData: enrichedItem,
+          ),
+        ),
+        if (hasMore)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: searchState.isLoading
+                  ? const CircularProgressIndicator()
+                  : TextButton(
+                      onPressed: () {
+                        unawaited(
+                          ref.read(searchStateProvider.notifier).loadMore(),
+                        );
+                      },
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('もっと見る'),
+                          SizedBox(width: 4),
+                          Icon(Icons.expand_more, size: 20),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+      ],
     );
   }
 }
