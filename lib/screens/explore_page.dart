@@ -1,12 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
+import 'package:novelty/domain/search_state.dart';
 import 'package:novelty/models/novel_search_query.dart';
-import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
-import 'package:novelty/widgets/enriched_novel_list.dart';
+import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
 /// "見つける"ページのウィジェット。
@@ -22,9 +23,6 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   var _searchQuery = const NovelSearchQuery();
-  List<RankingResponse> _searchResults = [];
-  var _isLoading = false;
-  var _isSearching = false;
   late final VoidCallback _tabListener;
 
   @override
@@ -36,11 +34,9 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
         return;
       }
 
-      if (_isSearching) {
-        setState(() {
-          _isSearching = false;
-          _searchResults = [];
-        });
+      final searchState = ref.read(searchStateProvider);
+      if (searchState.isSearching) {
+        ref.read(searchStateProvider.notifier).reset();
       }
     };
     _tabController.addListener(_tabListener);
@@ -55,22 +51,11 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
   }
 
   Future<void> _performSearch() async {
-    setState(() {
-      _isLoading = true;
-      _isSearching = true;
-    });
-
-    final apiService = ref.read(apiServiceProvider);
-    final results = await apiService.searchNovels(_searchQuery);
-
-    setState(() {
-      _searchResults = results;
-      _isLoading = false;
-    });
+    await ref.read(searchStateProvider.notifier).search(_searchQuery);
   }
 
   void _showSearchDialog() {
-    showDialog<void>(
+    unawaited(showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -214,14 +199,14 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
             TextButton(
               child: const Text('検索'),
               onPressed: () {
-                _performSearch();
+                unawaited(_performSearch());
                 Navigator.of(context).pop();
               },
             ),
           ],
         );
       },
-    );
+    ));
   }
 
   void _showRankingFilterDialog() {
@@ -234,7 +219,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
       rankingFilterStateProvider(currentRankingType),
     );
 
-    showModalBottomSheet<void>(
+    unawaited(showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (BuildContext context) {
@@ -315,47 +300,43 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
           },
         );
       },
-    );
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
+    final searchState = ref.watch(searchStateProvider);
+
     return PopScope(
-      canPop: !_isSearching,
+      canPop: !searchState.isSearching,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) {
           return;
         }
-        setState(() {
-          _isSearching = false;
-          _searchResults = [];
-        });
+        ref.read(searchStateProvider.notifier).reset();
       },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('見つける'),
           actions: [
-            if (_isSearching)
+            if (searchState.isSearching)
               IconButton(
                 icon: const Icon(Icons.clear),
                 onPressed: () {
-                  setState(() {
-                    _isSearching = false;
-                    _searchResults = [];
-                  });
+                  ref.read(searchStateProvider.notifier).reset();
                 },
               ),
             IconButton(
               icon: const Icon(Icons.search),
               onPressed: _showSearchDialog,
             ),
-            if (!_isSearching)
+            if (!searchState.isSearching)
               IconButton(
                 icon: const Icon(Icons.filter_list),
                 onPressed: _showRankingFilterDialog,
               ),
           ],
-          bottom: _isSearching
+          bottom: searchState.isSearching
               ? null
               : TabBar(
                   controller: _tabController,
@@ -368,10 +349,10 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
                   ],
                 ),
         ),
-        body: _isSearching
-            ? _isLoading
+        body: searchState.isSearching
+            ? searchState.isLoading && searchState.results.isEmpty
                   ? const Center(child: CircularProgressIndicator())
-                  : _EnrichedSearchResults(searchResults: _searchResults)
+                  : const _EnrichedSearchResults()
             : TabBarView(
                 controller: _tabController,
                 children: const [
@@ -402,23 +383,64 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
   }
 }
 
-/// Helper widget to display enriched search results
+/// 検索結果を表示するヘルパーウィジェット
 class _EnrichedSearchResults extends ConsumerWidget {
-  const _EnrichedSearchResults({required this.searchResults});
-
-  final List<RankingResponse> searchResults;
+  const _EnrichedSearchResults();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final searchState = ref.watch(searchStateProvider);
     final enrichedResults = ref.watch(
-      enrichedSearchDataProvider(searchResults),
+      enrichedSearchDataProvider(searchState.results),
     );
 
     return enrichedResults.when(
+      skipLoadingOnReload: true,
       data: (data) {
-        return EnrichedNovelList(
-          enrichedNovels: data,
-          isRanking: false,
+        // リストの最後に「もっと見る」ボタンを追加するため、itemCountを調整
+        final hasMore = searchState.hasMore;
+        final itemCount = data.length + (hasMore ? 1 : 0);
+
+        return ListView.builder(
+          key: const PageStorageKey('search_results'),
+          itemCount: itemCount,
+          itemBuilder: (context, index) {
+            // 最後のアイテムは「もっと見る」ボタン
+            if (hasMore && index == data.length) {
+              return Padding(
+                padding: const EdgeInsets.all(16),
+                child: Center(
+                  child: searchState.isLoading
+                      ? const CircularProgressIndicator()
+                      : TextButton(
+                          onPressed: () {
+                            unawaited(
+                              ref
+                                  .read(searchStateProvider.notifier)
+                                  .loadMore(),
+                            );
+                          },
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('もっと見る'),
+                              SizedBox(width: 4),
+                              Icon(Icons.expand_more, size: 20),
+                            ],
+                          ),
+                        ),
+                ),
+              );
+            }
+
+            // 通常の小説アイテム
+            final enrichedItem = data[index];
+            return NovelListTile(
+              item: enrichedItem.novel,
+              enrichedData: enrichedItem,
+              isRanking: false,
+            );
+          },
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),

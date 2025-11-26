@@ -10,6 +10,7 @@ import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
+import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -423,8 +424,10 @@ class ApiService {
     return compute(_parseJson, bytes.toList());
   }
 
-  /// 小説のランキングを取得するメソッド。
-  Future<List<RankingResponse>> searchNovels(NovelSearchQuery query) async {
+  /// 小説を検索するメソッド。
+  ///
+  /// 検索結果と全件数を含む[NovelSearchResult]を返す。
+  Future<NovelSearchResult> searchNovels(NovelSearchQuery query) async {
     final queryParameters = query.toMap();
     final filteredQueryParameters = queryParameters
       ..removeWhere((key, value) => value == null);
@@ -443,7 +446,9 @@ class ApiService {
       final data = await _fetchData(uri.toString());
       if (data.isNotEmpty &&
           (data[0] as Map<String, dynamic>?)?['allcount'] != null) {
-        return data
+        final allCount =
+            (data[0] as Map<String, dynamic>)['allcount'] as int? ?? 0;
+        final novels = data
             .sublist(1)
             .map(
               (item) => RankingResponse.fromJson(
@@ -451,13 +456,14 @@ class ApiService {
               ),
             )
             .toList();
+        return NovelSearchResult(novels: novels, allCount: allCount);
       }
-      return [];
+      return const NovelSearchResult(novels: [], allCount: 0);
     } on Exception catch (e) {
       if (kDebugMode) {
         print('An error occurred while searching for novels. Error: $e');
       }
-      return [];
+      return const NovelSearchResult(novels: [], allCount: 0);
     }
   }
 
@@ -590,17 +596,18 @@ class ApiService {
     const query = NovelSearchQuery(order: 'hyoka', lim: allTimeRankingLimit);
 
     try {
-      final results = await searchNovels(query);
+      final result = await searchNovels(query);
+      final novels = result.novels;
       if (kDebugMode) {
         print(
-          'Successfully fetched all-time ranking, count: ${results.length}',
+          'Successfully fetched all-time ranking, count: ${novels.length}',
         );
       }
 
       // ランキング順位を追加
       return [
-        for (var i = 0; i < results.length; i++)
-          results[i].copyWith(rank: i + 1, pt: results[i].allPoint),
+        for (var i = 0; i < novels.length; i++)
+          novels[i].copyWith(rank: i + 1, pt: novels[i].allPoint),
       ];
     } on Exception catch (e) {
       if (kDebugMode) {

@@ -8,14 +8,15 @@ import 'dart:async' as _i5;
 import 'package:drift/drift.dart' as _i2;
 import 'package:drift/src/runtime/executor/stream_queries.dart' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i8;
+import 'package:mockito/src/dummies.dart' as _i9;
 import 'package:novelty/database/database.dart' as _i3;
 import 'package:novelty/models/episode.dart' as _i7;
-import 'package:novelty/models/novel_download_summary.dart' as _i9;
+import 'package:novelty/models/novel_download_summary.dart' as _i10;
 import 'package:novelty/models/novel_info.dart' as _i6;
 import 'package:novelty/models/novel_search_query.dart' as _i12;
-import 'package:novelty/models/ranking_response.dart' as _i11;
-import 'package:novelty/services/api_service.dart' as _i10;
+import 'package:novelty/models/novel_search_result.dart' as _i8;
+import 'package:novelty/models/ranking_response.dart' as _i13;
+import 'package:novelty/services/api_service.dart' as _i11;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -181,6 +182,12 @@ class _FakeEpisode_25 extends _i1.SmartFake implements _i7.Episode {
     : super(parent, parentInvocation);
 }
 
+class _FakeNovelSearchResult_26 extends _i1.SmartFake
+    implements _i8.NovelSearchResult {
+  _FakeNovelSearchResult_26(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
 /// A class which mocks [AppDatabase].
 ///
 /// See the documentation for Mockito's code generation for more information.
@@ -332,7 +339,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i2.SqlTypes get typeMapping =>
       (super.noSuchMethod(
             Invocation.getter(#typeMapping),
-            returnValue: _i8.dummyValue<_i2.SqlTypes>(
+            returnValue: _i9.dummyValue<_i2.SqlTypes>(
               this,
               Invocation.getter(#typeMapping),
             ),
@@ -550,40 +557,40 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<int>);
 
   @override
-  _i5.Future<_i9.NovelDownloadSummary?> getNovelDownloadSummary(
+  _i5.Future<_i10.NovelDownloadSummary?> getNovelDownloadSummary(
     String? ncode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getNovelDownloadSummary, [ncode]),
-            returnValue: _i5.Future<_i9.NovelDownloadSummary?>.value(),
+            returnValue: _i5.Future<_i10.NovelDownloadSummary?>.value(),
           )
-          as _i5.Future<_i9.NovelDownloadSummary?>);
+          as _i5.Future<_i10.NovelDownloadSummary?>);
 
   @override
-  _i5.Stream<_i9.NovelDownloadSummary?> watchNovelDownloadSummary(
+  _i5.Stream<_i10.NovelDownloadSummary?> watchNovelDownloadSummary(
     String? ncode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#watchNovelDownloadSummary, [ncode]),
-            returnValue: _i5.Stream<_i9.NovelDownloadSummary?>.empty(),
+            returnValue: _i5.Stream<_i10.NovelDownloadSummary?>.empty(),
           )
-          as _i5.Stream<_i9.NovelDownloadSummary?>);
+          as _i5.Stream<_i10.NovelDownloadSummary?>);
 
   @override
-  _i5.Stream<List<_i9.NovelDownloadSummary>> watchDownloadingNovels() =>
+  _i5.Stream<List<_i10.NovelDownloadSummary>> watchDownloadingNovels() =>
       (super.noSuchMethod(
             Invocation.method(#watchDownloadingNovels, []),
-            returnValue: _i5.Stream<List<_i9.NovelDownloadSummary>>.empty(),
+            returnValue: _i5.Stream<List<_i10.NovelDownloadSummary>>.empty(),
           )
-          as _i5.Stream<List<_i9.NovelDownloadSummary>>);
+          as _i5.Stream<List<_i10.NovelDownloadSummary>>);
 
   @override
-  _i5.Stream<List<_i9.NovelDownloadSummary>> watchCompletedDownloads() =>
+  _i5.Stream<List<_i10.NovelDownloadSummary>> watchCompletedDownloads() =>
       (super.noSuchMethod(
             Invocation.method(#watchCompletedDownloads, []),
-            returnValue: _i5.Stream<List<_i9.NovelDownloadSummary>>.empty(),
+            returnValue: _i5.Stream<List<_i10.NovelDownloadSummary>>.empty(),
           )
-          as _i5.Stream<List<_i9.NovelDownloadSummary>>);
+          as _i5.Stream<List<_i10.NovelDownloadSummary>>);
 
   @override
   _i2.Migrator createMigrator() =>
@@ -631,7 +638,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   T alias<T, D>(_i2.ResultSetImplementation<T, D>? table, String? alias) =>
       (super.noSuchMethod(
             Invocation.method(#alias, [table, alias]),
-            returnValue: _i8.dummyValue<T>(
+            returnValue: _i9.dummyValue<T>(
               this,
               Invocation.method(#alias, [table, alias]),
             ),
@@ -668,8 +675,8 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
       (super.noSuchMethod(
             Invocation.method(#doWhenOpened, [fn]),
             returnValue:
-                _i8.ifNotNull(
-                  _i8.dummyValueOrNull<T>(
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
                     this,
                     Invocation.method(#doWhenOpened, [fn]),
                   ),
@@ -884,8 +891,8 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
               {#requireNew: requireNew},
             ),
             returnValue:
-                _i8.ifNotNull(
-                  _i8.dummyValueOrNull<T>(
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
                     this,
                     Invocation.method(
                       #transaction,
@@ -911,8 +918,8 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
       (super.noSuchMethod(
             Invocation.method(#exclusively, [action]),
             returnValue:
-                _i8.ifNotNull(
-                  _i8.dummyValueOrNull<T>(
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
                     this,
                     Invocation.method(#exclusively, [action]),
                   ),
@@ -946,8 +953,8 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
               {#interceptor: interceptor},
             ),
             returnValue:
-                _i8.ifNotNull(
-                  _i8.dummyValueOrNull<T>(
+                _i9.ifNotNull(
+                  _i9.dummyValueOrNull<T>(
                     this,
                     Invocation.method(
                       #runWithInterceptor,
@@ -1021,7 +1028,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   String $expandVar(int? start, int? amount) =>
       (super.noSuchMethod(
             Invocation.method(#$expandVar, [start, amount]),
-            returnValue: _i8.dummyValue<String>(
+            returnValue: _i9.dummyValue<String>(
               this,
               Invocation.method(#$expandVar, [start, amount]),
             ),
@@ -1032,7 +1039,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
 /// A class which mocks [ApiService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockApiService extends _i1.Mock implements _i10.ApiService {
+class MockApiService extends _i1.Mock implements _i11.ApiService {
   MockApiService() {
     _i1.throwOnMissingStub(this);
   }
@@ -1097,24 +1104,27 @@ class MockApiService extends _i1.Mock implements _i10.ApiService {
           as _i5.Future<_i7.Episode>);
 
   @override
-  _i5.Future<List<_i11.RankingResponse>> searchNovels(
+  _i5.Future<_i8.NovelSearchResult> searchNovels(
     _i12.NovelSearchQuery? query,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#searchNovels, [query]),
-            returnValue: _i5.Future<List<_i11.RankingResponse>>.value(
-              <_i11.RankingResponse>[],
+            returnValue: _i5.Future<_i8.NovelSearchResult>.value(
+              _FakeNovelSearchResult_26(
+                this,
+                Invocation.method(#searchNovels, [query]),
+              ),
             ),
           )
-          as _i5.Future<List<_i11.RankingResponse>>);
+          as _i5.Future<_i8.NovelSearchResult>);
 
   @override
-  _i5.Future<List<_i11.RankingResponse>> fetchRanking(String? rankingType) =>
+  _i5.Future<List<_i13.RankingResponse>> fetchRanking(String? rankingType) =>
       (super.noSuchMethod(
             Invocation.method(#fetchRanking, [rankingType]),
-            returnValue: _i5.Future<List<_i11.RankingResponse>>.value(
-              <_i11.RankingResponse>[],
+            returnValue: _i5.Future<List<_i13.RankingResponse>>.value(
+              <_i13.RankingResponse>[],
             ),
           )
-          as _i5.Future<List<_i11.RankingResponse>>);
+          as _i5.Future<List<_i13.RankingResponse>>);
 }
