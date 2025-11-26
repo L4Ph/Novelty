@@ -105,10 +105,10 @@ Future<EnrichedNovelData> enrichedNovel(Ref ref, String ncode) async {
   // APIから小説データを取得
   final query = NovelSearchQuery(ncode: [ncode], lim: 1);
   final searchResult = await apiService.searchNovels(query);
-  if (searchResult.isEmpty) {
+  if (searchResult.novels.isEmpty) {
     throw Exception('Novel not found for ncode: $ncode');
   }
-  final novel = searchResult.first;
+  final novel = searchResult.novels.first;
 
   // ライブラリ状態を確認
   final isInLibrary = await db.isInLibrary(ncode);

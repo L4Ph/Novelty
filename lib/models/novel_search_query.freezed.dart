@@ -114,7 +114,7 @@ mixin _$NovelSearchQuery {
 /// [出力順序一覧](https://dev.syosetu.com/man/api/#order)
  String get order;/// 最大出力数。
 ///
-/// 1～500。���フォルトは20。
+/// 1～500。デフォルトは20。
  int get lim;/// 表示開始位置。
 ///
 /// 1～2000。デフォルトは1。
@@ -575,7 +575,7 @@ class _NovelSearchQuery implements NovelSearchQuery {
 @override@JsonKey() final  String order;
 /// 最大出力数。
 ///
-/// 1～500。���フォルトは20。
+/// 1～500。デフォルトは20。
 @override@JsonKey() final  int lim;
 /// 表示開始位置。
 ///

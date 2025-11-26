@@ -1,12 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:novelty/database/database.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
+import 'package:novelty/domain/search_state.dart';
 import 'package:novelty/models/novel_search_query.dart';
-import 'package:novelty/models/ranking_response.dart';
-import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/app_constants.dart';
-import 'package:novelty/widgets/enriched_novel_list.dart';
+import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
 /// "見つける"ページのウィジェット。
@@ -22,9 +25,6 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   var _searchQuery = const NovelSearchQuery();
-  List<RankingResponse> _searchResults = [];
-  var _isLoading = false;
-  var _isSearching = false;
   late final VoidCallback _tabListener;
 
   @override
@@ -36,11 +36,9 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
         return;
       }
 
-      if (_isSearching) {
-        setState(() {
-          _isSearching = false;
-          _searchResults = [];
-        });
+      final searchState = ref.read(searchStateProvider);
+      if (searchState.isSearching) {
+        ref.read(searchStateProvider.notifier).reset();
       }
     };
     _tabController.addListener(_tabListener);
@@ -55,22 +53,11 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
   }
 
   Future<void> _performSearch() async {
-    setState(() {
-      _isLoading = true;
-      _isSearching = true;
-    });
-
-    final apiService = ref.read(apiServiceProvider);
-    final results = await apiService.searchNovels(_searchQuery);
-
-    setState(() {
-      _searchResults = results;
-      _isLoading = false;
-    });
+    await ref.read(searchStateProvider.notifier).search(_searchQuery);
   }
 
   void _showSearchDialog() {
-    showDialog<void>(
+    unawaited(showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -214,14 +201,14 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
             TextButton(
               child: const Text('検索'),
               onPressed: () {
-                _performSearch();
+                unawaited(_performSearch());
                 Navigator.of(context).pop();
               },
             ),
           ],
         );
       },
-    );
+    ));
   }
 
   void _showRankingFilterDialog() {
@@ -234,7 +221,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
       rankingFilterStateProvider(currentRankingType),
     );
 
-    showModalBottomSheet<void>(
+    unawaited(showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (BuildContext context) {
@@ -315,47 +302,43 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
           },
         );
       },
-    );
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
+    final searchState = ref.watch(searchStateProvider);
+
     return PopScope(
-      canPop: !_isSearching,
+      canPop: !searchState.isSearching,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) {
           return;
         }
-        setState(() {
-          _isSearching = false;
-          _searchResults = [];
-        });
+        ref.read(searchStateProvider.notifier).reset();
       },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('見つける'),
           actions: [
-            if (_isSearching)
+            if (searchState.isSearching)
               IconButton(
                 icon: const Icon(Icons.clear),
                 onPressed: () {
-                  setState(() {
-                    _isSearching = false;
-                    _searchResults = [];
-                  });
+                  ref.read(searchStateProvider.notifier).reset();
                 },
               ),
             IconButton(
               icon: const Icon(Icons.search),
               onPressed: _showSearchDialog,
             ),
-            if (!_isSearching)
+            if (!searchState.isSearching)
               IconButton(
                 icon: const Icon(Icons.filter_list),
                 onPressed: _showRankingFilterDialog,
               ),
           ],
-          bottom: _isSearching
+          bottom: searchState.isSearching
               ? null
               : TabBar(
                   controller: _tabController,
@@ -368,10 +351,10 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
                   ],
                 ),
         ),
-        body: _isSearching
-            ? _isLoading
+        body: searchState.isSearching
+            ? searchState.isLoading && searchState.results.isEmpty
                   ? const Center(child: CircularProgressIndicator())
-                  : _EnrichedSearchResults(searchResults: _searchResults)
+                  : const _EnrichedSearchResults()
             : TabBarView(
                 controller: _tabController,
                 children: const [
@@ -402,27 +385,115 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
   }
 }
 
-/// Helper widget to display enriched search results
-class _EnrichedSearchResults extends ConsumerWidget {
-  const _EnrichedSearchResults({required this.searchResults});
-
-  final List<RankingResponse> searchResults;
+/// 検索結果を表示するヘルパーウィジェット
+class _EnrichedSearchResults extends HookConsumerWidget {
+  const _EnrichedSearchResults();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final enrichedResults = ref.watch(
-      enrichedSearchDataProvider(searchResults),
+    final searchState = ref.watch(searchStateProvider);
+
+    // ローカル状態で強化済みデータを管理（フラッシュ防止）
+    final enrichedData = useState<List<EnrichedNovelData>>([]);
+    final isEnriching = useState(false);
+    final lastEnrichedCount = useState(0);
+
+    // 新しい結果が追加されたときに強化処理を実行
+    useEffect(
+      () {
+        Future<void> enrichNewResults() async {
+          final results = searchState.results;
+          final alreadyEnriched = lastEnrichedCount.value;
+
+          // 新しい結果がない場合はスキップ
+          if (results.length <= alreadyEnriched) {
+            // リセットされた場合（結果が減った場合）
+            if (results.isEmpty && enrichedData.value.isNotEmpty) {
+              enrichedData.value = [];
+              lastEnrichedCount.value = 0;
+            }
+            return;
+          }
+
+          isEnriching.value = true;
+
+          try {
+            // データベースからライブラリ状態を取得
+            final db = ref.read(appDatabaseProvider);
+            final libraryNovels = await db.getLibraryNovels();
+            final libraryNcodes =
+                libraryNovels.map((novel) => novel.ncode).toSet();
+
+            // 新しい結果のみを強化
+            final newResults = results.sublist(alreadyEnriched);
+            final newEnrichedData = newResults.map((novel) {
+              final isInLibrary = libraryNcodes.contains(novel.ncode);
+              return EnrichedNovelData(
+                novel: novel,
+                isInLibrary: isInLibrary,
+              );
+            }).toList();
+
+            // 既存のデータに追加
+            enrichedData.value = [...enrichedData.value, ...newEnrichedData];
+            lastEnrichedCount.value = results.length;
+          } finally {
+            isEnriching.value = false;
+          }
+        }
+
+        unawaited(enrichNewResults());
+        return null;
+      },
+      [searchState.results.length],
     );
 
-    return enrichedResults.when(
-      data: (data) {
-        return EnrichedNovelList(
-          enrichedNovels: data,
-          isRanking: false,
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(child: Text('Error: $error')),
+    // 初回ローディング中
+    if (searchState.isLoading && enrichedData.value.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // データがない場合
+    if (enrichedData.value.isEmpty && !isEnriching.value) {
+      return const Center(child: Text('検索結果がありません'));
+    }
+
+    final hasMore = searchState.hasMore;
+    final data = enrichedData.value;
+
+    return ListView(
+      key: const PageStorageKey('search_results'),
+      children: [
+        ...data.map(
+          (enrichedItem) => NovelListTile(
+            item: enrichedItem.novel,
+            enrichedData: enrichedItem,
+          ),
+        ),
+        if (hasMore)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: searchState.isLoading
+                  ? const CircularProgressIndicator()
+                  : TextButton(
+                      onPressed: () {
+                        unawaited(
+                          ref.read(searchStateProvider.notifier).loadMore(),
+                        );
+                      },
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('もっと見る'),
+                          SizedBox(width: 4),
+                          Icon(Icons.expand_more, size: 20),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+      ],
     );
   }
 }
