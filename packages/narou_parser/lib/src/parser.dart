@@ -1,9 +1,9 @@
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
-import 'package:novelty/models/novel_content_element.dart';
+import 'package:narou_parser/src/models/novel_content_element.dart';
 
 /// HTML文字列から小説のコンテンツをパースする関数。
-List<NovelContentElement> parseNovel(String htmlString) {
+List<NovelContentElement> parseNovelContent(String htmlString) {
   final document = parser.parseFragment(htmlString);
 
   final elements = <NovelContentElement>[];

@@ -1,0 +1,9 @@
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  errors:
+    lines_longer_than_80_chars: ignore
+    invalid_annotation_target: ignore
+  exclude:
+    - lib/src/models/*.g.dart
+    - lib/src/models/*.freezed.dart

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:novelty/models/novel_content_element.dart';
+import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/widgets/ruby_text_widget.dart';
 
 /// 小説のコンテンツを表示するウィジェット。

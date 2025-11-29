@@ -7,11 +7,10 @@ import 'package:novelty/database/database.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/download_result.dart';
-import 'package:novelty/models/novel_content_element.dart';
+import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
-import 'package:novelty/utils/novel_parser.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -174,7 +173,7 @@ class NovelRepository {
       return [];
     }
 
-    final parsedContent = parseNovel(episodeData.body!);
+    final parsedContent = parseNovelContent(episodeData.body!);
     return parsedContent;
   }
 
