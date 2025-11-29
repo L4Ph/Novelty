@@ -30,16 +30,13 @@ HTMLから以下の要素を抽出：
 @freezed
 sealed class NovelContentElement with _$NovelContentElement {
   /// プレーンテキスト
-  const factory NovelContentElement.plainText(String text) = PlainText;
+  factory NovelContentElement.plainText(String text) = PlainText;
 
-  /// ルビ付きテキスト
-  const factory NovelContentElement.rubyText({
-    required String base,  // 親文字
-    required String ruby,  // ルビ
-  }) = RubyText;
+  /// ルビ付きテキスト（base: 親文字, ruby: ルビ）
+  factory NovelContentElement.rubyText(String base, String ruby) = RubyText;
 
   /// 改行
-  const factory NovelContentElement.newLine() = NewLine;
+  factory NovelContentElement.newLine() = NewLine;
 
   factory NovelContentElement.fromJson(Map<String, dynamic> json) =>
       _$NovelContentElementFromJson(json);
@@ -94,23 +91,25 @@ packages/narou_parser/
 
 ```yaml
 name: narou_parser
-description: A parser for Narou novel HTML content.
-version: 1.0.0
+description: なろう小説パーサー
+version: 0.1.0
 
 environment:
-  sdk: ^3.8.0
+  sdk: ^3.8.1
+
+resolution: workspace
 
 dependencies:
-  html: ^0.15.6
-  freezed_annotation: ^3.1.0
-  json_annotation: ^4.9.0
+  html: # workspace で管理
+  freezed_annotation: # workspace で管理
+  json_annotation: # workspace で管理
 
 dev_dependencies:
-  build_runner: ^2.5.4
-  freezed: ^3.1.0
-  json_serializable: ^6.9.0
-  very_good_analysis: ^8.0.0
-  test: ^1.25.0
+  build_runner: # workspace で管理
+  freezed: # workspace で管理
+  json_serializable: # workspace で管理
+  very_good_analysis: # workspace で管理
+  test: # workspace で管理
 ```
 
 ---
