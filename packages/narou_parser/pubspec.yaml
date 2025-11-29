@@ -6,3 +6,15 @@ environment:
   sdk: ^3.8.1
 
 resolution: workspace
+
+dependencies:
+  html:
+  freezed_annotation:
+  json_annotation:
+
+dev_dependencies:
+  build_runner:
+  freezed:
+  json_serializable:
+  very_good_analysis:
+  test:

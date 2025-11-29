@@ -1,4 +1,4 @@
-import 'package:novelty/models/novel_content_element.dart';
+import 'package:narou_parser/narou_parser.dart';
 import 'package:tategaki/tategaki.dart';
 
 /// NovelContentElementからTategakiElementへの変換ユーティリティ

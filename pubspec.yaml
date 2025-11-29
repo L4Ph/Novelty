@@ -31,6 +31,8 @@ workspace:
 dependencies:
   tategaki:
     path: packages/tategaki
+  narou_parser:
+    path: packages/narou_parser
   archive: ^4.0.7
   cupertino_icons: ^1.0.8
   dio: ^5.9.0

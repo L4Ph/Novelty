@@ -5,7 +5,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:novelty/models/novel_content_element.dart';
+import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/models/novel_download_summary.dart';
 import 'package:novelty/utils/history_grouping.dart';
 import 'package:novelty/utils/ncode_utils.dart';
