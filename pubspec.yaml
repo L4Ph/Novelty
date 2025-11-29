@@ -17,7 +17,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 version: 0.7.3+71
 environment:
-  sdk: ^3.8.1
+  sdk: ^3.9.2
 workspace:
   - packages/tategaki
   - packages/narou_parser
@@ -61,7 +61,7 @@ dependencies:
   url_launcher: ^6.3.2
 dev_dependencies:
   build_runner: ^2.5.4
-  custom_lint: 0.8.1
+  custom_lint: 0.8.0
   drift_dev: ^2.14.0
   flutter_test:
     sdk: flutter
