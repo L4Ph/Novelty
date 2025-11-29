@@ -1,0 +1,3 @@
+environment:
+  sdk: ^3.8.1
+resolution: workspace
