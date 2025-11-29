@@ -248,7 +248,7 @@ final class EnrichedNovelProvider
   }
 }
 
-String _$enrichedNovelHash() => r'0ddc46911e861761ca6bc791a005e9b5219bd377';
+String _$enrichedNovelHash() => r'4c5408924b9b046662f7709784685f107d29d0a5';
 
 /// ncodeから単一の豊富な小説データを取得するプロバイダー
 

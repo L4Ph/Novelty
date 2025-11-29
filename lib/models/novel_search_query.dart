@@ -190,7 +190,7 @@ abstract class NovelSearchQuery with _$NovelSearchQuery {
 
     /// 最大出力数。
     ///
-    /// 1～500。���フォルトは20。
+    /// 1～500。デフォルトは20。
     @Default(20) int lim,
 
     /// 表示開始位置。

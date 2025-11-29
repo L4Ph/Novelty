@@ -15,9 +15,12 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.7.3+66
+version: 0.7.3+68
 environment:
   sdk: ^3.8.1
+workspace:
+  - packages/tategaki
+  - packages/narou_parser
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -25,6 +28,10 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  tategaki:
+    path: packages/tategaki
+  narou_parser:
+    path: packages/narou_parser
   archive: ^4.0.7
   cupertino_icons: ^1.0.8
   dio: ^5.9.0

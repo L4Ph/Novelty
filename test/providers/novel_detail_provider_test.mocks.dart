@@ -7,21 +7,22 @@ import 'dart:async' as _i5;
 
 import 'package:drift/drift.dart' as _i2;
 import 'package:drift/src/runtime/executor/stream_queries.dart' as _i4;
-import 'package:flutter_riverpod/flutter_riverpod.dart' as _i15;
+import 'package:flutter_riverpod/flutter_riverpod.dart' as _i16;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i10;
+import 'package:mockito/src/dummies.dart' as _i11;
+import 'package:narou_parser/narou_parser.dart' as _i19;
 import 'package:novelty/database/database.dart' as _i3;
-import 'package:novelty/models/download_progress.dart' as _i17;
-import 'package:novelty/models/download_result.dart' as _i9;
+import 'package:novelty/models/download_progress.dart' as _i18;
+import 'package:novelty/models/download_result.dart' as _i10;
 import 'package:novelty/models/episode.dart' as _i7;
-import 'package:novelty/models/novel_content_element.dart' as _i18;
-import 'package:novelty/models/novel_download_summary.dart' as _i11;
+import 'package:novelty/models/novel_download_summary.dart' as _i12;
 import 'package:novelty/models/novel_info.dart' as _i6;
 import 'package:novelty/models/novel_search_query.dart' as _i13;
-import 'package:novelty/models/ranking_response.dart' as _i12;
-import 'package:novelty/repositories/novel_repository.dart' as _i14;
-import 'package:novelty/services/api_service.dart' as _i8;
-import 'package:novelty/utils/settings_provider.dart' as _i16;
+import 'package:novelty/models/novel_search_result.dart' as _i8;
+import 'package:novelty/models/ranking_response.dart' as _i14;
+import 'package:novelty/repositories/novel_repository.dart' as _i15;
+import 'package:novelty/services/api_service.dart' as _i9;
+import 'package:novelty/utils/settings_provider.dart' as _i17;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -187,14 +188,20 @@ class _FakeEpisode_25 extends _i1.SmartFake implements _i7.Episode {
     : super(parent, parentInvocation);
 }
 
-class _FakeApiService_26 extends _i1.SmartFake implements _i8.ApiService {
-  _FakeApiService_26(Object parent, Invocation parentInvocation)
+class _FakeNovelSearchResult_26 extends _i1.SmartFake
+    implements _i8.NovelSearchResult {
+  _FakeNovelSearchResult_26(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeDownloadResult_27 extends _i1.SmartFake
-    implements _i9.DownloadResult {
-  _FakeDownloadResult_27(Object parent, Invocation parentInvocation)
+class _FakeApiService_27 extends _i1.SmartFake implements _i9.ApiService {
+  _FakeApiService_27(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeDownloadResult_28 extends _i1.SmartFake
+    implements _i10.DownloadResult {
+  _FakeDownloadResult_28(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -349,7 +356,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i2.SqlTypes get typeMapping =>
       (super.noSuchMethod(
             Invocation.getter(#typeMapping),
-            returnValue: _i10.dummyValue<_i2.SqlTypes>(
+            returnValue: _i11.dummyValue<_i2.SqlTypes>(
               this,
               Invocation.getter(#typeMapping),
             ),
@@ -567,40 +574,40 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<int>);
 
   @override
-  _i5.Future<_i11.NovelDownloadSummary?> getNovelDownloadSummary(
+  _i5.Future<_i12.NovelDownloadSummary?> getNovelDownloadSummary(
     String? ncode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getNovelDownloadSummary, [ncode]),
-            returnValue: _i5.Future<_i11.NovelDownloadSummary?>.value(),
+            returnValue: _i5.Future<_i12.NovelDownloadSummary?>.value(),
           )
-          as _i5.Future<_i11.NovelDownloadSummary?>);
+          as _i5.Future<_i12.NovelDownloadSummary?>);
 
   @override
-  _i5.Stream<_i11.NovelDownloadSummary?> watchNovelDownloadSummary(
+  _i5.Stream<_i12.NovelDownloadSummary?> watchNovelDownloadSummary(
     String? ncode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#watchNovelDownloadSummary, [ncode]),
-            returnValue: _i5.Stream<_i11.NovelDownloadSummary?>.empty(),
+            returnValue: _i5.Stream<_i12.NovelDownloadSummary?>.empty(),
           )
-          as _i5.Stream<_i11.NovelDownloadSummary?>);
+          as _i5.Stream<_i12.NovelDownloadSummary?>);
 
   @override
-  _i5.Stream<List<_i11.NovelDownloadSummary>> watchDownloadingNovels() =>
+  _i5.Stream<List<_i12.NovelDownloadSummary>> watchDownloadingNovels() =>
       (super.noSuchMethod(
             Invocation.method(#watchDownloadingNovels, []),
-            returnValue: _i5.Stream<List<_i11.NovelDownloadSummary>>.empty(),
+            returnValue: _i5.Stream<List<_i12.NovelDownloadSummary>>.empty(),
           )
-          as _i5.Stream<List<_i11.NovelDownloadSummary>>);
+          as _i5.Stream<List<_i12.NovelDownloadSummary>>);
 
   @override
-  _i5.Stream<List<_i11.NovelDownloadSummary>> watchCompletedDownloads() =>
+  _i5.Stream<List<_i12.NovelDownloadSummary>> watchCompletedDownloads() =>
       (super.noSuchMethod(
             Invocation.method(#watchCompletedDownloads, []),
-            returnValue: _i5.Stream<List<_i11.NovelDownloadSummary>>.empty(),
+            returnValue: _i5.Stream<List<_i12.NovelDownloadSummary>>.empty(),
           )
-          as _i5.Stream<List<_i11.NovelDownloadSummary>>);
+          as _i5.Stream<List<_i12.NovelDownloadSummary>>);
 
   @override
   _i2.Migrator createMigrator() =>
@@ -648,7 +655,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   T alias<T, D>(_i2.ResultSetImplementation<T, D>? table, String? alias) =>
       (super.noSuchMethod(
             Invocation.method(#alias, [table, alias]),
-            returnValue: _i10.dummyValue<T>(
+            returnValue: _i11.dummyValue<T>(
               this,
               Invocation.method(#alias, [table, alias]),
             ),
@@ -685,8 +692,8 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
       (super.noSuchMethod(
             Invocation.method(#doWhenOpened, [fn]),
             returnValue:
-                _i10.ifNotNull(
-                  _i10.dummyValueOrNull<T>(
+                _i11.ifNotNull(
+                  _i11.dummyValueOrNull<T>(
                     this,
                     Invocation.method(#doWhenOpened, [fn]),
                   ),
@@ -901,8 +908,8 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
               {#requireNew: requireNew},
             ),
             returnValue:
-                _i10.ifNotNull(
-                  _i10.dummyValueOrNull<T>(
+                _i11.ifNotNull(
+                  _i11.dummyValueOrNull<T>(
                     this,
                     Invocation.method(
                       #transaction,
@@ -928,8 +935,8 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
       (super.noSuchMethod(
             Invocation.method(#exclusively, [action]),
             returnValue:
-                _i10.ifNotNull(
-                  _i10.dummyValueOrNull<T>(
+                _i11.ifNotNull(
+                  _i11.dummyValueOrNull<T>(
                     this,
                     Invocation.method(#exclusively, [action]),
                   ),
@@ -963,8 +970,8 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
               {#interceptor: interceptor},
             ),
             returnValue:
-                _i10.ifNotNull(
-                  _i10.dummyValueOrNull<T>(
+                _i11.ifNotNull(
+                  _i11.dummyValueOrNull<T>(
                     this,
                     Invocation.method(
                       #runWithInterceptor,
@@ -1038,7 +1045,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   String $expandVar(int? start, int? amount) =>
       (super.noSuchMethod(
             Invocation.method(#$expandVar, [start, amount]),
-            returnValue: _i10.dummyValue<String>(
+            returnValue: _i11.dummyValue<String>(
               this,
               Invocation.method(#$expandVar, [start, amount]),
             ),
@@ -1049,7 +1056,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
 /// A class which mocks [ApiService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockApiService extends _i1.Mock implements _i8.ApiService {
+class MockApiService extends _i1.Mock implements _i9.ApiService {
   MockApiService() {
     _i1.throwOnMissingStub(this);
   }
@@ -1114,68 +1121,71 @@ class MockApiService extends _i1.Mock implements _i8.ApiService {
           as _i5.Future<_i7.Episode>);
 
   @override
-  _i5.Future<List<_i12.RankingResponse>> searchNovels(
+  _i5.Future<_i8.NovelSearchResult> searchNovels(
     _i13.NovelSearchQuery? query,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#searchNovels, [query]),
-            returnValue: _i5.Future<List<_i12.RankingResponse>>.value(
-              <_i12.RankingResponse>[],
+            returnValue: _i5.Future<_i8.NovelSearchResult>.value(
+              _FakeNovelSearchResult_26(
+                this,
+                Invocation.method(#searchNovels, [query]),
+              ),
             ),
           )
-          as _i5.Future<List<_i12.RankingResponse>>);
+          as _i5.Future<_i8.NovelSearchResult>);
 
   @override
-  _i5.Future<List<_i12.RankingResponse>> fetchRanking(String? rankingType) =>
+  _i5.Future<List<_i14.RankingResponse>> fetchRanking(String? rankingType) =>
       (super.noSuchMethod(
             Invocation.method(#fetchRanking, [rankingType]),
-            returnValue: _i5.Future<List<_i12.RankingResponse>>.value(
-              <_i12.RankingResponse>[],
+            returnValue: _i5.Future<List<_i14.RankingResponse>>.value(
+              <_i14.RankingResponse>[],
             ),
           )
-          as _i5.Future<List<_i12.RankingResponse>>);
+          as _i5.Future<List<_i14.RankingResponse>>);
 }
 
 /// A class which mocks [NovelRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
+class MockNovelRepository extends _i1.Mock implements _i15.NovelRepository {
   MockNovelRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i15.Ref get ref =>
+  _i16.Ref get ref =>
       (super.noSuchMethod(
             Invocation.getter(#ref),
-            returnValue: _i10.dummyValue<_i15.Ref>(
+            returnValue: _i11.dummyValue<_i16.Ref>(
               this,
               Invocation.getter(#ref),
             ),
           )
-          as _i15.Ref);
+          as _i16.Ref);
 
   @override
-  _i8.ApiService get apiService =>
+  _i9.ApiService get apiService =>
       (super.noSuchMethod(
             Invocation.getter(#apiService),
-            returnValue: _FakeApiService_26(
+            returnValue: _FakeApiService_27(
               this,
               Invocation.getter(#apiService),
             ),
           )
-          as _i8.ApiService);
+          as _i9.ApiService);
 
   @override
-  _i15.AsyncValue<_i16.AppSettings> get settings =>
+  _i16.AsyncValue<_i17.AppSettings> get settings =>
       (super.noSuchMethod(
             Invocation.getter(#settings),
-            returnValue: _i10.dummyValue<_i15.AsyncValue<_i16.AppSettings>>(
+            returnValue: _i11.dummyValue<_i16.AsyncValue<_i17.AppSettings>>(
               this,
               Invocation.getter(#settings),
             ),
           )
-          as _i15.AsyncValue<_i16.AppSettings>);
+          as _i16.AsyncValue<_i17.AppSettings>);
 
   @override
   void dispose() => super.noSuchMethod(
@@ -1184,12 +1194,12 @@ class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
   );
 
   @override
-  _i5.Stream<_i17.DownloadProgress> watchDownloadProgress(String? ncode) =>
+  _i5.Stream<_i18.DownloadProgress> watchDownloadProgress(String? ncode) =>
       (super.noSuchMethod(
             Invocation.method(#watchDownloadProgress, [ncode]),
-            returnValue: _i5.Stream<_i17.DownloadProgress>.empty(),
+            returnValue: _i5.Stream<_i18.DownloadProgress>.empty(),
           )
-          as _i5.Stream<_i17.DownloadProgress>);
+          as _i5.Stream<_i18.DownloadProgress>);
 
   @override
   _i5.Future<bool> addNovelToLibrary(String? ncode) =>
@@ -1245,17 +1255,17 @@ class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
           as _i5.Future<bool>);
 
   @override
-  _i5.Future<List<_i18.NovelContentElement>> getEpisode(
+  _i5.Future<List<_i19.NovelContentElement>> getEpisode(
     String? ncode,
     int? episode,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getEpisode, [ncode, episode]),
-            returnValue: _i5.Future<List<_i18.NovelContentElement>>.value(
-              <_i18.NovelContentElement>[],
+            returnValue: _i5.Future<List<_i19.NovelContentElement>>.value(
+              <_i19.NovelContentElement>[],
             ),
           )
-          as _i5.Future<List<_i18.NovelContentElement>>);
+          as _i5.Future<List<_i19.NovelContentElement>>);
 
   @override
   _i5.Future<void> downloadEpisode(String? ncode, int? episode) =>
@@ -1310,7 +1320,7 @@ class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
           as _i5.Stream<bool>);
 
   @override
-  _i5.Future<_i9.DownloadResult> downloadNovelWithPermission(
+  _i5.Future<_i10.DownloadResult> downloadNovelWithPermission(
     String? ncode,
     int? totalEpisodes,
   ) =>
@@ -1319,8 +1329,8 @@ class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
               ncode,
               totalEpisodes,
             ]),
-            returnValue: _i5.Future<_i9.DownloadResult>.value(
-              _FakeDownloadResult_27(
+            returnValue: _i5.Future<_i10.DownloadResult>.value(
+              _FakeDownloadResult_28(
                 this,
                 Invocation.method(#downloadNovelWithPermission, [
                   ncode,
@@ -1329,5 +1339,5 @@ class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
               ),
             ),
           )
-          as _i5.Future<_i9.DownloadResult>);
+          as _i5.Future<_i10.DownloadResult>);
 }

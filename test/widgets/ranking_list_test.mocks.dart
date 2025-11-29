@@ -3,14 +3,15 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i5;
+import 'dart:async' as _i6;
 
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:novelty/models/episode.dart' as _i3;
 import 'package:novelty/models/novel_info.dart' as _i2;
 import 'package:novelty/models/novel_search_query.dart' as _i7;
-import 'package:novelty/models/ranking_response.dart' as _i6;
-import 'package:novelty/services/api_service.dart' as _i4;
+import 'package:novelty/models/novel_search_result.dart' as _i4;
+import 'package:novelty/models/ranking_response.dart' as _i8;
+import 'package:novelty/services/api_service.dart' as _i5;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -36,92 +37,99 @@ class _FakeEpisode_1 extends _i1.SmartFake implements _i3.Episode {
     : super(parent, parentInvocation);
 }
 
+class _FakeNovelSearchResult_2 extends _i1.SmartFake
+    implements _i4.NovelSearchResult {
+  _FakeNovelSearchResult_2(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
 /// A class which mocks [ApiService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockApiService extends _i1.Mock implements _i4.ApiService {
+class MockApiService extends _i1.Mock implements _i5.ApiService {
   MockApiService() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<Map<String, _i2.NovelInfo>> fetchMultipleNovelsInfo(
+  _i6.Future<Map<String, _i2.NovelInfo>> fetchMultipleNovelsInfo(
     List<String>? ncodes,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#fetchMultipleNovelsInfo, [ncodes]),
-            returnValue: _i5.Future<Map<String, _i2.NovelInfo>>.value(
+            returnValue: _i6.Future<Map<String, _i2.NovelInfo>>.value(
               <String, _i2.NovelInfo>{},
             ),
           )
-          as _i5.Future<Map<String, _i2.NovelInfo>>);
+          as _i6.Future<Map<String, _i2.NovelInfo>>);
 
   @override
-  _i5.Future<_i2.NovelInfo> fetchBasicNovelInfo(String? ncode) =>
+  _i6.Future<_i2.NovelInfo> fetchBasicNovelInfo(String? ncode) =>
       (super.noSuchMethod(
             Invocation.method(#fetchBasicNovelInfo, [ncode]),
-            returnValue: _i5.Future<_i2.NovelInfo>.value(
+            returnValue: _i6.Future<_i2.NovelInfo>.value(
               _FakeNovelInfo_0(
                 this,
                 Invocation.method(#fetchBasicNovelInfo, [ncode]),
               ),
             ),
           )
-          as _i5.Future<_i2.NovelInfo>);
+          as _i6.Future<_i2.NovelInfo>);
 
   @override
-  _i5.Future<List<_i3.Episode>> fetchEpisodeList(String? ncode, int? page) =>
+  _i6.Future<List<_i3.Episode>> fetchEpisodeList(String? ncode, int? page) =>
       (super.noSuchMethod(
             Invocation.method(#fetchEpisodeList, [ncode, page]),
-            returnValue: _i5.Future<List<_i3.Episode>>.value(<_i3.Episode>[]),
+            returnValue: _i6.Future<List<_i3.Episode>>.value(<_i3.Episode>[]),
           )
-          as _i5.Future<List<_i3.Episode>>);
+          as _i6.Future<List<_i3.Episode>>);
 
   @override
-  _i5.Future<_i2.NovelInfo> fetchNovelInfo(String? ncode) =>
+  _i6.Future<_i2.NovelInfo> fetchNovelInfo(String? ncode) =>
       (super.noSuchMethod(
             Invocation.method(#fetchNovelInfo, [ncode]),
-            returnValue: _i5.Future<_i2.NovelInfo>.value(
+            returnValue: _i6.Future<_i2.NovelInfo>.value(
               _FakeNovelInfo_0(
                 this,
                 Invocation.method(#fetchNovelInfo, [ncode]),
               ),
             ),
           )
-          as _i5.Future<_i2.NovelInfo>);
+          as _i6.Future<_i2.NovelInfo>);
 
   @override
-  _i5.Future<_i3.Episode> fetchEpisode(String? ncode, int? episode) =>
+  _i6.Future<_i3.Episode> fetchEpisode(String? ncode, int? episode) =>
       (super.noSuchMethod(
             Invocation.method(#fetchEpisode, [ncode, episode]),
-            returnValue: _i5.Future<_i3.Episode>.value(
+            returnValue: _i6.Future<_i3.Episode>.value(
               _FakeEpisode_1(
                 this,
                 Invocation.method(#fetchEpisode, [ncode, episode]),
               ),
             ),
           )
-          as _i5.Future<_i3.Episode>);
+          as _i6.Future<_i3.Episode>);
 
   @override
-  _i5.Future<List<_i6.RankingResponse>> searchNovels(
-    _i7.NovelSearchQuery? query,
-  ) =>
+  _i6.Future<_i4.NovelSearchResult> searchNovels(_i7.NovelSearchQuery? query) =>
       (super.noSuchMethod(
             Invocation.method(#searchNovels, [query]),
-            returnValue: _i5.Future<List<_i6.RankingResponse>>.value(
-              <_i6.RankingResponse>[],
+            returnValue: _i6.Future<_i4.NovelSearchResult>.value(
+              _FakeNovelSearchResult_2(
+                this,
+                Invocation.method(#searchNovels, [query]),
+              ),
             ),
           )
-          as _i5.Future<List<_i6.RankingResponse>>);
+          as _i6.Future<_i4.NovelSearchResult>);
 
   @override
-  _i5.Future<List<_i6.RankingResponse>> fetchRanking(String? rankingType) =>
+  _i6.Future<List<_i8.RankingResponse>> fetchRanking(String? rankingType) =>
       (super.noSuchMethod(
             Invocation.method(#fetchRanking, [rankingType]),
-            returnValue: _i5.Future<List<_i6.RankingResponse>>.value(
-              <_i6.RankingResponse>[],
+            returnValue: _i6.Future<List<_i8.RankingResponse>>.value(
+              <_i8.RankingResponse>[],
             ),
           )
-          as _i5.Future<List<_i6.RankingResponse>>);
+          as _i6.Future<List<_i8.RankingResponse>>);
 }
