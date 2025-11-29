@@ -1,8 +1,9 @@
+import 'package:narou_parser/experimental.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('parseNovelContentUltra (Experimental/Scanner)', () {
+  group('parseNovelContentStringScanner (Experimental/Scanner)', () {
     test('基本的なHTMLを正しくパースできるか', () {
       const html = '''
 <p>
@@ -12,7 +13,7 @@ void main() {
 改行も入ります。
 </p>
 ''';
-      final result = parseNovelContentUltra(html);
+      final result = parseNovelContentStringScanner(html);
 
       expect(result, hasLength(6));
       expect(
@@ -39,7 +40,7 @@ void main() {
 
     test('実体参照のデコード', () {
       const html = '<p>&lt; &gt; &amp; &quot; &nbsp;</p>';
-      final result = parseNovelContentUltra(html);
+      final result = parseNovelContentStringScanner(html);
 
       expect(result.first, isA<PlainText>());
       final text = (result.first as PlainText).text;
@@ -52,7 +53,7 @@ void main() {
 <ruby><rb>漢字</rb><rt>かんじ</rt></ruby>と<ruby><rb>単語</rb><rt>たんご</rt></ruby>が混在する文章。
 </p>
 ''';
-      final result = parseNovelContentUltra(html);
+      final result = parseNovelContentStringScanner(html);
 
       expect(result, hasLength(5));
       expect(
@@ -74,23 +75,23 @@ void main() {
     test('DOMパーサーとの互換性チェック', () {
       const html = '<p>テスト<br>です<ruby>ルビ<rt>るび</rt></ruby></p>';
       final domResult = parseNovelContent(html);
-      final ultraResult = parseNovelContentUltra(html);
+      final stringScannerResult = parseNovelContentStringScanner(html);
 
-      expect(ultraResult.length, domResult.length);
-      for (var i = 0; i < ultraResult.length; i++) {
-        expect(ultraResult[i].runtimeType, domResult[i].runtimeType);
-        if (ultraResult[i] is PlainText) {
+      expect(stringScannerResult.length, domResult.length);
+      for (var i = 0; i < stringScannerResult.length; i++) {
+        expect(stringScannerResult[i].runtimeType, domResult[i].runtimeType);
+        if (stringScannerResult[i] is PlainText) {
           expect(
-            (ultraResult[i] as PlainText).text,
+            (stringScannerResult[i] as PlainText).text,
             (domResult[i] as PlainText).text,
           );
-        } else if (ultraResult[i] is RubyText) {
+        } else if (stringScannerResult[i] is RubyText) {
           expect(
-            (ultraResult[i] as RubyText).base,
+            (stringScannerResult[i] as RubyText).base,
             (domResult[i] as RubyText).base,
           );
           expect(
-            (ultraResult[i] as RubyText).ruby,
+            (stringScannerResult[i] as RubyText).ruby,
             (domResult[i] as RubyText).ruby,
           );
         }
@@ -99,7 +100,7 @@ void main() {
 
     test('rpタグ除去の確認', () {
       const html = '<p><ruby>漢<rp>(</rp><rt>かん</rt><rp>)</rp></ruby></p>';
-      final result = parseNovelContentUltra(html);
+      final result = parseNovelContentStringScanner(html);
       expect(result, hasLength(2)); // RubyText + NewLine
       expect(
         result[0],

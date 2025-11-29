@@ -1,5 +1,5 @@
+import 'package:narou_parser/experimental.dart';
 import 'package:narou_parser/narou_parser.dart';
-import 'package:narou_parser/src/parser_experimental.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -41,7 +41,7 @@ void main() {
     test('実体参照のデコード', () {
       const html = '<p>&lt; &gt; &amp; &quot; &nbsp;</p>';
       final result = parseNovelContentFast(html);
-      
+
       expect(result.first, isA<PlainText>());
       final text = (result.first as PlainText).text;
       expect(text, '< > & "  ');
@@ -71,20 +71,29 @@ void main() {
       );
       expect(result[4], isA<NewLine>());
     });
-    
+
     test('DOMパーサーとの互換性チェック', () {
       const html = '<p>テスト<br>です<ruby>ルビ<rt>るび</rt></ruby></p>';
       final domResult = parseNovelContent(html);
       final fastResult = parseNovelContentFast(html);
-      
+
       expect(fastResult.length, domResult.length);
-      for(var i=0; i<fastResult.length; i++) {
+      for (var i = 0; i < fastResult.length; i++) {
         expect(fastResult[i].runtimeType, domResult[i].runtimeType);
         if (fastResult[i] is PlainText) {
-          expect((fastResult[i] as PlainText).text, (domResult[i] as PlainText).text);
+          expect(
+            (fastResult[i] as PlainText).text,
+            (domResult[i] as PlainText).text,
+          );
         } else if (fastResult[i] is RubyText) {
-           expect((fastResult[i] as RubyText).base, (domResult[i] as RubyText).base);
-           expect((fastResult[i] as RubyText).ruby, (domResult[i] as RubyText).ruby);
+          expect(
+            (fastResult[i] as RubyText).base,
+            (domResult[i] as RubyText).base,
+          );
+          expect(
+            (fastResult[i] as RubyText).ruby,
+            (domResult[i] as RubyText).ruby,
+          );
         }
       }
     });

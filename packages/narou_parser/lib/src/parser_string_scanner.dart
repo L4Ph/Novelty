@@ -7,7 +7,7 @@ import 'package:narou_parser/src/models/novel_content_element.dart';
 /// 注意: 厳密なHTMLパーサーではないため、タグのネスト構造が複雑な場合や、
 /// 想定外のタグ属性がある場合は正しく動作しない可能性があります。
 @experimental
-List<NovelContentElement> parseNovelContentUltra(String html) {
+List<NovelContentElement> parseNovelContentStringScanner(String html) {
   final elements = <NovelContentElement>[];
   final len = html.length;
   var i = 0;
