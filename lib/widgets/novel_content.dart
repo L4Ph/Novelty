@@ -4,8 +4,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:novelty/utils/tategaki_converter.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
-import 'package:novelty/widgets/tategaki.dart';
+import 'package:tategaki/tategaki.dart';
 
 /// 小説のコンテンツを表示するウィジェット。
 class NovelContent extends HookConsumerWidget {
@@ -84,6 +85,9 @@ class NovelContentBody extends HookWidget {
             );
 
             if (settingsData.isVertical) {
+              // NovelContentElementをTategakiElementに変換
+              final tategakiElements = TategakiConverter.convert(contentData);
+
               return Directionality(
                 textDirection: TextDirection.rtl,
                 child: SingleChildScrollView(
@@ -93,10 +97,12 @@ class NovelContentBody extends HookWidget {
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return RepaintBoundary(
-                        child: Tategaki(
-                          contentData,
+                        child: DefaultTextStyle(
                           style: textStyle,
-                          maxHeight: constraints.maxHeight,
+                          child: TategakiText(
+                            tategakiElements,
+                            height: constraints.maxHeight,
+                          ),
                         ),
                       );
                     },

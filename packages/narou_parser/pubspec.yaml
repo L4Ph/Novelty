@@ -1,3 +1,8 @@
+name: narou_parser
+description: なろう小説パーサー
+version: 0.1.0
+
 environment:
   sdk: ^3.8.1
+
 resolution: workspace

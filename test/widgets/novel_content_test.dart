@@ -5,7 +5,7 @@ import 'package:novelty/models/novel_content_element.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
-import 'package:novelty/widgets/tategaki.dart';
+import 'package:tategaki/tategaki.dart';
 
 /// テスト用のデフォルトAppSettingsインスタンス。
 AppSettings get defaultTestSettings => const AppSettings(
@@ -84,14 +84,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(NovelContentView), findsOneWidget);
-    expect(find.byType(Tategaki), findsNothing);
+    expect(find.byType(TategakiText), findsNothing);
 
     final richText = tester.widget<RichText>(find.byType(RichText));
     final textSpan = richText.text as TextSpan;
     expect(textSpan.toPlainText(), 'これはテストの1行目です。これはテストの2行目です。');
   });
 
-  testWidgets('データ取得成功時、縦書き設定でTategakiが表示されること', (tester) async {
+  testWidgets('データ取得成功時、縦書き設定でTategakiTextが表示されること', (tester) async {
     await pumpWidget(
       tester,
       contentValue: AsyncData(testContent),
@@ -99,7 +99,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(Tategaki), findsOneWidget);
+    expect(find.byType(TategakiText), findsOneWidget);
     expect(find.byType(NovelContentView), findsNothing);
   });
 }

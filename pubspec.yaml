@@ -29,6 +29,8 @@ workspace:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  tategaki:
+    path: packages/tategaki
   archive: ^4.0.7
   cupertino_icons: ^1.0.8
   dio: ^5.9.0
