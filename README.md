@@ -70,4 +70,7 @@ fvm flutter run
 バグ報告、機能提案、プルリクエストなど、あらゆるコントリビューションを歓迎します。  
 
 ## 📜 ライセンス
-このプロジェクトは MIT License のもとで公開されています。詳細は LICENSE ファイルをご確認ください。  
+アプリケーション本体はOSSではなく、SALとなります。
+
+- **アプリ本体**: [PolyForm Noncommercial 1.0.0](./LICENSE) - 非商用利用のみ自由な再配布、改変を許可します。
+- **packages/**: [MIT License](./packages/LICENSE) - 商用利用を含む自由な利用が可能です。
