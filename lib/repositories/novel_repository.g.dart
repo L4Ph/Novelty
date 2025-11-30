@@ -467,8 +467,8 @@ const episodeDownloadStatusProvider = EpisodeDownloadStatusFamily._();
 /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
 
 final class EpisodeDownloadStatusProvider
-    extends $FunctionalProvider<AsyncValue<int?>, int?, FutureOr<int?>>
-    with $FutureModifier<int?>, $FutureProvider<int?> {
+    extends $FunctionalProvider<AsyncValue<int?>, int?, Stream<int?>>
+    with $FutureModifier<int?>, $StreamProvider<int?> {
   /// エピソードのダウンロード状態を監視するプロバイダー。
   ///
   /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
@@ -495,11 +495,11 @@ final class EpisodeDownloadStatusProvider
 
   @$internal
   @override
-  $FutureProviderElement<int?> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+  $StreamProviderElement<int?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
 
   @override
-  FutureOr<int?> create(Ref ref) {
+  Stream<int?> create(Ref ref) {
     final argument = this.argument as ({String ncode, int episode});
     return episodeDownloadStatus(
       ref,
@@ -520,7 +520,7 @@ final class EpisodeDownloadStatusProvider
 }
 
 String _$episodeDownloadStatusHash() =>
-    r'448114451469e3ce5bdc56210830bf00ba598cf7';
+    r'38dc93349f351f866819fd6f8c4447e332f3725f';
 
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
@@ -528,10 +528,7 @@ String _$episodeDownloadStatusHash() =>
 
 final class EpisodeDownloadStatusFamily extends $Family
     with
-        $FunctionalFamilyOverride<
-          FutureOr<int?>,
-          ({String ncode, int episode})
-        > {
+        $FunctionalFamilyOverride<Stream<int?>, ({String ncode, int episode})> {
   const EpisodeDownloadStatusFamily._()
     : super(
         retry: null,

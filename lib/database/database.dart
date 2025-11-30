@@ -540,6 +540,16 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
+  /// キャッシュ済みエピソードの監視
+  Stream<CachedEpisode?> watchCachedEpisode(String ncode, int episode) {
+    return (select(cachedEpisodes)..where(
+          (t) =>
+              t.ncode.equals(ncode.toNormalizedNcode()) &
+              t.episode.equals(episode),
+        ))
+        .watchSingleOrNull();
+  }
+
   /// キャッシュ済みエピソードの削除
   Future<int> deleteCachedEpisode(String ncode, int episode) {
     return (delete(

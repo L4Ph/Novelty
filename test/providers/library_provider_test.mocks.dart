@@ -492,6 +492,17 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<_i3.CachedEpisode?>);
 
   @override
+  _i5.Stream<_i3.CachedEpisode?> watchCachedEpisode(
+    String? ncode,
+    int? episode,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#watchCachedEpisode, [ncode, episode]),
+            returnValue: _i5.Stream<_i3.CachedEpisode?>.empty(),
+          )
+          as _i5.Stream<_i3.CachedEpisode?>);
+
+  @override
   _i5.Future<int> deleteCachedEpisode(String? ncode, int? episode) =>
       (super.noSuchMethod(
             Invocation.method(#deleteCachedEpisode, [ncode, episode]),

@@ -594,15 +594,16 @@ class DownloadStatus extends _$DownloadStatus {
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
 /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
-Future<int?> episodeDownloadStatus(
+Stream<int?> episodeDownloadStatus(
   Ref ref, {
   required String ncode,
   required int episode,
-}) async {
+}) {
   final normalizedNcode = ncode.toNormalizedNcode();
   final db = ref.watch(appDatabaseProvider);
-  final cached = await db.getCachedEpisode(normalizedNcode, episode);
   
-  if (cached == null) return null;
-  return cached.content.isNotEmpty ? 2 : 3;
+  return db.watchCachedEpisode(normalizedNcode, episode).map((cached) {
+    if (cached == null) return null;
+    return cached.content.isNotEmpty ? 2 : 3;
+  });
 }
