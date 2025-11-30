@@ -14,8 +14,8 @@ void main() {
     late MockAppDatabase mockDatabase;
     late ProviderContainer container;
 
-    final testLibraryNovels = [
-      LibraryNovel(
+    final testNovels = [
+      Novel(
         ncode: 'n1234ab',
         title: 'テスト小説1',
         writer: 'テスト作者1',
@@ -24,9 +24,9 @@ void main() {
         end: 0,
         generalAllNo: 10,
         novelUpdatedAt: DateTime.now().toIso8601String(),
-        addedAt: DateTime.now().millisecondsSinceEpoch,
+        cachedAt: DateTime.now().millisecondsSinceEpoch,
       ),
-      LibraryNovel(
+      Novel(
         ncode: 'n5678cd',
         title: 'テスト小説2',
         writer: 'テスト作者2',
@@ -35,7 +35,7 @@ void main() {
         end: 1,
         generalAllNo: 1,
         novelUpdatedAt: DateTime.now().toIso8601String(),
-        addedAt: DateTime.now().millisecondsSinceEpoch,
+        cachedAt: DateTime.now().millisecondsSinceEpoch,
       ),
     ];
 
@@ -52,21 +52,21 @@ void main() {
       container.dispose();
     });
 
-    test('should return Future<List<LibraryNovel>>', () async {
+    test('should return Future<List<Novel>>', () async {
       when(
-        mockDatabase.getLibraryNovels(),
-      ).thenAnswer((_) async => testLibraryNovels);
+        mockDatabase.watchLibraryNovelsWithDetails(),
+      ).thenAnswer((_) => Stream.value(testNovels));
 
       final result = await container.read(libraryNovelsProvider.future);
 
-      expect(result, equals(testLibraryNovels));
-      verify(mockDatabase.getLibraryNovels()).called(1);
+      expect(result, equals(testNovels));
+      verify(mockDatabase.watchLibraryNovelsWithDetails()).called(1);
     });
 
     test('should handle database errors gracefully', () async {
       when(
-        mockDatabase.getLibraryNovels(),
-      ).thenThrow(Exception('Database error'));
+        mockDatabase.watchLibraryNovelsWithDetails(),
+      ).thenAnswer((_) => Stream.error(Exception('Database error')));
 
       await expectLater(
         container.read(libraryNovelsProvider.future),
@@ -76,8 +76,8 @@ void main() {
 
     test('should be auto-disposed and re-fetched when not in use', () async {
       when(
-        mockDatabase.getLibraryNovels(),
-      ).thenAnswer((_) async => testLibraryNovels);
+        mockDatabase.watchLibraryNovelsWithDetails(),
+      ).thenAnswer((_) => Stream.value(testNovels));
 
       await container.read(libraryNovelsProvider.future);
       container.dispose();
@@ -90,33 +90,43 @@ void main() {
         ],
       );
       when(
-        newMockDatabase.getLibraryNovels(),
-      ).thenAnswer((_) async => testLibraryNovels);
+        newMockDatabase.watchLibraryNovelsWithDetails(),
+      ).thenAnswer((_) => Stream.value(testNovels));
 
       final result = await newContainer.read(libraryNovelsProvider.future);
-      expect(result, testLibraryNovels);
-      verify(newMockDatabase.getLibraryNovels()).called(1);
+      expect(result, testNovels);
+      verify(newMockDatabase.watchLibraryNovelsWithDetails()).called(1);
 
       newContainer.dispose();
     });
 
     test('should handle refresh correctly', () async {
+      // StreamProvider doesn't support manual refresh in the same way as FutureProvider
+      // when mocking the stream directly. 
+      // Instead, we can verify that the stream emits new values.
+      // But here we are mocking the method call.
+      
+      // Initial call
       when(
-        mockDatabase.getLibraryNovels(),
-      ).thenAnswer((_) async => testLibraryNovels.sublist(0, 1));
+        mockDatabase.watchLibraryNovelsWithDetails(),
+      ).thenAnswer((_) => Stream.value(testNovels.sublist(0, 1)));
 
-      await container.read(libraryNovelsProvider.future);
+      final firstResult = await container.read(libraryNovelsProvider.future);
+      expect(firstResult, equals(testNovels.sublist(0, 1)));
 
+      // Invalidate the provider to force re-read
+      container.invalidate(libraryNovelsProvider);
+      
+      // Update mock to return new data for the NEXT call
       when(
-        mockDatabase.getLibraryNovels(),
-      ).thenAnswer((_) async => testLibraryNovels);
+        mockDatabase.watchLibraryNovelsWithDetails(),
+      ).thenAnswer((_) => Stream.value(testNovels));
 
-      final refreshedResult = await container.refresh(
-        libraryNovelsProvider.future,
-      );
-
-      expect(refreshedResult, equals(testLibraryNovels));
-      verify(mockDatabase.getLibraryNovels()).called(2);
+      final secondResult = await container.read(libraryNovelsProvider.future);
+      expect(secondResult, equals(testNovels));
+      
+      // Verify called twice
+      verify(mockDatabase.watchLibraryNovelsWithDetails()).called(2);
     });
   });
 }
