@@ -1212,9 +1212,17 @@ class MockNovelRepository extends _i1.Mock implements _i15.NovelRepository {
           as _i5.Future<void>);
 
   @override
-  _i5.Future<bool> downloadSingleEpisode(String? ncode, int? episode) =>
+  _i5.Future<bool> downloadSingleEpisode(
+    String? ncode,
+    int? episode, {
+    String? revised,
+  }) =>
       (super.noSuchMethod(
-            Invocation.method(#downloadSingleEpisode, [ncode, episode]),
+            Invocation.method(
+              #downloadSingleEpisode,
+              [ncode, episode],
+              {#revised: revised},
+            ),
             returnValue: _i5.Future<bool>.value(false),
           )
           as _i5.Future<bool>);
@@ -1222,10 +1230,15 @@ class MockNovelRepository extends _i1.Mock implements _i15.NovelRepository {
   @override
   _i5.Future<List<_i19.NovelContentElement>> getEpisode(
     String? ncode,
-    int? episode,
-  ) =>
+    int? episode, {
+    String? revised,
+  }) =>
       (super.noSuchMethod(
-            Invocation.method(#getEpisode, [ncode, episode]),
+            Invocation.method(
+              #getEpisode,
+              [ncode, episode],
+              {#revised: revised},
+            ),
             returnValue: _i5.Future<List<_i19.NovelContentElement>>.value(
               <_i19.NovelContentElement>[],
             ),

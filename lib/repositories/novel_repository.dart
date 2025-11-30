@@ -180,16 +180,23 @@ class NovelRepository {
   /// 単一エピソードのダウンロードを実行するメソッド。
   ///
   /// 既にダウンロード成功済み（contentが空でない）の場合はスキップする。
+  /// [revised] が指定された場合、キャッシュの改稿日時と比較し、異なる場合は再ダウンロードする。
   /// 戻り値: ダウンロードに成功した場合true、失敗した場合false。
-  Future<bool> downloadSingleEpisode(String ncode, int episode) async {
+  Future<bool> downloadSingleEpisode(
+    String ncode,
+    int episode, {
+    String? revised,
+  }) async {
     final ncodeLower = ncode.toNormalizedNcode();
     final now = DateTime.now().millisecondsSinceEpoch;
 
     // 既にダウンロード成功済みかチェック
     final existing = await _db.getCachedEpisode(ncodeLower, episode);
     if (existing != null && existing.content.isNotEmpty) {
-      // 既に成功している場合はスキップ
-      return true;
+      // revisedが指定されていない、または一致する場合はスキップ
+      if (revised == null || existing.revised == revised) {
+        return true;
+      }
     }
 
     try {
@@ -203,7 +210,7 @@ class NovelRepository {
           episode: Value(episode),
           content: Value(content),
           cachedAt: Value(now),
-          revised: const Value(null),
+          revised: Value(revised),
         ),
       );
 
@@ -216,7 +223,7 @@ class NovelRepository {
           episode: Value(episode),
           content: const Value([]), // 空のコンテンツ
           cachedAt: Value(now),
-          revised: const Value(null),
+          revised: Value(revised),
         ),
       );
 
@@ -225,36 +232,61 @@ class NovelRepository {
   }
 
   /// 小説のエピソードを取得するメソッド。
+  ///
+  /// [revised] が指定された場合、キャッシュの改稿日時と比較し、
+  /// 異なる場合は再取得する。
   Future<List<NovelContentElement>> getEpisode(
     String ncode,
-    int episode,
-  ) async {
+    int episode, {
+    String? revised,
+  }) async {
     final cached = await _db.getCachedEpisode(ncode, episode);
-    if (cached != null) {
-      return cached.content;
+    
+    // キャッシュが存在し、content有効で、改稿日時が一致する場合はキャッシュを返す
+    if (cached != null && cached.content.isNotEmpty) {
+      if (revised == null || cached.revised == revised) {
+        return cached.content;
+      }
     }
 
-    return _fetchEpisodeContent(ncode, episode);
+    // fetch & cache
+    try {
+      final content = await _fetchEpisodeContent(ncode, episode);
+      await _db.insertCachedEpisode(
+        CachedEpisodesCompanion(
+          ncode: Value(ncode.toNormalizedNcode()),
+          episode: Value(episode),
+          content: Value(content),
+          cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          revised: Value(revised),
+        ),
+      );
+      return content;
+    } on Exception {
+      // 失敗時は空contentで保存
+      await _db.insertCachedEpisode(
+        CachedEpisodesCompanion(
+          ncode: Value(ncode.toNormalizedNcode()),
+          episode: Value(episode),
+          content: const Value([]),
+          cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          revised: Value(revised),
+        ),
+      );
+      rethrow;
+    }
   }
 
   /// 小説の情報を取得するメソッド。
   Future<void> downloadEpisode(String ncode, int episode) async {
-    final content = await _fetchEpisodeContent(ncode, episode);
-    await _db.insertCachedEpisode(
-      CachedEpisodesCompanion(
-        ncode: Value(ncode),
-        episode: Value(episode),
-        content: Value(content),
-        cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
-        revised: const Value(null),
-      ),
-    );
+    // 既存のdownloadSingleEpisodeを利用するように変更
+    await downloadSingleEpisode(ncode, episode);
   }
 
   /// 小説のダウンロードを行うメソッド。
   ///
   /// 各エピソードのダウンロードを試み、失敗したエピソードがあっても継続する。
-  /// ダウンロード状態はDownloadedEpisodesテーブルから自動的に計算される。
+  /// 最初に目次を取得して改稿日時(revised)を確認する。
   Future<void> downloadNovel(
     String ncode,
     int totalEpisodes,
@@ -272,12 +304,36 @@ class NovelRepository {
         ),
       );
 
+      // 目次情報を取得して改稿日時Mapを作成
+      // これにより、改稿されたエピソードのみを再ダウンロードできる
+      Map<int, String?> revisedMap = {};
+      try {
+        final info = await apiService.fetchNovelInfo(ncodeLower);
+        final episodes = info.episodes ?? [];
+        for (final ep in episodes) {
+          if (ep.index != null) {
+            revisedMap[ep.index!] = ep.revised;
+          }
+        }
+      } catch (e) {
+        // 目次取得失敗時はrevised情報なしで進める（全件チェックになるが、キャッシュがあればスキップされる）
+        // ただし、キャッシュが古くてもスキップされてしまう可能性がある
+        if (kDebugMode) {
+          print('Failed to fetch novel info for revised dates: $e');
+        }
+      }
+
       var successCount = 0;
       var failureCount = 0;
 
       // 各エピソードをダウンロード
       for (var i = 1; i <= totalEpisodes; i++) {
-        final success = await downloadSingleEpisode(ncodeLower, i);
+        final revised = revisedMap[i];
+        final success = await downloadSingleEpisode(
+          ncodeLower, 
+          i, 
+          revised: revised,
+        );
 
         if (success) {
           successCount++;
@@ -294,6 +350,7 @@ class NovelRepository {
           ),
         );
       }
+
 
       // 完了通知
       progressController?.add(
@@ -403,10 +460,11 @@ Future<List<NovelContentElement>> novelContent(
   Ref ref, {
   required String ncode,
   required int episode,
+  String? revised,
 }) async {
   final normalizedNcode = ncode.toNormalizedNcode();
   final repository = ref.read(novelRepositoryProvider);
-  return repository.getEpisode(normalizedNcode, episode);
+  return repository.getEpisode(normalizedNcode, episode, revised: revised);
 }
 
 @riverpod

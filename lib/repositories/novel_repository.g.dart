@@ -75,7 +75,7 @@ final class NovelContentProvider
   /// 小説のコンテンツを取得するプロバイダー。
   const NovelContentProvider._({
     required NovelContentFamily super.from,
-    required ({String ncode, int episode}) super.argument,
+    required ({String ncode, int episode, String? revised}) super.argument,
   }) : super(
          retry: null,
          name: r'novelContentProvider',
@@ -102,8 +102,14 @@ final class NovelContentProvider
 
   @override
   FutureOr<List<NovelContentElement>> create(Ref ref) {
-    final argument = this.argument as ({String ncode, int episode});
-    return novelContent(ref, ncode: argument.ncode, episode: argument.episode);
+    final argument =
+        this.argument as ({String ncode, int episode, String? revised});
+    return novelContent(
+      ref,
+      ncode: argument.ncode,
+      episode: argument.episode,
+      revised: argument.revised,
+    );
   }
 
   @override
@@ -117,7 +123,7 @@ final class NovelContentProvider
   }
 }
 
-String _$novelContentHash() => r'9d6d5b1a548e64a593f40c42cd6a515d11be9949';
+String _$novelContentHash() => r'946148ce819d122abf573b303eddb7fb79334a2e';
 
 /// 小説のコンテンツを取得するプロバイダー。
 
@@ -125,7 +131,7 @@ final class NovelContentFamily extends $Family
     with
         $FunctionalFamilyOverride<
           FutureOr<List<NovelContentElement>>,
-          ({String ncode, int episode})
+          ({String ncode, int episode, String? revised})
         > {
   const NovelContentFamily._()
     : super(
@@ -138,11 +144,14 @@ final class NovelContentFamily extends $Family
 
   /// 小説のコンテンツを取得するプロバイダー。
 
-  NovelContentProvider call({required String ncode, required int episode}) =>
-      NovelContentProvider._(
-        argument: (ncode: ncode, episode: episode),
-        from: this,
-      );
+  NovelContentProvider call({
+    required String ncode,
+    required int episode,
+    String? revised,
+  }) => NovelContentProvider._(
+    argument: (ncode: ncode, episode: episode, revised: revised),
+    from: this,
+  );
 
   @override
   String toString() => r'novelContentProvider';
