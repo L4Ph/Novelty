@@ -179,15 +179,15 @@ class NovelRepository {
 
   /// 単一エピソードのダウンロードを実行するメソッド。
   ///
-  /// 既にダウンロード成功済み（status=2）の場合はスキップする。
+  /// 既にダウンロード成功済み（contentが空でない）の場合はスキップする。
   /// 戻り値: ダウンロードに成功した場合true、失敗した場合false。
   Future<bool> downloadSingleEpisode(String ncode, int episode) async {
     final ncodeLower = ncode.toNormalizedNcode();
     final now = DateTime.now().millisecondsSinceEpoch;
 
     // 既にダウンロード成功済みかチェック
-    final existing = await _db.getDownloadedEpisode(ncodeLower, episode);
-    if (existing != null && existing.status == 2) {
+    final existing = await _db.getCachedEpisode(ncodeLower, episode);
+    if (existing != null && existing.content.isNotEmpty) {
       // 既に成功している場合はスキップ
       return true;
     }
@@ -197,30 +197,26 @@ class NovelRepository {
       final content = await _fetchEpisodeContent(ncodeLower, episode);
 
       // データベースに保存（成功）
-      await _db.insertDownloadedEpisode(
-        DownloadedEpisodesCompanion(
+      await _db.insertCachedEpisode(
+        CachedEpisodesCompanion(
           ncode: Value(ncodeLower),
           episode: Value(episode),
           content: Value(content),
-          downloadedAt: Value(now),
-          status: const Value(2), // 2: 成功
-          errorMessage: const Value(null),
-          lastAttemptAt: Value(now),
+          cachedAt: Value(now),
+          revised: const Value(null),
         ),
       );
 
       return true;
-    } on Exception catch (e) {
+    } on Exception {
       // データベースに保存（失敗）
-      await _db.insertDownloadedEpisode(
-        DownloadedEpisodesCompanion(
+      await _db.insertCachedEpisode(
+        CachedEpisodesCompanion(
           ncode: Value(ncodeLower),
           episode: Value(episode),
           content: const Value([]), // 空のコンテンツ
-          downloadedAt: Value(now),
-          status: const Value(3), // 3: 失敗
-          errorMessage: Value(e.toString()),
-          lastAttemptAt: Value(now),
+          cachedAt: Value(now),
+          revised: const Value(null),
         ),
       );
 
@@ -233,9 +229,9 @@ class NovelRepository {
     String ncode,
     int episode,
   ) async {
-    final downloaded = await _db.getDownloadedEpisode(ncode, episode);
-    if (downloaded != null) {
-      return downloaded.content;
+    final cached = await _db.getCachedEpisode(ncode, episode);
+    if (cached != null) {
+      return cached.content;
     }
 
     return _fetchEpisodeContent(ncode, episode);
@@ -244,12 +240,13 @@ class NovelRepository {
   /// 小説の情報を取得するメソッド。
   Future<void> downloadEpisode(String ncode, int episode) async {
     final content = await _fetchEpisodeContent(ncode, episode);
-    await _db.insertDownloadedEpisode(
-      DownloadedEpisodesCompanion(
+    await _db.insertCachedEpisode(
+      CachedEpisodesCompanion(
         ncode: Value(ncode),
         episode: Value(episode),
         content: Value(content),
-        downloadedAt: Value(DateTime.now().millisecondsSinceEpoch),
+        cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
+        revised: const Value(null),
       ),
     );
   }
@@ -328,22 +325,22 @@ class NovelRepository {
 
   /// ダウンロード済みエピソードを削除するメソッド。
   Future<void> deleteDownloadedEpisode(String ncode, int episode) async {
-    await _db.deleteDownloadedEpisode(ncode, episode);
+    await _db.deleteCachedEpisode(ncode, episode);
   }
 
   /// ダウンロード済み小説を削除するメソッド。
   ///
   /// 該当ncodeのすべてのダウンロード済みエピソードを一括削除する。
   Future<void> deleteDownloadedNovel(String ncode) async {
-    await (_db.delete(_db.downloadedEpisodes)
+    await (_db.delete(_db.cachedEpisodes)
           ..where((e) => e.ncode.equals(ncode.toNormalizedNcode())))
         .go();
   }
 
   /// ダウンロードパスを取得するメソッド。
   Stream<bool> isEpisodeDownloaded(String ncode, int episode) async* {
-    final downloaded = await _db.getDownloadedEpisode(ncode, episode);
-    yield downloaded != null;
+    final cached = await _db.getCachedEpisode(ncode, episode);
+    yield cached != null && cached.content.isNotEmpty;
   }
 
   /// 小説がダウンロードされているかを確認するメソッド。
@@ -545,6 +542,8 @@ Future<int?> episodeDownloadStatus(
 }) async {
   final normalizedNcode = ncode.toNormalizedNcode();
   final db = ref.watch(appDatabaseProvider);
-  final downloaded = await db.getDownloadedEpisode(normalizedNcode, episode);
-  return downloaded?.status;
+  final cached = await db.getCachedEpisode(normalizedNcode, episode);
+  
+  if (cached == null) return null;
+  return cached.content.isNotEmpty ? 2 : 3;
 }

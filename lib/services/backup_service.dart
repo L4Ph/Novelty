@@ -15,11 +15,11 @@ class BackupService {
   final AppDatabase _database;
 
   /// 現在のスキーマバージョン
-  static const int currentSchemaVersion = 10;
+  static const int currentSchemaVersion = 11;
 
   /// データベース全体をエクスポートする
   ///
-  /// すべてのテーブル(Novels, LibraryNovels, History, Episodes, DownloadedEpisodes)を
+  /// すべてのテーブル(Novels, LibraryNovels, History, CachedEpisodes)を
   /// 含むデータベースファイルをバックアップする
   ///
   /// 戻り値: エクスポートされたファイルのパス。キャンセルされた場合はnull

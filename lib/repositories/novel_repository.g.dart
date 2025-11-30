@@ -511,7 +511,7 @@ final class EpisodeDownloadStatusProvider
 }
 
 String _$episodeDownloadStatusHash() =>
-    r'ca2df1351facb21732b51139098dffae2a3435a0';
+    r'448114451469e3ce5bdc56210830bf00ba598cf7';
 
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
