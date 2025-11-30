@@ -723,7 +723,13 @@ class _EpisodeListTile extends ConsumerWidget {
         ),
       ),
       onTap: () {
-        context.push('/novel/$ncode/$episodeNumber');
+        final uri = Uri(
+          path: '/novel/$ncode/$episodeNumber',
+          queryParameters: episode.revised != null
+              ? {'revised': episode.revised}
+              : null,
+        );
+        context.push(uri.toString());
       },
     );
   }
@@ -736,7 +742,11 @@ class _EpisodeListTile extends ConsumerWidget {
     final repo = ref.read(novelRepositoryProvider);
 
     try {
-      final success = await repo.downloadSingleEpisode(ncode, episodeNumber);
+      final success = await repo.downloadSingleEpisode(
+        ncode,
+        episodeNumber,
+        revised: episode.revised,
+      );
 
       if (!context.mounted) return;
 

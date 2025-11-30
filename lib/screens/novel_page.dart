@@ -12,7 +12,12 @@ import 'package:novelty/widgets/novel_content.dart';
 /// 小説のページを表示するウィジェット。
 class NovelPage extends HookConsumerWidget {
   /// コンストラクタ。
-  const NovelPage({required this.ncode, super.key, this.episode});
+  const NovelPage({
+    required this.ncode,
+    super.key,
+    this.episode,
+    this.revised,
+  });
 
   /// 小説のNコード。
   ///
@@ -21,6 +26,9 @@ class NovelPage extends HookConsumerWidget {
 
   /// 表示するエピソード番号。
   final int? episode;
+
+  /// 改稿日時（指定された場合、キャッシュ判定に使用）
+  final String? revised;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,6 +60,18 @@ class NovelPage extends HookConsumerWidget {
         // PageViewのitemCountとinitialPageを動的に決定
         final itemCount = _getItemCount(currentEpisode.value, totalEpisodes);
         final initialPageIndex = _getInitialPage(currentEpisode.value);
+
+        // 改稿日時マップを作成
+        final episodeMap = useMemoized(() {
+          // エピソードリストがnullの場合は空のMapを返す
+          if (novelInfo.episodes == null) {
+            return <int, String?>{};
+          }
+          return {
+            for (var e in novelInfo.episodes!)
+              if (e.index != null) e.index!: e.revised
+          };
+        }, [novelInfo]);
 
         // PageControllerをメモ化（itemCountが変わったときのみ再作成）
         final pageController = useMemoized(
@@ -110,10 +130,17 @@ class NovelPage extends HookConsumerWidget {
                     totalEpisodes,
                   );
 
+                  // 指定されたエピソードかつ改稿日時が指定されている場合はそちらを優先
+                  // それ以外はNovelInfoから取得した改稿日時を使用
+                  final revisedDate = (episodeNum == episode && revised != null)
+                      ? revised
+                      : episodeMap[episodeNum];
+
                   return RepaintBoundary(
                     child: NovelContent(
                       ncode: ncode,
                       episode: episodeNum,
+                      revised: revisedDate,
                     ),
                   );
                 },
