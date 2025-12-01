@@ -2153,391 +2153,12 @@ class HistoryCompanion extends drift.UpdateCompanion<HistoryData> {
   }
 }
 
-class $EpisodesTable extends Episodes
-    with drift.TableInfo<$EpisodesTable, Episode> {
+class $CachedEpisodesTable extends CachedEpisodes
+    with drift.TableInfo<$CachedEpisodesTable, CachedEpisode> {
   @override
   final drift.GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $EpisodesTable(this.attachedDatabase, [this._alias]);
-  static const drift.VerificationMeta _ncodeMeta = const drift.VerificationMeta(
-    'ncode',
-  );
-  @override
-  late final drift.GeneratedColumn<String> ncode =
-      drift.GeneratedColumn<String>(
-        'ncode',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      );
-  static const drift.VerificationMeta _episodeMeta =
-      const drift.VerificationMeta('episode');
-  @override
-  late final drift.GeneratedColumn<int> episode = drift.GeneratedColumn<int>(
-    'episode',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const drift.VerificationMeta _titleMeta = const drift.VerificationMeta(
-    'title',
-  );
-  @override
-  late final drift.GeneratedColumn<String> title =
-      drift.GeneratedColumn<String>(
-        'title',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
-  static const drift.VerificationMeta _contentMeta =
-      const drift.VerificationMeta('content');
-  @override
-  late final drift.GeneratedColumn<String> content =
-      drift.GeneratedColumn<String>(
-        'content',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
-  static const drift.VerificationMeta _cachedAtMeta =
-      const drift.VerificationMeta('cachedAt');
-  @override
-  late final drift.GeneratedColumn<int> cachedAt = drift.GeneratedColumn<int>(
-    'cached_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<drift.GeneratedColumn> get $columns => [
-    ncode,
-    episode,
-    title,
-    content,
-    cachedAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'episodes';
-  @override
-  drift.VerificationContext validateIntegrity(
-    drift.Insertable<Episode> instance, {
-    bool isInserting = false,
-  }) {
-    final context = drift.VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('ncode')) {
-      context.handle(
-        _ncodeMeta,
-        ncode.isAcceptableOrUnknown(data['ncode']!, _ncodeMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_ncodeMeta);
-    }
-    if (data.containsKey('episode')) {
-      context.handle(
-        _episodeMeta,
-        episode.isAcceptableOrUnknown(data['episode']!, _episodeMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_episodeMeta);
-    }
-    if (data.containsKey('title')) {
-      context.handle(
-        _titleMeta,
-        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
-      );
-    }
-    if (data.containsKey('content')) {
-      context.handle(
-        _contentMeta,
-        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
-      );
-    }
-    if (data.containsKey('cached_at')) {
-      context.handle(
-        _cachedAtMeta,
-        cachedAt.isAcceptableOrUnknown(data['cached_at']!, _cachedAtMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<drift.GeneratedColumn> get $primaryKey => {ncode, episode};
-  @override
-  Episode map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Episode(
-      ncode: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}ncode'],
-      )!,
-      episode: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}episode'],
-      )!,
-      title: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}title'],
-      ),
-      content: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}content'],
-      ),
-      cachedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}cached_at'],
-      ),
-    );
-  }
-
-  @override
-  $EpisodesTable createAlias(String alias) {
-    return $EpisodesTable(attachedDatabase, alias);
-  }
-}
-
-class Episode extends drift.DataClass implements drift.Insertable<Episode> {
-  /// 小説のncode
-  final String ncode;
-
-  /// エピソード番号
-  final int episode;
-
-  /// エピソードのタイトル
-  final String? title;
-
-  /// エピソードの内容
-  final String? content;
-
-  /// キャッシュした日時
-  final int? cachedAt;
-  const Episode({
-    required this.ncode,
-    required this.episode,
-    this.title,
-    this.content,
-    this.cachedAt,
-  });
-  @override
-  Map<String, drift.Expression> toColumns(bool nullToAbsent) {
-    final map = <String, drift.Expression>{};
-    map['ncode'] = drift.Variable<String>(ncode);
-    map['episode'] = drift.Variable<int>(episode);
-    if (!nullToAbsent || title != null) {
-      map['title'] = drift.Variable<String>(title);
-    }
-    if (!nullToAbsent || content != null) {
-      map['content'] = drift.Variable<String>(content);
-    }
-    if (!nullToAbsent || cachedAt != null) {
-      map['cached_at'] = drift.Variable<int>(cachedAt);
-    }
-    return map;
-  }
-
-  EpisodesCompanion toCompanion(bool nullToAbsent) {
-    return EpisodesCompanion(
-      ncode: drift.Value(ncode),
-      episode: drift.Value(episode),
-      title: title == null && nullToAbsent
-          ? const drift.Value.absent()
-          : drift.Value(title),
-      content: content == null && nullToAbsent
-          ? const drift.Value.absent()
-          : drift.Value(content),
-      cachedAt: cachedAt == null && nullToAbsent
-          ? const drift.Value.absent()
-          : drift.Value(cachedAt),
-    );
-  }
-
-  factory Episode.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= drift.driftRuntimeOptions.defaultSerializer;
-    return Episode(
-      ncode: serializer.fromJson<String>(json['ncode']),
-      episode: serializer.fromJson<int>(json['episode']),
-      title: serializer.fromJson<String?>(json['title']),
-      content: serializer.fromJson<String?>(json['content']),
-      cachedAt: serializer.fromJson<int?>(json['cachedAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= drift.driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ncode': serializer.toJson<String>(ncode),
-      'episode': serializer.toJson<int>(episode),
-      'title': serializer.toJson<String?>(title),
-      'content': serializer.toJson<String?>(content),
-      'cachedAt': serializer.toJson<int?>(cachedAt),
-    };
-  }
-
-  Episode copyWith({
-    String? ncode,
-    int? episode,
-    drift.Value<String?> title = const drift.Value.absent(),
-    drift.Value<String?> content = const drift.Value.absent(),
-    drift.Value<int?> cachedAt = const drift.Value.absent(),
-  }) => Episode(
-    ncode: ncode ?? this.ncode,
-    episode: episode ?? this.episode,
-    title: title.present ? title.value : this.title,
-    content: content.present ? content.value : this.content,
-    cachedAt: cachedAt.present ? cachedAt.value : this.cachedAt,
-  );
-  Episode copyWithCompanion(EpisodesCompanion data) {
-    return Episode(
-      ncode: data.ncode.present ? data.ncode.value : this.ncode,
-      episode: data.episode.present ? data.episode.value : this.episode,
-      title: data.title.present ? data.title.value : this.title,
-      content: data.content.present ? data.content.value : this.content,
-      cachedAt: data.cachedAt.present ? data.cachedAt.value : this.cachedAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('Episode(')
-          ..write('ncode: $ncode, ')
-          ..write('episode: $episode, ')
-          ..write('title: $title, ')
-          ..write('content: $content, ')
-          ..write('cachedAt: $cachedAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(ncode, episode, title, content, cachedAt);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is Episode &&
-          other.ncode == this.ncode &&
-          other.episode == this.episode &&
-          other.title == this.title &&
-          other.content == this.content &&
-          other.cachedAt == this.cachedAt);
-}
-
-class EpisodesCompanion extends drift.UpdateCompanion<Episode> {
-  final drift.Value<String> ncode;
-  final drift.Value<int> episode;
-  final drift.Value<String?> title;
-  final drift.Value<String?> content;
-  final drift.Value<int?> cachedAt;
-  final drift.Value<int> rowid;
-  const EpisodesCompanion({
-    this.ncode = const drift.Value.absent(),
-    this.episode = const drift.Value.absent(),
-    this.title = const drift.Value.absent(),
-    this.content = const drift.Value.absent(),
-    this.cachedAt = const drift.Value.absent(),
-    this.rowid = const drift.Value.absent(),
-  });
-  EpisodesCompanion.insert({
-    required String ncode,
-    required int episode,
-    this.title = const drift.Value.absent(),
-    this.content = const drift.Value.absent(),
-    this.cachedAt = const drift.Value.absent(),
-    this.rowid = const drift.Value.absent(),
-  }) : ncode = drift.Value(ncode),
-       episode = drift.Value(episode);
-  static drift.Insertable<Episode> custom({
-    drift.Expression<String>? ncode,
-    drift.Expression<int>? episode,
-    drift.Expression<String>? title,
-    drift.Expression<String>? content,
-    drift.Expression<int>? cachedAt,
-    drift.Expression<int>? rowid,
-  }) {
-    return drift.RawValuesInsertable({
-      if (ncode != null) 'ncode': ncode,
-      if (episode != null) 'episode': episode,
-      if (title != null) 'title': title,
-      if (content != null) 'content': content,
-      if (cachedAt != null) 'cached_at': cachedAt,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  EpisodesCompanion copyWith({
-    drift.Value<String>? ncode,
-    drift.Value<int>? episode,
-    drift.Value<String?>? title,
-    drift.Value<String?>? content,
-    drift.Value<int?>? cachedAt,
-    drift.Value<int>? rowid,
-  }) {
-    return EpisodesCompanion(
-      ncode: ncode ?? this.ncode,
-      episode: episode ?? this.episode,
-      title: title ?? this.title,
-      content: content ?? this.content,
-      cachedAt: cachedAt ?? this.cachedAt,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, drift.Expression> toColumns(bool nullToAbsent) {
-    final map = <String, drift.Expression>{};
-    if (ncode.present) {
-      map['ncode'] = drift.Variable<String>(ncode.value);
-    }
-    if (episode.present) {
-      map['episode'] = drift.Variable<int>(episode.value);
-    }
-    if (title.present) {
-      map['title'] = drift.Variable<String>(title.value);
-    }
-    if (content.present) {
-      map['content'] = drift.Variable<String>(content.value);
-    }
-    if (cachedAt.present) {
-      map['cached_at'] = drift.Variable<int>(cachedAt.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = drift.Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('EpisodesCompanion(')
-          ..write('ncode: $ncode, ')
-          ..write('episode: $episode, ')
-          ..write('title: $title, ')
-          ..write('content: $content, ')
-          ..write('cachedAt: $cachedAt, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $DownloadedEpisodesTable extends DownloadedEpisodes
-    with drift.TableInfo<$DownloadedEpisodesTable, DownloadedEpisode> {
-  @override
-  final drift.GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $DownloadedEpisodesTable(this.attachedDatabase, [this._alias]);
+  $CachedEpisodesTable(this.attachedDatabase, [this._alias]);
   static const drift.VerificationMeta _ncodeMeta = const drift.VerificationMeta(
     'ncode',
   );
@@ -2573,50 +2194,27 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
         type: DriftSqlType.string,
         requiredDuringInsert: true,
       ).withConverter<List<NovelContentElement>>(
-        $DownloadedEpisodesTable.$convertercontent,
+        $CachedEpisodesTable.$convertercontent,
       );
-  static const drift.VerificationMeta _downloadedAtMeta =
-      const drift.VerificationMeta('downloadedAt');
+  static const drift.VerificationMeta _cachedAtMeta =
+      const drift.VerificationMeta('cachedAt');
   @override
-  late final drift.GeneratedColumn<int> downloadedAt =
-      drift.GeneratedColumn<int>(
-        'downloaded_at',
-        aliasedName,
-        false,
-        type: DriftSqlType.int,
-        requiredDuringInsert: true,
-      );
-  static const drift.VerificationMeta _statusMeta =
-      const drift.VerificationMeta('status');
-  @override
-  late final drift.GeneratedColumn<int> status = drift.GeneratedColumn<int>(
-    'status',
+  late final drift.GeneratedColumn<int> cachedAt = drift.GeneratedColumn<int>(
+    'cached_at',
     aliasedName,
     false,
     type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const drift.Constant(2),
+    requiredDuringInsert: true,
   );
-  static const drift.VerificationMeta _errorMessageMeta =
-      const drift.VerificationMeta('errorMessage');
+  static const drift.VerificationMeta _revisedMeta =
+      const drift.VerificationMeta('revised');
   @override
-  late final drift.GeneratedColumn<String> errorMessage =
+  late final drift.GeneratedColumn<String> revised =
       drift.GeneratedColumn<String>(
-        'error_message',
+        'revised',
         aliasedName,
         true,
         type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
-  static const drift.VerificationMeta _lastAttemptAtMeta =
-      const drift.VerificationMeta('lastAttemptAt');
-  @override
-  late final drift.GeneratedColumn<int> lastAttemptAt =
-      drift.GeneratedColumn<int>(
-        'last_attempt_at',
-        aliasedName,
-        true,
-        type: DriftSqlType.int,
         requiredDuringInsert: false,
       );
   @override
@@ -2624,19 +2222,17 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
     ncode,
     episode,
     content,
-    downloadedAt,
-    status,
-    errorMessage,
-    lastAttemptAt,
+    cachedAt,
+    revised,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'downloaded_episodes';
+  static const String $name = 'cached_episodes';
   @override
   drift.VerificationContext validateIntegrity(
-    drift.Insertable<DownloadedEpisode> instance, {
+    drift.Insertable<CachedEpisode> instance, {
     bool isInserting = false,
   }) {
     final context = drift.VerificationContext();
@@ -2657,39 +2253,18 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
     } else if (isInserting) {
       context.missing(_episodeMeta);
     }
-    if (data.containsKey('downloaded_at')) {
+    if (data.containsKey('cached_at')) {
       context.handle(
-        _downloadedAtMeta,
-        downloadedAt.isAcceptableOrUnknown(
-          data['downloaded_at']!,
-          _downloadedAtMeta,
-        ),
+        _cachedAtMeta,
+        cachedAt.isAcceptableOrUnknown(data['cached_at']!, _cachedAtMeta),
       );
     } else if (isInserting) {
-      context.missing(_downloadedAtMeta);
+      context.missing(_cachedAtMeta);
     }
-    if (data.containsKey('status')) {
+    if (data.containsKey('revised')) {
       context.handle(
-        _statusMeta,
-        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
-      );
-    }
-    if (data.containsKey('error_message')) {
-      context.handle(
-        _errorMessageMeta,
-        errorMessage.isAcceptableOrUnknown(
-          data['error_message']!,
-          _errorMessageMeta,
-        ),
-      );
-    }
-    if (data.containsKey('last_attempt_at')) {
-      context.handle(
-        _lastAttemptAtMeta,
-        lastAttemptAt.isAcceptableOrUnknown(
-          data['last_attempt_at']!,
-          _lastAttemptAtMeta,
-        ),
+        _revisedMeta,
+        revised.isAcceptableOrUnknown(data['revised']!, _revisedMeta),
       );
     }
     return context;
@@ -2698,9 +2273,9 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
   @override
   Set<drift.GeneratedColumn> get $primaryKey => {ncode, episode};
   @override
-  DownloadedEpisode map(Map<String, dynamic> data, {String? tablePrefix}) {
+  CachedEpisode map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return DownloadedEpisode(
+    return CachedEpisode(
       ncode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}ncode'],
@@ -2709,42 +2284,34 @@ class $DownloadedEpisodesTable extends DownloadedEpisodes
         DriftSqlType.int,
         data['${effectivePrefix}episode'],
       )!,
-      content: $DownloadedEpisodesTable.$convertercontent.fromSql(
+      content: $CachedEpisodesTable.$convertercontent.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}content'],
         )!,
       ),
-      downloadedAt: attachedDatabase.typeMapping.read(
+      cachedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
-        data['${effectivePrefix}downloaded_at'],
+        data['${effectivePrefix}cached_at'],
       )!,
-      status: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}status'],
-      )!,
-      errorMessage: attachedDatabase.typeMapping.read(
+      revised: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}error_message'],
-      ),
-      lastAttemptAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}last_attempt_at'],
+        data['${effectivePrefix}revised'],
       ),
     );
   }
 
   @override
-  $DownloadedEpisodesTable createAlias(String alias) {
-    return $DownloadedEpisodesTable(attachedDatabase, alias);
+  $CachedEpisodesTable createAlias(String alias) {
+    return $CachedEpisodesTable(attachedDatabase, alias);
   }
 
   static drift.TypeConverter<List<NovelContentElement>, String>
   $convertercontent = const ContentConverter();
 }
 
-class DownloadedEpisode extends drift.DataClass
-    implements drift.Insertable<DownloadedEpisode> {
+class CachedEpisode extends drift.DataClass
+    implements drift.Insertable<CachedEpisode> {
   /// 小説のncode
   final String ncode;
 
@@ -2752,29 +2319,20 @@ class DownloadedEpisode extends drift.DataClass
   final int episode;
 
   /// エピソードの内容
-  /// JSON形式で保存される
+  /// JSON形式で保存される。空配列=失敗、中身あり=成功
   final List<NovelContentElement> content;
 
-  /// ダウンロード日時
-  final int downloadedAt;
+  /// キャッシュ日時
+  final int cachedAt;
 
-  /// ダウンロード状態
-  /// 2: 成功, 3: 失敗
-  final int status;
-
-  /// 失敗時のエラーメッセージ
-  final String? errorMessage;
-
-  /// 最終試行日時
-  final int? lastAttemptAt;
-  const DownloadedEpisode({
+  /// キャッシュ時点の改稿日時
+  final String? revised;
+  const CachedEpisode({
     required this.ncode,
     required this.episode,
     required this.content,
-    required this.downloadedAt,
-    required this.status,
-    this.errorMessage,
-    this.lastAttemptAt,
+    required this.cachedAt,
+    this.revised,
   });
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
@@ -2783,49 +2341,39 @@ class DownloadedEpisode extends drift.DataClass
     map['episode'] = drift.Variable<int>(episode);
     {
       map['content'] = drift.Variable<String>(
-        $DownloadedEpisodesTable.$convertercontent.toSql(content),
+        $CachedEpisodesTable.$convertercontent.toSql(content),
       );
     }
-    map['downloaded_at'] = drift.Variable<int>(downloadedAt);
-    map['status'] = drift.Variable<int>(status);
-    if (!nullToAbsent || errorMessage != null) {
-      map['error_message'] = drift.Variable<String>(errorMessage);
-    }
-    if (!nullToAbsent || lastAttemptAt != null) {
-      map['last_attempt_at'] = drift.Variable<int>(lastAttemptAt);
+    map['cached_at'] = drift.Variable<int>(cachedAt);
+    if (!nullToAbsent || revised != null) {
+      map['revised'] = drift.Variable<String>(revised);
     }
     return map;
   }
 
-  DownloadedEpisodesCompanion toCompanion(bool nullToAbsent) {
-    return DownloadedEpisodesCompanion(
+  CachedEpisodesCompanion toCompanion(bool nullToAbsent) {
+    return CachedEpisodesCompanion(
       ncode: drift.Value(ncode),
       episode: drift.Value(episode),
       content: drift.Value(content),
-      downloadedAt: drift.Value(downloadedAt),
-      status: drift.Value(status),
-      errorMessage: errorMessage == null && nullToAbsent
+      cachedAt: drift.Value(cachedAt),
+      revised: revised == null && nullToAbsent
           ? const drift.Value.absent()
-          : drift.Value(errorMessage),
-      lastAttemptAt: lastAttemptAt == null && nullToAbsent
-          ? const drift.Value.absent()
-          : drift.Value(lastAttemptAt),
+          : drift.Value(revised),
     );
   }
 
-  factory DownloadedEpisode.fromJson(
+  factory CachedEpisode.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
-    return DownloadedEpisode(
+    return CachedEpisode(
       ncode: serializer.fromJson<String>(json['ncode']),
       episode: serializer.fromJson<int>(json['episode']),
       content: serializer.fromJson<List<NovelContentElement>>(json['content']),
-      downloadedAt: serializer.fromJson<int>(json['downloadedAt']),
-      status: serializer.fromJson<int>(json['status']),
-      errorMessage: serializer.fromJson<String?>(json['errorMessage']),
-      lastAttemptAt: serializer.fromJson<int?>(json['lastAttemptAt']),
+      cachedAt: serializer.fromJson<int>(json['cachedAt']),
+      revised: serializer.fromJson<String?>(json['revised']),
     );
   }
   @override
@@ -2835,160 +2383,117 @@ class DownloadedEpisode extends drift.DataClass
       'ncode': serializer.toJson<String>(ncode),
       'episode': serializer.toJson<int>(episode),
       'content': serializer.toJson<List<NovelContentElement>>(content),
-      'downloadedAt': serializer.toJson<int>(downloadedAt),
-      'status': serializer.toJson<int>(status),
-      'errorMessage': serializer.toJson<String?>(errorMessage),
-      'lastAttemptAt': serializer.toJson<int?>(lastAttemptAt),
+      'cachedAt': serializer.toJson<int>(cachedAt),
+      'revised': serializer.toJson<String?>(revised),
     };
   }
 
-  DownloadedEpisode copyWith({
+  CachedEpisode copyWith({
     String? ncode,
     int? episode,
     List<NovelContentElement>? content,
-    int? downloadedAt,
-    int? status,
-    drift.Value<String?> errorMessage = const drift.Value.absent(),
-    drift.Value<int?> lastAttemptAt = const drift.Value.absent(),
-  }) => DownloadedEpisode(
+    int? cachedAt,
+    drift.Value<String?> revised = const drift.Value.absent(),
+  }) => CachedEpisode(
     ncode: ncode ?? this.ncode,
     episode: episode ?? this.episode,
     content: content ?? this.content,
-    downloadedAt: downloadedAt ?? this.downloadedAt,
-    status: status ?? this.status,
-    errorMessage: errorMessage.present ? errorMessage.value : this.errorMessage,
-    lastAttemptAt: lastAttemptAt.present
-        ? lastAttemptAt.value
-        : this.lastAttemptAt,
+    cachedAt: cachedAt ?? this.cachedAt,
+    revised: revised.present ? revised.value : this.revised,
   );
-  DownloadedEpisode copyWithCompanion(DownloadedEpisodesCompanion data) {
-    return DownloadedEpisode(
+  CachedEpisode copyWithCompanion(CachedEpisodesCompanion data) {
+    return CachedEpisode(
       ncode: data.ncode.present ? data.ncode.value : this.ncode,
       episode: data.episode.present ? data.episode.value : this.episode,
       content: data.content.present ? data.content.value : this.content,
-      downloadedAt: data.downloadedAt.present
-          ? data.downloadedAt.value
-          : this.downloadedAt,
-      status: data.status.present ? data.status.value : this.status,
-      errorMessage: data.errorMessage.present
-          ? data.errorMessage.value
-          : this.errorMessage,
-      lastAttemptAt: data.lastAttemptAt.present
-          ? data.lastAttemptAt.value
-          : this.lastAttemptAt,
+      cachedAt: data.cachedAt.present ? data.cachedAt.value : this.cachedAt,
+      revised: data.revised.present ? data.revised.value : this.revised,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('DownloadedEpisode(')
+    return (StringBuffer('CachedEpisode(')
           ..write('ncode: $ncode, ')
           ..write('episode: $episode, ')
           ..write('content: $content, ')
-          ..write('downloadedAt: $downloadedAt, ')
-          ..write('status: $status, ')
-          ..write('errorMessage: $errorMessage, ')
-          ..write('lastAttemptAt: $lastAttemptAt')
+          ..write('cachedAt: $cachedAt, ')
+          ..write('revised: $revised')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-    ncode,
-    episode,
-    content,
-    downloadedAt,
-    status,
-    errorMessage,
-    lastAttemptAt,
-  );
+  int get hashCode => Object.hash(ncode, episode, content, cachedAt, revised);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is DownloadedEpisode &&
+      (other is CachedEpisode &&
           other.ncode == this.ncode &&
           other.episode == this.episode &&
           other.content == this.content &&
-          other.downloadedAt == this.downloadedAt &&
-          other.status == this.status &&
-          other.errorMessage == this.errorMessage &&
-          other.lastAttemptAt == this.lastAttemptAt);
+          other.cachedAt == this.cachedAt &&
+          other.revised == this.revised);
 }
 
-class DownloadedEpisodesCompanion
-    extends drift.UpdateCompanion<DownloadedEpisode> {
+class CachedEpisodesCompanion extends drift.UpdateCompanion<CachedEpisode> {
   final drift.Value<String> ncode;
   final drift.Value<int> episode;
   final drift.Value<List<NovelContentElement>> content;
-  final drift.Value<int> downloadedAt;
-  final drift.Value<int> status;
-  final drift.Value<String?> errorMessage;
-  final drift.Value<int?> lastAttemptAt;
+  final drift.Value<int> cachedAt;
+  final drift.Value<String?> revised;
   final drift.Value<int> rowid;
-  const DownloadedEpisodesCompanion({
+  const CachedEpisodesCompanion({
     this.ncode = const drift.Value.absent(),
     this.episode = const drift.Value.absent(),
     this.content = const drift.Value.absent(),
-    this.downloadedAt = const drift.Value.absent(),
-    this.status = const drift.Value.absent(),
-    this.errorMessage = const drift.Value.absent(),
-    this.lastAttemptAt = const drift.Value.absent(),
+    this.cachedAt = const drift.Value.absent(),
+    this.revised = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
   });
-  DownloadedEpisodesCompanion.insert({
+  CachedEpisodesCompanion.insert({
     required String ncode,
     required int episode,
     required List<NovelContentElement> content,
-    required int downloadedAt,
-    this.status = const drift.Value.absent(),
-    this.errorMessage = const drift.Value.absent(),
-    this.lastAttemptAt = const drift.Value.absent(),
+    required int cachedAt,
+    this.revised = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
   }) : ncode = drift.Value(ncode),
        episode = drift.Value(episode),
        content = drift.Value(content),
-       downloadedAt = drift.Value(downloadedAt);
-  static drift.Insertable<DownloadedEpisode> custom({
+       cachedAt = drift.Value(cachedAt);
+  static drift.Insertable<CachedEpisode> custom({
     drift.Expression<String>? ncode,
     drift.Expression<int>? episode,
     drift.Expression<String>? content,
-    drift.Expression<int>? downloadedAt,
-    drift.Expression<int>? status,
-    drift.Expression<String>? errorMessage,
-    drift.Expression<int>? lastAttemptAt,
+    drift.Expression<int>? cachedAt,
+    drift.Expression<String>? revised,
     drift.Expression<int>? rowid,
   }) {
     return drift.RawValuesInsertable({
       if (ncode != null) 'ncode': ncode,
       if (episode != null) 'episode': episode,
       if (content != null) 'content': content,
-      if (downloadedAt != null) 'downloaded_at': downloadedAt,
-      if (status != null) 'status': status,
-      if (errorMessage != null) 'error_message': errorMessage,
-      if (lastAttemptAt != null) 'last_attempt_at': lastAttemptAt,
+      if (cachedAt != null) 'cached_at': cachedAt,
+      if (revised != null) 'revised': revised,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
-  DownloadedEpisodesCompanion copyWith({
+  CachedEpisodesCompanion copyWith({
     drift.Value<String>? ncode,
     drift.Value<int>? episode,
     drift.Value<List<NovelContentElement>>? content,
-    drift.Value<int>? downloadedAt,
-    drift.Value<int>? status,
-    drift.Value<String?>? errorMessage,
-    drift.Value<int?>? lastAttemptAt,
+    drift.Value<int>? cachedAt,
+    drift.Value<String?>? revised,
     drift.Value<int>? rowid,
   }) {
-    return DownloadedEpisodesCompanion(
+    return CachedEpisodesCompanion(
       ncode: ncode ?? this.ncode,
       episode: episode ?? this.episode,
       content: content ?? this.content,
-      downloadedAt: downloadedAt ?? this.downloadedAt,
-      status: status ?? this.status,
-      errorMessage: errorMessage ?? this.errorMessage,
-      lastAttemptAt: lastAttemptAt ?? this.lastAttemptAt,
+      cachedAt: cachedAt ?? this.cachedAt,
+      revised: revised ?? this.revised,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3004,20 +2509,14 @@ class DownloadedEpisodesCompanion
     }
     if (content.present) {
       map['content'] = drift.Variable<String>(
-        $DownloadedEpisodesTable.$convertercontent.toSql(content.value),
+        $CachedEpisodesTable.$convertercontent.toSql(content.value),
       );
     }
-    if (downloadedAt.present) {
-      map['downloaded_at'] = drift.Variable<int>(downloadedAt.value);
+    if (cachedAt.present) {
+      map['cached_at'] = drift.Variable<int>(cachedAt.value);
     }
-    if (status.present) {
-      map['status'] = drift.Variable<int>(status.value);
-    }
-    if (errorMessage.present) {
-      map['error_message'] = drift.Variable<String>(errorMessage.value);
-    }
-    if (lastAttemptAt.present) {
-      map['last_attempt_at'] = drift.Variable<int>(lastAttemptAt.value);
+    if (revised.present) {
+      map['revised'] = drift.Variable<String>(revised.value);
     }
     if (rowid.present) {
       map['rowid'] = drift.Variable<int>(rowid.value);
@@ -3027,14 +2526,12 @@ class DownloadedEpisodesCompanion
 
   @override
   String toString() {
-    return (StringBuffer('DownloadedEpisodesCompanion(')
+    return (StringBuffer('CachedEpisodesCompanion(')
           ..write('ncode: $ncode, ')
           ..write('episode: $episode, ')
           ..write('content: $content, ')
-          ..write('downloadedAt: $downloadedAt, ')
-          ..write('status: $status, ')
-          ..write('errorMessage: $errorMessage, ')
-          ..write('lastAttemptAt: $lastAttemptAt, ')
+          ..write('cachedAt: $cachedAt, ')
+          ..write('revised: $revised, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3652,9 +3149,7 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $NovelsTable novels = $NovelsTable(this);
   late final $HistoryTable history = $HistoryTable(this);
-  late final $EpisodesTable episodes = $EpisodesTable(this);
-  late final $DownloadedEpisodesTable downloadedEpisodes =
-      $DownloadedEpisodesTable(this);
+  late final $CachedEpisodesTable cachedEpisodes = $CachedEpisodesTable(this);
   late final $LibraryNovelsTable libraryNovels = $LibraryNovelsTable(this);
   @override
   Iterable<drift.TableInfo<drift.Table, Object?>> get allTables =>
@@ -3663,8 +3158,7 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
   List<drift.DatabaseSchemaEntity> get allSchemaEntities => [
     novels,
     history,
-    episodes,
-    downloadedEpisodes,
+    cachedEpisodes,
     libraryNovels,
   ];
 }
@@ -4589,231 +4083,28 @@ typedef $$HistoryTableProcessedTableManager =
       HistoryData,
       drift.PrefetchHooks Function()
     >;
-typedef $$EpisodesTableCreateCompanionBuilder =
-    EpisodesCompanion Function({
-      required String ncode,
-      required int episode,
-      drift.Value<String?> title,
-      drift.Value<String?> content,
-      drift.Value<int?> cachedAt,
-      drift.Value<int> rowid,
-    });
-typedef $$EpisodesTableUpdateCompanionBuilder =
-    EpisodesCompanion Function({
-      drift.Value<String> ncode,
-      drift.Value<int> episode,
-      drift.Value<String?> title,
-      drift.Value<String?> content,
-      drift.Value<int?> cachedAt,
-      drift.Value<int> rowid,
-    });
-
-class $$EpisodesTableFilterComposer
-    extends drift.Composer<_$AppDatabase, $EpisodesTable> {
-  $$EpisodesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  drift.ColumnFilters<String> get ncode => $composableBuilder(
-    column: $table.ncode,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
-  drift.ColumnFilters<int> get episode => $composableBuilder(
-    column: $table.episode,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
-  drift.ColumnFilters<String> get title => $composableBuilder(
-    column: $table.title,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
-  drift.ColumnFilters<String> get content => $composableBuilder(
-    column: $table.content,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
-  drift.ColumnFilters<int> get cachedAt => $composableBuilder(
-    column: $table.cachedAt,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-}
-
-class $$EpisodesTableOrderingComposer
-    extends drift.Composer<_$AppDatabase, $EpisodesTable> {
-  $$EpisodesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  drift.ColumnOrderings<String> get ncode => $composableBuilder(
-    column: $table.ncode,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<int> get episode => $composableBuilder(
-    column: $table.episode,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<String> get title => $composableBuilder(
-    column: $table.title,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<String> get content => $composableBuilder(
-    column: $table.content,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<int> get cachedAt => $composableBuilder(
-    column: $table.cachedAt,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-}
-
-class $$EpisodesTableAnnotationComposer
-    extends drift.Composer<_$AppDatabase, $EpisodesTable> {
-  $$EpisodesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  drift.GeneratedColumn<String> get ncode =>
-      $composableBuilder(column: $table.ncode, builder: (column) => column);
-
-  drift.GeneratedColumn<int> get episode =>
-      $composableBuilder(column: $table.episode, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get title =>
-      $composableBuilder(column: $table.title, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get content =>
-      $composableBuilder(column: $table.content, builder: (column) => column);
-
-  drift.GeneratedColumn<int> get cachedAt =>
-      $composableBuilder(column: $table.cachedAt, builder: (column) => column);
-}
-
-class $$EpisodesTableTableManager
-    extends
-        drift.RootTableManager<
-          _$AppDatabase,
-          $EpisodesTable,
-          Episode,
-          $$EpisodesTableFilterComposer,
-          $$EpisodesTableOrderingComposer,
-          $$EpisodesTableAnnotationComposer,
-          $$EpisodesTableCreateCompanionBuilder,
-          $$EpisodesTableUpdateCompanionBuilder,
-          (
-            Episode,
-            drift.BaseReferences<_$AppDatabase, $EpisodesTable, Episode>,
-          ),
-          Episode,
-          drift.PrefetchHooks Function()
-        > {
-  $$EpisodesTableTableManager(_$AppDatabase db, $EpisodesTable table)
-    : super(
-        drift.TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$EpisodesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$EpisodesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$EpisodesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                drift.Value<String> ncode = const drift.Value.absent(),
-                drift.Value<int> episode = const drift.Value.absent(),
-                drift.Value<String?> title = const drift.Value.absent(),
-                drift.Value<String?> content = const drift.Value.absent(),
-                drift.Value<int?> cachedAt = const drift.Value.absent(),
-                drift.Value<int> rowid = const drift.Value.absent(),
-              }) => EpisodesCompanion(
-                ncode: ncode,
-                episode: episode,
-                title: title,
-                content: content,
-                cachedAt: cachedAt,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ncode,
-                required int episode,
-                drift.Value<String?> title = const drift.Value.absent(),
-                drift.Value<String?> content = const drift.Value.absent(),
-                drift.Value<int?> cachedAt = const drift.Value.absent(),
-                drift.Value<int> rowid = const drift.Value.absent(),
-              }) => EpisodesCompanion.insert(
-                ncode: ncode,
-                episode: episode,
-                title: title,
-                content: content,
-                cachedAt: cachedAt,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (e.readTable(table), drift.BaseReferences(db, table, e)),
-              )
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$EpisodesTableProcessedTableManager =
-    drift.ProcessedTableManager<
-      _$AppDatabase,
-      $EpisodesTable,
-      Episode,
-      $$EpisodesTableFilterComposer,
-      $$EpisodesTableOrderingComposer,
-      $$EpisodesTableAnnotationComposer,
-      $$EpisodesTableCreateCompanionBuilder,
-      $$EpisodesTableUpdateCompanionBuilder,
-      (Episode, drift.BaseReferences<_$AppDatabase, $EpisodesTable, Episode>),
-      Episode,
-      drift.PrefetchHooks Function()
-    >;
-typedef $$DownloadedEpisodesTableCreateCompanionBuilder =
-    DownloadedEpisodesCompanion Function({
+typedef $$CachedEpisodesTableCreateCompanionBuilder =
+    CachedEpisodesCompanion Function({
       required String ncode,
       required int episode,
       required List<NovelContentElement> content,
-      required int downloadedAt,
-      drift.Value<int> status,
-      drift.Value<String?> errorMessage,
-      drift.Value<int?> lastAttemptAt,
+      required int cachedAt,
+      drift.Value<String?> revised,
       drift.Value<int> rowid,
     });
-typedef $$DownloadedEpisodesTableUpdateCompanionBuilder =
-    DownloadedEpisodesCompanion Function({
+typedef $$CachedEpisodesTableUpdateCompanionBuilder =
+    CachedEpisodesCompanion Function({
       drift.Value<String> ncode,
       drift.Value<int> episode,
       drift.Value<List<NovelContentElement>> content,
-      drift.Value<int> downloadedAt,
-      drift.Value<int> status,
-      drift.Value<String?> errorMessage,
-      drift.Value<int?> lastAttemptAt,
+      drift.Value<int> cachedAt,
+      drift.Value<String?> revised,
       drift.Value<int> rowid,
     });
 
-class $$DownloadedEpisodesTableFilterComposer
-    extends drift.Composer<_$AppDatabase, $DownloadedEpisodesTable> {
-  $$DownloadedEpisodesTableFilterComposer({
+class $$CachedEpisodesTableFilterComposer
+    extends drift.Composer<_$AppDatabase, $CachedEpisodesTable> {
+  $$CachedEpisodesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -4840,30 +4131,20 @@ class $$DownloadedEpisodesTableFilterComposer
     builder: (column) => drift.ColumnWithTypeConverterFilters(column),
   );
 
-  drift.ColumnFilters<int> get downloadedAt => $composableBuilder(
-    column: $table.downloadedAt,
+  drift.ColumnFilters<int> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
     builder: (column) => drift.ColumnFilters(column),
   );
 
-  drift.ColumnFilters<int> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
-  drift.ColumnFilters<String> get errorMessage => $composableBuilder(
-    column: $table.errorMessage,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
-  drift.ColumnFilters<int> get lastAttemptAt => $composableBuilder(
-    column: $table.lastAttemptAt,
+  drift.ColumnFilters<String> get revised => $composableBuilder(
+    column: $table.revised,
     builder: (column) => drift.ColumnFilters(column),
   );
 }
 
-class $$DownloadedEpisodesTableOrderingComposer
-    extends drift.Composer<_$AppDatabase, $DownloadedEpisodesTable> {
-  $$DownloadedEpisodesTableOrderingComposer({
+class $$CachedEpisodesTableOrderingComposer
+    extends drift.Composer<_$AppDatabase, $CachedEpisodesTable> {
+  $$CachedEpisodesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -4885,30 +4166,20 @@ class $$DownloadedEpisodesTableOrderingComposer
     builder: (column) => drift.ColumnOrderings(column),
   );
 
-  drift.ColumnOrderings<int> get downloadedAt => $composableBuilder(
-    column: $table.downloadedAt,
+  drift.ColumnOrderings<int> get cachedAt => $composableBuilder(
+    column: $table.cachedAt,
     builder: (column) => drift.ColumnOrderings(column),
   );
 
-  drift.ColumnOrderings<int> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<String> get errorMessage => $composableBuilder(
-    column: $table.errorMessage,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<int> get lastAttemptAt => $composableBuilder(
-    column: $table.lastAttemptAt,
+  drift.ColumnOrderings<String> get revised => $composableBuilder(
+    column: $table.revised,
     builder: (column) => drift.ColumnOrderings(column),
   );
 }
 
-class $$DownloadedEpisodesTableAnnotationComposer
-    extends drift.Composer<_$AppDatabase, $DownloadedEpisodesTable> {
-  $$DownloadedEpisodesTableAnnotationComposer({
+class $$CachedEpisodesTableAnnotationComposer
+    extends drift.Composer<_$AppDatabase, $CachedEpisodesTable> {
+  $$CachedEpisodesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -4925,82 +4196,63 @@ class $$DownloadedEpisodesTableAnnotationComposer
   get content =>
       $composableBuilder(column: $table.content, builder: (column) => column);
 
-  drift.GeneratedColumn<int> get downloadedAt => $composableBuilder(
-    column: $table.downloadedAt,
-    builder: (column) => column,
-  );
+  drift.GeneratedColumn<int> get cachedAt =>
+      $composableBuilder(column: $table.cachedAt, builder: (column) => column);
 
-  drift.GeneratedColumn<int> get status =>
-      $composableBuilder(column: $table.status, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get errorMessage => $composableBuilder(
-    column: $table.errorMessage,
-    builder: (column) => column,
-  );
-
-  drift.GeneratedColumn<int> get lastAttemptAt => $composableBuilder(
-    column: $table.lastAttemptAt,
-    builder: (column) => column,
-  );
+  drift.GeneratedColumn<String> get revised =>
+      $composableBuilder(column: $table.revised, builder: (column) => column);
 }
 
-class $$DownloadedEpisodesTableTableManager
+class $$CachedEpisodesTableTableManager
     extends
         drift.RootTableManager<
           _$AppDatabase,
-          $DownloadedEpisodesTable,
-          DownloadedEpisode,
-          $$DownloadedEpisodesTableFilterComposer,
-          $$DownloadedEpisodesTableOrderingComposer,
-          $$DownloadedEpisodesTableAnnotationComposer,
-          $$DownloadedEpisodesTableCreateCompanionBuilder,
-          $$DownloadedEpisodesTableUpdateCompanionBuilder,
+          $CachedEpisodesTable,
+          CachedEpisode,
+          $$CachedEpisodesTableFilterComposer,
+          $$CachedEpisodesTableOrderingComposer,
+          $$CachedEpisodesTableAnnotationComposer,
+          $$CachedEpisodesTableCreateCompanionBuilder,
+          $$CachedEpisodesTableUpdateCompanionBuilder,
           (
-            DownloadedEpisode,
+            CachedEpisode,
             drift.BaseReferences<
               _$AppDatabase,
-              $DownloadedEpisodesTable,
-              DownloadedEpisode
+              $CachedEpisodesTable,
+              CachedEpisode
             >,
           ),
-          DownloadedEpisode,
+          CachedEpisode,
           drift.PrefetchHooks Function()
         > {
-  $$DownloadedEpisodesTableTableManager(
+  $$CachedEpisodesTableTableManager(
     _$AppDatabase db,
-    $DownloadedEpisodesTable table,
+    $CachedEpisodesTable table,
   ) : super(
         drift.TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$DownloadedEpisodesTableFilterComposer($db: db, $table: table),
+              $$CachedEpisodesTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$DownloadedEpisodesTableOrderingComposer($db: db, $table: table),
+              $$CachedEpisodesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$DownloadedEpisodesTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
+              $$CachedEpisodesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 drift.Value<String> ncode = const drift.Value.absent(),
                 drift.Value<int> episode = const drift.Value.absent(),
                 drift.Value<List<NovelContentElement>> content =
                     const drift.Value.absent(),
-                drift.Value<int> downloadedAt = const drift.Value.absent(),
-                drift.Value<int> status = const drift.Value.absent(),
-                drift.Value<String?> errorMessage = const drift.Value.absent(),
-                drift.Value<int?> lastAttemptAt = const drift.Value.absent(),
+                drift.Value<int> cachedAt = const drift.Value.absent(),
+                drift.Value<String?> revised = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
-              }) => DownloadedEpisodesCompanion(
+              }) => CachedEpisodesCompanion(
                 ncode: ncode,
                 episode: episode,
                 content: content,
-                downloadedAt: downloadedAt,
-                status: status,
-                errorMessage: errorMessage,
-                lastAttemptAt: lastAttemptAt,
+                cachedAt: cachedAt,
+                revised: revised,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -5008,19 +4260,15 @@ class $$DownloadedEpisodesTableTableManager
                 required String ncode,
                 required int episode,
                 required List<NovelContentElement> content,
-                required int downloadedAt,
-                drift.Value<int> status = const drift.Value.absent(),
-                drift.Value<String?> errorMessage = const drift.Value.absent(),
-                drift.Value<int?> lastAttemptAt = const drift.Value.absent(),
+                required int cachedAt,
+                drift.Value<String?> revised = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
-              }) => DownloadedEpisodesCompanion.insert(
+              }) => CachedEpisodesCompanion.insert(
                 ncode: ncode,
                 episode: episode,
                 content: content,
-                downloadedAt: downloadedAt,
-                status: status,
-                errorMessage: errorMessage,
-                lastAttemptAt: lastAttemptAt,
+                cachedAt: cachedAt,
+                revised: revised,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -5033,25 +4281,25 @@ class $$DownloadedEpisodesTableTableManager
       );
 }
 
-typedef $$DownloadedEpisodesTableProcessedTableManager =
+typedef $$CachedEpisodesTableProcessedTableManager =
     drift.ProcessedTableManager<
       _$AppDatabase,
-      $DownloadedEpisodesTable,
-      DownloadedEpisode,
-      $$DownloadedEpisodesTableFilterComposer,
-      $$DownloadedEpisodesTableOrderingComposer,
-      $$DownloadedEpisodesTableAnnotationComposer,
-      $$DownloadedEpisodesTableCreateCompanionBuilder,
-      $$DownloadedEpisodesTableUpdateCompanionBuilder,
+      $CachedEpisodesTable,
+      CachedEpisode,
+      $$CachedEpisodesTableFilterComposer,
+      $$CachedEpisodesTableOrderingComposer,
+      $$CachedEpisodesTableAnnotationComposer,
+      $$CachedEpisodesTableCreateCompanionBuilder,
+      $$CachedEpisodesTableUpdateCompanionBuilder,
       (
-        DownloadedEpisode,
+        CachedEpisode,
         drift.BaseReferences<
           _$AppDatabase,
-          $DownloadedEpisodesTable,
-          DownloadedEpisode
+          $CachedEpisodesTable,
+          CachedEpisode
         >,
       ),
-      DownloadedEpisode,
+      CachedEpisode,
       drift.PrefetchHooks Function()
     >;
 typedef $$LibraryNovelsTableCreateCompanionBuilder =
@@ -5350,10 +4598,8 @@ class $AppDatabaseManager {
       $$NovelsTableTableManager(_db, _db.novels);
   $$HistoryTableTableManager get history =>
       $$HistoryTableTableManager(_db, _db.history);
-  $$EpisodesTableTableManager get episodes =>
-      $$EpisodesTableTableManager(_db, _db.episodes);
-  $$DownloadedEpisodesTableTableManager get downloadedEpisodes =>
-      $$DownloadedEpisodesTableTableManager(_db, _db.downloadedEpisodes);
+  $$CachedEpisodesTableTableManager get cachedEpisodes =>
+      $$CachedEpisodesTableTableManager(_db, _db.cachedEpisodes);
   $$LibraryNovelsTableTableManager get libraryNovels =>
       $$LibraryNovelsTableTableManager(_db, _db.libraryNovels);
 }

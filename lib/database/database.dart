@@ -164,29 +164,8 @@ class History extends Table {
   Set<Column> get primaryKey => {ncode};
 }
 
-/// 小説のエピソードを格納するテーブル
-class Episodes extends Table {
-  /// 小説のncode
-  TextColumn get ncode => text()();
-
-  /// エピソード番号
-  IntColumn get episode => integer()();
-
-  /// エピソードのタイトル
-  TextColumn get title => text().nullable()();
-
-  /// エピソードの内容
-  TextColumn get content => text().nullable()();
-
-  /// キャッシュした日時
-  IntColumn get cachedAt => integer().nullable()();
-
-  @override
-  Set<Column> get primaryKey => {ncode, episode};
-}
-
-/// ダウンロード済みエピソードを格納するテーブル
-class DownloadedEpisodes extends Table {
+/// キャッシュ済みエピソードを格納するテーブル
+class CachedEpisodes extends Table {
   /// 小説のncode
   TextColumn get ncode => text()();
 
@@ -194,21 +173,14 @@ class DownloadedEpisodes extends Table {
   IntColumn get episode => integer()();
 
   /// エピソードの内容
-  /// JSON形式で保存される
+  /// JSON形式で保存される。空配列=失敗、中身あり=成功
   TextColumn get content => text().map(const ContentConverter())();
 
-  /// ダウンロード日時
-  IntColumn get downloadedAt => integer()();
+  /// キャッシュ日時
+  IntColumn get cachedAt => integer()();
 
-  /// ダウンロード状態
-  /// 2: 成功, 3: 失敗
-  IntColumn get status => integer().withDefault(const Constant(2))();
-
-  /// 失敗時のエラーメッセージ
-  TextColumn get errorMessage => text().nullable()();
-
-  /// 最終試行日時
-  IntColumn get lastAttemptAt => integer().nullable()();
+  /// キャッシュ時点の改稿日時
+  TextColumn get revised => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {ncode, episode};
@@ -255,13 +227,12 @@ class LibraryNovels extends Table {
   tables: [
     Novels,
     History,
-    Episodes,
-    DownloadedEpisodes,
+    CachedEpisodes,
     LibraryNovels,
   ],
 )
 /// アプリケーションのデータベース
-/// 小説情報、閲覧履歴、エピソード、ダウンロード済みエピソードを管理
+/// 小説情報、閲覧履歴、エピソード、キャッシュ済みエピソードを管理
 class AppDatabase extends _$AppDatabase {
   /// コンストラクタ
   /// データベースの接続を初期化
@@ -272,7 +243,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration {
@@ -372,15 +343,14 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from <= 7) {
           // downloadedEpisodesテーブルにstatus, errorMessage, lastAttemptAtカラムを追加
-          await m.addColumn(downloadedEpisodes, downloadedEpisodes.status);
-          await m.addColumn(
-            downloadedEpisodes,
-            downloadedEpisodes.errorMessage,
-          );
-          await m.addColumn(
-            downloadedEpisodes,
-            downloadedEpisodes.lastAttemptAt,
-          );
+          try {
+             await customStatement('ALTER TABLE downloaded_episodes ADD COLUMN status INTEGER DEFAULT 2');
+             await customStatement('ALTER TABLE downloaded_episodes ADD COLUMN error_message TEXT');
+             await customStatement('ALTER TABLE downloaded_episodes ADD COLUMN last_attempt_at INTEGER');
+          } catch (e) {
+            // カラムが既に存在する場合などでエラーになる可能性があるが無視
+            print('Migration error (from <= 7): $e');
+          }
         }
         if (from <= 8) {
           // bookmarksテーブルを削除（使用されていないため）
@@ -390,6 +360,32 @@ class AppDatabase extends _$AppDatabase {
           // downloaded_novelsテーブルを削除
           // ダウンロード状態はdownloaded_episodesから動的に計算するように変更
           await customStatement('DROP TABLE IF EXISTS downloaded_novels');
+        }
+        if (from <= 10) {
+          // DownloadedEpisodes → CachedEpisodes にリネーム & スキーマ変更
+          // 不要なカラムを削除し、revisedカラムを追加
+          await customStatement('''
+            CREATE TABLE cached_episodes (
+              ncode TEXT NOT NULL,
+              episode INTEGER NOT NULL,
+              content TEXT NOT NULL,
+              cached_at INTEGER NOT NULL,
+              revised TEXT,
+              PRIMARY KEY(ncode, episode)
+            )
+          ''');
+
+          // データを移行 (status, errorMessage, lastAttemptAt は捨てる)
+          // downloaded_at -> cached_at
+          await customStatement('''
+            INSERT INTO cached_episodes (ncode, episode, content, cached_at, revised)
+            SELECT ncode, episode, content, downloaded_at, NULL FROM downloaded_episodes
+          ''');
+
+          await customStatement('DROP TABLE downloaded_episodes');
+
+          // 未使用のEpisodesテーブルを削除
+          await customStatement('DROP TABLE IF EXISTS episodes');
         }
       },
     );
@@ -526,17 +522,17 @@ class AppDatabase extends _$AppDatabase {
     return delete(history).go();
   }
 
-  /// エピソードの保存
-  Future<int> insertEpisode(EpisodesCompanion episode) {
-    return into(episodes).insert(
+  /// キャッシュ済みエピソードの保存
+  Future<int> insertCachedEpisode(CachedEpisodesCompanion episode) {
+    return into(cachedEpisodes).insert(
       episode.copyWith(ncode: drift.Value(episode.ncode.value.toLowerCase())),
       mode: InsertMode.insertOrReplace,
     );
   }
 
-  /// エピソードの取得
-  Future<Episode?> getEpisode(String ncode, int episode) {
-    return (select(episodes)..where(
+  /// キャッシュ済みエピソードの取得
+  Future<CachedEpisode?> getCachedEpisode(String ncode, int episode) {
+    return (select(cachedEpisodes)..where(
           (t) =>
               t.ncode.equals(ncode.toNormalizedNcode()) &
               t.episode.equals(episode),
@@ -544,28 +540,20 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
-  /// ダウンロード済みエピソードの保存
-  Future<int> insertDownloadedEpisode(DownloadedEpisodesCompanion episode) {
-    return into(downloadedEpisodes).insert(
-      episode.copyWith(ncode: drift.Value(episode.ncode.value.toLowerCase())),
-      mode: InsertMode.insertOrReplace,
-    );
-  }
-
-  /// ダウンロード済みエピソードの取得
-  Future<DownloadedEpisode?> getDownloadedEpisode(String ncode, int episode) {
-    return (select(downloadedEpisodes)..where(
+  /// キャッシュ済みエピソードの監視
+  Stream<CachedEpisode?> watchCachedEpisode(String ncode, int episode) {
+    return (select(cachedEpisodes)..where(
           (t) =>
               t.ncode.equals(ncode.toNormalizedNcode()) &
               t.episode.equals(episode),
         ))
-        .getSingleOrNull();
+        .watchSingleOrNull();
   }
 
-  /// ダウンロード済みエピソードの削除
-  Future<int> deleteDownloadedEpisode(String ncode, int episode) {
+  /// キャッシュ済みエピソードの削除
+  Future<int> deleteCachedEpisode(String ncode, int episode) {
     return (delete(
-          downloadedEpisodes,
+          cachedEpisodes,
         )..where(
           (t) =>
               t.ncode.equals(ncode.toNormalizedNcode()) &
@@ -585,14 +573,14 @@ class AppDatabase extends _$AppDatabase {
     }
     final totalEpisodes = novel!.generalAllNo!;
 
-    // ダウンロード済みエピソードを取得
-    final episodes = await (select(downloadedEpisodes)
+    // キャッシュ済みエピソードを取得
+    final episodes = await (select(cachedEpisodes)
           ..where((e) => e.ncode.equals(normalizedNcode)))
         .get();
 
-    // 成功・失敗数をカウント
-    final successCount = episodes.where((e) => e.status == 2).length;
-    final failureCount = episodes.where((e) => e.status == 3).length;
+    // contentの中身で成功/失敗を判定
+    final successCount = episodes.where((e) => e.content.isNotEmpty).length;
+    final failureCount = episodes.where((e) => e.content.isEmpty).length;
 
     return NovelDownloadSummary(
       ncode: normalizedNcode,
@@ -606,8 +594,8 @@ class AppDatabase extends _$AppDatabase {
   Stream<NovelDownloadSummary?> watchNovelDownloadSummary(String ncode) {
     final normalizedNcode = ncode.toNormalizedNcode();
 
-    // DownloadedEpisodesの変更を監視
-    return (select(downloadedEpisodes)
+    // CachedEpisodesの変更を監視
+    return (select(cachedEpisodes)
           ..where((e) => e.ncode.equals(normalizedNcode)))
         .watch()
         .asyncMap((episodes) async {
@@ -618,9 +606,9 @@ class AppDatabase extends _$AppDatabase {
       }
       final totalEpisodes = novel!.generalAllNo!;
 
-      // 成功・失敗数をカウント
-      final successCount = episodes.where((e) => e.status == 2).length;
-      final failureCount = episodes.where((e) => e.status == 3).length;
+      // contentの中身で成功/失敗を判定
+      final successCount = episodes.where((e) => e.content.isNotEmpty).length;
+      final failureCount = episodes.where((e) => e.content.isEmpty).length;
 
       return NovelDownloadSummary(
         ncode: normalizedNcode,
@@ -634,15 +622,15 @@ class AppDatabase extends _$AppDatabase {
 
   /// ダウンロード中の小説を監視
   ///
-  /// DownloadedEpisodesから集計し、ダウンロード中（status=1）の小説を取得。
+  /// CachedEpisodesから集計し、ダウンロード中（status=1）の小説を取得。
   /// NovelsテーブルとLEFT JOINして小説情報も含める。
   Stream<List<NovelDownloadSummary>> watchDownloadingNovels() {
-    // DownloadedEpisodesから異なるncodeのリストを取得
-    return select(downloadedEpisodes)
+    // CachedEpisodesから異なるncodeのリストを取得
+    return select(cachedEpisodes)
         .watch()
         .asyncMap((allEpisodes) async {
       // ncodeでグループ化
-      final ncodeMap = <String, List<DownloadedEpisode>>{};
+      final ncodeMap = <String, List<CachedEpisode>>{};
       for (final episode in allEpisodes) {
         ncodeMap.putIfAbsent(episode.ncode, () => []).add(episode);
       }
@@ -658,8 +646,8 @@ class AppDatabase extends _$AppDatabase {
         if (novel?.generalAllNo == null) continue;
 
         final totalEpisodes = novel!.generalAllNo!;
-        final successCount = episodes.where((e) => e.status == 2).length;
-        final failureCount = episodes.where((e) => e.status == 3).length;
+        final successCount = episodes.where((e) => e.content.isNotEmpty).length;
+        final failureCount = episodes.where((e) => e.content.isEmpty).length;
 
         final summary = NovelDownloadSummary(
           ncode: ncode,
@@ -680,14 +668,14 @@ class AppDatabase extends _$AppDatabase {
 
   /// 完了済みダウンロード小説を監視
   ///
-  /// DownloadedEpisodesから集計し、完了済み（status=2）の小説を取得。
+  /// CachedEpisodesから集計し、完了済み（status=2）の小説を取得。
   Stream<List<NovelDownloadSummary>> watchCompletedDownloads() {
-    // DownloadedEpisodesから異なるncodeのリストを取得
-    return select(downloadedEpisodes)
+    // CachedEpisodesから異なるncodeのリストを取得
+    return select(cachedEpisodes)
         .watch()
         .asyncMap((allEpisodes) async {
       // ncodeでグループ化
-      final ncodeMap = <String, List<DownloadedEpisode>>{};
+      final ncodeMap = <String, List<CachedEpisode>>{};
       for (final episode in allEpisodes) {
         ncodeMap.putIfAbsent(episode.ncode, () => []).add(episode);
       }
@@ -703,8 +691,8 @@ class AppDatabase extends _$AppDatabase {
         if (novel?.generalAllNo == null) continue;
 
         final totalEpisodes = novel!.generalAllNo!;
-        final successCount = episodes.where((e) => e.status == 2).length;
-        final failureCount = episodes.where((e) => e.status == 3).length;
+        final successCount = episodes.where((e) => e.content.isNotEmpty).length;
+        final failureCount = episodes.where((e) => e.content.isEmpty).length;
 
         final summary = NovelDownloadSummary(
           ncode: ncode,

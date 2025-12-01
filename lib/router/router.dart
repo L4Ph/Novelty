@@ -102,7 +102,12 @@ final router = GoRouter(
             final ncode = state.pathParameters['ncode']!.toNormalizedNcode();
             final episode =
                 int.tryParse(state.pathParameters['episode'] ?? '1') ?? 1;
-            return NovelPage(ncode: ncode, episode: episode);
+            final revised = state.uri.queryParameters['revised'];
+            return NovelPage(
+              ncode: ncode,
+              episode: episode,
+              revised: revised,
+            );
           },
         ),
       ],

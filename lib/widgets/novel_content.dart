@@ -14,6 +14,7 @@ class NovelContent extends HookConsumerWidget {
   const NovelContent({
     required this.ncode,
     required this.episode,
+    this.revised,
     super.key,
   });
 
@@ -23,11 +24,14 @@ class NovelContent extends HookConsumerWidget {
   /// 小説のエピソード番号
   final int episode;
 
+  /// 改稿日時
+  final String? revised;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final contentAsync = ref.watch(
-      novelContentProvider(ncode: ncode, episode: episode),
+      novelContentProvider(ncode: ncode, episode: episode, revised: revised),
     );
 
     return SafeArea(
