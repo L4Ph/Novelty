@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:novelty/database/database.dart' hide Episode;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/models/ranking_response.dart';
@@ -648,10 +649,21 @@ class ApiService {
 
 @riverpod
 /// 小説の情報を取得するプロバイダー（シンプル版）。
-Future<NovelInfo> novelInfo(Ref ref, String ncode) {
+Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   final normalizedNcode = ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
-  return apiService.fetchNovelInfo(normalizedNcode);
+
+  try {
+    return await apiService.fetchNovelInfo(normalizedNcode);
+  } catch (e) {
+    // API取得失敗時はDBから取得を試みる
+    final db = ref.read(appDatabaseProvider);
+    final cachedNovel = await db.getNovel(normalizedNcode);
+    if (cachedNovel != null) {
+      return cachedNovel.toModel();
+    }
+    rethrow;
+  }
 }
 
 @riverpod
@@ -663,17 +675,26 @@ Future<NovelInfo> novelInfoWithCache(Ref ref, String ncode) async {
   final apiService = ref.read(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
 
-  final novelInfo = await apiService.fetchNovelInfo(normalizedNcode);
+  try {
+    final novelInfo = await apiService.fetchNovelInfo(normalizedNcode);
 
-  // Upsert novel data, preserving fav status
-  final existing = await db.getNovel(normalizedNcode);
-  await db.insertNovel(
-    novelInfo.toDbCompanion().copyWith(
-      fav: drift.Value(existing?.fav ?? 0),
-    ),
-  );
+    // Upsert novel data, preserving fav status
+    final existing = await db.getNovel(normalizedNcode);
+    await db.insertNovel(
+      novelInfo.toDbCompanion().copyWith(
+        fav: drift.Value(existing?.fav ?? 0),
+      ),
+    );
 
-  return novelInfo;
+    return novelInfo;
+  } catch (e) {
+    // API取得失敗時はDBから取得を試みる
+    final cachedNovel = await db.getNovel(normalizedNcode);
+    if (cachedNovel != null) {
+      return cachedNovel.toModel();
+    }
+    rethrow;
+  }
 }
 
 @riverpod
