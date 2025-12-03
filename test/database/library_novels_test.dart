@@ -4,8 +4,8 @@ import 'package:novelty/database/database.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  
-  group('LibraryNovels テーブル', () {
+
+  group('LibraryEntries テーブル', () {
     late AppDatabase database;
 
     setUp(() {
@@ -16,34 +16,35 @@ void main() {
       await database.close();
     });
 
+    Future<void> insertDummyNovel(String ncode) async {
+      await database
+          .into(database.novels)
+          .insert(
+            NovelsCompanion(
+              ncode: Value(ncode),
+              title: Value('Title $ncode'),
+              writer: Value('Writer $ncode'),
+            ),
+          );
+    }
+
     test('ライブラリ小説の追加ができること', () async {
       const ncode = 'n1234ab';
-      final addedAt = DateTime.now().millisecondsSinceEpoch;
+      await insertDummyNovel(ncode);
 
-      await database.addToLibrary(
-        LibraryNovelsCompanion(
-          ncode: const Value(ncode),
-          addedAt: Value(addedAt),
-        ),
-      );
+      await database.addToLibrary(ncode);
 
       final novels = await database.getLibraryNovels();
       expect(novels.length, 1);
       expect(novels.first.ncode, ncode);
-      expect(novels.first.addedAt, addedAt);
     });
 
     test('ライブラリ小説の削除ができること', () async {
       const ncode = 'n1234ab';
-      final addedAt = DateTime.now().millisecondsSinceEpoch;
+      await insertDummyNovel(ncode);
 
       // 追加
-      await database.addToLibrary(
-        LibraryNovelsCompanion(
-          ncode: const Value(ncode),
-          addedAt: Value(addedAt),
-        ),
-      );
+      await database.addToLibrary(ncode);
 
       // 削除
       await database.removeFromLibrary(ncode);
@@ -54,18 +55,13 @@ void main() {
 
     test('ライブラリ状態の確認ができること', () async {
       const ncode = 'n1234ab';
-      final addedAt = DateTime.now().millisecondsSinceEpoch;
+      await insertDummyNovel(ncode);
 
       // 初期状態では登録されていない
       expect(await database.isInLibrary(ncode), false);
 
       // 追加
-      await database.addToLibrary(
-        LibraryNovelsCompanion(
-          ncode: const Value(ncode),
-          addedAt: Value(addedAt),
-        ),
-      );
+      await database.addToLibrary(ncode);
 
       // 登録されている
       expect(await database.isInLibrary(ncode), true);
@@ -73,51 +69,34 @@ void main() {
 
     test('ライブラリ状態の監視ができること', () async {
       const ncode = 'n1234ab';
-      final addedAt = DateTime.now().millisecondsSinceEpoch;
+      await insertDummyNovel(ncode);
 
       // 初期状態の監視
       final stream = database.watchIsInLibrary(ncode);
-      
+
       expect(await stream.first, false);
 
       // 追加
-      await database.addToLibrary(
-        LibraryNovelsCompanion(
-          ncode: const Value(ncode),
-          addedAt: Value(addedAt),
-        ),
-      );
+      await database.addToLibrary(ncode);
 
       expect(await stream.first, true);
     });
 
     test('追加日時順でソートされること', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      
       // 複数の小説を追加（時間をずらして）
-      await database.addToLibrary(
-        LibraryNovelsCompanion(
-          ncode: const Value('n1234ab'),
-          addedAt: Value(now),
-        ),
-      );
-      
-      await database.addToLibrary(
-        LibraryNovelsCompanion(
-          ncode: const Value('n5678cd'),
-          addedAt: Value(now + 1000),
-        ),
-      );
-      
-      await database.addToLibrary(
-        LibraryNovelsCompanion(
-          ncode: const Value('n9012ef'),
-          addedAt: Value(now + 2000),
-        ),
-      );
+      await insertDummyNovel('n1234ab');
+      await database.addToLibrary('n1234ab');
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      await insertDummyNovel('n5678cd');
+      await database.addToLibrary('n5678cd');
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+
+      await insertDummyNovel('n9012ef');
+      await database.addToLibrary('n9012ef');
 
       final novels = await database.getLibraryNovels();
-      
+
       // 最新追加順（降順）でソートされていることを確認
       expect(novels.length, 3);
       expect(novels[0].ncode, 'n9012ef');
@@ -127,27 +106,14 @@ void main() {
 
     test('重複追加は無視されること', () async {
       const ncode = 'n1234ab';
-      final addedAt = DateTime.now().millisecondsSinceEpoch;
+      await insertDummyNovel(ncode);
 
       // 同じ小説を2回追加
-      await database.addToLibrary(
-        LibraryNovelsCompanion(
-          ncode: const Value(ncode),
-          addedAt: Value(addedAt),
-        ),
-      );
-      
-      await database.addToLibrary(
-        LibraryNovelsCompanion(
-          ncode: const Value(ncode),
-          addedAt: Value(addedAt + 1000),
-        ),
-      );
+      await database.addToLibrary(ncode);
+      await database.addToLibrary(ncode);
 
       final novels = await database.getLibraryNovels();
       expect(novels.length, 1);
-      // 最初の追加日時が保持されることを確認
-      expect(novels.first.addedAt, addedAt);
     });
   });
 }

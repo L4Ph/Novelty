@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -54,18 +56,18 @@ void main() {
 
     test('should return Future<List<Novel>>', () async {
       when(
-        mockDatabase.watchLibraryNovelsWithDetails(),
-      ).thenAnswer((_) => Stream.value(testNovels));
+        mockDatabase.watchLibraryNovels(),
+      ).thenAnswer((_) => Stream.fromIterable([testNovels]));
 
       final result = await container.read(libraryNovelsProvider.future);
 
       expect(result, equals(testNovels));
-      verify(mockDatabase.watchLibraryNovelsWithDetails()).called(1);
+      verify(mockDatabase.watchLibraryNovels()).called(1);
     });
 
     test('should handle database errors gracefully', () async {
       when(
-        mockDatabase.watchLibraryNovelsWithDetails(),
+        mockDatabase.watchLibraryNovels(),
       ).thenAnswer((_) => Stream.error(Exception('Database error')));
 
       await expectLater(
@@ -76,8 +78,8 @@ void main() {
 
     test('should be auto-disposed and re-fetched when not in use', () async {
       when(
-        mockDatabase.watchLibraryNovelsWithDetails(),
-      ).thenAnswer((_) => Stream.value(testNovels));
+        mockDatabase.watchLibraryNovels(),
+      ).thenAnswer((_) => Stream.fromIterable([testNovels]));
 
       await container.read(libraryNovelsProvider.future);
       container.dispose();
@@ -89,44 +91,40 @@ void main() {
           appDatabaseProvider.overrideWithValue(newMockDatabase),
         ],
       );
+
       when(
-        newMockDatabase.watchLibraryNovelsWithDetails(),
-      ).thenAnswer((_) => Stream.value(testNovels));
+        newMockDatabase.watchLibraryNovels(),
+      ).thenAnswer((_) => Stream.fromIterable([testNovels]));
 
       final result = await newContainer.read(libraryNovelsProvider.future);
       expect(result, testNovels);
-      verify(newMockDatabase.watchLibraryNovelsWithDetails()).called(1);
+      verify(newMockDatabase.watchLibraryNovels()).called(1);
 
       newContainer.dispose();
     });
 
     test('should handle refresh correctly', () async {
-      // StreamProvider doesn't support manual refresh in the same way as FutureProvider
-      // when mocking the stream directly. 
-      // Instead, we can verify that the stream emits new values.
-      // But here we are mocking the method call.
-      
       // Initial call
       when(
-        mockDatabase.watchLibraryNovelsWithDetails(),
-      ).thenAnswer((_) => Stream.value(testNovels.sublist(0, 1)));
+        mockDatabase.watchLibraryNovels(),
+      ).thenAnswer((_) => Stream.fromIterable([testNovels.sublist(0, 1)]));
 
       final firstResult = await container.read(libraryNovelsProvider.future);
       expect(firstResult, equals(testNovels.sublist(0, 1)));
 
       // Invalidate the provider to force re-read
       container.invalidate(libraryNovelsProvider);
-      
+
       // Update mock to return new data for the NEXT call
       when(
-        mockDatabase.watchLibraryNovelsWithDetails(),
-      ).thenAnswer((_) => Stream.value(testNovels));
+        mockDatabase.watchLibraryNovels(),
+      ).thenAnswer((_) => Stream.fromIterable([testNovels]));
 
       final secondResult = await container.read(libraryNovelsProvider.future);
       expect(secondResult, equals(testNovels));
-      
+
       // Verify called twice
-      verify(mockDatabase.watchLibraryNovelsWithDetails()).called(2);
+      verify(mockDatabase.watchLibraryNovels()).called(2);
     });
   });
 }

@@ -202,7 +202,7 @@ final class LibraryStatusProvider
   }
 }
 
-String _$libraryStatusHash() => r'a6e335ba9000e1de28b7bc25c057c8a4b3026a6c';
+String _$libraryStatusHash() => r'c46c6aa280d95c7752683442650585847e5f0227';
 
 /// 小説のライブラリ状態を管理するプロバイダー。
 
@@ -520,7 +520,7 @@ final class EpisodeDownloadStatusProvider
 }
 
 String _$episodeDownloadStatusHash() =>
-    r'38dc93349f351f866819fd6f8c4447e332f3725f';
+    r'd35b31e59af860b089466eb79f5808081d5ebf90';
 
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
@@ -552,4 +552,88 @@ final class EpisodeDownloadStatusFamily extends $Family
 
   @override
   String toString() => r'episodeDownloadStatusProvider';
+}
+
+/// エピソードリストを取得するプロバイダー
+
+@ProviderFor(episodeList)
+const episodeListProvider = EpisodeListFamily._();
+
+/// エピソードリストを取得するプロバイダー
+
+final class EpisodeListProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Episode>>,
+          List<Episode>,
+          FutureOr<List<Episode>>
+        >
+    with $FutureModifier<List<Episode>>, $FutureProvider<List<Episode>> {
+  /// エピソードリストを取得するプロバイダー
+  const EpisodeListProvider._({
+    required EpisodeListFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'episodeListProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$episodeListHash();
+
+  @override
+  String toString() {
+    return r'episodeListProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Episode>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Episode>> create(Ref ref) {
+    final argument = this.argument as String;
+    return episodeList(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EpisodeListProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$episodeListHash() => r'eac464a5085d796cfee879af15cc876d0ca3c5ee';
+
+/// エピソードリストを取得するプロバイダー
+
+final class EpisodeListFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Episode>>, String> {
+  const EpisodeListFamily._()
+    : super(
+        retry: null,
+        name: r'episodeListProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// エピソードリストを取得するプロバイダー
+
+  EpisodeListProvider call(String ncodeAndPage) =>
+      EpisodeListProvider._(argument: ncodeAndPage, from: this);
+
+  @override
+  String toString() => r'episodeListProvider';
 }

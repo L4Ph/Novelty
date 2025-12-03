@@ -199,7 +199,7 @@ final class NovelInfoProvider
   }
 }
 
-String _$novelInfoHash() => r'95b98deaa4e02d38a19e93296bcb38e4b997df79';
+String _$novelInfoHash() => r'a044759c69e959c739cf07f33f1545371e1f2cd1';
 
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 
@@ -225,14 +225,14 @@ final class NovelInfoFamily extends $Family
 
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 ///
-/// APIから小説情報を取得し、既存のfavステータスを保持しながらDBに保存する。
+/// APIから小説情報を取得し、DBに保存する。
 
 @ProviderFor(novelInfoWithCache)
 const novelInfoWithCacheProvider = NovelInfoWithCacheFamily._();
 
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 ///
-/// APIから小説情報を取得し、既存のfavステータスを保持しながらDBに保存する。
+/// APIから小説情報を取得し、DBに保存する。
 
 final class NovelInfoWithCacheProvider
     extends
@@ -244,7 +244,7 @@ final class NovelInfoWithCacheProvider
     with $FutureModifier<NovelInfo>, $FutureProvider<NovelInfo> {
   /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
   ///
-  /// APIから小説情報を取得し、既存のfavステータスを保持しながらDBに保存する。
+  /// APIから小説情報を取得し、DBに保存する。
   const NovelInfoWithCacheProvider._({
     required NovelInfoWithCacheFamily super.from,
     required String super.argument,
@@ -289,11 +289,11 @@ final class NovelInfoWithCacheProvider
 }
 
 String _$novelInfoWithCacheHash() =>
-    r'962d81628d0105f1d1ce8e45f1c2abf803dd4489';
+    r'd3d9a381bb6f41093cdb2804934fa3e553172617';
 
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 ///
-/// APIから小説情報を取得し、既存のfavステータスを保持しながらDBに保存する。
+/// APIから小説情報を取得し、DBに保存する。
 
 final class NovelInfoWithCacheFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<NovelInfo>, String> {
@@ -308,7 +308,7 @@ final class NovelInfoWithCacheFamily extends $Family
 
   /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
   ///
-  /// APIから小説情報を取得し、既存のfavステータスを保持しながらDBに保存する。
+  /// APIから小説情報を取得し、DBに保存する。
 
   NovelInfoWithCacheProvider call(String ncode) =>
       NovelInfoWithCacheProvider._(argument: ncode, from: this);
@@ -371,7 +371,7 @@ final class EpisodeProvider
   }
 }
 
-String _$episodeHash() => r'1cd7ad8a9d325526ef0e915556398acbbc383ba0';
+String _$episodeHash() => r'fd78632f5100d45209527425adf801baa31a3c68';
 
 /// 小説のエピソードを取得するプロバイダー。
 
@@ -397,88 +397,4 @@ final class EpisodeFamily extends $Family
 
   @override
   String toString() => r'episodeProvider';
-}
-
-/// 小説のエピソードリストを取得するプロバイダー。
-
-@ProviderFor(episodeList)
-const episodeListProvider = EpisodeListFamily._();
-
-/// 小説のエピソードリストを取得するプロバイダー。
-
-final class EpisodeListProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Episode>>,
-          List<Episode>,
-          FutureOr<List<Episode>>
-        >
-    with $FutureModifier<List<Episode>>, $FutureProvider<List<Episode>> {
-  /// 小説のエピソードリストを取得するプロバイダー。
-  const EpisodeListProvider._({
-    required EpisodeListFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'episodeListProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$episodeListHash();
-
-  @override
-  String toString() {
-    return r'episodeListProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $FutureProviderElement<List<Episode>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<Episode>> create(Ref ref) {
-    final argument = this.argument as String;
-    return episodeList(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is EpisodeListProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$episodeListHash() => r'db416a99e1efe708c8478e021196c75d03808ffc';
-
-/// 小説のエピソードリストを取得するプロバイダー。
-
-final class EpisodeListFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<List<Episode>>, String> {
-  const EpisodeListFamily._()
-    : super(
-        retry: null,
-        name: r'episodeListProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  /// 小説のエピソードリストを取得するプロバイダー。
-
-  EpisodeListProvider call(String key) =>
-      EpisodeListProvider._(argument: key, from: this);
-
-  @override
-  String toString() => r'episodeListProvider';
 }
