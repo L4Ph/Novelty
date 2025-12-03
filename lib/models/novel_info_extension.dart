@@ -1,10 +1,11 @@
-import 'package:novelty/database/database.dart';
+import 'package:novelty/database/database.dart' as db;
+import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 
-/// [Novel] (DB Entity) から [NovelInfo] (Domain Model) への変換を行う拡張
-extension NovelInfoFromDb on Novel {
-  /// [Novel] を [NovelInfo] に変換する
-  NovelInfo toModel() {
+/// [db.Novel] (DB Entity) から [NovelInfo] (Domain Model) への変換を行う拡張
+extension NovelInfoFromDb on db.Novel {
+  /// [db.Novel] を [NovelInfo] に変換する
+  NovelInfo toModel({List<Episode>? episodes}) {
     return NovelInfo(
       ncode: ncode,
       title: title,
@@ -23,7 +24,6 @@ extension NovelInfoFromDb on Novel {
       generalLastup: generalLastup?.toString(),
 
       globalPoint: globalPoint,
-      favNovelCnt: null, // DBには保存されていない（favはLibraryNovelsで管理）
 
       reviewCnt: reviewCount,
       allHyokaCnt: rateCount,
@@ -36,15 +36,12 @@ extension NovelInfoFromDb on Novel {
       quarterPoint: quarterPoint,
       yearlyPoint: yearlyPoint,
 
-      sasieCnt: null, // DBには保存されていない
-      kaiwaritu: null, // DBには保存されていない
-
       // DBはText, NovelInfoはInt
-      novelupdatedAt: novelUpdatedAt != null ? int.tryParse(novelUpdatedAt!) : null,
+      novelupdatedAt: novelUpdatedAt != null
+          ? int.tryParse(novelUpdatedAt!)
+          : null,
 
-      updatedAt: null, // DBには保存されていない(system用)
-
-      episodes: null, // DBには保存されていない
+      episodes: episodes, // そのまま渡す（既にEpisodeモデルのリスト）
 
       isr15: isr15,
       isbl: isbl,

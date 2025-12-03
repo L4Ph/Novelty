@@ -144,17 +144,8 @@ void main() {
         ),
       ).called(1);
 
-      // `addedAt`が動的なため、argThatでncodeのみを検証
       verify(
-        mockDb.addToLibrary(
-          argThat(
-            isA<LibraryNovelsCompanion>().having(
-              (c) => c.ncode.value,
-              'ncode',
-              testRankingResponse.ncode,
-            ),
-          ),
-        ),
+        mockDb.addToLibrary(testRankingResponse.ncode),
       ).called(1);
 
       expect(find.text('ライブラリに追加しました'), findsOneWidget);

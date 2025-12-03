@@ -4,11 +4,12 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/download_result.dart';
-import 'package:narou_parser/narou_parser.dart';
+import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
@@ -100,13 +101,8 @@ class NovelRepository {
     // Novelテーブルに保存
     await _db.insertNovel(novelInfo.toDbCompanion());
 
-    // LibraryNovelsテーブルに追加
-    await _db.addToLibrary(
-      LibraryNovelsCompanion(
-        ncode: Value(ncodeLower),
-        addedAt: Value(DateTime.now().millisecondsSinceEpoch),
-      ),
-    );
+    // LibraryEntriesテーブルに追加
+    await _db.addToLibrary(ncodeLower);
 
     // Providersを無効化してUIを更新
     ref
@@ -145,13 +141,19 @@ class NovelRepository {
     final normalizedNcode = ncode.toNormalizedNcode();
     final validEpisode = lastEpisode > 0 ? lastEpisode : 1;
 
+    // Note: addToHistory now expects ReadingHistoryCompanion
+    // We assume the novel is already in Novels table (fetched via API or Library).
+    // If not, we should ideally insert it, but we don't have full metadata here.
+    // The previous implementation inserted into History table which had title/writer.
+    // The new ReadingHistory table only links to Novels.
+    // For now, we proceed with inserting into ReadingHistory.
+
     await _db.addToHistory(
-      HistoryCompanion(
+      ReadingHistoryCompanion(
         ncode: Value(normalizedNcode),
-        title: Value(title),
-        writer: Value(writer),
-        lastEpisode: Value(validEpisode),
+        lastEpisodeId: Value(validEpisode),
         viewedAt: Value(DateTime.now().millisecondsSinceEpoch),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
       ),
     );
   }
@@ -162,20 +164,15 @@ class NovelRepository {
     await _db.deleteHistory(normalizedNcode);
   }
 
-  Future<List<NovelContentElement>> _fetchEpisodeContent(
+  /// Helper to fetch full episode data including metadata
+  Future<Episode> _fetchEpisode(
     String ncode,
     int episode,
   ) async {
-    final episodeData = await apiService.fetchEpisode(
+    return apiService.fetchEpisode(
       ncode.toNormalizedNcode(),
       episode,
     );
-    if (episodeData.body == null) {
-      return [];
-    }
-
-    final parsedContent = parseNovelContent(episodeData.body!);
-    return parsedContent;
   }
 
   /// 単一エピソードのダウンロードを実行するメソッド。
@@ -192,41 +189,63 @@ class NovelRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
 
     // 既にダウンロード成功済みかチェック
-    final existing = await _db.getCachedEpisode(ncodeLower, episode);
-    if (existing != null && existing.content.isNotEmpty) {
+    final existing = await _db.getEpisodeData(ncodeLower, episode);
+    if (existing != null &&
+        existing.content != null &&
+        existing.content!.isNotEmpty) {
       // revisedが指定されていない、または一致する場合はスキップ
-      if (revised == null || existing.revised == revised) {
+      if (revised == null || existing.revisedAt == revised) {
         return true;
       }
     }
 
     try {
-      // エピソードをフェッチ
-      final content = await _fetchEpisodeContent(ncodeLower, episode);
+      // エピソードをフェッチ (Metadata + Content)
+      final ep = await _fetchEpisode(ncodeLower, episode);
+      final content = ep.body != null
+          ? parseNovelContent(ep.body!)
+          : <NovelContentElement>[];
 
       // データベースに保存（成功）
-      await _db.insertCachedEpisode(
-        CachedEpisodesCompanion(
+      await _db.updateEpisodeContent(
+        EpisodeEntitiesCompanion(
           ncode: Value(ncodeLower),
-          episode: Value(episode),
+          episodeId: Value(episode),
           content: Value(content),
-          cachedAt: Value(now),
-          revised: Value(revised),
+          fetchedAt: Value(now),
+          revisedAt: Value(revised),
+          subtitle: Value(ep.subtitle ?? ''),
+          url: Value(ep.url ?? ''),
+          publishedAt: Value(ep.update ?? ''),
         ),
       );
 
       return true;
     } on Exception {
       // データベースに保存（失敗）
-      await _db.insertCachedEpisode(
-        CachedEpisodesCompanion(
-          ncode: Value(ncodeLower),
-          episode: Value(episode),
-          content: const Value([]), // 空のコンテンツ
-          cachedAt: Value(now),
-          revised: Value(revised),
-        ),
-      );
+      // We need to insert a record with empty content to mark failure/attempt.
+      // But updateEpisodeContent requires subtitle/url.
+      // If fetch failed, we might not have them.
+      // If we have existing metadata, we can try to use it, but here we assume fetch failed completely.
+      // For now, we skip saving failure state if we can't get metadata,
+      // OR we save with empty strings if that's acceptable.
+      // Let's try to save with empty strings to indicate failure.
+
+      try {
+        await _db.updateEpisodeContent(
+          EpisodeEntitiesCompanion(
+            ncode: Value(ncodeLower),
+            episodeId: Value(episode),
+            content: const Value([]), // Empty content
+            fetchedAt: Value(now),
+            revisedAt: Value(revised),
+            subtitle: const Value(''),
+            url: const Value(''),
+          ),
+        );
+      } catch (_) {
+        // Ignore secondary failure
+      }
 
       return false;
     }
@@ -241,39 +260,52 @@ class NovelRepository {
     int episode, {
     String? revised,
   }) async {
-    final cached = await _db.getCachedEpisode(ncode, episode);
-    
+    final cached = await _db.getEpisodeData(ncode, episode);
+
     // キャッシュが存在し、content有効で、改稿日時が一致する場合はキャッシュを返す
-    if (cached != null && cached.content.isNotEmpty) {
-      if (revised == null || cached.revised == revised) {
-        return cached.content;
+    if (cached != null &&
+        cached.content != null &&
+        cached.content!.isNotEmpty) {
+      if (revised == null || cached.revisedAt == revised) {
+        return cached.content!;
       }
     }
 
     // fetch & cache
     try {
-      final content = await _fetchEpisodeContent(ncode, episode);
-      await _db.insertCachedEpisode(
-        CachedEpisodesCompanion(
+      final ep = await _fetchEpisode(ncode, episode);
+      final content = ep.body != null
+          ? parseNovelContent(ep.body!)
+          : <NovelContentElement>[];
+
+      await _db.updateEpisodeContent(
+        EpisodeEntitiesCompanion(
           ncode: Value(ncode.toNormalizedNcode()),
-          episode: Value(episode),
+          episodeId: Value(episode),
           content: Value(content),
-          cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
-          revised: Value(revised),
+          fetchedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          revisedAt: Value(revised),
+          subtitle: Value(ep.subtitle ?? ''),
+          url: Value(ep.url ?? ''),
+          publishedAt: Value(ep.update ?? ''),
         ),
       );
       return content;
     } on Exception {
       // 失敗時は空contentで保存
-      await _db.insertCachedEpisode(
-        CachedEpisodesCompanion(
-          ncode: Value(ncode.toNormalizedNcode()),
-          episode: Value(episode),
-          content: const Value([]),
-          cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
-          revised: Value(revised),
-        ),
-      );
+      try {
+        await _db.updateEpisodeContent(
+          EpisodeEntitiesCompanion(
+            ncode: Value(ncode.toNormalizedNcode()),
+            episodeId: Value(episode),
+            content: const Value([]),
+            fetchedAt: Value(DateTime.now().millisecondsSinceEpoch),
+            revisedAt: Value(revised),
+            subtitle: const Value(''),
+            url: const Value(''),
+          ),
+        );
+      } catch (_) {}
       rethrow;
     }
   }
@@ -307,7 +339,7 @@ class NovelRepository {
 
       // 目次情報を取得して改稿日時Mapを作成
       // これにより、改稿されたエピソードのみを再ダウンロードできる
-      Map<int, String?> revisedMap = {};
+      final revisedMap = <int, String?>{};
       try {
         final info = await apiService.fetchNovelInfo(ncodeLower);
         final episodes = info.episodes ?? [];
@@ -331,8 +363,8 @@ class NovelRepository {
       for (var i = 1; i <= totalEpisodes; i++) {
         final revised = revisedMap[i];
         final success = await downloadSingleEpisode(
-          ncodeLower, 
-          i, 
+          ncodeLower,
+          i,
           revised: revised,
         );
 
@@ -352,14 +384,15 @@ class NovelRepository {
         );
       }
 
-
       // 完了通知
       progressController?.add(
         DownloadProgress(
           currentEpisode: successCount,
           totalEpisodes: totalEpisodes,
           isDownloading: false,
-          errorMessage: failureCount > 0 ? '$failureCount話のダウンロードに失敗しました' : null,
+          errorMessage: failureCount > 0
+              ? '$failureCount話のダウンロードに失敗しました'
+              : null,
         ),
       );
     } on Exception catch (e) {
@@ -383,22 +416,31 @@ class NovelRepository {
 
   /// ダウンロード済みエピソードを削除するメソッド。
   Future<void> deleteDownloadedEpisode(String ncode, int episode) async {
-    await _db.deleteCachedEpisode(ncode, episode);
+    // コンテンツをNULLに更新
+    await (_db.update(_db.episodeEntities)..where(
+          (e) =>
+              e.ncode.equals(ncode.toNormalizedNcode()) &
+              e.episodeId.equals(episode),
+        ))
+        .write(const EpisodeEntitiesCompanion(content: Value(null)));
   }
 
   /// ダウンロード済み小説を削除するメソッド。
   ///
   /// 該当ncodeのすべてのダウンロード済みエピソードを一括削除する。
   Future<void> deleteDownloadedNovel(String ncode) async {
-    await (_db.delete(_db.cachedEpisodes)
+    // コンテンツをNULLに更新する。
+    await (_db.update(_db.episodeEntities)
           ..where((e) => e.ncode.equals(ncode.toNormalizedNcode())))
-        .go();
+        .write(const EpisodeEntitiesCompanion(content: Value(null)));
   }
 
   /// ダウンロードパスを取得するメソッド。
   Stream<bool> isEpisodeDownloaded(String ncode, int episode) async* {
-    final cached = await _db.getCachedEpisode(ncode, episode);
-    yield cached != null && cached.content.isNotEmpty;
+    final cached = await _db.getEpisodeData(ncode, episode);
+    yield cached != null &&
+        cached.content != null &&
+        cached.content!.isNotEmpty;
   }
 
   /// 小説がダウンロードされているかを確認するメソッド。
@@ -487,18 +529,10 @@ class LibraryStatus extends _$LibraryStatus {
     state = const AsyncValue.loading();
     try {
       if (newStatus) {
-        final entry = LibraryNovelsCompanion(
-          ncode: Value(novelInfo.ncode!),
-          title: Value(novelInfo.title),
-          writer: Value(novelInfo.writer),
-          story: Value(novelInfo.story),
-          novelType: Value(novelInfo.novelType),
-          end: Value(novelInfo.end),
-          generalAllNo: Value(novelInfo.generalAllNo),
-          novelUpdatedAt: Value(novelInfo.novelupdatedAt?.toString()),
-          addedAt: Value(DateTime.now().millisecondsSinceEpoch),
-        );
-        await db.addToLibrary(entry);
+        // Note: We need to ensure Novel is in Novels table first.
+        // Usually fetchNovelInfo handles this.
+        await db.insertNovel(novelInfo.toDbCompanion());
+        await db.addToLibrary(novelInfo.ncode!);
       } else {
         await db.removeFromLibrary(novelInfo.ncode!);
       }
@@ -601,9 +635,14 @@ Stream<int?> episodeDownloadStatus(
 }) {
   final normalizedNcode = ncode.toNormalizedNcode();
   final db = ref.watch(appDatabaseProvider);
-  
-  return db.watchCachedEpisode(normalizedNcode, episode).map((cached) {
+
+  return db.watchEpisodeEntity(normalizedNcode, episode).map((cached) {
     if (cached == null) return null;
-    return cached.content.isNotEmpty ? 2 : 3;
+    if (cached.content != null && cached.content!.isNotEmpty) {
+      return 2; // Success
+    } else if (cached.content != null && cached.content!.isEmpty) {
+      return 3; // Failure (assuming empty content means failure as per logic)
+    }
+    return null;
   });
 }

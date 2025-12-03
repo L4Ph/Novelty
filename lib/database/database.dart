@@ -6,6 +6,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
+import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_download_summary.dart';
 import 'package:novelty/utils/history_grouping.dart';
 import 'package:novelty/utils/ncode_utils.dart';
@@ -40,8 +41,53 @@ class ContentConverter
   }
 }
 
+/// 履歴データのDTOクラス
+/// 旧Historyテーブルのデータクラスと互換性を持たせるために定義
+class HistoryData {
+  HistoryData({
+    required this.ncode,
+    required this.viewedAt,
+    required this.updatedAt,
+    this.title,
+    this.writer,
+    this.lastEpisode,
+  });
+  final String ncode;
+  final String? title;
+  final String? writer;
+  final int? lastEpisode;
+  final int viewedAt;
+  final int updatedAt;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is HistoryData &&
+          runtimeType == other.runtimeType &&
+          ncode == other.ncode &&
+          title == other.title &&
+          writer == other.writer &&
+          lastEpisode == other.lastEpisode &&
+          viewedAt == other.viewedAt &&
+          updatedAt == other.updatedAt;
+
+  @override
+  int get hashCode =>
+      ncode.hashCode ^
+      title.hashCode ^
+      writer.hashCode ^
+      lastEpisode.hashCode ^
+      viewedAt.hashCode ^
+      updatedAt.hashCode;
+
+  @override
+  String toString() {
+    return 'HistoryData(ncode: $ncode, title: $title, writer: $writer, lastEpisode: $lastEpisode, viewedAt: $viewedAt, updatedAt: $updatedAt)';
+  }
+}
+
 // テーブル定義
-/// 小説情報を格納するテーブル
+/// 小説情報を格納するテーブル（マスターテーブル）
 class Novels extends Table {
   /// 小説のncode
   TextColumn get ncode => text()();
@@ -72,7 +118,7 @@ class Novels extends Table {
   /// 作品に含まれる要素に「ボーイズラブ」が含まれる場合は1、それ以外は0
   IntColumn get isbl => integer().nullable()();
 
-  /// 作品に��まれる要素に「ガールズラブ」が含まれる場合は1、それ以外は0
+  /// 作品に含まれる要素に「ガールズラブ」が含まれる場合は1、それ以外は0
   IntColumn get isgl => integer().nullable()();
 
   /// 作品に含まれる要素に「残酷な描写あり」が含まれる場合は1、それ以外は0
@@ -98,6 +144,7 @@ class Novels extends Table {
 
   /// Noveltyのライブラリに登録されているかどうか
   /// 1: 登録済み、0: 未登録
+  /// DEPRECATED: LibraryEntriesテーブルを使用するため、このカラムは使用しない
   IntColumn get fav => integer().nullable()();
 
   /// レビュー数
@@ -140,19 +187,26 @@ class Novels extends Table {
   Set<Column> get primaryKey => {ncode};
 }
 
-/// 小説の閲覧履歴を格納するテーブル
-class History extends Table {
-  /// 小説のncode
-  TextColumn get ncode => text()();
+/// ライブラリ登録情報を格納するテーブル（正規化済み）
+class LibraryEntries extends Table {
+  /// 小説のncode (外部キー)
+  TextColumn get ncode => text().references(Novels, #ncode)();
 
-  /// 小説のタイトル
-  TextColumn get title => text().nullable()();
+  /// ライブラリに追加された日時
+  /// UNIXタイムスタンプ形式で保存される
+  IntColumn get addedAt => integer()();
 
-  /// 小説の著者
-  TextColumn get writer => text().nullable()();
+  @override
+  Set<Column> get primaryKey => {ncode};
+}
 
-  /// 最後に閲覧したエピソード
-  IntColumn get lastEpisode => integer().nullable()();
+/// 閲覧履歴を格納するテーブル（正規化済み）
+class ReadingHistory extends Table {
+  /// 小説のncode (外部キー)
+  TextColumn get ncode => text().references(Novels, #ncode)();
+
+  /// 最後に閲覧したエピソード番号
+  IntColumn get lastEpisodeId => integer().nullable()();
 
   /// 閲覧日時
   IntColumn get viewedAt => integer()();
@@ -164,86 +218,60 @@ class History extends Table {
   Set<Column> get primaryKey => {ncode};
 }
 
-/// キャッシュ済みエピソードを格納するテーブル
-class CachedEpisodes extends Table {
-  /// 小説のncode
-  TextColumn get ncode => text()();
+/// エピソード情報を格納するテーブル（メタデータ + コンテンツ）
+/// Domain ModelのEpisodeと名前が被るため、Entityを明示
+@DataClassName('EpisodeRow')
+class EpisodeEntities extends Table {
+  @override
+  String get tableName => 'episodes';
+
+  /// 小説のncode (外部キー)
+  TextColumn get ncode => text().references(Novels, #ncode)();
 
   /// エピソード番号
-  IntColumn get episode => integer()();
+  IntColumn get episodeId => integer()();
 
-  /// エピソードの内容
-  /// JSON形式で保存される。空配列=失敗、中身あり=成功
-  TextColumn get content => text().map(const ContentConverter())();
+  /// サブタイトル（目次用）
+  TextColumn get subtitle => text().nullable()();
 
-  /// キャッシュ日時
-  IntColumn get cachedAt => integer()();
+  /// URL
+  TextColumn get url => text().nullable()();
 
-  /// キャッシュ時点の改稿日時
-  TextColumn get revised => text().nullable()();
+  /// 掲載日（APIのupdate）
+  TextColumn get publishedAt => text().nullable()();
 
-  @override
-  Set<Column> get primaryKey => {ncode, episode};
-}
+  /// 改稿日（APIのrevised）
+  TextColumn get revisedAt => text().nullable()();
 
+  /// エピソードの内容（キャッシュ）
+  /// JSON形式で保存される。空配列=失敗、中身あり=成功、NULL=未取得
+  TextColumn get content => text().map(const ContentConverter()).nullable()();
 
-/// ライブラリに追加された小説を格納するテーブル
-class LibraryNovels extends Table {
-  /// 小説のncode
-  TextColumn get ncode => text()();
-
-  /// 小説のタイトル
-  TextColumn get title => text().nullable()();
-
-  /// 小説の著者
-  TextColumn get writer => text().nullable()();
-
-  /// 小説のあらすじ
-  TextColumn get story => text().nullable()();
-
-  /// 小説の種別
-  /// 0: 短編 1: 連載中
-  IntColumn get novelType => integer().nullable()();
-
-  /// 小説の状態
-  /// 0: 短編 or 完結済 1: 連載中
-  IntColumn get end => integer().nullable()();
-
-  /// 連載小説のエピソード数 短編は常に1
-  IntColumn get generalAllNo => integer().nullable()();
-
-  /// 作品の更新日時
-  TextColumn get novelUpdatedAt => text().nullable()();
-
-  /// ライブラリに追加された日時
-  /// UNIXタイムスタンプ形式で保存される
-  IntColumn get addedAt => integer()();
+  /// コンテンツ取得日時
+  IntColumn get fetchedAt => integer().nullable()();
 
   @override
-  Set<Column> get primaryKey => {ncode};
+  Set<Column> get primaryKey => {ncode, episodeId};
 }
 
 @DriftDatabase(
   tables: [
     Novels,
-    History,
-    CachedEpisodes,
-    LibraryNovels,
+    LibraryEntries,
+    ReadingHistory,
+    EpisodeEntities,
   ],
 )
 /// アプリケーションのデータベース
-/// 小説情報、閲覧履歴、エピソード、キャッシュ済みエピソードを管理
 class AppDatabase extends _$AppDatabase {
   /// コンストラクタ
-  /// データベースの接続を初期化
   AppDatabase() : super(_openConnection());
 
   /// テスト用コンストラクタ
-  /// インメモリデータベースを使用
   AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration {
@@ -252,140 +280,70 @@ class AppDatabase extends _$AppDatabase {
         return m.createAll();
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        if (from == 1) {
-          await customStatement(
-            'ALTER TABLE novels RENAME COLUMN poin_count TO point_count;',
-          );
-        }
-        if (from <= 2) {
-          // LibraryNovelsテーブルを作成
-          await m.createTable(libraryNovels);
-
-          // 既存のfav=1の小説をLibraryNovelsテーブルに移行
-          await customStatement('''
-            INSERT INTO library_novels (ncode, added_at)
-            SELECT ncode, cached_at
-            FROM novels
-            WHERE fav = 1;
-          ''');
-        }
-        if (from <= 3) {
-          // Add the new columns
-          await m.addColumn(libraryNovels, libraryNovels.title);
-          await m.addColumn(libraryNovels, libraryNovels.writer);
-          await m.addColumn(libraryNovels, libraryNovels.story);
-          await m.addColumn(libraryNovels, libraryNovels.novelType);
-          await m.addColumn(libraryNovels, libraryNovels.end);
-          await m.addColumn(libraryNovels, libraryNovels.generalAllNo);
-          await m.addColumn(libraryNovels, libraryNovels.novelUpdatedAt);
-
-          // データをnovelsテーブルからコピー
-          await customStatement('''
-            UPDATE library_novels
-            SET
-              title = (SELECT title FROM novels WHERE novels.ncode = library_novels.ncode),
-              writer = (SELECT writer FROM novels WHERE novels.ncode = library_novels.ncode),
-              story = (SELECT story FROM novels WHERE novels.ncode = library_novels.ncode),
-              novel_type = (SELECT novel_type FROM novels WHERE novels.ncode = library_novels.ncode),
-              end = (SELECT end FROM novels WHERE novels.ncode = library_novels.ncode),
-              general_all_no = (SELECT general_all_no FROM novels WHERE novels.ncode = library_novels.ncode),
-              novel_updated_at = (SELECT novel_updated_at FROM novels WHERE novels.ncode = library_novels.ncode)
-            WHERE EXISTS (SELECT 1 FROM novels WHERE novels.ncode = library_novels.ncode);
-          ''');
-        }
-        if (from <= 4) {
-          await m.addColumn(history, history.updatedAt);
-          await customStatement(
-            'UPDATE history SET updated_at = viewed_at;',
-          );
-        }
-        if (from <= 5) {
-          // DownloadedNovelsテーブルを作成（v10で削除される）
-          await customStatement('''
-            CREATE TABLE IF NOT EXISTS downloaded_novels (
-              ncode TEXT NOT NULL PRIMARY KEY,
-              download_status INTEGER NOT NULL,
-              downloaded_at INTEGER NOT NULL,
-              total_episodes INTEGER NOT NULL,
-              downloaded_episodes INTEGER NOT NULL
-            )
-          ''');
-
-          // DownloadedEpisodesテーブルからtitleカラムを削除するためのマイグレーション
-          // 1. 新しい構造で一時テーブルを作成
-          await customStatement('''
-            CREATE TABLE downloaded_episodes_new (
-              ncode TEXT NOT NULL,
-              episode INTEGER NOT NULL,
-              content TEXT NOT NULL,
-              downloaded_at INTEGER NOT NULL,
-              PRIMARY KEY(ncode, episode)
-            )
-          ''');
-
-          // 2. データを一時テーブルにコピー
-          await customStatement('''
-            INSERT INTO downloaded_episodes_new (ncode, episode, content, downloaded_at)
-            SELECT ncode, episode, content, downloaded_at FROM downloaded_episodes
-          ''');
-
-          // 3. 古いテーブルを削除
-          await customStatement('DROP TABLE downloaded_episodes');
-
-          // 4. 一時テーブルをリネーム
-          await customStatement(
-            'ALTER TABLE downloaded_episodes_new RENAME TO downloaded_episodes',
-          );
-        }
-        if (from <= 6) {
-          // novelsテーブルにgenreカラムを追加
-          await m.addColumn(novels, novels.genre);
-        }
-        if (from <= 7) {
-          // downloadedEpisodesテーブルにstatus, errorMessage, lastAttemptAtカラムを追加
+        if (from < 12) {
           try {
-             await customStatement('ALTER TABLE downloaded_episodes ADD COLUMN status INTEGER DEFAULT 2');
-             await customStatement('ALTER TABLE downloaded_episodes ADD COLUMN error_message TEXT');
-             await customStatement('ALTER TABLE downloaded_episodes ADD COLUMN last_attempt_at INTEGER');
-          } catch (e) {
-            // カラムが既に存在する場合などでエラーになる可能性があるが無視
-            print('Migration error (from <= 7): $e');
+            // Ensure new tables are fresh (in case of previous failed migration)
+            await customStatement('DROP TABLE IF EXISTS episodes');
+            await customStatement('DROP TABLE IF EXISTS library_entries');
+            await customStatement('DROP TABLE IF EXISTS reading_history');
+
+            // 1. Create new tables
+            await m.createTable(novels);
+            await m.createTable(libraryEntries);
+            await m.createTable(readingHistory);
+            await m.createTable(episodeEntities);
+
+            // 2. Migrate LibraryNovels -> LibraryEntries & Novels
+            await customStatement('''
+              INSERT OR IGNORE INTO novels (
+                ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
+              )
+              SELECT 
+                ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
+              FROM library_novels;
+            ''');
+
+            await customStatement('''
+              INSERT OR IGNORE INTO library_entries (ncode, added_at)
+              SELECT ncode, added_at FROM library_novels;
+            ''');
+
+            // 3. Migrate History -> ReadingHistory & Novels
+            await customStatement('''
+              INSERT OR IGNORE INTO novels (ncode, cached_at)
+              SELECT ncode, viewed_at FROM history;
+            ''');
+
+            await customStatement('''
+              INSERT INTO reading_history (ncode, last_episode_id, viewed_at, updated_at)
+              SELECT ncode, last_episode, viewed_at, updated_at FROM history;
+            ''');
+
+            // 4. Migrate CachedEpisodes -> Episodes
+
+            // Check if cached_episodes table exists
+            final cachedEpisodesResult = await customSelect(
+              "SELECT name FROM sqlite_master WHERE type='table' AND name='cached_episodes'",
+            ).get();
+
+            if (cachedEpisodesResult.isNotEmpty) {
+              await customStatement('''
+                INSERT INTO episodes (ncode, episode_id, content, fetched_at, revised_at)
+                SELECT ncode, episode, content, cached_at, revised FROM cached_episodes;
+              ''');
+            }
+
+            // 5. Drop old tables
+            await customStatement('DROP TABLE IF EXISTS library_novels');
+            await customStatement('DROP TABLE IF EXISTS history');
+            await customStatement('DROP TABLE IF EXISTS cached_episodes');
+          } catch (e, st) {
+            // ignore: avoid_print
+            print('Migration Error: $e');
+            // ignore: avoid_print
+            print('Migration StackTrace: $st');
+            rethrow;
           }
-        }
-        if (from <= 8) {
-          // bookmarksテーブルを削除（使用されていないため）
-          await customStatement('DROP TABLE IF EXISTS bookmarks');
-        }
-        if (from <= 9) {
-          // downloaded_novelsテーブルを削除
-          // ダウンロード状態はdownloaded_episodesから動的に計算するように変更
-          await customStatement('DROP TABLE IF EXISTS downloaded_novels');
-        }
-        if (from <= 10) {
-          // DownloadedEpisodes → CachedEpisodes にリネーム & スキーマ変更
-          // 不要なカラムを削除し、revisedカラムを追加
-          await customStatement('''
-            CREATE TABLE cached_episodes (
-              ncode TEXT NOT NULL,
-              episode INTEGER NOT NULL,
-              content TEXT NOT NULL,
-              cached_at INTEGER NOT NULL,
-              revised TEXT,
-              PRIMARY KEY(ncode, episode)
-            )
-          ''');
-
-          // データを移行 (status, errorMessage, lastAttemptAt は捨てる)
-          // downloaded_at -> cached_at
-          await customStatement('''
-            INSERT INTO cached_episodes (ncode, episode, content, cached_at, revised)
-            SELECT ncode, episode, content, downloaded_at, NULL FROM downloaded_episodes
-          ''');
-
-          await customStatement('DROP TABLE downloaded_episodes');
-
-          // 未使用のEpisodesテーブルを削除
-          await customStatement('DROP TABLE IF EXISTS episodes');
         }
       },
     );
@@ -393,16 +351,19 @@ class AppDatabase extends _$AppDatabase {
 
   /// 小説情報の取得
   Future<Novel?> getNovel(String ncode) {
-    return (select(
-          novels,
-        )..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
+    return (select(novels)
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .getSingleOrNull();
   }
 
   /// ライブラリに小説を追加
-  Future<int> addToLibrary(LibraryNovelsCompanion novel) {
-    return into(libraryNovels).insert(
-      novel.copyWith(ncode: drift.Value(novel.ncode.value.toLowerCase())),
+  Future<int> addToLibrary(String ncode) {
+    final normalized = ncode.toNormalizedNcode();
+    return into(libraryEntries).insert(
+      LibraryEntriesCompanion(
+        ncode: drift.Value(normalized),
+        addedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
+      ),
       mode: InsertMode.insertOrIgnore,
     );
   }
@@ -410,32 +371,25 @@ class AppDatabase extends _$AppDatabase {
   /// ライブラリから小説を削除
   Future<int> removeFromLibrary(String ncode) {
     return (delete(
-      libraryNovels,
+      libraryEntries,
     )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).go();
   }
 
   /// ライブラリの小説リストを取得（追加日時の降順）
-  Future<List<LibraryNovel>> getLibraryNovels() {
-    return (select(
-      libraryNovels,
-    )..orderBy([(t) => OrderingTerm.desc(t.addedAt)])).get();
-  }
-
-  /// ライブラリに登録された小説の詳細情報を取得(JOINクエリで最適化)
-  Future<List<Novel>> getLibraryNovelsWithDetails() async {
-    final query = select(libraryNovels).join([
-      innerJoin(novels, novels.ncode.equalsExp(libraryNovels.ncode)),
-    ])..orderBy([OrderingTerm.desc(libraryNovels.addedAt)]);
+  Future<List<Novel>> getLibraryNovels() async {
+    final query = select(libraryEntries).join([
+      innerJoin(novels, novels.ncode.equalsExp(libraryEntries.ncode)),
+    ])..orderBy([OrderingTerm.desc(libraryEntries.addedAt)]);
 
     final results = await query.get();
     return results.map((row) => row.readTable(novels)).toList();
   }
 
-  /// ライブラリに登録された小説の詳細情報を監視(JOINクエリで最適化)
-  Stream<List<Novel>> watchLibraryNovelsWithDetails() {
-    final query = select(libraryNovels).join([
-      innerJoin(novels, novels.ncode.equalsExp(libraryNovels.ncode)),
-    ])..orderBy([OrderingTerm.desc(libraryNovels.addedAt)]);
+  /// ライブラリの小説リストを監視（JOIN）
+  Stream<List<Novel>> watchLibraryNovels() {
+    final query = select(libraryEntries).join([
+      innerJoin(novels, novels.ncode.equalsExp(libraryEntries.ncode)),
+    ])..orderBy([OrderingTerm.desc(libraryEntries.addedAt)]);
 
     return query.watch().map(
       (rows) => rows.map((row) => row.readTable(novels)).toList(),
@@ -445,27 +399,18 @@ class AppDatabase extends _$AppDatabase {
   /// 小説がライブラリに追加されているかを確認
   Future<bool> isInLibrary(String ncode) async {
     final result =
-        await (select(
-              libraryNovels,
-            )..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
+        await (select(libraryEntries)
+              ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
             .getSingleOrNull();
     return result != null;
   }
 
-  /// ライブラリ登録状態の監視（新しいメソッド）
+  /// ライブラリ登録状態の監視
   Stream<bool> watchIsInLibrary(String ncode) {
-    return (select(libraryNovels)
+    return (select(libraryEntries)
           ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .watchSingleOrNull()
-        .map((novel) => novel != null);
-  }
-
-  /// ライブラリ登録状態の監視（既存メソッドは残す - 削除予定）
-  Stream<bool> watchIsFavorite(String ncode) {
-    return (select(novels)
-          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
-        .watchSingleOrNull()
-        .map((novel) => novel != null && novel.fav == 1);
+        .map((entry) => entry != null);
   }
 
   /// 小説情報の保存
@@ -476,17 +421,10 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  /// 小説情報の削除
-  Future<int> deleteNovel(String ncode) {
-    return (delete(
-      novels,
-    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).go();
-  }
-
   /// 履歴の追加
-  Future<int> addToHistory(HistoryCompanion history) {
+  Future<int> addToHistory(ReadingHistoryCompanion history) {
     final now = DateTime.now().millisecondsSinceEpoch;
-    return into(this.history).insert(
+    return into(readingHistory).insert(
       history.copyWith(
         ncode: drift.Value(history.ncode.value.toLowerCase()),
         viewedAt: drift.Value(now),
@@ -496,95 +434,179 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  /// 履歴の取得
-  Future<List<HistoryData>> getHistory() {
-    return (select(
-      history,
-    )..orderBy([(t) => OrderingTerm.desc(t.viewedAt)])).get();
+  /// 履歴の取得（JOIN）
+  Future<List<HistoryData>> getHistory() async {
+    final query = select(readingHistory).join([
+      innerJoin(novels, novels.ncode.equalsExp(readingHistory.ncode)),
+    ])..orderBy([OrderingTerm.desc(readingHistory.viewedAt)]);
+
+    final results = await query.get();
+
+    return results.map((row) {
+      final novel = row.readTable(novels);
+      final history = row.readTable(readingHistory);
+
+      return HistoryData(
+        ncode: novel.ncode,
+        title: novel.title,
+        writer: novel.writer,
+        lastEpisode: history.lastEpisodeId,
+        viewedAt: history.viewedAt,
+        updatedAt: history.updatedAt,
+      );
+    }).toList();
   }
 
-  /// 履歴の監視（リアルタイム更新）
+  /// 履歴の監視（JOIN）
   Stream<List<HistoryData>> watchHistory() {
-    return (select(
-      history,
-    )..orderBy([(t) => OrderingTerm.desc(t.viewedAt)])).watch();
+    final query = select(readingHistory).join([
+      innerJoin(novels, novels.ncode.equalsExp(readingHistory.ncode)),
+    ])..orderBy([OrderingTerm.desc(readingHistory.viewedAt)]);
+
+    return query.watch().map((rows) {
+      return rows.map((row) {
+        final novel = row.readTable(novels);
+        final history = row.readTable(readingHistory);
+        return HistoryData(
+          ncode: novel.ncode,
+          title: novel.title,
+          writer: novel.writer,
+          lastEpisode: history.lastEpisodeId,
+          viewedAt: history.viewedAt,
+          updatedAt: history.updatedAt,
+        );
+      }).toList();
+    });
   }
 
   /// 履歴の削除
   Future<int> deleteHistory(String ncode) {
     return (delete(
-      history,
+      readingHistory,
     )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).go();
   }
 
   /// 履歴の全削除
   Future<int> clearHistory() {
-    return delete(history).go();
+    return delete(readingHistory).go();
   }
 
-  /// キャッシュ済みエピソードの保存
-  Future<int> insertCachedEpisode(CachedEpisodesCompanion episode) {
-    return into(cachedEpisodes).insert(
-      episode.copyWith(ncode: drift.Value(episode.ncode.value.toLowerCase())),
-      mode: InsertMode.insertOrReplace,
+  /// エピソード情報（目次）の保存
+  Future<void> upsertEpisodes(
+    List<EpisodeEntitiesCompanion> newEpisodes,
+  ) async {
+    await batch((batch) {
+      for (final episode in newEpisodes) {
+        batch.customStatement(
+          '''
+          INSERT INTO episodes (ncode, episode_id, subtitle, url, published_at, revised_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+          ON CONFLICT(ncode, episode_id) DO UPDATE SET
+            subtitle = excluded.subtitle,
+            url = excluded.url,
+            published_at = excluded.published_at,
+            revised_at = excluded.revised_at;
+        ''',
+          [
+            episode.ncode.value,
+            episode.episodeId.value,
+            episode.subtitle.value,
+            episode.url.value,
+            episode.publishedAt.value,
+            episode.revisedAt.value,
+          ],
+        );
+      }
+    });
+  }
+
+  /// エピソード本文の保存
+  Future<void> updateEpisodeContent(EpisodeEntitiesCompanion episode) {
+    return customStatement(
+      '''
+      INSERT INTO episodes (ncode, episode_id, content, fetched_at, subtitle, url)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(ncode, episode_id) DO UPDATE SET
+        content = excluded.content,
+        fetched_at = excluded.fetched_at;
+    ''',
+      [
+        episode.ncode.value,
+        episode.episodeId.value,
+        const ContentConverter().toSql(episode.content.value!),
+        episode.fetchedAt.value,
+        episode.subtitle.value,
+        episode.url.value,
+      ],
     );
   }
 
-  /// キャッシュ済みエピソードの取得
-  Future<CachedEpisode?> getCachedEpisode(String ncode, int episode) {
-    return (select(cachedEpisodes)..where(
+  // ...
+
+  /// 特定エピソードの生データ（Entity）を取得
+  Future<EpisodeRow?> getEpisodeData(String ncode, int episodeId) {
+    return (select(episodeEntities)..where(
           (t) =>
               t.ncode.equals(ncode.toNormalizedNcode()) &
-              t.episode.equals(episode),
+              t.episodeId.equals(episodeId),
         ))
         .getSingleOrNull();
   }
 
-  /// キャッシュ済みエピソードの監視
-  Stream<CachedEpisode?> watchCachedEpisode(String ncode, int episode) {
-    return (select(cachedEpisodes)..where(
-          (t) =>
-              t.ncode.equals(ncode.toNormalizedNcode()) &
-              t.episode.equals(episode),
-        ))
-        .watchSingleOrNull();
+  /// エピソード一覧を取得
+  Future<List<Episode>> getEpisodes(String ncode) async {
+    final rows =
+        await (select(episodeEntities)
+              ..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))
+              ..orderBy([(t) => OrderingTerm(expression: t.episodeId)]))
+            .get();
+
+    return rows
+        .map(
+          (row) => Episode(
+            ncode: row.ncode,
+            index: row.episodeId,
+            subtitle: row.subtitle,
+            url: row.url,
+            update: row.publishedAt,
+            revised: row.revisedAt,
+          ),
+        )
+        .toList();
   }
 
-  /// キャッシュ済みエピソードの削除
-  Future<int> deleteCachedEpisode(String ncode, int episode) {
-    return (delete(
-          cachedEpisodes,
-        )..where(
+  /// 特定エピソードのEntityを監視
+  Stream<EpisodeRow?> watchEpisodeEntity(String ncode, int episodeId) {
+    return (select(episodeEntities)..where(
           (t) =>
               t.ncode.equals(ncode.toNormalizedNcode()) &
-              t.episode.equals(episode),
+              t.episodeId.equals(episodeId),
         ))
-        .go();
+        .watchSingleOrNull();
   }
 
   /// 小説のダウンロード状態の集計情報を取得
   Future<NovelDownloadSummary?> getNovelDownloadSummary(String ncode) async {
     final normalizedNcode = ncode.toNormalizedNcode();
-
-    // 小説情報からtotalEpisodesを取得
     final novel = await getNovel(normalizedNcode);
     if (novel?.generalAllNo == null) {
       return null;
     }
     final totalEpisodes = novel!.generalAllNo!;
 
-    // キャッシュ済みエピソードを取得
-    final episodes = await (select(cachedEpisodes)
-          ..where((e) => e.ncode.equals(normalizedNcode)))
-        .get();
+    final savedEpisodes =
+        await (select(episodeEntities)..where(
+              (e) => e.ncode.equals(normalizedNcode) & e.content.isNotNull(),
+            ))
+            .get();
 
-    // contentの中身で成功/失敗を判定
-    final successCount = episodes.where((e) => e.content.isNotEmpty).length;
-    final failureCount = episodes.where((e) => e.content.isEmpty).length;
+    final successCount = savedEpisodes.length;
+    final failureCount = savedEpisodes.where((e) => e.content!.isEmpty).length;
+    final realSuccessCount = successCount - failureCount;
 
     return NovelDownloadSummary(
       ncode: normalizedNcode,
-      successCount: successCount,
+      successCount: realSuccessCount,
       failureCount: failureCount,
       totalEpisodes: totalEpisodes,
     );
@@ -594,119 +616,110 @@ class AppDatabase extends _$AppDatabase {
   Stream<NovelDownloadSummary?> watchNovelDownloadSummary(String ncode) {
     final normalizedNcode = ncode.toNormalizedNcode();
 
-    // CachedEpisodesの変更を監視
-    return (select(cachedEpisodes)
+    return (select(episodeEntities)
           ..where((e) => e.ncode.equals(normalizedNcode)))
         .watch()
-        .asyncMap((episodes) async {
-      // 小説情報からtotalEpisodesを取得
-      final novel = await getNovel(normalizedNcode);
-      if (novel?.generalAllNo == null) {
-        return null;
-      }
-      final totalEpisodes = novel!.generalAllNo!;
+        .asyncMap((allEpisodes) async {
+          final novel = await getNovel(normalizedNcode);
+          if (novel?.generalAllNo == null) {
+            return null;
+          }
+          final totalEpisodes = novel!.generalAllNo!;
 
-      // contentの中身で成功/失敗を判定
-      final successCount = episodes.where((e) => e.content.isNotEmpty).length;
-      final failureCount = episodes.where((e) => e.content.isEmpty).length;
+          final savedEpisodes = allEpisodes
+              .where((e) => e.content != null)
+              .toList();
+          final successCount = savedEpisodes.length;
+          final failureCount = savedEpisodes
+              .where((e) => e.content!.isEmpty)
+              .length;
+          final realSuccessCount = successCount - failureCount;
 
-      return NovelDownloadSummary(
-        ncode: normalizedNcode,
-        successCount: successCount,
-        failureCount: failureCount,
-        totalEpisodes: totalEpisodes,
-      );
-    });
+          return NovelDownloadSummary(
+            ncode: normalizedNcode,
+            successCount: realSuccessCount,
+            failureCount: failureCount,
+            totalEpisodes: totalEpisodes,
+          );
+        });
   }
 
-
   /// ダウンロード中の小説を監視
-  ///
-  /// CachedEpisodesから集計し、ダウンロード中（status=1）の小説を取得。
-  /// NovelsテーブルとLEFT JOINして小説情報も含める。
   Stream<List<NovelDownloadSummary>> watchDownloadingNovels() {
-    // CachedEpisodesから異なるncodeのリストを取得
-    return select(cachedEpisodes)
-        .watch()
-        .asyncMap((allEpisodes) async {
-      // ncodeでグループ化
-      final ncodeMap = <String, List<CachedEpisode>>{};
+    return select(episodeEntities).watch().asyncMap((allEpisodes) async {
+      final ncodeMap = <String, List<EpisodeRow>>{};
       for (final episode in allEpisodes) {
-        ncodeMap.putIfAbsent(episode.ncode, () => []).add(episode);
+        if (episode.content != null) {
+          ncodeMap.putIfAbsent(episode.ncode, () => []).add(episode);
+        }
       }
 
-      // 各小説の集計情報を作成
       final summaries = <NovelDownloadSummary>[];
       for (final entry in ncodeMap.entries) {
         final ncode = entry.key;
-        final episodes = entry.value;
+        final savedEpisodes = entry.value;
 
-        // 小説情報からtotalEpisodesを取得
         final novel = await getNovel(ncode);
         if (novel?.generalAllNo == null) continue;
 
         final totalEpisodes = novel!.generalAllNo!;
-        final successCount = episodes.where((e) => e.content.isNotEmpty).length;
-        final failureCount = episodes.where((e) => e.content.isEmpty).length;
+        final successCount = savedEpisodes.length;
+        final failureCount = savedEpisodes
+            .where((e) => e.content!.isEmpty)
+            .length;
+        final realSuccessCount = successCount - failureCount;
 
         final summary = NovelDownloadSummary(
           ncode: ncode,
-          successCount: successCount,
+          successCount: realSuccessCount,
           failureCount: failureCount,
           totalEpisodes: totalEpisodes,
         );
 
-        // ダウンロード中（status=1）のみ追加
         if (summary.downloadStatus == 1) {
           summaries.add(summary);
         }
       }
-
       return summaries;
     });
   }
 
   /// 完了済みダウンロード小説を監視
-  ///
-  /// CachedEpisodesから集計し、完了済み（status=2）の小説を取得。
   Stream<List<NovelDownloadSummary>> watchCompletedDownloads() {
-    // CachedEpisodesから異なるncodeのリストを取得
-    return select(cachedEpisodes)
-        .watch()
-        .asyncMap((allEpisodes) async {
-      // ncodeでグループ化
-      final ncodeMap = <String, List<CachedEpisode>>{};
+    return select(episodeEntities).watch().asyncMap((allEpisodes) async {
+      final ncodeMap = <String, List<EpisodeRow>>{};
       for (final episode in allEpisodes) {
-        ncodeMap.putIfAbsent(episode.ncode, () => []).add(episode);
+        if (episode.content != null) {
+          ncodeMap.putIfAbsent(episode.ncode, () => []).add(episode);
+        }
       }
 
-      // 各小説の集計情報を作成
       final summaries = <NovelDownloadSummary>[];
       for (final entry in ncodeMap.entries) {
         final ncode = entry.key;
-        final episodes = entry.value;
+        final savedEpisodes = entry.value;
 
-        // 小説情報からtotalEpisodesを取得
         final novel = await getNovel(ncode);
         if (novel?.generalAllNo == null) continue;
 
         final totalEpisodes = novel!.generalAllNo!;
-        final successCount = episodes.where((e) => e.content.isNotEmpty).length;
-        final failureCount = episodes.where((e) => e.content.isEmpty).length;
+        final successCount = savedEpisodes.length;
+        final failureCount = savedEpisodes
+            .where((e) => e.content!.isEmpty)
+            .length;
+        final realSuccessCount = successCount - failureCount;
 
         final summary = NovelDownloadSummary(
           ncode: ncode,
-          successCount: successCount,
+          successCount: realSuccessCount,
           failureCount: failureCount,
           totalEpisodes: totalEpisodes,
         );
 
-        // 完了済み（status=2）のみ追加
         if (summary.downloadStatus == 2) {
           summaries.add(summary);
         }
       }
-
       return summaries;
     });
   }
@@ -722,39 +735,24 @@ LazyDatabase _openConnection() {
 
 // ==================== Providers ====================
 
-/// アプリケーションのデータベースプロバイダー
 final appDatabaseProvider = Provider<AppDatabase>((ref) => AppDatabase());
 
-/// 小説のライブラリを表示するためのプロバイダー。
-///
-/// JOINクエリを使用してN+1クエリ問題を回避している。
-/// keepAlive: アプリ起動中ずっとStreamを保持し、画面遷移時の再ロードを防ぐ
 final libraryNovelsProvider = StreamProvider<List<Novel>>((ref) {
   final db = ref.watch(appDatabaseProvider);
   ref.keepAlive();
-  return db.watchLibraryNovelsWithDetails();
+  return db.watchLibraryNovels();
 });
 
-/// 履歴データをリアルタイムで提供するプロバイダー
-///
-/// keepAlive: アプリ起動中ずっとStreamを保持し、画面遷移時の再ロードを防ぐ
 final historyProvider = StreamProvider<List<HistoryData>>((ref) {
   final db = ref.watch(appDatabaseProvider);
   ref.keepAlive();
   return db.watchHistory();
 });
 
-/// 現在時刻を提供するプロバイダー（テスト時にオーバーライド可能）
 final currentTimeProvider = Provider<DateTime>((ref) => DateTime.now());
 
-/// 日付でグルーピングされた履歴データをリアルタイムで提供するプロバイダー
-///
-/// keepAlive: アプリ起動中ずっとStreamを保持し、画面遷移時の再ロードを防ぐ
 final groupedHistoryProvider = StreamProvider<List<HistoryGroup>>((ref) {
-  // 現在の日時を取得
   final now = ref.watch(currentTimeProvider);
-
-  // データベースのwatchHistory()を直接使用し、グルーピング処理を適用
   final db = ref.watch(appDatabaseProvider);
   ref.keepAlive();
   return db.watchHistory().map((historyItems) {

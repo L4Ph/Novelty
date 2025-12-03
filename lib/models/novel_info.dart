@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:novelty/database/database.dart' hide Episode;
+import 'package:novelty/database/database.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/string_to_int_converter.dart';
 import 'package:novelty/utils/ncode_utils.dart';
@@ -158,9 +158,10 @@ abstract class NovelInfo with _$NovelInfo {
 
   /// JSONから[NovelInfo]を生成するファクトリコンストラクタ
   factory NovelInfo.fromJson(Map<String, dynamic> json) => _$NovelInfoFromJson({
-        ...json,
-        if (json['ncode'] is String) 'ncode': (json['ncode'] as String).toNormalizedNcode(),
-      });
+    ...json,
+    if (json['ncode'] is String)
+      'ncode': (json['ncode'] as String).toNormalizedNcode(),
+  });
 }
 
 /// [NovelInfo]をデータベースの[NovelsCompanion]に変換する拡張メソッド。
