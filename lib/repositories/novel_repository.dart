@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
@@ -262,7 +262,21 @@ class NovelRepository {
   }) async {
     final cached = await _db.getEpisodeData(ncode, episode);
 
-    // キャッシュが存在し、content有効で、改稿日時が一致する場合はキャッシュを返す
+    // ネットワーク接続状態を確認
+    final connectivityResult = await Connectivity().checkConnectivity();
+    final isOffline = connectivityResult.contains(ConnectivityResult.none);
+
+    // 1. オフラインの場合はキャッシュを強制的に使用
+    if (isOffline) {
+      if (cached != null &&
+          cached.content != null &&
+          cached.content!.isNotEmpty) {
+        return cached.content!;
+      }
+      throw Exception('Offline: No cached content available');
+    }
+
+    // 2. オンラインでも、キャッシュがあり、かつ改稿日時が一致する場合はキャッシュを使用（通信しない）
     if (cached != null &&
         cached.content != null &&
         cached.content!.isNotEmpty) {
@@ -271,7 +285,7 @@ class NovelRepository {
       }
     }
 
-    // fetch & cache
+    // 3. オンラインかつ更新が必要な場合のみ取得
     try {
       final ep = await _fetchEpisode(ncode, episode);
       final content = ep.body != null
@@ -292,6 +306,13 @@ class NovelRepository {
       );
       return content;
     } on Exception {
+      // 失敗時はキャッシュがあればそれを返す
+      if (cached != null &&
+          cached.content != null &&
+          cached.content!.isNotEmpty) {
+        return cached.content!;
+      }
+
       // 失敗時は空contentで保存
       try {
         await _db.updateEpisodeContent(
@@ -493,6 +514,63 @@ class NovelRepository {
       return DownloadResult.error(e.toString());
     }
   }
+
+  /// エピソードリストを取得する
+  Future<List<Episode>> fetchEpisodeList(String ncode, int page) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    final start = (page - 1) * 100 + 1;
+    final end = page * 100;
+
+    // ネットワーク接続状態を確認
+    final connectivityResult = await Connectivity().checkConnectivity();
+    final isOffline = connectivityResult.contains(ConnectivityResult.none);
+
+    // オフラインの場合はDBから取得
+    if (isOffline) {
+      final cachedEpisodes = await _db.getEpisodesRange(
+        normalizedNcode,
+        start,
+        end,
+      );
+      if (cachedEpisodes.isNotEmpty) {
+        return cachedEpisodes;
+      }
+      // オフラインでキャッシュもない場合はエラー
+      throw Exception('Offline: No cached episode list available');
+    }
+
+    try {
+      // オンラインの場合はAPIから取得
+      final episodes = await apiService.fetchEpisodeList(normalizedNcode, page);
+
+      // DBに保存
+      final episodesCompanions = episodes.map((e) {
+        return EpisodeEntitiesCompanion(
+          ncode: Value(normalizedNcode),
+          episodeId: Value(e.index ?? 0),
+          subtitle: Value(e.subtitle),
+          url: Value(e.url),
+          publishedAt: Value(e.update),
+          revisedAt: Value(e.revised),
+          // content is not updated here
+        );
+      }).toList();
+      await _db.upsertEpisodes(episodesCompanions);
+
+      return episodes;
+    } catch (e) {
+      // API取得失敗時はDBから取得を試みる
+      final cachedEpisodes = await _db.getEpisodesRange(
+        normalizedNcode,
+        start,
+        end,
+      );
+      if (cachedEpisodes.isNotEmpty) {
+        return cachedEpisodes;
+      }
+      rethrow;
+    }
+  }
 }
 
 // ==================== Providers ====================
@@ -645,4 +723,14 @@ Stream<int?> episodeDownloadStatus(
     }
     return null;
   });
+}
+
+@riverpod
+/// エピソードリストを取得するプロバイダー
+Future<List<Episode>> episodeList(Ref ref, String ncodeAndPage) async {
+  final parts = ncodeAndPage.split('_');
+  final ncode = parts[0];
+  final page = int.parse(parts[1]);
+  final repository = ref.read(novelRepositoryProvider);
+  return repository.fetchEpisodeList(ncode, page);
 }

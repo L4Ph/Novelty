@@ -508,6 +508,18 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<List<_i7.Episode>>);
 
   @override
+  _i5.Future<List<_i7.Episode>> getEpisodesRange(
+    String? ncode,
+    int? start,
+    int? end,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getEpisodesRange, [ncode, start, end]),
+            returnValue: _i5.Future<List<_i7.Episode>>.value(<_i7.Episode>[]),
+          )
+          as _i5.Future<List<_i7.Episode>>);
+
+  @override
   _i5.Stream<_i3.EpisodeRow?> watchEpisodeEntity(
     String? ncode,
     int? episodeId,

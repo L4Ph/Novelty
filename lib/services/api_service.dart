@@ -34,16 +34,6 @@ Future<List<RankingResponse>> rankingData(Ref ref, String rankingType) {
   return apiService.fetchRanking(rankingType);
 }
 
-@riverpod
-/// エピソードリストを取得するプロバイダー
-Future<List<Episode>> episodeList(Ref ref, String ncodeAndPage) async {
-  final parts = ncodeAndPage.split('_');
-  final ncode = parts[0];
-  final page = int.parse(parts[1]);
-  final apiService = ref.read(apiServiceProvider);
-  return apiService.fetchEpisodeList(ncode, page);
-}
-
 /// APIサービスクラス。
 class ApiService {
   Future<http.Response> _fetchWithCache(String url) async {
