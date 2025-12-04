@@ -1,9 +1,22 @@
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
 import 'package:narou_parser/src/models/novel_content_element.dart';
+import 'package:narou_parser/src/parser_lookup.dart';
 
 /// HTML文字列から小説のコンテンツをパースする関数。
+///
+/// 最適化されたLookupベースのパーサーを使用します。
 List<NovelContentElement> parseNovelContent(String htmlString) {
+  return parseNovelContentLookup(htmlString);
+}
+
+/// HTML文字列から小説のコンテンツをパースする関数（旧実装）。
+///
+/// package:html を使用したDOMベースの実装です。
+/// 互換性のために残されています。
+
+@deprecated
+List<NovelContentElement> parseNovelContentLegacy(String htmlString) {
   final elements = <NovelContentElement>[];
 
   // 巨大なHTMLの場合、チャンクに分割して処理することでパフォーマンス低下（O(N^2)傾向）を防ぐ
@@ -46,7 +59,10 @@ List<NovelContentElement> parseNovelContent(String htmlString) {
   return elements;
 }
 
-void _parseHtmlFragment(String htmlFragment, List<NovelContentElement> elements) {
+void _parseHtmlFragment(
+  String htmlFragment,
+  List<NovelContentElement> elements,
+) {
   final document = parser.parseFragment(htmlFragment);
   for (final node in document.nodes) {
     _parseNode(node, elements);

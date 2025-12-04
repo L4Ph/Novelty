@@ -1,127 +1,119 @@
-import 'package:meta/meta.dart';
 import 'package:narou_parser/src/models/novel_content_element.dart';
 
-/// ルックアップテーブルによる高速パース処理。
-/// 文字ごとにアクションテーブルを参照して処理を行うことで、分岐を最小化。
+/// ルックアップテーブルによる高速パース処理（最適化版）。
+///
+/// 特徴:
+/// 1. switch文による効率的なタグ分岐
+/// 2. エンティティデコードの統合（1パス処理）
+/// 3. 中間文字列生成の抑制
 ///
 /// 注意: 厳密なHTMLパーサーではないため、タグのネスト構造が複雑な場合や、
 /// 想定外のタグ属性がある場合は正しく動作しない可能性があります。
-@experimental
 List<NovelContentElement> parseNovelContentLookup(String html) {
   final elements = <NovelContentElement>[];
   final len = html.length;
   var i = 0;
+  final sb = StringBuffer();
 
-  while (i < len) {
-    // '<' を探す
-    final ltIndex = html.indexOf('<', i);
-
-    if (ltIndex == -1) {
-      // タグがもうない場合、残りをテキストとして追加
-      if (i < len) {
-        final text = html.substring(i).trim();
-        if (text.isNotEmpty) {
-          elements.add(NovelContentElement.plainText(_decodeEntity(text)));
-        }
-      }
-      break;
-    }
-
-    // '<' の手前までをテキストとして追加
-    if (ltIndex > i) {
-      final text = html.substring(i, ltIndex).trim();
+  void flushBuffer() {
+    if (sb.isNotEmpty) {
+      final text = sb.toString().trim();
       if (text.isNotEmpty) {
-        elements.add(NovelContentElement.plainText(_decodeEntity(text)));
+        elements.add(NovelContentElement.plainText(text));
       }
-    }
-
-    // タグの処理
-    i = ltIndex;
-
-    // タグの種類をルックアップテーブルで判定
-    final tagType = _lookupTagType(html, i);
-
-    switch (tagType) {
-      case _TagType.ruby:
-        i = _processRubyTag(html, i, elements);
-      case _TagType.br:
-        elements.add(NovelContentElement.newLine());
-        i = html.indexOf('>', i) + 1;
-      case _TagType.pClose:
-        if (elements.isNotEmpty && elements.last is! NewLine) {
-          elements.add(NovelContentElement.newLine());
-        }
-        i = i + 4; // </p>
-      case _TagType.pOpen:
-        i = html.indexOf('>', i) + 1;
-      case _TagType.unknown:
-        final gtIndex = html.indexOf('>', i);
-        i = gtIndex != -1 ? gtIndex + 1 : len;
+      sb.clear();
     }
   }
 
+  while (i < len) {
+    final char = html.codeUnitAt(i);
+
+    // Switch on first char is the "Lookup" part
+    switch (char) {
+      case 60: // <
+        flushBuffer();
+        // Lookahead for tag type
+        if (i + 1 >= len) {
+          i++;
+          continue;
+        }
+        final nextChar = html.codeUnitAt(i + 1);
+
+        switch (nextChar) {
+          case 114: // r (ruby)
+            if (html.startsWith('uby', i + 2)) {
+              final rubyEnd = html.indexOf('</ruby>', i);
+              if (rubyEnd != -1) {
+                final rubyContentStart = html.indexOf('>', i) + 1;
+                final inner = html.substring(rubyContentStart, rubyEnd);
+                _processRubyContent(inner, elements);
+                i = rubyEnd + 7;
+                continue;
+              }
+            }
+          case 98: // b (br)
+            if (html.startsWith('r', i + 2)) {
+              elements.add(NovelContentElement.newLine());
+              i = html.indexOf('>', i) + 1;
+              continue;
+            }
+          case 47: // / (closing)
+            if (html.startsWith('p>', i + 2)) {
+              if (elements.isNotEmpty && elements.last is! NewLine) {
+                elements.add(NovelContentElement.newLine());
+              }
+              i += 4;
+              continue;
+            }
+        }
+
+        // Skip unknown tag
+        while (i < len && html.codeUnitAt(i) != 62) {
+          i++;
+        }
+        i++;
+        continue;
+
+      case 38: // &
+        if (html.startsWith('lt;', i + 1)) {
+          sb.write('<');
+          i += 4;
+          continue;
+        }
+        if (html.startsWith('gt;', i + 1)) {
+          sb.write('>');
+          i += 4;
+          continue;
+        }
+        if (html.startsWith('amp;', i + 1)) {
+          sb.write('&');
+          i += 5;
+          continue;
+        }
+        if (html.startsWith('quot;', i + 1)) {
+          sb.write('"');
+          i += 6;
+          continue;
+        }
+        if (html.startsWith('nbsp;', i + 1)) {
+          sb.write(' ');
+          i += 6;
+          continue;
+        }
+        sb.writeCharCode(char);
+        i++;
+        continue;
+
+      default:
+        sb.writeCharCode(char);
+        i++;
+    }
+  }
+  flushBuffer();
   return elements;
 }
 
-/// タグの種類
-enum _TagType {
-  ruby,
-  br,
-  pOpen,
-  pClose,
-  unknown,
-}
-
-/// ルックアップテーブルでタグの種類を判定
-_TagType _lookupTagType(String html, int pos) {
-  // 最小限のチェックで判定
-  if (pos + 1 >= html.length) return _TagType.unknown;
-
-  final char = html.codeUnitAt(pos + 1);
-
-  // ルックアップテーブル（ASCII コード順）
-  switch (char) {
-    case 47: // '/' (closing tag)
-      if (pos + 3 < html.length && html.codeUnitAt(pos + 2) == 112) { // 'p'
-        return _TagType.pClose;
-      }
-      return _TagType.unknown;
-
-    case 98: // 'b' (br)
-      if (pos + 3 < html.length && html.codeUnitAt(pos + 2) == 114) { // 'r'
-        return _TagType.br;
-      }
-      return _TagType.unknown;
-
-    case 112: // 'p'
-      return _TagType.pOpen;
-
-    case 114: // 'r' (ruby)
-      if (pos + 5 < html.length &&
-          html.codeUnitAt(pos + 2) == 117 && // 'u'
-          html.codeUnitAt(pos + 3) == 98 &&   // 'b'
-          html.codeUnitAt(pos + 4) == 121) {  // 'y'
-        return _TagType.ruby;
-      }
-      return _TagType.unknown;
-
-    default:
-      return _TagType.unknown;
-  }
-}
-
-/// Ruby タグを処理
-int _processRubyTag(String html, int pos, List<NovelContentElement> elements) {
-  final rubyEnd = html.indexOf('</ruby>', pos);
-  if (rubyEnd == -1) {
-    // 閉じタグがない場合
-    return html.indexOf('>', pos) + 1;
-  }
-
-  final rubyContentStart = html.indexOf('>', pos) + 1;
-  final inner = html.substring(rubyContentStart, rubyEnd);
-
-  // rt タグを探す
+void _processRubyContent(String inner, List<NovelContentElement> elements) {
   const rtStartTag = '<rt>';
   const rtEndTag = '</rt>';
 
@@ -144,8 +136,6 @@ int _processRubyTag(String html, int pos, List<NovelContentElement> elements) {
       );
     }
   }
-
-  return rubyEnd + 7; // </ruby> の長さ(7)分進める
 }
 
 /// <rb>, </rb>, <rp>...</rp> などを除去してベーステキストを抽出
@@ -188,7 +178,7 @@ String _cleanRubyBase(String raw) {
   return sb.toString().trim();
 }
 
-/// 簡易HTMLデコード
+/// 簡易HTMLデコード (Ruby内部などで使用)
 String _decodeEntity(String text) {
   if (!text.contains('&')) return text;
   return text
