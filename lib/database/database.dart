@@ -271,13 +271,14 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
-      onCreate: (Migrator m) {
-        return m.createAll();
+      onCreate: (Migrator m) async {
+        await m.createAll();
+        await _createFtsTables();
       },
       onUpgrade: (Migrator m, int from, int to) async {
         if (from < 12) {
@@ -345,8 +346,91 @@ class AppDatabase extends _$AppDatabase {
             rethrow;
           }
         }
+
+        if (from < 13) {
+          await _createFtsTables();
+          await _populateFtsTables();
+        }
       },
     );
+  }
+
+  Future<void> _createFtsTables() async {
+    // Novels FTS
+    await customStatement('''
+      CREATE VIRTUAL TABLE IF NOT EXISTS novels_search USING fts5(
+        ncode UNINDEXED,
+        title,
+        writer,
+        story,
+        tokenize='trigram'
+      );
+    ''');
+
+    // Episodes FTS
+    await customStatement('''
+      CREATE VIRTUAL TABLE IF NOT EXISTS episodes_search USING fts5(
+        ncode UNINDEXED,
+        episode_id UNINDEXED,
+        subtitle,
+        content,
+        tokenize='trigram'
+      );
+    ''');
+
+    // Triggers for Novels
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS novels_ai AFTER INSERT ON novels BEGIN
+        INSERT INTO novels_search(ncode, title, writer, story)
+        VALUES (new.ncode, new.title, new.writer, new.story);
+      END;
+    ''');
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS novels_ad AFTER DELETE ON novels BEGIN
+        DELETE FROM novels_search WHERE ncode = old.ncode;
+      END;
+    ''');
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS novels_au AFTER UPDATE ON novels BEGIN
+        UPDATE novels_search SET
+          title = new.title,
+          writer = new.writer,
+          story = new.story
+        WHERE ncode = old.ncode;
+      END;
+    ''');
+
+    // Triggers for Episodes
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS episodes_ai AFTER INSERT ON episodes BEGIN
+        INSERT INTO episodes_search(ncode, episode_id, subtitle, content)
+        VALUES (new.ncode, new.episode_id, new.subtitle, new.content);
+      END;
+    ''');
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS episodes_ad AFTER DELETE ON episodes BEGIN
+        DELETE FROM episodes_search WHERE ncode = old.ncode AND episode_id = old.episode_id;
+      END;
+    ''');
+    await customStatement('''
+      CREATE TRIGGER IF NOT EXISTS episodes_au AFTER UPDATE ON episodes BEGIN
+        UPDATE episodes_search SET
+          subtitle = new.subtitle,
+          content = new.content
+        WHERE ncode = old.ncode AND episode_id = old.episode_id;
+      END;
+    ''');
+  }
+
+  Future<void> _populateFtsTables() async {
+    await customStatement('''
+      INSERT INTO novels_search(ncode, title, writer, story)
+      SELECT ncode, title, writer, story FROM novels;
+    ''');
+    await customStatement('''
+      INSERT INTO episodes_search(ncode, episode_id, subtitle, content)
+      SELECT ncode, episode_id, subtitle, content FROM episodes;
+    ''');
   }
 
   /// 小説情報の取得
@@ -354,6 +438,52 @@ class AppDatabase extends _$AppDatabase {
     return (select(novels)
           ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .getSingleOrNull();
+  }
+
+  /// 小説の検索
+  Future<List<Novel>> searchNovels(String query) async {
+    final results = await customSelect(
+      '''
+      SELECT n.* FROM novels n
+      JOIN novels_search ns ON n.ncode = ns.ncode
+      WHERE ns.novels_search MATCH ?
+      ORDER BY ns.rank
+      ''',
+      variables: [Variable.withString(query)],
+      readsFrom: {novels},
+    ).get();
+
+    return results.map((row) => novels.map(row.data)).toList();
+  }
+
+  /// エピソードの検索
+  Future<List<EpisodeSearchResult>> searchEpisodes(String query) async {
+    final results = await customSelect(
+      '''
+      SELECT 
+        e.ncode,
+        e.episode_id,
+        e.subtitle,
+        n.title as novel_title
+      FROM episodes e
+      JOIN novels n ON e.ncode = n.ncode
+      JOIN episodes_search es ON e.ncode = es.ncode AND e.episode_id = es.episode_id
+      WHERE es.episodes_search MATCH ?
+      ORDER BY es.rank
+      LIMIT 100
+      ''',
+      variables: [Variable.withString(query)],
+      readsFrom: {episodeEntities, novels},
+    ).get();
+
+    return results.map((row) {
+      return EpisodeSearchResult(
+        ncode: row.read<String>('ncode'),
+        episodeId: row.read<int>('episode_id'),
+        subtitle: row.read<String?>('subtitle') ?? '',
+        novelTitle: row.read<String?>('novel_title') ?? '',
+      );
+    }).toList();
   }
 
   /// ライブラリに小説を追加
@@ -753,6 +883,21 @@ class AppDatabase extends _$AppDatabase {
       return summaries;
     });
   }
+}
+
+/// エピソード検索結果のDTO
+class EpisodeSearchResult {
+  final String ncode;
+  final int episodeId;
+  final String subtitle;
+  final String novelTitle;
+
+  EpisodeSearchResult({
+    required this.ncode,
+    required this.episodeId,
+    required this.subtitle,
+    required this.novelTitle,
+  });
 }
 
 LazyDatabase _openConnection() {

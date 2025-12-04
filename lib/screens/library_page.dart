@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/screens/search_page.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 /// "ライブラリ"ページのウィジェット。
@@ -20,9 +21,15 @@ class LibraryPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('ライブラリ'),
         actions: [
-          const IconButton(
-            icon: Icon(Icons.search),
-            onPressed: null,
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (context) => const SearchPage(),
+                ),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.filter_list),
