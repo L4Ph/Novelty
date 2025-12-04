@@ -36,9 +36,7 @@ class SearchPage extends HookConsumerWidget {
           decoration: const InputDecoration(
             hintText: 'ライブラリを検索...',
             border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white70),
           ),
-          style: const TextStyle(color: Colors.white),
           onChanged: (value) {
             query.value = value;
           },
