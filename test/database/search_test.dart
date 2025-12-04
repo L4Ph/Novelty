@@ -187,4 +187,21 @@ void main() {
     expect(results.first.ncode, 'n1111a');
     expect(results.first.title, 'Library Novel');
   });
+
+  test('Search filters out Bigram noise', () async {
+    // Arrange
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        ncode: 'n9999z',
+        title: const Value('東京と京都'),
+      ),
+    );
+    await db.addToLibrary('n9999z');
+
+    // Act
+    final results = await db.searchNovels('東京都');
+
+    // Assert
+    expect(results.isEmpty, true);
+  });
 }

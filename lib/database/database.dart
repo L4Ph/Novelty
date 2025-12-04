@@ -508,7 +508,11 @@ class AppDatabase extends _$AppDatabase {
       readsFrom: {novels, libraryEntries},
     ).get();
 
-    return results.map((row) => novels.map(row.data)).toList();
+    return results.map((row) => novels.map(row.data)).where((novel) {
+      return (novel.title?.contains(query) ?? false) ||
+          (novel.writer?.contains(query) ?? false) ||
+          (novel.story?.contains(query) ?? false);
+    }).toList();
   }
 
   /// エピソードの検索
@@ -522,6 +526,7 @@ class AppDatabase extends _$AppDatabase {
         e.ncode,
         e.episode_id,
         e.subtitle,
+        e.content,
         n.title as novel_title
       FROM episodes e
       JOIN novels n ON e.ncode = n.ncode
@@ -535,14 +540,38 @@ class AppDatabase extends _$AppDatabase {
       readsFrom: {episodeEntities, novels, libraryEntries},
     ).get();
 
-    return results.map((row) {
-      return EpisodeSearchResult(
-        ncode: row.read<String>('ncode'),
-        episodeId: row.read<int>('episode_id'),
-        subtitle: row.read<String?>('subtitle') ?? '',
-        novelTitle: row.read<String?>('novel_title') ?? '',
-      );
-    }).toList();
+    return results
+        .where((row) {
+          final subtitle = row.read<String?>('subtitle') ?? '';
+          if (subtitle.contains(query)) return true;
+
+          final contentJson = row.read<String?>('content');
+          if (contentJson == null) return false;
+
+          // Parse content to check for exact match
+          try {
+            final contentList = const ContentConverter().fromSql(contentJson);
+            for (final element in contentList) {
+              if (element is PlainText) {
+                if (element.text.contains(query)) return true;
+              } else if (element is RubyText) {
+                if (element.base.contains(query)) return true;
+              }
+            }
+          } on Exception catch (_) {
+            // Ignore parsing errors
+          }
+          return false;
+        })
+        .map((row) {
+          return EpisodeSearchResult(
+            ncode: row.read<String>('ncode'),
+            episodeId: row.read<int>('episode_id'),
+            subtitle: row.read<String?>('subtitle') ?? '',
+            novelTitle: row.read<String?>('novel_title') ?? '',
+          );
+        })
+        .toList();
   }
 
   /// ライブラリに小説を追加
