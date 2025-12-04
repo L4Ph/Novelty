@@ -24,6 +24,7 @@ void main() {
         story: const Value('スライムに転生してしまった。'),
       ),
     );
+    await db.addToLibrary('n1234a');
     await db.insertNovel(
       NovelsCompanion.insert(
         ncode: 'n5678b',
@@ -32,6 +33,18 @@ void main() {
         story: const Value('異世界に行きたい。'),
       ),
     );
+    await db.addToLibrary('n5678b');
+    await db.addToLibrary('n1234a');
+
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        ncode: 'n5678b',
+        title: const Value('無職転生'),
+        writer: const Value('理不尽な孫の手'),
+        story: const Value('異世界に行きたい。'),
+      ),
+    );
+    await db.addToLibrary('n5678b');
 
     // Act & Assert
     // Title search
@@ -62,6 +75,7 @@ void main() {
         title: const Value('Test Novel'),
       ),
     );
+    await db.addToLibrary('n1234a');
     await db.upsertEpisodes([
       EpisodeEntitiesCompanion.insert(
         ncode: 'n1234a',
@@ -126,6 +140,7 @@ void main() {
         title: const Value('Delete Me'),
       ),
     );
+    await db.addToLibrary('n1234a');
 
     // Verify it exists
     expect((await db.searchNovels('Delete')).length, 1);
@@ -143,5 +158,33 @@ void main() {
 
     // Assert
     expect((await db.searchNovels('Delete')).isEmpty, true);
+  });
+
+  test('Search only returns novels in library', () async {
+    // Arrange
+    // Novel in library
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        ncode: 'n1111a',
+        title: const Value('Library Novel'),
+      ),
+    );
+    await db.addToLibrary('n1111a');
+
+    // Novel NOT in library
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        ncode: 'n2222b',
+        title: const Value('Non-Library Novel'),
+      ),
+    );
+
+    // Act
+    final results = await db.searchNovels('Novel');
+
+    // Assert
+    expect(results.length, 1);
+    expect(results.first.ncode, 'n1111a');
+    expect(results.first.title, 'Library Novel');
   });
 }

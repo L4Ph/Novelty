@@ -10,6 +10,7 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_download_summary.dart';
 import 'package:novelty/utils/history_grouping.dart';
 import 'package:novelty/utils/ncode_utils.dart';
+import 'package:novelty/utils/search_tokenizer.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -271,7 +272,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration {
@@ -348,6 +349,15 @@ class AppDatabase extends _$AppDatabase {
         }
 
         if (from < 13) {
+          // Version 13 migration (Triggers based FTS) - skipped or overwritten by 14
+        }
+
+        if (from < 14) {
+          // Re-create FTS tables with default tokenizer (simple) instead of trigram
+          // and populate them manually (since we removed triggers)
+          await customStatement('DROP TABLE IF EXISTS novels_search');
+          await customStatement('DROP TABLE IF EXISTS episodes_search');
+
           await _createFtsTables();
           await _populateFtsTables();
         }
@@ -356,81 +366,122 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> _createFtsTables() async {
-    // Novels FTS
+    // Novels FTS (default tokenizer)
     await customStatement('''
       CREATE VIRTUAL TABLE IF NOT EXISTS novels_search USING fts5(
         ncode UNINDEXED,
         title,
         writer,
-        story,
-        tokenize='trigram'
+        story
       );
     ''');
 
-    // Episodes FTS
+    // Episodes FTS (default tokenizer)
     await customStatement('''
       CREATE VIRTUAL TABLE IF NOT EXISTS episodes_search USING fts5(
         ncode UNINDEXED,
         episode_id UNINDEXED,
         subtitle,
-        content,
-        tokenize='trigram'
+        content
       );
     ''');
 
-    // Triggers for Novels
-    await customStatement('''
-      CREATE TRIGGER IF NOT EXISTS novels_ai AFTER INSERT ON novels BEGIN
-        INSERT INTO novels_search(ncode, title, writer, story)
-        VALUES (new.ncode, new.title, new.writer, new.story);
-      END;
-    ''');
-    await customStatement('''
-      CREATE TRIGGER IF NOT EXISTS novels_ad AFTER DELETE ON novels BEGIN
-        DELETE FROM novels_search WHERE ncode = old.ncode;
-      END;
-    ''');
-    await customStatement('''
-      CREATE TRIGGER IF NOT EXISTS novels_au AFTER UPDATE ON novels BEGIN
-        UPDATE novels_search SET
-          title = new.title,
-          writer = new.writer,
-          story = new.story
-        WHERE ncode = old.ncode;
-      END;
-    ''');
-
-    // Triggers for Episodes
-    await customStatement('''
-      CREATE TRIGGER IF NOT EXISTS episodes_ai AFTER INSERT ON episodes BEGIN
-        INSERT INTO episodes_search(ncode, episode_id, subtitle, content)
-        VALUES (new.ncode, new.episode_id, new.subtitle, new.content);
-      END;
-    ''');
-    await customStatement('''
-      CREATE TRIGGER IF NOT EXISTS episodes_ad AFTER DELETE ON episodes BEGIN
-        DELETE FROM episodes_search WHERE ncode = old.ncode AND episode_id = old.episode_id;
-      END;
-    ''');
-    await customStatement('''
-      CREATE TRIGGER IF NOT EXISTS episodes_au AFTER UPDATE ON episodes BEGIN
-        UPDATE episodes_search SET
-          subtitle = new.subtitle,
-          content = new.content
-        WHERE ncode = old.ncode AND episode_id = old.episode_id;
-      END;
-    ''');
+    // No triggers here anymore
   }
 
   Future<void> _populateFtsTables() async {
-    await customStatement('''
-      INSERT INTO novels_search(ncode, title, writer, story)
-      SELECT ncode, title, writer, story FROM novels;
-    ''');
-    await customStatement('''
-      INSERT INTO episodes_search(ncode, episode_id, subtitle, content)
-      SELECT ncode, episode_id, subtitle, content FROM episodes;
-    ''');
+    // Populate Novels FTS
+    final allNovels = await select(novels).get();
+    for (final novel in allNovels) {
+      await _updateNovelSearchIndex(novel);
+    }
+
+    // Populate Episodes FTS
+    final allEpisodes = await select(episodeEntities).get();
+    for (final episode in allEpisodes) {
+      if (episode.content != null) {
+        await _updateEpisodeSearchIndex(episode);
+      }
+    }
+  }
+
+  /// 小説の検索インデックスを更新
+  Future<void> _updateNovelSearchIndex(Novel novel) async {
+    final tokenizedTitle = SearchTokenizer.tokenize(novel.title ?? '');
+    final tokenizedWriter = SearchTokenizer.tokenize(novel.writer ?? '');
+    final tokenizedStory = SearchTokenizer.tokenize(novel.story ?? '');
+
+    await customStatement(
+      '''
+      INSERT OR REPLACE INTO novels_search(rowid, ncode, title, writer, story)
+      VALUES (
+        (SELECT rowid FROM novels_search WHERE ncode = ?),
+        ?, ?, ?, ?
+      )
+      ''',
+      [
+        novel.ncode,
+        novel.ncode,
+        tokenizedTitle,
+        tokenizedWriter,
+        tokenizedStory,
+      ],
+    );
+  }
+
+  /// エピソードの検索インデックスを更新
+  Future<void> _updateEpisodeSearchIndex(EpisodeRow episode) async {
+    if (episode.content == null) return;
+
+    final tokenizedSubtitle = SearchTokenizer.tokenize(episode.subtitle ?? '');
+
+    // Extract text content from JSON
+    final contentList = episode.content!;
+    final buffer = StringBuffer();
+    for (final element in contentList) {
+      if (element is PlainText) {
+        buffer.write(element.text);
+      } else if (element is RubyText) {
+        buffer.write(element.base);
+      }
+    }
+    final tokenizedContent = SearchTokenizer.tokenize(buffer.toString());
+
+    await customStatement(
+      '''
+      INSERT OR REPLACE INTO episodes_search(rowid, ncode, episode_id, subtitle, content)
+      VALUES (
+        (SELECT rowid FROM episodes_search WHERE ncode = ? AND episode_id = ?),
+        ?, ?, ?, ?
+      )
+      ''',
+      [
+        episode.ncode,
+        episode.episodeId,
+        episode.ncode,
+        episode.episodeId,
+        tokenizedSubtitle,
+        tokenizedContent,
+      ],
+    );
+  }
+
+  /// 小説の検索インデックスから削除
+  // ignore: unused_element
+  Future<void> _deleteNovelSearchIndex(String ncode) async {
+    await customStatement(
+      'DELETE FROM novels_search WHERE ncode = ?',
+      [ncode],
+    );
+  }
+
+  /// エピソードの検索インデックスから削除
+  // ignore: unused_element
+  Future<void> _deleteEpisodeSearchIndex(String ncode, int episodeId) async {
+    await customStatement(
+      'DELETE FROM episodes_search WHERE ncode = ? AND episode_id = ?',
+      [ncode, episodeId],
+    );
   }
 
   /// 小説情報の取得
@@ -442,15 +493,19 @@ class AppDatabase extends _$AppDatabase {
 
   /// 小説の検索
   Future<List<Novel>> searchNovels(String query) async {
+    final tokenizedQuery = SearchTokenizer.tokenize(query);
+    if (tokenizedQuery.isEmpty) return [];
+
     final results = await customSelect(
       '''
       SELECT n.* FROM novels n
       JOIN novels_search ns ON n.ncode = ns.ncode
+      JOIN library_entries le ON n.ncode = le.ncode
       WHERE ns.novels_search MATCH ?
       ORDER BY ns.rank
       ''',
-      variables: [Variable.withString(query)],
-      readsFrom: {novels},
+      variables: [Variable.withString(tokenizedQuery)],
+      readsFrom: {novels, libraryEntries},
     ).get();
 
     return results.map((row) => novels.map(row.data)).toList();
@@ -458,6 +513,9 @@ class AppDatabase extends _$AppDatabase {
 
   /// エピソードの検索
   Future<List<EpisodeSearchResult>> searchEpisodes(String query) async {
+    final tokenizedQuery = SearchTokenizer.tokenize(query);
+    if (tokenizedQuery.isEmpty) return [];
+
     final results = await customSelect(
       '''
       SELECT 
@@ -467,13 +525,14 @@ class AppDatabase extends _$AppDatabase {
         n.title as novel_title
       FROM episodes e
       JOIN novels n ON e.ncode = n.ncode
+      JOIN library_entries le ON e.ncode = le.ncode
       JOIN episodes_search es ON e.ncode = es.ncode AND e.episode_id = es.episode_id
       WHERE es.episodes_search MATCH ?
       ORDER BY es.rank
       LIMIT 100
       ''',
-      variables: [Variable.withString(query)],
-      readsFrom: {episodeEntities, novels},
+      variables: [Variable.withString(tokenizedQuery)],
+      readsFrom: {episodeEntities, novels, libraryEntries},
     ).get();
 
     return results.map((row) {
@@ -544,11 +603,19 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// 小説情報の保存
-  Future<int> insertNovel(NovelsCompanion novel) {
-    return into(novels).insert(
+  Future<int> insertNovel(NovelsCompanion novel) async {
+    final id = await into(novels).insert(
       novel.copyWith(ncode: drift.Value(novel.ncode.value.toLowerCase())),
       mode: InsertMode.insertOrReplace,
     );
+
+    // Update Search Index
+    final insertedNovel = await getNovel(novel.ncode.value);
+    if (insertedNovel != null) {
+      await _updateNovelSearchIndex(insertedNovel);
+    }
+
+    return id;
   }
 
   /// 履歴の追加
@@ -648,11 +715,27 @@ class AppDatabase extends _$AppDatabase {
         );
       }
     });
+
+    // Update Search Index for subtitles
+    // Note: Since batch doesn't return inserted rows easily, and we might have many episodes,
+    // we might want to optimize this. For now, let's just update index for these episodes.
+    for (final episode in newEpisodes) {
+      // We need to fetch the full episode data to get content if it exists,
+      // but upsertEpisodes usually only updates metadata.
+      // If content exists, we should preserve it.
+      final row = await getEpisodeData(
+        episode.ncode.value,
+        episode.episodeId.value,
+      );
+      if (row != null) {
+        await _updateEpisodeSearchIndex(row);
+      }
+    }
   }
 
   /// エピソード本文の保存
-  Future<void> updateEpisodeContent(EpisodeEntitiesCompanion episode) {
-    return customStatement(
+  Future<void> updateEpisodeContent(EpisodeEntitiesCompanion episode) async {
+    await customStatement(
       '''
       INSERT INTO episodes (ncode, episode_id, content, fetched_at, subtitle, url)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -669,6 +752,15 @@ class AppDatabase extends _$AppDatabase {
         episode.url.value,
       ],
     );
+
+    // Update Search Index
+    final row = await getEpisodeData(
+      episode.ncode.value,
+      episode.episodeId.value,
+    );
+    if (row != null) {
+      await _updateEpisodeSearchIndex(row);
+    }
   }
 
   // ...
@@ -887,17 +979,16 @@ class AppDatabase extends _$AppDatabase {
 
 /// エピソード検索結果のDTO
 class EpisodeSearchResult {
-  final String ncode;
-  final int episodeId;
-  final String subtitle;
-  final String novelTitle;
-
   EpisodeSearchResult({
     required this.ncode,
     required this.episodeId,
     required this.subtitle,
     required this.novelTitle,
   });
+  final String ncode;
+  final int episodeId;
+  final String subtitle;
+  final String novelTitle;
 }
 
 LazyDatabase _openConnection() {
