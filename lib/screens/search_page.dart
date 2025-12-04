@@ -140,10 +140,9 @@ class SearchPage extends HookConsumerWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               onTap: () {
-                // 小説ページへ遷移
+                // エピソードビューアーへ遷移
                 context.push(
-                  '/novel/${episode.ncode}',
-                  extra: {'episode': episode.episodeId},
+                  '/novel/${episode.ncode}/${episode.episodeId}',
                 );
               },
             );
