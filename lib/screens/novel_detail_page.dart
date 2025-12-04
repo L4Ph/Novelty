@@ -5,6 +5,7 @@ import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/providers/connectivity_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -378,6 +379,7 @@ Widget _buildActionButtons(
 ) {
   final isFavoriteAsync = ref.watch(libraryStatusProvider(ncode));
   final downloadStatusAsync = ref.watch(downloadStatusProvider(novelInfo));
+  final isOffline = ref.watch(isOfflineProvider);
 
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -399,53 +401,55 @@ Widget _buildActionButtons(
         error: (e, s) =>
             _buildActionButton(context, icon: Icons.error, label: 'Error'),
       ),
-      downloadStatusAsync.when(
-        data: (isDownloaded) {
-          final downloadProgressAsync = ref.watch(
-            downloadProgressProvider(ncode),
-          );
-          return downloadProgressAsync.when(
-            data: (progress) => _buildDownloadButton(
-              context,
-              ref,
-              novelInfo,
-              isDownloaded,
-              progress,
-            ),
-            loading: () => _buildDownloadButton(
-              context,
-              ref,
-              novelInfo,
-              isDownloaded,
-              null,
-            ),
-            error: (e, s) => _buildActionButton(
-              context,
-              icon: Icons.error,
-              label: 'Error',
-            ),
-          );
-        },
-        loading: () => _buildActionButton(
-          context,
-          icon: Icons.downloading,
-          label: 'ダウンロード中...',
-          // ignore: avoid_redundant_argument_values
-          onPressed: null,
+      if (!isOffline) ...[
+        downloadStatusAsync.when(
+          data: (isDownloaded) {
+            final downloadProgressAsync = ref.watch(
+              downloadProgressProvider(ncode),
+            );
+            return downloadProgressAsync.when(
+              data: (progress) => _buildDownloadButton(
+                context,
+                ref,
+                novelInfo,
+                isDownloaded,
+                progress,
+              ),
+              loading: () => _buildDownloadButton(
+                context,
+                ref,
+                novelInfo,
+                isDownloaded,
+                null,
+              ),
+              error: (e, s) => _buildActionButton(
+                context,
+                icon: Icons.error,
+                label: 'Error',
+              ),
+            );
+          },
+          loading: () => _buildActionButton(
+            context,
+            icon: Icons.downloading,
+            label: 'ダウンロード中...',
+            // ignore: avoid_redundant_argument_values
+            onPressed: null,
+          ),
+          error: (e, s) =>
+              _buildActionButton(context, icon: Icons.error, label: 'Error'),
         ),
-        error: (e, s) =>
-            _buildActionButton(context, icon: Icons.error, label: 'Error'),
-      ),
-      _buildActionButton(
-        context,
-        icon: Icons.public,
-        label: 'WebView',
-        onPressed: () {
-          launchUrl(
-            Uri.parse('https://ncode.syosetu.com/$ncode/'),
-          );
-        },
-      ),
+        _buildActionButton(
+          context,
+          icon: Icons.public,
+          label: 'WebView',
+          onPressed: () {
+            launchUrl(
+              Uri.parse('https://ncode.syosetu.com/$ncode/'),
+            );
+          },
+        ),
+      ],
     ],
   );
 }
@@ -665,63 +669,69 @@ class _EpisodeListTile extends ConsumerWidget {
       return ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16),
         title: Text(episodeTitle),
-        subtitle: episode.update != null ? Text('更新日: ${episode.update}') : null,
+        subtitle: episode.update != null
+            ? Text('更新日: ${episode.update}')
+            : null,
       );
     }
 
     final downloadStatusAsync = ref.watch(
       episodeDownloadStatusProvider(ncode: ncode, episode: episodeNumber),
     );
+    final isOffline = ref.watch(isOfflineProvider);
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       title: Text(episodeTitle),
-      subtitle:
-          episode.update != null ? Text('更新日: ${episode.update}') : null,
-      trailing: downloadStatusAsync.when(
-        data: (status) {
-          if (status == 2) {
-            // ダウンロード成功
-            return IconButton(
-              icon: Icon(
-                Icons.download_done,
-                color: Theme.of(context).colorScheme.primary,
+      subtitle: episode.update != null ? Text('更新日: ${episode.update}') : null,
+      trailing: isOffline
+          ? null
+          : downloadStatusAsync.when(
+              data: (status) {
+                if (status == 2) {
+                  // ダウンロード成功
+                  return IconButton(
+                    icon: Icon(
+                      Icons.download_done,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    onPressed: null, // 無効化
+                  );
+                } else if (status == 3) {
+                  // ダウンロード失敗
+                  return IconButton(
+                    icon: Icon(
+                      Icons.download,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    onPressed: () =>
+                        _handleDownload(context, ref, episodeNumber),
+                  );
+                } else {
+                  // 未ダウンロード
+                  return IconButton(
+                    icon: const Icon(Icons.download),
+                    onPressed: () =>
+                        _handleDownload(context, ref, episodeNumber),
+                  );
+                }
+              },
+              loading: () => const SizedBox(
+                width: 48,
+                height: 48,
+                child: Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
               ),
-              onPressed: null, // 無効化
-            );
-          } else if (status == 3) {
-            // ダウンロード失敗
-            return IconButton(
-              icon: Icon(
-                Icons.download,
-                color: Theme.of(context).colorScheme.error,
+              error: (e, s) => IconButton(
+                icon: const Icon(Icons.download),
+                onPressed: () => _handleDownload(context, ref, episodeNumber),
               ),
-              onPressed: () => _handleDownload(context, ref, episodeNumber),
-            );
-          } else {
-            // 未ダウンロード
-            return IconButton(
-              icon: const Icon(Icons.download),
-              onPressed: () => _handleDownload(context, ref, episodeNumber),
-            );
-          }
-        },
-        loading: () => const SizedBox(
-          width: 48,
-          height: 48,
-          child: Center(
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
             ),
-          ),
-        ),
-        error: (e, s) => IconButton(
-          icon: const Icon(Icons.download),
-          onPressed: () => _handleDownload(context, ref, episodeNumber),
-        ),
-      ),
       onTap: () {
         final uri = Uri(
           path: '/novel/$ncode/$episodeNumber',
