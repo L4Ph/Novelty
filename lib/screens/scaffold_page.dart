@@ -16,6 +16,16 @@ class ScaffoldPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isOffline = ref.watch(isOfflineProvider);
 
+    // オフラインになった時に、現在「見つける」タブにいたらライブラリに遷移させる
+    ref.listen(isOfflineProvider, (previous, next) {
+      if (next) {
+        final location = GoRouterState.of(context).uri.toString();
+        if (location.startsWith('/explore')) {
+          context.go('/');
+        }
+      }
+    });
+
     final items = <BottomNavigationBarItem>[
       const BottomNavigationBarItem(icon: Icon(Icons.book), label: 'ライブラリ'),
       if (!isOffline)
