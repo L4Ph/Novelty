@@ -6,6 +6,6 @@ library;
 
 export 'src/models/novel_content_element.dart';
 export 'src/parser_experimental.dart';
-export 'src/parser_lookup.dart';
+// export 'src/parser_lookup.dart';
 export 'src/parser_state_machine.dart';
 export 'src/parser_string_scanner.dart';

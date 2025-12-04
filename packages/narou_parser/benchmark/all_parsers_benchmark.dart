@@ -7,11 +7,10 @@ void main() {
 
   print('=== Narou Parser Ultimate Benchmark ===\n');
   print('Parsers to test:');
-  print('1. Stable (DOM Chunked)   - package:html with chunk optimization');
-  print('2. Fast   (Hono Regex)    - Single RegExp linear scan');
-  print('3. StringScanner          - Raw string scanning (index manipulation)');
-  print('4. StateMachine           - State machine based parser');
-  print('5. Lookup                 - Lookup table based parser\n');
+  print('1. Legacy (DOM Chunked)   - package:html with chunk optimization');
+  print('2. New Default (Lookup)   - Optimized Lookup Integrated Scanner');
+  print('3. StringScanner          - Raw string scanning');
+  print('4. StateMachine           - State machine based parser\n');
 
   for (final lines in scenarios) {
     _runScenario(lines);
@@ -30,17 +29,17 @@ void _runScenario(int lines) {
   print('  HTML Generation: ${stopwatchGen.elapsedMilliseconds}ms');
   print('  Data Size:       ${html.length} chars ($sizeMb MB)\n');
 
-  // 1. Stable (DOM)
-  final swStable = Stopwatch()..start();
-  final resStable = parseNovelContent(html);
-  swStable.stop();
-  final timeStable = swStable.elapsedMilliseconds;
+  // 1. Legacy (DOM)
+  final swLegacy = Stopwatch()..start();
+  final resLegacy = parseNovelContentLegacy(html);
+  swLegacy.stop();
+  final timeLegacy = swLegacy.elapsedMilliseconds;
 
-  // 2. Fast (Regex)
-  final swFast = Stopwatch()..start();
-  final resFast = parseNovelContentFast(html);
-  swFast.stop();
-  final timeFast = swFast.elapsedMilliseconds;
+  // 2. New Default (Lookup)
+  final swNew = Stopwatch()..start();
+  final resNew = parseNovelContent(html);
+  swNew.stop();
+  final timeNew = swNew.elapsedMilliseconds;
 
   // 3. StringScanner
   final swStringScanner = Stopwatch()..start();
@@ -54,38 +53,29 @@ void _runScenario(int lines) {
   swStateMachine.stop();
   final timeStateMachine = swStateMachine.elapsedMilliseconds;
 
-  // 5. Lookup
-  final swLookup = Stopwatch()..start();
-  final resLookup = parseNovelContentLookup(html);
-  swLookup.stop();
-  final timeLookup = swLookup.elapsedMilliseconds;
-
   // 結果出力
   print('  [Performance]');
   print(
-    '  Stable:        ${timeStable.toString().padLeft(5)} ms (${_calcSpeed(timeStable, lines)} ms/1k)',
+    '  Legacy:        ${timeLegacy.toString().padLeft(5)} ms (${_calcSpeed(timeLegacy, lines)} ms/1k)',
   );
   print(
-    '  Fast:          ${timeFast.toString().padLeft(5)} ms (${_calcSpeed(timeFast, lines)} ms/1k) - ${hasSpeedup(timeStable, timeFast)}x faster',
+    '  New Default:   ${timeNew.toString().padLeft(5)} ms (${_calcSpeed(timeNew, lines)} ms/1k) - ${hasSpeedup(timeLegacy, timeNew)}x faster',
   );
   print(
-    '  StringScanner: ${timeStringScanner.toString().padLeft(5)} ms (${_calcSpeed(timeStringScanner, lines)} ms/1k) - ${hasSpeedup(timeStable, timeStringScanner)}x faster',
+    '  StringScanner: ${timeStringScanner.toString().padLeft(5)} ms (${_calcSpeed(timeStringScanner, lines)} ms/1k) - ${hasSpeedup(timeLegacy, timeStringScanner)}x faster',
   );
   print(
-    '  StateMachine:  ${timeStateMachine.toString().padLeft(5)} ms (${_calcSpeed(timeStateMachine, lines)} ms/1k) - ${hasSpeedup(timeStable, timeStateMachine)}x faster',
-  );
-  print(
-    '  Lookup:        ${timeLookup.toString().padLeft(5)} ms (${_calcSpeed(timeLookup, lines)} ms/1k) - ${hasSpeedup(timeStable, timeLookup)}x faster',
+    '  StateMachine:  ${timeStateMachine.toString().padLeft(5)} ms (${_calcSpeed(timeStateMachine, lines)} ms/1k) - ${hasSpeedup(timeLegacy, timeStateMachine)}x faster',
   );
 
   // 整合性チェック
   print('\n  [Validation]');
-  final countMatch = resStable.length == resFast.length &&
-      resStable.length == resStringScanner.length &&
-      resStable.length == resStateMachine.length &&
-      resStable.length == resLookup.length;
+  final countMatch =
+      resLegacy.length == resNew.length &&
+      resLegacy.length == resStringScanner.length &&
+      resLegacy.length == resStateMachine.length;
   print(
-    '  Element Counts: Stable=${resStable.length}, Fast=${resFast.length}, StringScanner=${resStringScanner.length}, StateMachine=${resStateMachine.length}, Lookup=${resLookup.length}',
+    '  Element Counts: Legacy=${resLegacy.length}, New=${resNew.length}, StringScanner=${resStringScanner.length}, StateMachine=${resStateMachine.length}',
   );
   print(
     '  Status:         ${countMatch ? "OK (All match)" : "WARNING (Count mismatch)"}',
