@@ -1,9 +1,9 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart' as db;
 import 'package:novelty/models/episode.dart';
+import 'package:novelty/providers/connectivity_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
@@ -22,15 +22,18 @@ void main() {
     setUp(() {
       mockDatabase = MockAppDatabase();
       mockApiService = MockApiService();
+    });
 
-      container = ProviderContainer(
+    ProviderContainer createContainer({bool isOffline = false}) {
+      return ProviderContainer(
         overrides: [
           db.appDatabaseProvider.overrideWithValue(mockDatabase),
           apiServiceProvider.overrideWithValue(mockApiService),
           settingsProvider.overrideWith(FakeSettings.new),
+          isOfflineProvider.overrideWithValue(isOffline),
         ],
       );
-    });
+    }
 
     tearDown(() {
       container.dispose();
@@ -40,19 +43,8 @@ void main() {
     final normalizedNcode = testNcode.toNormalizedNcode();
     const page = 1;
 
-    void mockConnectivity(String status) {
-      const channel = MethodChannel('dev.fluttercommunity.plus/connectivity');
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-            if (methodCall.method == 'check') {
-              return [status];
-            }
-            return null;
-          });
-    }
-
     test('should return cached episodes when offline', () async {
-      mockConnectivity('none'); // Offline
+      container = createContainer(isOffline: true); // Offline
 
       when(mockDatabase.getEpisodesRange(normalizedNcode, 1, 100)).thenAnswer(
         (_) async => [
@@ -75,7 +67,7 @@ void main() {
     });
 
     test('should fetch from API and save to DB when online', () async {
-      mockConnectivity('wifi'); // Online
+      container = createContainer(); // Online
 
       final episodes = [
         const Episode(
@@ -102,7 +94,7 @@ void main() {
     });
 
     test('should fallback to cache when online fetch fails', () async {
-      mockConnectivity('wifi'); // Online
+      container = createContainer(); // Online
 
       when(
         mockApiService.fetchEpisodeList(normalizedNcode, page),

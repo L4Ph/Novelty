@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:narou_parser/narou_parser.dart';
@@ -11,6 +10,7 @@ import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/providers/connectivity_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
@@ -263,8 +263,8 @@ class NovelRepository {
     final cached = await _db.getEpisodeData(ncode, episode);
 
     // ネットワーク接続状態を確認
-    final connectivityResult = await Connectivity().checkConnectivity();
-    final isOffline = connectivityResult.contains(ConnectivityResult.none);
+    // ネットワーク接続状態を確認
+    final isOffline = ref.read(isOfflineProvider);
 
     // 1. オフラインの場合はキャッシュを強制的に使用
     if (isOffline) {
@@ -522,8 +522,7 @@ class NovelRepository {
     final end = page * 100;
 
     // ネットワーク接続状態を確認
-    final connectivityResult = await Connectivity().checkConnectivity();
-    final isOffline = connectivityResult.contains(ConnectivityResult.none);
+    final isOffline = ref.read(isOfflineProvider);
 
     // オフラインの場合はDBから取得
     if (isOffline) {
