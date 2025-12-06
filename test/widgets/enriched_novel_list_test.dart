@@ -83,7 +83,7 @@ void main() {
   Widget createTestWidget(List<EnrichedNovelData> novels) {
     return ProviderScope(
       overrides: [
-        // ignore: scoped_providers_should_specify_dependencies
+        // ignore: scoped_providers_should_specify_dependencies テストのため
         appDatabaseProvider.overrideWithValue(mockDb),
         apiServiceProvider.overrideWithValue(mockApiService),
         // InvalidateされるProviderたちをダミーでオーバーライド

@@ -355,10 +355,12 @@ class AppDatabase extends _$AppDatabase {
             await customStatement('DROP TABLE IF EXISTS history');
             await customStatement('DROP TABLE IF EXISTS cached_episodes');
           } catch (e, st) {
-            // ignore: avoid_print
-            print('Migration Error: $e');
-            // ignore: avoid_print
-            print('Migration StackTrace: $st');
+            if (kDebugMode) {
+              print('Migration Error: $e');
+            }
+            if (kDebugMode) {
+              print('Migration StackTrace: $st');
+            }
             rethrow;
           }
         }

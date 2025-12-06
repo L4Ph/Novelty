@@ -64,7 +64,7 @@ class ApiService {
       return Episode(
         subtitle: subtitle?.text.trim(),
         url: url,
-        // ignore: unnecessary_raw_strings
+        // ignore: unnecessary_raw_strings 明示的に入れる
         update: update?.text.trim().replaceAll(RegExp(r'（.+）'), '').trim(),
         revised: revisedAttr?.replaceAll(' 改稿', '').trim(),
         index: index,
@@ -379,8 +379,8 @@ class ApiService {
             '.p-novel__text:not(.p-novel__text--preface):not(.p-novel__text--afterword)',
           )
           .map((el) => el.innerHtml)
-          // ignore: avoid_redundant_argument_values
-          .join(''),
+          // ignore: avoid_redundant_argument_values　明示的に空文字をjoin
+          .join(),
     );
   }
 
