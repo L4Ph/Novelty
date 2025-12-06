@@ -8,13 +8,16 @@ part of 'connectivity_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// ネットワーク接続状態を管理するクラス
 
 @ProviderFor(ConnectivityStatus)
 const connectivityStatusProvider = ConnectivityStatusProvider._();
 
+/// ネットワーク接続状態を管理するクラス
 final class ConnectivityStatusProvider
     extends
         $AsyncNotifierProvider<ConnectivityStatus, List<ConnectivityResult>> {
+  /// ネットワーク接続状態を管理するクラス
   const ConnectivityStatusProvider._()
     : super(
         from: null,
@@ -36,6 +39,8 @@ final class ConnectivityStatusProvider
 
 String _$connectivityStatusHash() =>
     r'4a45974c1fccf6881c80b98c7312e7f8a358bf16';
+
+/// ネットワーク接続状態を管理するクラス
 
 abstract class _$ConnectivityStatus
     extends $AsyncNotifier<List<ConnectivityResult>> {
@@ -65,11 +70,16 @@ abstract class _$ConnectivityStatus
   }
 }
 
+/// オフラインかどうかを判定するプロバイダー
+
 @ProviderFor(isOffline)
 const isOfflineProvider = IsOfflineProvider._();
 
+/// オフラインかどうかを判定するプロバイダー
+
 final class IsOfflineProvider extends $FunctionalProvider<bool, bool, bool>
     with $Provider<bool> {
+  /// オフラインかどうかを判定するプロバイダー
   const IsOfflineProvider._()
     : super(
         from: null,
@@ -103,4 +113,4 @@ final class IsOfflineProvider extends $FunctionalProvider<bool, bool, bool>
   }
 }
 
-String _$isOfflineHash() => r'2191bab0a3714f3e50818cfa9604f9e67b1d58a6';
+String _$isOfflineHash() => r'c528b5ad19823d2dc385a9277cd9fbdff1679d70';

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -185,7 +187,7 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
   @override
   void initState() {
     super.initState();
-    _loadMoreEpisodes();
+    unawaited(_loadMoreEpisodes());
   }
 
   Future<void> _loadMoreEpisodes() async {
@@ -284,7 +286,7 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
           final episodeIndex = index - 1;
           if (episodeIndex >= _episodes.length) {
             if (!_isLoading && _hasMorePages) {
-              Future.microtask(_loadMoreEpisodes);
+              unawaited(Future.microtask(_loadMoreEpisodes));
             }
             return _isLoading
                 ? const Padding(
@@ -433,7 +435,7 @@ Widget _buildActionButtons(
             context,
             icon: Icons.downloading,
             label: 'ダウンロード中...',
-            // ignore: avoid_redundant_argument_values
+            // ignore: avoid_redundant_argument_values テストのため
             onPressed: null,
           ),
           error: (e, s) =>
@@ -444,8 +446,10 @@ Widget _buildActionButtons(
           icon: Icons.public,
           label: 'WebView',
           onPressed: () {
-            launchUrl(
-              Uri.parse('https://ncode.syosetu.com/$ncode/'),
+            unawaited(
+              launchUrl(
+                Uri.parse('https://ncode.syosetu.com/$ncode/'),
+              ),
             );
           },
         ),
@@ -490,9 +494,9 @@ Widget _buildDownloadButton(
     label: isDownloaded ? 'ダウンロード済' : 'ダウンロード',
     onPressed: () {
       if (isDownloaded) {
-        _handleDelete(context, ref, novelInfo);
+        unawaited(_handleDelete(context, ref, novelInfo));
       } else {
-        _handleDownload(context, ref, novelInfo);
+        unawaited(_handleDownload(context, ref, novelInfo));
       }
     },
   );
@@ -519,9 +523,11 @@ Future<void> _handleDownload(
             action: SnackBarAction(
               label: '追加',
               onPressed: () {
-                ref
-                    .read(libraryStatusProvider(novelInfo.ncode!).notifier)
-                    .toggle(novelInfo);
+                unawaited(
+                  ref
+                      .read(libraryStatusProvider(novelInfo.ncode!).notifier)
+                      .toggle(novelInfo),
+                );
               },
             ),
           ),
@@ -529,24 +535,26 @@ Future<void> _handleDownload(
       }
     },
     permissionDenied: () {
-      showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('権限が必要です'),
-          content: const Text('小説をダウンロードするには、ファイルへのアクセス権限を許可してください。'),
-          actions: [
-            TextButton(
-              child: const Text('キャンセル'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text('設定を開く'),
-              onPressed: () {
-                openAppSettings();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+      unawaited(
+        showDialog<void>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('権限が必要です'),
+            content: const Text('小説をダウンロードするには、ファイルへのアクセス権限を許可してください。'),
+            actions: [
+              TextButton(
+                child: const Text('キャンセル'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              TextButton(
+                child: const Text('設定を開く'),
+                onPressed: () {
+                  unawaited(openAppSettings());
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
         ),
       );
     },
@@ -704,15 +712,17 @@ class _EpisodeListTile extends ConsumerWidget {
                       Icons.download,
                       color: Theme.of(context).colorScheme.error,
                     ),
-                    onPressed: () =>
-                        _handleDownload(context, ref, episodeNumber),
+                    onPressed: () {
+                      unawaited(_handleDownload(context, ref, episodeNumber));
+                    },
                   );
                 } else {
                   // 未ダウンロード
                   return IconButton(
                     icon: const Icon(Icons.download),
-                    onPressed: () =>
-                        _handleDownload(context, ref, episodeNumber),
+                    onPressed: () {
+                      unawaited(_handleDownload(context, ref, episodeNumber));
+                    },
                   );
                 }
               },
@@ -729,7 +739,9 @@ class _EpisodeListTile extends ConsumerWidget {
               ),
               error: (e, s) => IconButton(
                 icon: const Icon(Icons.download),
-                onPressed: () => _handleDownload(context, ref, episodeNumber),
+                onPressed: () {
+                  unawaited(_handleDownload(context, ref, episodeNumber));
+                },
               ),
             ),
       onTap: () {
@@ -739,7 +751,7 @@ class _EpisodeListTile extends ConsumerWidget {
               ? {'revised': episode.revised}
               : null,
         );
-        context.push(uri.toString());
+        unawaited(context.push(uri.toString()));
       },
     );
   }

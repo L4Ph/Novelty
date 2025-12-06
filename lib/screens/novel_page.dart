@@ -68,7 +68,7 @@ class NovelPage extends HookConsumerWidget {
             return <int, String?>{};
           }
           return {
-            for (var e in novelInfo.episodes!)
+            for (final e in novelInfo.episodes!)
               if (e.index != null) e.index!: e.revised
           };
         }, [novelInfo]);

@@ -15,7 +15,7 @@ List<NovelContentElement> parseNovelContent(String htmlString) {
 /// package:html を使用したDOMベースの実装です。
 /// 互換性のために残されています。
 
-@deprecated
+@Deprecated('Use parseNovelContentLookup instead')
 List<NovelContentElement> parseNovelContentLegacy(String htmlString) {
   final elements = <NovelContentElement>[];
 

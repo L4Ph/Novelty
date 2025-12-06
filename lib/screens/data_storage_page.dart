@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
@@ -51,8 +53,8 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
           child: Text(
             'データベースのバックアップ',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         Padding(
@@ -60,8 +62,8 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
           child: Text(
             'すべてのデータ(ライブラリ、履歴、ダウンロード済み小説)をバックアップ・復元します',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
+              color: Theme.of(context).textTheme.bodySmall?.color,
+            ),
           ),
         ),
         ListTile(
@@ -176,34 +178,38 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
 
   /// 成功ダイアログを表示
   void _showSuccessDialog(String title, String message) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   /// エラーダイアログを表示
   void _showErrorDialog(String title, String message) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -214,7 +220,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
     int? backupVersion,
   }) {
     // メッセージを構築
-    String message = 'すべてのデータが復元されました。\n\n';
+    var message = 'すべてのデータが復元されました。\n\n';
 
     if (requiresMigration && backupVersion != null) {
       message +=
@@ -224,20 +230,22 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
 
     message += '変更を反映するため、アプリを終了して再起動してください。';
 
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('復元が完了しました'),
-        content: Text(message),
-        actions: [
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('OK'),
-          ),
-        ],
+    unawaited(
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('復元が完了しました'),
+          content: Text(message),
+          actions: [
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       ),
     );
   }

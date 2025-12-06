@@ -87,7 +87,7 @@ class BackupService {
       final dbFile = File(p.join(dbFolder.path, 'novelty.db'));
 
       // 既存のデータベースをバックアップ(念のため)
-      if (await dbFile.exists()) {
+      if (dbFile.existsSync()) {
         final backupFile = File('${dbFile.path}.bak');
         await dbFile.copy(backupFile.path);
       }

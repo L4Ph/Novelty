@@ -108,7 +108,7 @@ void main() {
           ncode: 'N1234AB',
           title: 'テスト小説',
           novelType: 1,
-          // ignore: avoid_redundant_argument_values
+          // ignore: avoid_redundant_argument_values テストのため
           end: null,
           genre: 1,
           writer: 'テスト作者',
@@ -154,7 +154,7 @@ void main() {
         const item = RankingResponse(
           ncode: 'N1234AB',
           title: 'テスト小説',
-          // ignore: avoid_redundant_argument_values
+          // ignore: avoid_redundant_argument_values テストのため
           novelType: null,
           end: 0,
           genre: 1,
@@ -275,7 +275,7 @@ void main() {
       expect(find.text('テストタイトル'), findsOneWidget);
       expect(find.textContaining('N1234AB'), findsOneWidget);
       expect(find.textContaining('完結済'), findsOneWidget);
-      
+
       // HookWidgetとして実装されていることを確認
       expect(find.byType(NovelListTile), findsOneWidget);
       final widget = tester.widget(find.byType(NovelListTile));

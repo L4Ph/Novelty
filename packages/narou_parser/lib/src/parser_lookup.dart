@@ -138,7 +138,7 @@ void _processRubyContent(String inner, List<NovelContentElement> elements) {
   }
 }
 
-/// <rb>, </rb>, <rp>...</rp> などを除去してベーステキストを抽出
+/// `<rb>`, `</rb>`, `<rp>...</rp>` などを除去してベーステキストを抽出
 String _cleanRubyBase(String raw) {
   if (!raw.contains('<')) return raw.trim();
 

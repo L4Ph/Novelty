@@ -45,8 +45,10 @@ class ContentConverter
 
 /// 履歴データのDTOクラス
 /// 旧Historyテーブルのデータクラスと互換性を持たせるために定義
+@immutable
 class HistoryData {
-  HistoryData({
+  /// コンストラクタ
+  const HistoryData({
     required this.ncode,
     required this.viewedAt,
     required this.updatedAt,
@@ -54,11 +56,23 @@ class HistoryData {
     this.writer,
     this.lastEpisode,
   });
+
+  /// 小説のNコード
   final String ncode;
+
+  /// タイトル
   final String? title;
+
+  /// 作者名
   final String? writer;
+
+  /// 最後に読んだエピソード番号
   final int? lastEpisode;
+
+  /// 閲覧日時（UNIXタイムスタンプ）
   final int viewedAt;
+
+  /// 更新日時（UNIXタイムスタンプ）
   final int updatedAt;
 
   @override
@@ -341,10 +355,12 @@ class AppDatabase extends _$AppDatabase {
             await customStatement('DROP TABLE IF EXISTS history');
             await customStatement('DROP TABLE IF EXISTS cached_episodes');
           } catch (e, st) {
-            // ignore: avoid_print
-            print('Migration Error: $e');
-            // ignore: avoid_print
-            print('Migration StackTrace: $st');
+            if (kDebugMode) {
+              print('Migration Error: $e');
+            }
+            if (kDebugMode) {
+              print('Migration StackTrace: $st');
+            }
             rethrow;
           }
         }
@@ -1065,15 +1081,24 @@ class AppDatabase extends _$AppDatabase {
 
 /// エピソード検索結果のDTO
 class EpisodeSearchResult {
+  /// コンストラクタ
   EpisodeSearchResult({
     required this.ncode,
     required this.episodeId,
     required this.subtitle,
     required this.novelTitle,
   });
+
+  /// 小説のNコード
   final String ncode;
+
+  /// エピソード番号
   final int episodeId;
+
+  /// サブタイトル
   final String subtitle;
+
+  /// 小説のタイトル
   final String novelTitle;
 }
 
@@ -1087,22 +1112,27 @@ LazyDatabase _openConnection() {
 
 // ==================== Providers ====================
 
+/// アプリケーションデータベースのプロバイダー
 final appDatabaseProvider = Provider<AppDatabase>((ref) => AppDatabase());
 
+/// ライブラリの小説リストを提供するプロバイダー
 final libraryNovelsProvider = StreamProvider<List<Novel>>((ref) {
   final db = ref.watch(appDatabaseProvider);
   ref.keepAlive();
   return db.watchLibraryNovels();
 });
 
+/// 閲覧履歴を提供するプロバイダー
 final historyProvider = StreamProvider<List<HistoryData>>((ref) {
   final db = ref.watch(appDatabaseProvider);
   ref.keepAlive();
   return db.watchHistory();
 });
 
+/// 現在時刻を提供するプロバイダー
 final currentTimeProvider = Provider<DateTime>((ref) => DateTime.now());
 
+/// 日付ごとにグループ化された閲覧履歴を提供するプロバイダー
 final groupedHistoryProvider = StreamProvider<List<HistoryGroup>>((ref) {
   final now = ref.watch(currentTimeProvider);
   final db = ref.watch(appDatabaseProvider);

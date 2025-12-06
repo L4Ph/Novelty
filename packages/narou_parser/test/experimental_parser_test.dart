@@ -8,7 +8,9 @@ void main() {
       'StringScanner': parseNovelContentStringScanner,
     };
 
-    parsers.forEach((name, parse) {
+    for (final entry in parsers.entries) {
+      final name = entry.key;
+      final parse = entry.value;
       group(name, () {
         test('基本的なHTMLを正しくパースできるか', () {
           const html = '''
@@ -97,6 +99,6 @@ void main() {
           expect(result[2], isA<NewLine>());
         });
       });
-    });
+    }
   });
 }

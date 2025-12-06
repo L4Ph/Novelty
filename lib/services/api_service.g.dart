@@ -25,7 +25,7 @@ final class ApiServiceProvider
         argument: null,
         retry: null,
         name: r'apiServiceProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -52,7 +52,7 @@ final class ApiServiceProvider
   }
 }
 
-String _$apiServiceHash() => r'01c3d99362f3730b98e29079977950009cd07601';
+String _$apiServiceHash() => r'93a7e3b4d3004741abc3061c4688239c3a72f9c4';
 
 /// ランキングデータのプロバイダー
 

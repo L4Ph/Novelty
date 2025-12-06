@@ -372,6 +372,24 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<_i3.Novel?>);
 
   @override
+  _i5.Future<List<_i3.Novel>> searchNovels(String? query) =>
+      (super.noSuchMethod(
+            Invocation.method(#searchNovels, [query]),
+            returnValue: _i5.Future<List<_i3.Novel>>.value(<_i3.Novel>[]),
+          )
+          as _i5.Future<List<_i3.Novel>>);
+
+  @override
+  _i5.Future<List<_i3.EpisodeSearchResult>> searchEpisodes(String? query) =>
+      (super.noSuchMethod(
+            Invocation.method(#searchEpisodes, [query]),
+            returnValue: _i5.Future<List<_i3.EpisodeSearchResult>>.value(
+              <_i3.EpisodeSearchResult>[],
+            ),
+          )
+          as _i5.Future<List<_i3.EpisodeSearchResult>>);
+
+  @override
   _i5.Future<int> addToLibrary(String? ncode) =>
       (super.noSuchMethod(
             Invocation.method(#addToLibrary, [ncode]),
