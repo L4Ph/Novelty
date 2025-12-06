@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:drift/drift.dart' as drift;
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/models/episode.dart';
@@ -633,15 +634,30 @@ class AppDatabase extends _$AppDatabase {
 
   /// 小説情報の保存
   Future<int> insertNovel(NovelsCompanion novel) async {
+    // FTS更新が必要かどうかを判定するために既存データを取得
+    final existingNovel = await getNovel(novel.ncode.value);
+
     final id = await into(novels).insert(
       novel.copyWith(ncode: drift.Value(novel.ncode.value.toLowerCase())),
       mode: InsertMode.insertOrReplace,
     );
 
     // Update Search Index
-    final insertedNovel = await getNovel(novel.ncode.value);
-    if (insertedNovel != null) {
-      await _updateNovelSearchIndex(insertedNovel);
+    // タイトル、著者、あらすじが変更された場合のみインデックスを更新
+    var shouldUpdateIndex = true;
+    if (existingNovel != null) {
+      if (existingNovel.title == novel.title.value &&
+          existingNovel.writer == novel.writer.value &&
+          existingNovel.story == novel.story.value) {
+        shouldUpdateIndex = false;
+      }
+    }
+
+    if (shouldUpdateIndex) {
+      final insertedNovel = await getNovel(novel.ncode.value);
+      if (insertedNovel != null) {
+        await _updateNovelSearchIndex(insertedNovel);
+      }
     }
 
     return id;
@@ -721,6 +737,20 @@ class AppDatabase extends _$AppDatabase {
   Future<void> upsertEpisodes(
     List<EpisodeEntitiesCompanion> newEpisodes,
   ) async {
+    if (newEpisodes.isEmpty) return;
+
+    // 最適化: 不要なFTS更新を避けるため、既存のサブタイトルを事前に取得する。
+    // このメソッドは通常、単一の小説のエピソードリストに対して呼び出されるため、
+    // 既存データを効率的に取得できる。
+    final ncode = newEpisodes.first.ncode.value;
+    final existingRows = await (select(
+      episodeEntities,
+    )..where((t) => t.ncode.equals(ncode))).get();
+
+    final existingSubtitles = {
+      for (final row in existingRows) row.episodeId: row.subtitle,
+    };
+
     await batch((batch) {
       for (final episode in newEpisodes) {
         batch.customStatement(
@@ -745,25 +775,39 @@ class AppDatabase extends _$AppDatabase {
       }
     });
 
-    // Update Search Index for subtitles
-    // Note: Since batch doesn't return inserted rows easily, and we might have many episodes,
-    // we might want to optimize this. For now, let's just update index for these episodes.
+    // サブタイトルの検索インデックスを更新
+    // 既存のエピソードで、サブタイトルが実際に変更された場合のみ更新するように最適化。
+    // 新規エピソードの場合、contentはnull（このメソッドはメタデータのみ更新するため）なので、
+    // いずれにせよ_updateEpisodeSearchIndexはスキップされるため、DBクエリを節約できる。
     for (final episode in newEpisodes) {
-      // We need to fetch the full episode data to get content if it exists,
-      // but upsertEpisodes usually only updates metadata.
-      // If content exists, we should preserve it.
-      final row = await getEpisodeData(
-        episode.ncode.value,
-        episode.episodeId.value,
-      );
-      if (row != null) {
-        await _updateEpisodeSearchIndex(row);
+      final epId = episode.episodeId.value;
+      final newSubtitle = episode.subtitle.value;
+
+      // エピソードが存在し、かつサブタイトルが変更された場合のみ更新
+
+      if (existingSubtitles.containsKey(epId)) {
+        final oldSubtitle = existingSubtitles[epId];
+        if (oldSubtitle != newSubtitle) {
+          final row = await getEpisodeData(
+            episode.ncode.value,
+            epId,
+          );
+          if (row != null) {
+            await _updateEpisodeSearchIndex(row);
+          }
+        }
       }
     }
   }
 
   /// エピソード本文の保存
   Future<void> updateEpisodeContent(EpisodeEntitiesCompanion episode) async {
+    // FTS更新が必要かどうかを判定するために既存データを取得
+    final existingRow = await getEpisodeData(
+      episode.ncode.value,
+      episode.episodeId.value,
+    );
+
     await customStatement(
       '''
       INSERT INTO episodes (ncode, episode_id, content, fetched_at, subtitle, url)
@@ -783,12 +827,25 @@ class AppDatabase extends _$AppDatabase {
     );
 
     // Update Search Index
-    final row = await getEpisodeData(
-      episode.ncode.value,
-      episode.episodeId.value,
-    );
-    if (row != null) {
-      await _updateEpisodeSearchIndex(row);
+    // コンテンツが変更された場合のみインデックスを更新
+    var shouldUpdateIndex = true;
+    if (existingRow != null &&
+        existingRow.content != null &&
+        episode.content.value != null) {
+      // リストの内容を比較
+      if (listEquals(existingRow.content, episode.content.value)) {
+        shouldUpdateIndex = false;
+      }
+    }
+
+    if (shouldUpdateIndex) {
+      final row = await getEpisodeData(
+        episode.ncode.value,
+        episode.episodeId.value,
+      );
+      if (row != null) {
+        await _updateEpisodeSearchIndex(row);
+      }
     }
   }
 
