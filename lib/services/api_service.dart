@@ -23,7 +23,7 @@ part 'api_service.g.dart';
 /// なろう小説APIの制限値（最大500件）を最大限活用
 const int allTimeRankingLimit = 500;
 
-@riverpod
+@Riverpod(keepAlive: true)
 /// APIサービスのプロバイダー
 ApiService apiService(Ref ref) => ApiService();
 
