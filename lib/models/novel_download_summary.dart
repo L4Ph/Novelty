@@ -5,13 +5,17 @@ part 'novel_download_summary.freezed.dart';
 /// 小説のダウンロード状態の集計情報を表すクラス。
 @freezed
 abstract class NovelDownloadSummary with _$NovelDownloadSummary {
+  /// ファクトリーコンストラクタ
   const factory NovelDownloadSummary({
     /// 小説のncode
     required String ncode,
+
     /// ダウンロード成功したエピソード数
     required int successCount,
+
     /// ダウンロード失敗したエピソード数
     required int failureCount,
+
     /// ダウンロード対象の総エピソード数
     required int totalEpisodes,
   }) = _NovelDownloadSummary;

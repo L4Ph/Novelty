@@ -8,7 +8,9 @@ import 'package:novelty/database/database.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
+/// 小説検索画面
 class SearchPage extends HookConsumerWidget {
+  /// コンストラクタ
   const SearchPage({super.key});
 
   @override

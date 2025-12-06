@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'connectivity_provider.g.dart';
 
+/// ネットワーク接続状態を管理するクラス
 @Riverpod(keepAlive: true)
 class ConnectivityStatus extends _$ConnectivityStatus {
   @override
@@ -16,6 +17,7 @@ class ConnectivityStatus extends _$ConnectivityStatus {
   }
 }
 
+/// オフラインかどうかを判定するプロバイダー
 @riverpod
 bool isOffline(Ref ref) {
   final status = ref.watch(connectivityStatusProvider);
