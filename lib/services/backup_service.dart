@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_slow_async_io
+
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';

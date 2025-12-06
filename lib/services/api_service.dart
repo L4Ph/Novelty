@@ -254,7 +254,7 @@ class ApiService {
     // 短編小説の場合は、単一のエピソードとして扱う
     if (info.novelType == 2) {
       // 短編小説の場合は、単一のエピソードとして扱う
-      info = info.copyWith(
+      return info.copyWith(
         episodes: [
           Episode(
             subtitle: info.title,
@@ -264,7 +264,6 @@ class ApiService {
           ),
         ],
       );
-      return info;
     }
 
     final firstPageUrl =

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
@@ -63,7 +65,7 @@ class NovelListTile extends HookWidget {
     // デフォルトのonTapハンドラーをメモ化
     final defaultOnTap = useCallback(
       () {
-        context.push('/novel/${item.ncode}');
+        unawaited(context.push('/novel/${item.ncode}'));
       },
       [item.ncode],
     );

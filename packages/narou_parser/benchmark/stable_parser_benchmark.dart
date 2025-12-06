@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, unreachable_from_main
+
 import 'package:narou_parser/narou_parser.dart';
 
 /// 通常パーサー (parseNovelContent) の性能測定ベンチマーク
@@ -39,7 +41,7 @@ void main() {
     // 実際の計測（複数回実行して平均を取る）
     const iterations = 3;
     final times = <int>[];
-    int elementCount = 0;
+    var elementCount = 0;
 
     for (var i = 0; i < iterations; i++) {
       final sw = Stopwatch()..start();
@@ -173,8 +175,8 @@ void _printSummary(List<BenchmarkResult> results) {
 
   for (final result in results) {
     final sizeKb = (result.dataSize / 1024).toStringAsFixed(1);
-    final msPerKLines =
-        (result.avgTime / (result.scenario.lines / 1000)).toStringAsFixed(2);
+    final msPerKLines = (result.avgTime / (result.scenario.lines / 1000))
+        .toStringAsFixed(2);
 
     print(
       '| ${result.scenario.name.padRight(7)} | ${result.scenario.lines.toString().padLeft(6)} | ${sizeKb.padLeft(8)} KB | ${result.avgTime.toString().padLeft(7)} ms | ${msPerKLines.padLeft(7)} |',

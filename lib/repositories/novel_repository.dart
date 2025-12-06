@@ -66,7 +66,7 @@ class NovelRepository {
   void dispose() {
     for (final controller in _progressControllers.values) {
       if (!controller.isClosed) {
-        controller.close();
+        unawaited(controller.close());
       }
     }
     _progressControllers.clear();
@@ -243,7 +243,7 @@ class NovelRepository {
             url: const Value(''),
           ),
         );
-      } catch (_) {
+      } on Exception catch (_) {
         // Ignore secondary failure
       }
 
@@ -326,7 +326,7 @@ class NovelRepository {
             url: const Value(''),
           ),
         );
-      } catch (_) {}
+      } on Exception catch (_) {}
       rethrow;
     }
   }
@@ -369,7 +369,7 @@ class NovelRepository {
             revisedMap[ep.index!] = ep.revised;
           }
         }
-      } catch (e) {
+      } on Exception catch (e) {
         // 目次取得失敗時はrevised情報なしで進める（全件チェックになるが、キャッシュがあればスキップされる）
         // ただし、キャッシュが古くてもスキップされてしまう可能性がある
         if (kDebugMode) {

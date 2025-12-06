@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, deprecated_member_use_from_same_package, cascade_invocations
+
 import 'package:narou_parser/experimental.dart';
 import 'package:narou_parser/narou_parser.dart';
 
@@ -12,9 +14,7 @@ void main() {
   print('3. StringScanner          - Raw string scanning');
   print('4. StateMachine           - State machine based parser\n');
 
-  for (final lines in scenarios) {
-    _runScenario(lines);
-  }
+  scenarios.forEach(_runScenario);
 }
 
 void _runScenario(int lines) {

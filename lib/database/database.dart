@@ -45,8 +45,9 @@ class ContentConverter
 
 /// 履歴データのDTOクラス
 /// 旧Historyテーブルのデータクラスと互換性を持たせるために定義
+@immutable
 class HistoryData {
-  HistoryData({
+  const HistoryData({
     required this.ncode,
     required this.viewedAt,
     required this.updatedAt,
