@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/search_page.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
+import 'package:novelty/widgets/search_modal.dart';
 
 /// "ライブラリ"ページのウィジェット。
 class LibraryPage extends ConsumerWidget {
@@ -25,47 +27,24 @@ class LibraryPage extends ConsumerWidget {
             icon: const Icon(Icons.search),
             onPressed: () {
               unawaited(
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (context) => const SearchPage(),
-                  ),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {
-              unawaited(
                 showModalBottomSheet<void>(
                   context: context,
-                  showDragHandle: true,
-                  builder: (BuildContext context) {
-                    return const DefaultTabController(
-                      length: 2,
-                      child: SizedBox(
-                        height: 300,
-                        child: Column(
-                          children: <Widget>[
-                            TabBar(
-                              tabs: <Widget>[
-                                Tab(text: '絞り込み'),
-                                Tab(text: '並び替え'),
-                              ],
-                            ),
-                            Expanded(
-                              child: TabBarView(
-                                children: <Widget>[
-                                  Center(child: Text('絞り込みオプション')),
-                                  Center(child: Text('並び替えオプション')),
-                                ],
-                              ),
-                            ),
-                          ],
+                  isScrollControlled: true,
+                  useSafeArea: true,
+                  builder: (context) => SearchModal(
+                    initialQuery: const NovelSearchQuery(),
+                    onSearch: (query) {
+                      Navigator.pop(context);
+                      unawaited(
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) =>
+                                SearchPage(initialQuery: query),
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               );
             },
