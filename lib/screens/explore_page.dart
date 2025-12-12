@@ -8,8 +8,8 @@ import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/domain/search_state.dart';
 import 'package:novelty/models/novel_search_query.dart';
-import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
+import 'package:novelty/widgets/ranking_filter_sheet.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 import 'package:novelty/widgets/search_modal.dart';
 
@@ -90,89 +90,21 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
     unawaited(
       showModalBottomSheet<void>(
         context: context,
-        showDragHandle: true,
-        builder: (BuildContext context) {
-          var tempShowOnlyOngoing = currentFilter.showOnlyOngoing;
-          var tempSelectedGenre = currentFilter.selectedGenre;
-
-          return StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return SizedBox(
-                height: 300,
-                child: Column(
-                  children: <Widget>[
-                    CheckboxListTile(
-                      title: const Text('連載中のみ'),
-                      value: tempShowOnlyOngoing,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          tempShowOnlyOngoing = value ?? false;
-                        });
-                      },
-                    ),
-                    DropdownButton<int?>(
-                      value: tempSelectedGenre,
-                      hint: const Text('ジャンルを選択'),
-                      isExpanded: true,
-                      items: [
-                        const DropdownMenuItem<int?>(
-                          child: Text('すべて'),
-                        ),
-                        ...genreList.map((genre) {
-                          return DropdownMenuItem<int?>(
-                            value: genre['id'] as int?,
-                            child: Text(genre['name'] as String),
-                          );
-                        }),
-                      ],
-                      onChanged: (int? newValue) {
-                        setState(() {
-                          tempSelectedGenre = newValue;
-                        });
-                      },
-                    ),
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            child: const Text('キャンセル'),
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                          TextButton(
-                            child: const Text('適用'),
-                            onPressed: () {
-                              // Providerの状態を更新
-                              ref
-                                  .read(
-                                    rankingFilterStateProvider(
-                                      currentRankingType,
-                                    ).notifier,
-                                  )
-                                  .setShowOnlyOngoing(
-                                    value: tempShowOnlyOngoing,
-                                  );
-                              ref
-                                  .read(
-                                    rankingFilterStateProvider(
-                                      currentRankingType,
-                                    ).notifier,
-                                  )
-                                  .setSelectedGenre(tempSelectedGenre);
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+        isScrollControlled: true,
+        useSafeArea: true,
+        builder: (context) => RankingFilterSheet(
+          initialShowOnlyOngoing: currentFilter.showOnlyOngoing,
+          initialSelectedGenre: currentFilter.selectedGenre,
+          onApply: ({required showOnlyOngoing, required selectedGenre}) {
+            // Providerの状態を更新
+            final _ =
+                ref.read(
+                    rankingFilterStateProvider(currentRankingType).notifier,
+                  )
+                  ..setShowOnlyOngoing(value: showOnlyOngoing)
+                  ..setSelectedGenre(selectedGenre);
+          },
+        ),
       ),
     );
   }
@@ -359,8 +291,8 @@ class _EnrichedSearchResults extends HookConsumerWidget {
           color:
               Theme.of(
                 context,
-              ).colorScheme.surfaceContainerHighest.withOpacity(
-                0.5,
+              ).colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.5,
               ),
           width: double.infinity,
           child: Text(
