@@ -6,7 +6,6 @@ import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/enriched_novel_list.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
@@ -19,9 +18,7 @@ void main() {
   late MockApiService mockApiService;
 
   // テスト用のダミーデータ
-  const testRankingResponse = RankingResponse(
-    rank: 1,
-    pt: 100,
+  const testNovel = NovelInfo(
     ncode: 'n1111a',
     title: 'Test Novel 1',
     writer: 'Test Writer 1',
@@ -35,11 +32,11 @@ void main() {
   );
 
   const testEnrichedNovel = EnrichedNovelData(
-    novel: testRankingResponse,
+    novel: testNovel,
     isInLibrary: false,
   );
 
-  const testNovelInfo = NovelInfo(
+  const testFullNovelInfo = NovelInfo(
     title: 'Test Novel 1',
     ncode: 'n1111a',
     writer: 'Test Writer 1',
@@ -83,16 +80,12 @@ void main() {
   Widget createTestWidget(List<EnrichedNovelData> novels) {
     return ProviderScope(
       overrides: [
-        // ignore: scoped_providers_should_specify_dependencies テストのため
+        // ignore: scoped_providers_should_specify_dependencies
         appDatabaseProvider.overrideWithValue(mockDb),
+        // ignore: scoped_providers_should_specify_dependencies
         apiServiceProvider.overrideWithValue(mockApiService),
         // InvalidateされるProviderたちをダミーでオーバーライド
         libraryNovelsProvider.overrideWith((ref) => Stream.value([])),
-        enrichedRankingDataProvider('d').overrideWith((ref) => []),
-        enrichedRankingDataProvider('w').overrideWith((ref) => []),
-        enrichedRankingDataProvider('m').overrideWith((ref) => []),
-        enrichedRankingDataProvider('q').overrideWith((ref) => []),
-        enrichedRankingDataProvider('all').overrideWith((ref) => []),
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -110,7 +103,7 @@ void main() {
       when(mockDb.isInLibrary(any)).thenAnswer((_) async => false);
       when(
         mockApiService.fetchNovelInfo(any),
-      ).thenAnswer((_) async => testNovelInfo);
+      ).thenAnswer((_) async => testFullNovelInfo);
       when(mockDb.insertNovel(any)).thenAnswer((_) async => 1);
       when(mockDb.addToLibrary(any)).thenAnswer((_) async => 1);
 
@@ -122,7 +115,7 @@ void main() {
 
       // --- Assert ---
       verify(
-        mockApiService.fetchNovelInfo(testRankingResponse.ncode),
+        mockApiService.fetchNovelInfo(testNovel.ncode),
       ).called(1);
 
       // `cachedAt`が動的なため、argThatで他のフィールドを検証
@@ -133,19 +126,19 @@ void main() {
                 .having(
                   (c) => c.ncode.value,
                   'ncode',
-                  testNovelInfo.ncode,
+                  testFullNovelInfo.ncode,
                 )
                 .having(
                   (c) => c.title.value,
                   'title',
-                  testNovelInfo.title,
+                  testFullNovelInfo.title,
                 ),
           ),
         ),
       ).called(1);
 
       verify(
-        mockDb.addToLibrary(testRankingResponse.ncode),
+        mockDb.addToLibrary(testNovel.ncode),
       ).called(1);
 
       expect(find.text('ライブラリに追加しました'), findsOneWidget);

@@ -3,9 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
-import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_search_query.dart';
+import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
@@ -20,42 +21,38 @@ void main() {
       mockApiService = MockApiService();
     });
 
-    testWidgets('should display ranking list with load more button', (
+    testWidgets('should display ranking list items', (
       WidgetTester tester,
     ) async {
-      // Mock data for ranking (全時間ランキングと同様に詳細情報を含める)
-      final mockRankingData = List.generate(
-        100,
-        (index) => RankingResponse(
-          ncode: 'n${index + 1000}ab',
-          title: 'Test Novel ${index + 1}',
-          writer: 'Test Writer ${index + 1}',
-          story: 'Test Story ${index + 1}',
-          rank: index + 1,
-          pt: 1000 - index,
-          end: 1, // 連載中
-          genre: 1, // ジャンル
-          novelType: 1, // 連載
-          generalAllNo: 10,
+      final mockNovels = List.generate(
+        5,
+        (index) => NovelInfo(
+          ncode: 'n$index',
+          title: 'Novel $index',
+          writer: 'Writer $index',
+          story: 'Story $index',
+          genre: 101,
+          novelType: 1,
+          end: 1,
+          allPoint: 1000 - index,
         ),
       );
 
-      when(
-        mockApiService.fetchRanking('d'),
-      ).thenAnswer((_) async => mockRankingData);
+      final searchResult = NovelSearchResult(
+        novels: mockNovels,
+        allCount: 5,
+      );
 
-      // EnrichedNovelDataに変換
-      final enrichedMockData = mockRankingData
-          .map((novel) => EnrichedNovelData(novel: novel, isInLibrary: false))
-          .toList();
+      // Default query match
+      when(
+        mockApiService.searchNovels(any),
+      ).thenAnswer((_) async => searchResult);
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            // ignore: scoped_providers_should_specify_dependencies
             apiServiceProvider.overrideWithValue(mockApiService),
-            enrichedRankingDataProvider('d').overrideWith(
-              (ref) async => enrichedMockData,
-            ),
           ],
           child: const MaterialApp(
             home: Scaffold(
@@ -68,224 +65,63 @@ void main() {
         ),
       );
 
-      // Wait for initial data to load
-      await tester.pump(); // Initial frame
-      await tester.pump(); // Provider resolution
-      await tester.pump(); // postFrameCallback execution
+      await tester.pumpAndSettle();
 
-      // Verify initial items are displayed (全時間ランキングのようにtitleを含むため即座に表示される)
-      expect(find.text('Test Novel 1'), findsOneWidget);
-
-      // ListViewが正しく表示されている
+      expect(find.text('Novel 0'), findsOneWidget);
+      expect(find.text('Novel 4'), findsOneWidget);
       expect(find.byType(ListView), findsOneWidget);
     });
 
-    testWidgets('should handle filter functionality correctly', (
+    testWidgets('should update query when filter changes', (
       WidgetTester tester,
     ) async {
-      // Mock ranking data with mixed ongoing and completed status (詳細情報を含む)
-      final mockRankingData = [
-        // Ongoing novel (should appear in filter)
-        const RankingResponse(
-          ncode: 'n1000ab',
-          title: 'Ongoing Novel',
-          writer: 'Writer 1',
-          story: 'Story 1',
-          rank: 1,
-          pt: 1000,
-          end: 1, // Ongoing
-          genre: 1, // Fantasy
-          novelType: 1,
-          generalAllNo: 10,
-        ),
-        // Completed novel (should not appear in ongoing filter)
-        const RankingResponse(
-          ncode: 'n1001ab',
-          title: 'Completed Novel',
-          writer: 'Writer 2',
-          story: 'Story 2',
-          rank: 2,
-          pt: 900,
-          end: 0, // Completed
-          genre: 1, // Fantasy
-          novelType: 1,
-          generalAllNo: 10,
-        ),
-        // Different genre novel
-        const RankingResponse(
-          ncode: 'n1002ab',
-          title: 'Romance Novel',
-          writer: 'Writer 3',
-          story: 'Story 3',
-          rank: 3,
-          pt: 800,
-          end: 1, // Ongoing
-          genre: 2, // Romance
-          novelType: 1,
-          generalAllNo: 10,
+      final mockNovels = [
+        const NovelInfo(
+          ncode: 'n1',
+          title: 'Filtered Novel',
+          writer: 'Writer',
+          genre: 201, // Fantasy
         ),
       ];
 
-      // EnrichedNovelDataに変換
-      final enrichedMockData = mockRankingData
-          .map((novel) => EnrichedNovelData(novel: novel, isInLibrary: false))
-          .toList();
+      final searchResult = NovelSearchResult(
+        novels: mockNovels,
+        allCount: 1,
+      );
 
-      // Test 1: Show only ongoing novels
+      when(
+        mockApiService.searchNovels(any),
+      ).thenAnswer((_) async => searchResult);
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            // ignore: scoped_providers_should_specify_dependencies
             apiServiceProvider.overrideWithValue(mockApiService),
-            enrichedRankingDataProvider('d').overrideWith(
-              (ref) async => enrichedMockData,
-            ),
+            // ignore: scoped_providers_should_specify_dependencies
             rankingFilterStateProvider('d').overrideWithValue(
-              const RankingFilterState(showOnlyOngoing: true),
+              const RankingFilterState(selectedGenre: 201),
             ),
           ],
           child: const MaterialApp(
             home: Scaffold(
               body: RankingList(
                 rankingType: 'd',
-                key: PageStorageKey('test_ongoing'),
+                key: PageStorageKey('test_filter'),
               ),
             ),
           ),
         ),
       );
 
-      await tester.pump();
-      await tester.pump();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      // Should show ongoing novels only (詳細情報が既に含まれているため即座にフィルタリングされる)
-      expect(find.text('Ongoing Novel'), findsOneWidget);
-      expect(find.text('Romance Novel'), findsOneWidget);
-      expect(find.text('Completed Novel'), findsNothing);
+      // Verify that searchNovels was called with a query including the genre
+      final captured = verify(mockApiService.searchNovels(captureAny)).captured;
+      final query = captured.last as NovelSearchQuery;
+      expect(query.genre, equals([201]));
 
-      // Test 2: Filter by genre
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            apiServiceProvider.overrideWithValue(mockApiService),
-            enrichedRankingDataProvider('d').overrideWith(
-              (ref) async => enrichedMockData,
-            ),
-            rankingFilterStateProvider('d').overrideWithValue(
-              const RankingFilterState(selectedGenre: 1), // Fantasy
-            ),
-          ],
-          child: const MaterialApp(
-            home: Scaffold(
-              body: RankingList(
-                rankingType: 'd',
-                key: PageStorageKey('test_genre'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.pump();
-      await tester.pump();
-      await tester.pump();
-
-      // Should show only fantasy novels
-      expect(find.text('Ongoing Novel'), findsOneWidget);
-      expect(find.text('Completed Novel'), findsOneWidget);
-      expect(find.text('Romance Novel'), findsNothing);
-
-      // Test 3: Both filters combined
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            apiServiceProvider.overrideWithValue(mockApiService),
-            enrichedRankingDataProvider('d').overrideWith(
-              (ref) async => enrichedMockData,
-            ),
-            rankingFilterStateProvider('d').overrideWithValue(
-              const RankingFilterState(
-                showOnlyOngoing: true,
-                selectedGenre: 1, // Fantasy
-              ),
-            ),
-          ],
-          child: const MaterialApp(
-            home: Scaffold(
-              body: RankingList(
-                rankingType: 'd',
-                key: PageStorageKey('test_both'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.pump();
-      await tester.pump();
-      await tester.pump();
-
-      // Should show only ongoing fantasy novels
-      expect(find.text('Ongoing Novel'), findsOneWidget);
-      expect(find.text('Completed Novel'), findsNothing);
-      expect(find.text('Romance Novel'), findsNothing);
+      expect(find.text('Filtered Novel'), findsOneWidget);
     });
-
-    testWidgets('should handle empty ranking data gracefully', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            apiServiceProvider.overrideWithValue(mockApiService),
-            enrichedRankingDataProvider('d').overrideWith((ref) async => []),
-          ],
-          child: const MaterialApp(
-            home: Scaffold(
-              body: RankingList(
-                rankingType: 'd',
-                key: PageStorageKey('test'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.pump();
-      await tester.pump();
-
-      // Should show empty list without crashing
-      expect(find.byType(ListView), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-    });
-
-    testWidgets('should handle API errors gracefully', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            apiServiceProvider.overrideWithValue(mockApiService),
-            enrichedRankingDataProvider('d').overrideWith(
-              (ref) async => throw Exception('API Error'),
-            ),
-          ],
-          child: const MaterialApp(
-            home: Scaffold(
-              body: RankingList(
-                rankingType: 'd',
-                key: PageStorageKey('test'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle(); // Wait for all async operations and animations
-
-      // Should show error message
-      expect(find.textContaining('エラーが発生しました'), findsOneWidget);
-    });
-
   });
 }

@@ -5,8 +5,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
-import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 /// 小説検索画面
@@ -232,15 +232,7 @@ class SearchPage extends HookConsumerWidget {
           ),
           const SizedBox(height: 8),
           ...novels.map((novel) {
-            final novelData = RankingResponse(
-              ncode: novel.ncode,
-              title: novel.title,
-              writer: novel.writer,
-              genre: novel.genre,
-              novelType: novel.novelType,
-              end: novel.end,
-              allPoint: novel.allPoint,
-            );
+            final novelData = novel.toModel();
             return NovelListTile(item: novelData);
           }),
           const Divider(height: 32),

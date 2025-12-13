@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
-import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/utils/app_constants.dart';
 
 /// 小説リストのタイルを表示するウィジェット。
@@ -13,20 +13,20 @@ class NovelListTile extends HookWidget {
   const NovelListTile({
     required this.item,
     super.key,
-    this.isRanking = false,
+    this.rank,
     this.onTap,
     this.onLongPress,
     this.enrichedData,
   });
 
   /// 小説の情報。
-  final RankingResponse item;
+  final NovelInfo item;
 
   /// 豊富な小説情報（ライブラリ状態を含む）。
   final EnrichedNovelData? enrichedData;
 
-  /// ランキングリストかどうか。
-  final bool isRanking;
+  /// 順位（ランキング表示用）。
+  final int? rank;
 
   /// タップ時のコールバック。
   final VoidCallback? onTap;
@@ -65,7 +65,9 @@ class NovelListTile extends HookWidget {
     // デフォルトのonTapハンドラーをメモ化
     final defaultOnTap = useCallback(
       () {
-        unawaited(context.push('/novel/${item.ncode}'));
+        if (item.ncode != null) {
+          unawaited(context.push('/novel/${item.ncode}'));
+        }
       },
       [item.ncode],
     );
@@ -77,14 +79,14 @@ class NovelListTile extends HookWidget {
         horizontal: 8,
       ),
       child: ListTile(
-        leading: isRanking ? Text('${item.rank ?? ''}') : null,
+        leading: rank != null ? Text('$rank') : null,
         title: Row(
           children: [
             Expanded(child: Text(title)),
           ],
         ),
         subtitle: Text(
-          'Nコード: ${item.ncode} - ${item.allPoint ?? item.pt ?? 0}pt\nジャンル: $genreName - $status',
+          'Nコード: ${item.ncode} - ${item.allPoint ?? 0}pt\nジャンル: $genreName - $status',
         ),
         onTap: onTap ?? defaultOnTap,
         onLongPress: onLongPress,

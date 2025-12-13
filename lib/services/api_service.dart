@@ -13,7 +13,6 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
-import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -26,13 +25,6 @@ const int allTimeRankingLimit = 500;
 @Riverpod(keepAlive: true)
 /// APIサービスのプロバイダー
 ApiService apiService(Ref ref) => ApiService();
-
-@riverpod
-/// ランキングデータのプロバイダー
-Future<List<RankingResponse>> rankingData(Ref ref, String rankingType) {
-  final apiService = ref.watch(apiServiceProvider);
-  return apiService.fetchRanking(rankingType);
-}
 
 /// APIサービスクラス。
 class ApiService {
@@ -452,7 +444,7 @@ class ApiService {
         final novels = data
             .sublist(1)
             .map(
-              (item) => RankingResponse.fromJson(
+              (item) => NovelInfo.fromJson(
                 _processNovelType(item as Map<String, dynamic>),
               ),
             )
@@ -465,156 +457,6 @@ class ApiService {
         print('An error occurred while searching for novels. Error: $e');
       }
       return const NovelSearchResult(novels: [], allCount: 0);
-    }
-  }
-
-  String _getFormattedDate(String rtype) {
-    final now = DateTime.now();
-    switch (rtype) {
-      case 'd':
-        final yesterday = now.subtract(const Duration(days: 1));
-        return '${yesterday.year}${_twoDigits(yesterday.month)}${_twoDigits(yesterday.day)}';
-      case 'w':
-        // 週間ランキングは毎週火曜日に公開されるが、
-        // 今日が火曜日の場合はまだ公開されていない可能性があるため、
-        // 必ず前週の火曜日を取得する
-        var date = now.subtract(const Duration(days: 1)); // 1日前から開始
-        while (date.weekday != DateTime.tuesday) {
-          date = date.subtract(const Duration(days: 1));
-        }
-        return '${date.year}${_twoDigits(date.month)}${_twoDigits(date.day)}';
-      case 'm':
-        return '${now.year}${_twoDigits(now.month)}01';
-      case 'q':
-        final month = now.month;
-        int quarterStartMonth;
-        if (month >= 1 && month <= 3) {
-          quarterStartMonth = 1;
-        } else if (month >= 4 && month <= 6) {
-          quarterStartMonth = 4;
-        } else if (month >= 7 && month <= 9) {
-          quarterStartMonth = 7;
-        } else {
-          quarterStartMonth = 10;
-        }
-        return '${now.year}${_twoDigits(quarterStartMonth)}01';
-      case 'all':
-        // 累計ランキングの場合は空文字を返す（特別な処理が必要）
-        return '';
-      default:
-        return '';
-    }
-  }
-
-  String _twoDigits(int n) {
-    if (n >= 10) {
-      return '$n';
-    }
-    return '0$n';
-  }
-
-  /// ランキングを取得するメソッド。
-  Future<List<RankingResponse>> fetchRanking(
-    String rankingType,
-  ) async {
-    // 累計ランキングの場合は小説APIの検索機能を使用
-    if (rankingType == 'all') {
-      return _fetchAllTimeRanking();
-    }
-
-    final date = _getFormattedDate(rankingType);
-    if (date.isEmpty) {
-      if (kDebugMode) {
-        print('Invalid ranking type: $rankingType');
-      }
-      return [];
-    }
-
-    final rankingUrl =
-        'https://api.syosetu.com/rank/rankget/?rtype=$date-$rankingType&out=json&gzip=5';
-
-    if (kDebugMode) {
-      print('Fetching ranking data from: $rankingUrl');
-      print('Ranking type: $rankingType, Date: $date');
-    }
-
-    List<dynamic> rankingData;
-    try {
-      rankingData = await _fetchData(rankingUrl);
-      if (kDebugMode) {
-        print(
-          'Successfully fetched ranking data, count: ${rankingData.length}',
-        );
-      }
-    } on Exception catch (e) {
-      if (kDebugMode) {
-        print('Failed to fetch ranking data: $e');
-        print('URL was: $rankingUrl');
-      }
-      return [];
-    }
-
-    // ランキングデータの検証
-    if (rankingData.isEmpty) {
-      if (kDebugMode) {
-        print('Ranking data is empty');
-      }
-      return [];
-    }
-
-    final allData = <RankingResponse>[];
-    for (final rankItem in rankingData) {
-      if (rankItem is! Map<String, dynamic>) {
-        continue;
-      }
-
-      final ncode = rankItem['ncode'] as String?;
-      if (ncode == null || ncode.isEmpty) {
-        continue;
-      }
-
-      try {
-        allData.add(
-          RankingResponse.fromJson(
-            rankItem,
-          ),
-        );
-      } on Exception catch (e) {
-        if (kDebugMode) {
-          print('Error processing ranking item for ncode $ncode: $e');
-        }
-        continue;
-      }
-    }
-    return allData;
-  }
-
-  Future<List<RankingResponse>> _fetchAllTimeRanking() async {
-    if (kDebugMode) {
-      print('Fetching all-time ranking using novel search API');
-    }
-
-    const query = NovelSearchQuery(order: 'hyoka', lim: allTimeRankingLimit);
-
-    try {
-      final result = await searchNovels(query);
-      final novels = result.novels;
-      if (kDebugMode) {
-        print(
-          'Successfully fetched all-time ranking, count: ${novels.length}',
-        );
-      }
-
-      // ランキング順位を追加
-      return [
-        for (var i = 0; i < novels.length; i++)
-          novels[i].copyWith(rank: i + 1, pt: novels[i].allPoint),
-      ];
-    } on Exception catch (e) {
-      if (kDebugMode) {
-        print('Failed to fetch all-time ranking: $e');
-      }
-      return [];
     }
   }
 

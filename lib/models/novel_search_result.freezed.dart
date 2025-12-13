@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 mixin _$NovelSearchResult {
 
 /// 検索結果の小説リスト
- List<RankingResponse> get novels;/// 検索条件に一致する全件数
+ List<NovelInfo> get novels;/// 検索条件に一致する全件数
  int get allCount;
 /// Create a copy of NovelSearchResult
 /// with the given fields replaced by the non-null parameter values.
@@ -47,7 +47,7 @@ abstract mixin class $NovelSearchResultCopyWith<$Res>  {
   factory $NovelSearchResultCopyWith(NovelSearchResult value, $Res Function(NovelSearchResult) _then) = _$NovelSearchResultCopyWithImpl;
 @useResult
 $Res call({
- List<RankingResponse> novels, int allCount
+ List<NovelInfo> novels, int allCount
 });
 
 
@@ -67,7 +67,7 @@ class _$NovelSearchResultCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') @override $Res call({Object? novels = null,Object? allCount = null,}) {
   return _then(_self.copyWith(
 novels: null == novels ? _self.novels : novels // ignore: cast_nullable_to_non_nullable
-as List<RankingResponse>,allCount: null == allCount ? _self.allCount : allCount // ignore: cast_nullable_to_non_nullable
+as List<NovelInfo>,allCount: null == allCount ? _self.allCount : allCount // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -153,7 +153,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<RankingResponse> novels,  int allCount)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<NovelInfo> novels,  int allCount)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NovelSearchResult() when $default != null:
 return $default(_that.novels,_that.allCount);case _:
@@ -174,7 +174,7 @@ return $default(_that.novels,_that.allCount);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<RankingResponse> novels,  int allCount)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<NovelInfo> novels,  int allCount)  $default,) {final _that = this;
 switch (_that) {
 case _NovelSearchResult():
 return $default(_that.novels,_that.allCount);case _:
@@ -194,7 +194,7 @@ return $default(_that.novels,_that.allCount);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<RankingResponse> novels,  int allCount)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<NovelInfo> novels,  int allCount)?  $default,) {final _that = this;
 switch (_that) {
 case _NovelSearchResult() when $default != null:
 return $default(_that.novels,_that.allCount);case _:
@@ -209,13 +209,13 @@ return $default(_that.novels,_that.allCount);case _:
 
 
 class _NovelSearchResult implements NovelSearchResult {
-  const _NovelSearchResult({required final  List<RankingResponse> novels, required this.allCount}): _novels = novels;
+  const _NovelSearchResult({required final  List<NovelInfo> novels, required this.allCount}): _novels = novels;
   
 
 /// 検索結果の小説リスト
- final  List<RankingResponse> _novels;
+ final  List<NovelInfo> _novels;
 /// 検索結果の小説リスト
-@override List<RankingResponse> get novels {
+@override List<NovelInfo> get novels {
   if (_novels is EqualUnmodifiableListView) return _novels;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_novels);
@@ -254,7 +254,7 @@ abstract mixin class _$NovelSearchResultCopyWith<$Res> implements $NovelSearchRe
   factory _$NovelSearchResultCopyWith(_NovelSearchResult value, $Res Function(_NovelSearchResult) _then) = __$NovelSearchResultCopyWithImpl;
 @override @useResult
 $Res call({
- List<RankingResponse> novels, int allCount
+ List<NovelInfo> novels, int allCount
 });
 
 
@@ -274,7 +274,7 @@ class __$NovelSearchResultCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? novels = null,Object? allCount = null,}) {
   return _then(_NovelSearchResult(
 novels: null == novels ? _self._novels : novels // ignore: cast_nullable_to_non_nullable
-as List<RankingResponse>,allCount: null == allCount ? _self.allCount : allCount // ignore: cast_nullable_to_non_nullable
+as List<NovelInfo>,allCount: null == allCount ? _self.allCount : allCount // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
