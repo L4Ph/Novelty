@@ -123,5 +123,130 @@ void main() {
 
       expect(find.text('Filtered Novel'), findsOneWidget);
     });
+    testWidgets('should filter ongoing novels locally', (
+      WidgetTester tester,
+    ) async {
+      final mockNovels = [
+        const NovelInfo(
+          ncode: 'n1',
+          title: 'Ongoing Novel',
+          writer: 'Writer',
+          novelType: 1, // Ongoing
+        ),
+        const NovelInfo(
+          ncode: 'n2',
+          title: 'Short Story',
+          writer: 'Writer',
+          novelType: 2, // Short
+        ),
+      ];
+
+      final searchResult = NovelSearchResult(
+        novels: mockNovels,
+        allCount: 2,
+      );
+
+      when(
+        mockApiService.searchNovels(any),
+      ).thenAnswer((_) async => searchResult);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            // ignore: scoped_providers_should_specify_dependencies
+            apiServiceProvider.overrideWithValue(mockApiService),
+            // ignore: scoped_providers_should_specify_dependencies
+            rankingFilterStateProvider('d').overrideWithValue(
+              const RankingFilterState(showOnlyOngoing: true),
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: RankingList(
+                rankingType: 'd',
+                key: PageStorageKey('test_ongoing_local'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Verify that query does NOT have type='r' (since we removed it)
+      final captured = verify(mockApiService.searchNovels(captureAny)).captured;
+      final query = captured.last as NovelSearchQuery;
+      expect(query.type, isNull);
+
+      // Verify filtering: Only Ongoing Novel should be visible
+      expect(find.text('Ongoing Novel'), findsOneWidget);
+      expect(find.text('Short Story'), findsNothing);
+    });
+    testWidgets('should refresh list when filter changes dynamically', (
+      WidgetTester tester,
+    ) async {
+      final mockNovels = [
+        const NovelInfo(
+          ncode: 'n1',
+          title: 'Initial Novel',
+          writer: 'Writer',
+          novelType: 1,
+        ),
+      ];
+      final filteredNovels = [
+        const NovelInfo(
+          ncode: 'n2',
+          title: 'Filtered Novel',
+          writer: 'Writer',
+          novelType: 1,
+        ),
+      ];
+
+      when(mockApiService.searchNovels(any)).thenAnswer(
+        (_) async => NovelSearchResult(novels: mockNovels, allCount: 1),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            // ignore: scoped_providers_should_specify_dependencies
+            apiServiceProvider.overrideWithValue(mockApiService),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: RankingList(
+                rankingType: 'd',
+                key: PageStorageKey('test_dynamic'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      expect(find.text('Initial Novel'), findsOneWidget);
+
+      // Change filter
+      final element = tester.element(find.byType(RankingList));
+      final container = ProviderScope.containerOf(element);
+      container
+          .read(rankingFilterStateProvider('d').notifier)
+          .setShowOnlyOngoing(value: true);
+
+      // Update mock response for the new query
+      when(mockApiService.searchNovels(any)).thenAnswer(
+        (_) async => NovelSearchResult(novels: filteredNovels, allCount: 1),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Should now show the filtered novel
+      // If reactivity is missing, this will fail as it will still show 'Initial Novel'
+      if (find.text('Filtered Novel').evaluate().isEmpty) {
+        // This print confirms our hypothesis if visible in logs
+        print('Test failed: Filtered Novel not found after state change');
+      }
+      expect(find.text('Filtered Novel'), findsOneWidget);
+    });
   });
 }

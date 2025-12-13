@@ -427,7 +427,12 @@ class ApiService {
 
     final uri = Uri.https('api.syosetu.com', '/novelapi/api', {
       ...filteredQueryParameters.map(
-        (key, value) => MapEntry(key, value.toString()),
+        (key, value) {
+          if (value is List) {
+            return MapEntry(key, value.join('-'));
+          }
+          return MapEntry(key, value.toString());
+        },
       ),
       'out': 'json',
       'gzip': '5',
@@ -461,6 +466,11 @@ class ApiService {
   }
 
   Map<String, dynamic> _processNovelType(Map<String, dynamic> novelData) {
+    if (kDebugMode) {
+      print(
+        'DEBUG: Processing novel type for ${novelData['title']}. Raw type: ${novelData['novel_type']}, GeneralAllNo: ${novelData['general_all_no']}',
+      );
+    }
     // novelTypeが文字列の場合、整数に変換
     if (novelData['novel_type'] is String) {
       final novelTypeStr = novelData['novel_type'] as String;
@@ -482,6 +492,9 @@ class ApiService {
       } else {
         novelData['novel_type'] = 1; // 連載小説
       }
+    }
+    if (kDebugMode) {
+      print('DEBUG: Processed type: ${novelData['novel_type']}');
     }
     return novelData;
   }

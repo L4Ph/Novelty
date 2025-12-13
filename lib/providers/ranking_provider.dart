@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart'; // For kDebugMode
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_info.dart';
@@ -29,6 +30,9 @@ abstract class RankingState with _$RankingState {
 class RankingNotifier extends _$RankingNotifier {
   @override
   RankingState build(String rankingType) {
+    // Watch filter state to trigger rebuild when it changes
+    ref.watch(rankingFilterStateProvider(rankingType));
+
     // Initial fetch
     unawaited(Future.microtask(fetchNextPage));
     return const RankingState();
@@ -53,21 +57,77 @@ class RankingNotifier extends _$RankingNotifier {
     try {
       final filter = ref.read(rankingFilterStateProvider(rankingType));
       final apiService = ref.read(apiServiceProvider);
-
       final order = _mapRankingTypeToOrder(rankingType);
-      final query = _buildQuery(filter, order, currentState.page);
 
-      final result = await apiService.searchNovels(query);
+      final newNovels = <NovelInfo>[];
+      var currentPageToFetch = currentState.page;
+      var hasMoreOnServer = true;
 
-      final newNovels = result.novels;
+      // Fetch loop to ensure we get enough items after filtering
+      // Limit to fetching at most 5 pages at a time to prevent excessive API calls
+      var pagesFetched = 0;
+      const maxPagesToFetch = 5;
+
+      while (newNovels.length < 20 &&
+          hasMoreOnServer &&
+          pagesFetched < maxPagesToFetch) {
+        final query = _buildQuery(filter, order, currentPageToFetch);
+        if (kDebugMode) {
+          print('DEBUG: Fetching page $currentPageToFetch with query: $query');
+        }
+        final result = await apiService.searchNovels(query);
+
+        final fetchedNovels = result.novels;
+        hasMoreOnServer = fetchedNovels.length >= 20;
+
+        if (kDebugMode) {
+          print(
+            'DEBUG: Fetched ${fetchedNovels.length} novels. Filter showOnlyOngoing: ${filter.showOnlyOngoing}',
+          );
+        }
+
+        // Apply client-side filtering
+        final filtered = fetchedNovels.where((novel) {
+          if (filter.showOnlyOngoing) {
+            if (kDebugMode) {
+              print(
+                'DEBUG: Checking novel ${novel.title} (Type: ${novel.novelType}, End: ${novel.end})',
+              );
+            }
+            // end: 1 = 連載中, 0 = 短編または完結
+            // API仕様: https://dev.syosetu.com/man/api/#end
+            if (novel.end != 1) return false;
+          }
+          return true;
+        }).toList();
+
+        if (kDebugMode) {
+          print('DEBUG: Retained ${filtered.length} novels after filtering.');
+        }
+
+        newNovels.addAll(filtered);
+        currentPageToFetch++;
+        pagesFetched++;
+      }
 
       state = currentState.copyWith(
         novels: [...currentState.novels, ...newNovels],
         isLoading: false,
         isLoadingMore: false,
-        page: currentState.page + 1,
-        hasMore: newNovels.length >= 20, // Default limit
+        page: currentPageToFetch, // Update to the next page to fetch
+        hasMore: hasMoreOnServer || newNovels.length >= 20,
       );
+
+      if (kDebugMode) {
+        print(
+          'DEBUG: RankingNotifier state updated. Total novels: ${state.novels.length}',
+        );
+        if (state.novels.isNotEmpty) {
+          print(
+            'DEBUG: First novel in state: ${state.novels.first.title} (Type: ${state.novels.first.novelType})',
+          );
+        }
+      }
     } on Object catch (e) {
       state = currentState.copyWith(
         isLoading: false,
@@ -111,7 +171,6 @@ class RankingNotifier extends _$RankingNotifier {
       genre: filter.selectedGenre != 0 && filter.selectedGenre != null
           ? [filter.selectedGenre!]
           : null,
-      // Add other filters from RankingFilterState here
     );
   }
 }

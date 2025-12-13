@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart'; // For kDebugMode
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -21,6 +22,17 @@ class RankingList extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // RankingNotifierから状態を取得
     final rankingState = ref.watch(rankingProvider(rankingType));
+
+    if (kDebugMode) {
+      print(
+        'DEBUG: RankingList build ($rankingType). State novels count: ${rankingState.novels.length}',
+      );
+      if (rankingState.novels.isNotEmpty) {
+        print(
+          'DEBUG: RankingList first novel: ${rankingState.novels.first.title}',
+        );
+      }
+    }
 
     // スクロール通知を監視するためのリスナー
     final scrollController = useScrollController();
