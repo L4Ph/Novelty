@@ -26,8 +26,8 @@ final class ApiServiceProvider
         retry: null,
         name: r'apiServiceProvider',
         isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[],
+        $allTransitiveDependencies: const <ProviderOrFamily>[],
       );
 
   @override
@@ -52,7 +52,7 @@ final class ApiServiceProvider
   }
 }
 
-String _$apiServiceHash() => r'93a7e3b4d3004741abc3061c4688239c3a72f9c4';
+String _$apiServiceHash() => r'd8a9cf67a08249ea1f590a1d16fea7a883a0523e';
 
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 

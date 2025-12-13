@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 @GenerateMocks([SharedPreferences])
 // Mockitoによって生成されたモックファイルのimportを無視
-// ignore: unused_import
+// ignore: unused_import mocked_shared_preferences_used_internally
 import 'settings_provider_test.mocks.dart';
 
 /// path_providerのモック実装

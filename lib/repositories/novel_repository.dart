@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/download_progress.dart';
@@ -356,12 +355,9 @@ class NovelRepository {
             revisedMap[ep.index!] = ep.revised;
           }
         }
-      } on Exception catch (e) {
+      } on Exception {
         // 目次取得失敗時はrevised情報なしで進める（全件チェックになるが、キャッシュがあればスキップされる）
         // ただし、キャッシュが古くてもスキップされてしまう可能性がある
-        if (kDebugMode) {
-          print('Failed to fetch novel info for revised dates: $e');
-        }
       }
 
       var successCount = 0;

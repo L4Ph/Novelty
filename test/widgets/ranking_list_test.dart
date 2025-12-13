@@ -51,7 +51,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            // ignore: scoped_providers_should_specify_dependencies
+            // ignore: scoped_providers_should_specify_dependencies overrides_are_scoped_to_test
             apiServiceProvider.overrideWithValue(mockApiService),
           ],
           child: const MaterialApp(
@@ -96,9 +96,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            // ignore: scoped_providers_should_specify_dependencies
+            // ignore: scoped_providers_should_specify_dependencies overrides_are_scoped_to_test
             apiServiceProvider.overrideWithValue(mockApiService),
-            // ignore: scoped_providers_should_specify_dependencies
+            // ignore: scoped_providers_should_specify_dependencies overrides_are_scoped_to_test
             rankingFilterStateProvider('d').overrideWithValue(
               const RankingFilterState(selectedGenre: 201),
             ),
@@ -153,9 +153,9 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            // ignore: scoped_providers_should_specify_dependencies
+            // ignore: scoped_providers_should_specify_dependencies overrides_are_scoped_to_test
             apiServiceProvider.overrideWithValue(mockApiService),
-            // ignore: scoped_providers_should_specify_dependencies
+            // ignore: scoped_providers_should_specify_dependencies overrides_are_scoped_to_test
             rankingFilterStateProvider('d').overrideWithValue(
               const RankingFilterState(showOnlyOngoing: true),
             ),
@@ -209,7 +209,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            // ignore: scoped_providers_should_specify_dependencies
+            // ignore: scoped_providers_should_specify_dependencies overrides_are_scoped_to_test
             apiServiceProvider.overrideWithValue(mockApiService),
           ],
           child: const MaterialApp(
@@ -242,10 +242,7 @@ void main() {
 
       // Should now show the filtered novel
       // If reactivity is missing, this will fail as it will still show 'Initial Novel'
-      if (find.text('Filtered Novel').evaluate().isEmpty) {
-        // This print confirms our hypothesis if visible in logs
-        print('Test failed: Filtered Novel not found after state change');
-      }
+      if (find.text('Filtered Novel').evaluate().isEmpty) {}
       expect(find.text('Filtered Novel'), findsOneWidget);
     });
   });

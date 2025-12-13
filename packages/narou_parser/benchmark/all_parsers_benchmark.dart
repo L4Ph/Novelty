@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print, deprecated_member_use_from_same_package, cascade_invocations
+// ignore_for_file: avoid_print, deprecated_member_use_from_same_package, cascade_invocations // benchmark logic
 
 import 'package:narou_parser/experimental.dart';
 import 'package:narou_parser/narou_parser.dart';

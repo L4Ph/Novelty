@@ -22,7 +22,7 @@ part 'api_service.g.dart';
 /// なろう小説APIの制限値（最大500件）を最大限活用
 const int allTimeRankingLimit = 500;
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [])
 /// APIサービスのプロバイダー
 ApiService apiService(Ref ref) => ApiService();
 
@@ -81,11 +81,6 @@ class ApiService {
       final novelData = data[1] as Map<String, dynamic>;
 
       // デバッグ: APIレスポンスを確認
-      if (kDebugMode) {
-        print('Novel data from API: $novelData');
-        print('Novel type: ${novelData['novel_type']}');
-        print('General all no: ${novelData['general_all_no']}');
-      }
 
       final processedData = _processNovelType(novelData);
       return NovelInfo.fromJson(processedData);
@@ -158,10 +153,7 @@ class ApiService {
             }
           }
         }
-      } on Exception catch (e) {
-        if (kDebugMode) {
-          print('Error fetching multiple novels: $e');
-        }
+      } on Exception {
         // Continue with the next chunk even if this one fails
       }
     }
@@ -182,11 +174,6 @@ class ApiService {
       } else {
         info = info.copyWith(novelType: 1); // 連載小説
       }
-    }
-
-    if (kDebugMode) {
-      print('Novel type after processing: ${info.novelType}');
-      print('General all no: ${info.generalAllNo}');
     }
 
     // For short stories, add a single episode with basic info
@@ -236,11 +223,6 @@ class ApiService {
       } else {
         info = info.copyWith(novelType: 1); // 連載小説
       }
-    }
-
-    if (kDebugMode) {
-      print('Novel type after processing: ${info.novelType}');
-      print('General all no: ${info.generalAllNo}');
     }
 
     // 短編小説の場合は、単一のエピソードとして扱う
@@ -322,11 +304,6 @@ class ApiService {
       }
     }
 
-    if (kDebugMode) {
-      print('fetchEpisode - Novel type: ${info.novelType}');
-      print('fetchEpisode - General all no: ${info.generalAllNo}');
-    }
-
     // 短編小説の場合のみ特別処理
     final isShortStory = info.novelType == 2;
 
@@ -378,42 +355,21 @@ class ApiService {
 
   static List<dynamic> _parseJson(List<int> bytes) {
     try {
-      if (kDebugMode) {
-        print('Attempting to decode ${bytes.length} bytes');
-      }
       final decoded = utf8.decode(const GZipDecoder().decodeBytes(bytes));
-      if (kDebugMode) {
-        print('Successfully decoded gzip, string length: ${decoded.length}');
-        print(
-          'First 200 chars: ${decoded.length > 200 ? decoded.substring(0, 200) : decoded}',
-        );
-      }
       final decodedJson = json.decode(decoded);
-      if (kDebugMode) {
-        print('Successfully parsed JSON');
-      }
       if (decodedJson is List) {
         return decodedJson;
       } else {
         return [decodedJson];
       }
     } catch (e) {
-      if (kDebugMode) {
-        print('Error in _parseJson: $e');
-      }
       rethrow;
     }
   }
 
   Future<List<dynamic>> _fetchData(String url) async {
-    if (kDebugMode) {
-      print('Fetching data from URL: $url');
-    }
     final response = await http.get(Uri.parse(url));
     final bytes = response.bodyBytes;
-    if (kDebugMode) {
-      print('Downloaded ${bytes.length} bytes from cache/network');
-    }
     return compute(_parseJson, bytes.toList());
   }
 
@@ -457,20 +413,12 @@ class ApiService {
         return NovelSearchResult(novels: novels, allCount: allCount);
       }
       return const NovelSearchResult(novels: [], allCount: 0);
-    } on Exception catch (e) {
-      if (kDebugMode) {
-        print('An error occurred while searching for novels. Error: $e');
-      }
+    } on Exception {
       return const NovelSearchResult(novels: [], allCount: 0);
     }
   }
 
   Map<String, dynamic> _processNovelType(Map<String, dynamic> novelData) {
-    if (kDebugMode) {
-      print(
-        'DEBUG: Processing novel type for ${novelData['title']}. Raw type: ${novelData['novel_type']}, GeneralAllNo: ${novelData['general_all_no']}',
-      );
-    }
     // novelTypeが文字列の場合、整数に変換
     if (novelData['novel_type'] is String) {
       final novelTypeStr = novelData['novel_type'] as String;
@@ -493,9 +441,7 @@ class ApiService {
         novelData['novel_type'] = 1; // 連載小説
       }
     }
-    if (kDebugMode) {
-      print('DEBUG: Processed type: ${novelData['novel_type']}');
-    }
+
     return novelData;
   }
 }

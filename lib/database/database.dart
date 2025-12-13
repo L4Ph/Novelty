@@ -298,20 +298,19 @@ class AppDatabase extends _$AppDatabase {
       },
       onUpgrade: (Migrator m, int from, int to) async {
         if (from < 12) {
-          try {
-            // Ensure new tables are fresh (in case of previous failed migration)
-            await customStatement('DROP TABLE IF EXISTS episodes');
-            await customStatement('DROP TABLE IF EXISTS library_entries');
-            await customStatement('DROP TABLE IF EXISTS reading_history');
+          // Ensure new tables are fresh (in case of previous failed migration)
+          await customStatement('DROP TABLE IF EXISTS episodes');
+          await customStatement('DROP TABLE IF EXISTS library_entries');
+          await customStatement('DROP TABLE IF EXISTS reading_history');
 
-            // 1. Create new tables
-            await m.createTable(novels);
-            await m.createTable(libraryEntries);
-            await m.createTable(readingHistory);
-            await m.createTable(episodeEntities);
+          // 1. Create new tables
+          await m.createTable(novels);
+          await m.createTable(libraryEntries);
+          await m.createTable(readingHistory);
+          await m.createTable(episodeEntities);
 
-            // 2. Migrate LibraryNovels -> LibraryEntries & Novels
-            await customStatement('''
+          // 2. Migrate LibraryNovels -> LibraryEntries & Novels
+          await customStatement('''
               INSERT OR IGNORE INTO novels (
                 ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
               )
@@ -320,49 +319,40 @@ class AppDatabase extends _$AppDatabase {
               FROM library_novels;
             ''');
 
-            await customStatement('''
+          await customStatement('''
               INSERT OR IGNORE INTO library_entries (ncode, added_at)
               SELECT ncode, added_at FROM library_novels;
             ''');
 
-            // 3. Migrate History -> ReadingHistory & Novels
-            await customStatement('''
+          // 3. Migrate History -> ReadingHistory & Novels
+          await customStatement('''
               INSERT OR IGNORE INTO novels (ncode, cached_at)
               SELECT ncode, viewed_at FROM history;
             ''');
 
-            await customStatement('''
+          await customStatement('''
               INSERT INTO reading_history (ncode, last_episode_id, viewed_at, updated_at)
               SELECT ncode, last_episode, viewed_at, updated_at FROM history;
             ''');
 
-            // 4. Migrate CachedEpisodes -> Episodes
+          // 4. Migrate CachedEpisodes -> Episodes
 
-            // Check if cached_episodes table exists
-            final cachedEpisodesResult = await customSelect(
-              "SELECT name FROM sqlite_master WHERE type='table' AND name='cached_episodes'",
-            ).get();
+          // Check if cached_episodes table exists
+          final cachedEpisodesResult = await customSelect(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='cached_episodes'",
+          ).get();
 
-            if (cachedEpisodesResult.isNotEmpty) {
-              await customStatement('''
+          if (cachedEpisodesResult.isNotEmpty) {
+            await customStatement('''
                 INSERT INTO episodes (ncode, episode_id, content, fetched_at, revised_at)
                 SELECT ncode, episode, content, cached_at, revised FROM cached_episodes;
               ''');
-            }
-
-            // 5. Drop old tables
-            await customStatement('DROP TABLE IF EXISTS library_novels');
-            await customStatement('DROP TABLE IF EXISTS history');
-            await customStatement('DROP TABLE IF EXISTS cached_episodes');
-          } catch (e, st) {
-            if (kDebugMode) {
-              print('Migration Error: $e');
-            }
-            if (kDebugMode) {
-              print('Migration StackTrace: $st');
-            }
-            rethrow;
           }
+
+          // 5. Drop old tables
+          await customStatement('DROP TABLE IF EXISTS library_novels');
+          await customStatement('DROP TABLE IF EXISTS history');
+          await customStatement('DROP TABLE IF EXISTS cached_episodes');
         }
 
         if (from < 13) {
@@ -1113,14 +1103,17 @@ LazyDatabase _openConnection() {
 // ==================== Providers ====================
 
 /// アプリケーションデータベースのプロバイダー
-final appDatabaseProvider = Provider<AppDatabase>((ref) => AppDatabase());
+final appDatabaseProvider = Provider<AppDatabase>(
+  (ref) => AppDatabase(),
+  dependencies: const [],
+);
 
 /// ライブラリの小説リストを提供するプロバイダー
 final libraryNovelsProvider = StreamProvider<List<Novel>>((ref) {
   final db = ref.watch(appDatabaseProvider);
   ref.keepAlive();
   return db.watchLibraryNovels();
-});
+}, dependencies: [appDatabaseProvider]);
 
 /// 閲覧履歴を提供するプロバイダー
 final historyProvider = StreamProvider<List<HistoryData>>((ref) {

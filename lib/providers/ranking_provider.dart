@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart'; // For kDebugMode
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_info.dart';
@@ -72,38 +71,21 @@ class RankingNotifier extends _$RankingNotifier {
           hasMoreOnServer &&
           pagesFetched < maxPagesToFetch) {
         final query = _buildQuery(filter, order, currentPageToFetch);
-        if (kDebugMode) {
-          print('DEBUG: Fetching page $currentPageToFetch with query: $query');
-        }
+
         final result = await apiService.searchNovels(query);
 
         final fetchedNovels = result.novels;
         hasMoreOnServer = fetchedNovels.length >= 20;
 
-        if (kDebugMode) {
-          print(
-            'DEBUG: Fetched ${fetchedNovels.length} novels. Filter showOnlyOngoing: ${filter.showOnlyOngoing}',
-          );
-        }
-
         // Apply client-side filtering
         final filtered = fetchedNovels.where((novel) {
           if (filter.showOnlyOngoing) {
-            if (kDebugMode) {
-              print(
-                'DEBUG: Checking novel ${novel.title} (Type: ${novel.novelType}, End: ${novel.end})',
-              );
-            }
             // end: 1 = 連載中, 0 = 短編または完結
             // API仕様: https://dev.syosetu.com/man/api/#end
             if (novel.end != 1) return false;
           }
           return true;
         }).toList();
-
-        if (kDebugMode) {
-          print('DEBUG: Retained ${filtered.length} novels after filtering.');
-        }
 
         newNovels.addAll(filtered);
         currentPageToFetch++;
@@ -117,17 +99,6 @@ class RankingNotifier extends _$RankingNotifier {
         page: currentPageToFetch, // Update to the next page to fetch
         hasMore: hasMoreOnServer || newNovels.length >= 20,
       );
-
-      if (kDebugMode) {
-        print(
-          'DEBUG: RankingNotifier state updated. Total novels: ${state.novels.length}',
-        );
-        if (state.novels.isNotEmpty) {
-          print(
-            'DEBUG: First novel in state: ${state.novels.first.title} (Type: ${state.novels.first.novelType})',
-          );
-        }
-      }
     } on Object catch (e) {
       state = currentState.copyWith(
         isLoading: false,

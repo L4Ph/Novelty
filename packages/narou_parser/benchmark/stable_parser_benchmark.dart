@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print, unreachable_from_main
+// ignore_for_file: avoid_print, unreachable_from_main // benchmark logic
 
 import 'package:narou_parser/narou_parser.dart';
 
