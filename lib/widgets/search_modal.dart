@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/utils/app_constants.dart';
+import 'package:novelty/widgets/sort_selection_sheet.dart';
 
 /// 検索条件を指定するモーダルウィジェット
 class SearchModal extends HookConsumerWidget {
@@ -209,11 +212,7 @@ class SearchModal extends HookConsumerWidget {
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    menuMaxHeight: MediaQuery.of(context).size.height * 0.5,
-                    initialValue: novelOrders.containsKey(query.value.order)
-                        ? query.value.order
-                        : 'new',
+                  InputDecorator(
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -223,17 +222,40 @@ class SearchModal extends HookConsumerWidget {
                         vertical: 8,
                       ),
                     ),
-                    items: novelOrders.entries.map((entry) {
-                      return DropdownMenuItem(
-                        value: entry.key,
-                        child: Text(entry.value),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        query.value = query.value.copyWith(order: value);
-                      }
-                    },
+                    child: InkWell(
+                      onTap: () {
+                        unawaited(
+                          showModalBottomSheet<void>(
+                            context: context,
+                            isScrollControlled: true,
+                            useSafeArea: true,
+                            builder: (context) => SortSelectionSheet(
+                              currentOrder: query.value.order,
+                              onOrderSelected: (newOrder) {
+                                query.value = query.value.copyWith(
+                                  order: newOrder,
+                                );
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              novelOrders[query.value.order] ??
+                                  query.value.order,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            const Icon(Icons.arrow_drop_down),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
 
