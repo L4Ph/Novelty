@@ -2,10 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
@@ -105,13 +103,7 @@ class NovelRepository {
     await _db.addToLibrary(ncodeLower);
 
     // Providersを無効化してUIを更新
-    ref
-      ..invalidate(libraryNovelsProvider)
-      ..invalidate(enrichedRankingDataProvider('d'))
-      ..invalidate(enrichedRankingDataProvider('w'))
-      ..invalidate(enrichedRankingDataProvider('m'))
-      ..invalidate(enrichedRankingDataProvider('q'))
-      ..invalidate(enrichedRankingDataProvider('all'));
+    ref.invalidate(libraryNovelsProvider);
 
     return true;
   }
@@ -122,13 +114,7 @@ class NovelRepository {
     await _db.removeFromLibrary(ncodeLower);
 
     // Providersを無効化してUIを更新
-    ref
-      ..invalidate(libraryNovelsProvider)
-      ..invalidate(enrichedRankingDataProvider('d'))
-      ..invalidate(enrichedRankingDataProvider('w'))
-      ..invalidate(enrichedRankingDataProvider('m'))
-      ..invalidate(enrichedRankingDataProvider('q'))
-      ..invalidate(enrichedRankingDataProvider('all'));
+    ref.invalidate(libraryNovelsProvider);
   }
 
   /// 小説を閲覧履歴に追加する。
@@ -369,12 +355,9 @@ class NovelRepository {
             revisedMap[ep.index!] = ep.revised;
           }
         }
-      } on Exception catch (e) {
+      } on Exception {
         // 目次取得失敗時はrevised情報なしで進める（全件チェックになるが、キャッシュがあればスキップされる）
         // ただし、キャッシュが古くてもスキップされてしまう可能性がある
-        if (kDebugMode) {
-          print('Failed to fetch novel info for revised dates: $e');
-        }
       }
 
       var successCount = 0;
@@ -614,13 +597,7 @@ class LibraryStatus extends _$LibraryStatus {
         await db.removeFromLibrary(novelInfo.ncode!);
       }
 
-      ref
-        ..invalidate(libraryNovelsProvider)
-        ..invalidate(enrichedRankingDataProvider('d'))
-        ..invalidate(enrichedRankingDataProvider('w'))
-        ..invalidate(enrichedRankingDataProvider('m'))
-        ..invalidate(enrichedRankingDataProvider('q'))
-        ..invalidate(enrichedRankingDataProvider('all'));
+      ref.invalidate(libraryNovelsProvider);
     } on Exception catch (e, st) {
       state = AsyncValue.error(e, st);
     }

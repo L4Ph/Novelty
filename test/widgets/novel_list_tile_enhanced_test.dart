@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
-import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 void main() {
@@ -10,7 +10,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      const testNovel = RankingResponse(
+      const testNovel = NovelInfo(
         ncode: 'n1234test',
         title: 'Test Novel',
         writer: 'Test Author',
@@ -42,7 +42,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      const testNovel = RankingResponse(
+      const testNovel = NovelInfo(
         ncode: 'n1234test',
         title: 'Test Novel',
         writer: 'Test Author',
@@ -74,7 +74,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      const testNovel = RankingResponse(
+      const testNovel = NovelInfo(
         ncode: 'n1234test',
         title: 'Test Novel',
         writer: 'Test Author',

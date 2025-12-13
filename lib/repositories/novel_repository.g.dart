@@ -202,7 +202,7 @@ final class LibraryStatusProvider
   }
 }
 
-String _$libraryStatusHash() => r'c46c6aa280d95c7752683442650585847e5f0227';
+String _$libraryStatusHash() => r'74d14ac181e29d196f392de4ed9e13fdc957459c';
 
 /// 小説のライブラリ状態を管理するプロバイダー。
 

@@ -47,7 +47,7 @@ class EnrichedNovelList extends HookConsumerWidget {
         return NovelListTile(
           item: item,
           enrichedData: enrichedItem,
-          isRanking: isRanking,
+          rank: isRanking ? index + 1 : null,
           onLongPress: () => addToLibraryCallback(enrichedItem),
         );
       },

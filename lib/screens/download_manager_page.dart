@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_download_summary.dart';
-import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
@@ -141,16 +142,10 @@ class _DownloadListItem extends ConsumerWidget {
       builder: (context, snapshot) {
         final novelInfo = snapshot.data;
 
-        // NovelListTileを使用するため、RankingResponseに変換
-        final novelData = RankingResponse(
-          ncode: summary.ncode,
-          title: novelInfo?.title ?? summary.ncode,
-          writer: novelInfo?.writer,
-          genre: novelInfo?.genre,
-          novelType: novelInfo?.novelType,
-          end: novelInfo?.end,
-          allPoint: novelInfo?.allPoint,
-        );
+        // NovelListTileを使用するため、NovelInfoに変換
+        final novelData =
+            novelInfo?.toModel() ??
+            NovelInfo(ncode: summary.ncode, title: summary.ncode);
 
         final progressAsync = ref.watch(
           downloadProgressProvider(summary.ncode),
@@ -163,8 +158,10 @@ class _DownloadListItem extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: progressAsync.when(
                 data: (progress) {
-                  final current = progress?.currentEpisode ?? summary.successCount;
-                  final total = progress?.totalEpisodes ?? summary.totalEpisodes;
+                  final current =
+                      progress?.currentEpisode ?? summary.successCount;
+                  final total =
+                      progress?.totalEpisodes ?? summary.totalEpisodes;
                   final progressValue = total > 0 ? current / total : 0.0;
 
                   return Column(
@@ -250,16 +247,10 @@ class _CompletedListItem extends ConsumerWidget {
       builder: (context, snapshot) {
         final novelInfo = snapshot.data;
 
-        // NovelListTileを使用するため、RankingResponseに変換
-        final novelData = RankingResponse(
-          ncode: summary.ncode,
-          title: novelInfo?.title ?? summary.ncode,
-          writer: novelInfo?.writer,
-          genre: novelInfo?.genre,
-          novelType: novelInfo?.novelType,
-          end: novelInfo?.end,
-          allPoint: novelInfo?.allPoint,
-        );
+        // NovelListTileを使用するため、NovelInfoに変換
+        final novelData =
+            novelInfo?.toModel() ??
+            NovelInfo(ncode: summary.ncode, title: summary.ncode);
 
         return NovelListTile(item: novelData);
       },

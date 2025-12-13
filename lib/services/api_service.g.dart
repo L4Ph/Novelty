@@ -26,8 +26,8 @@ final class ApiServiceProvider
         retry: null,
         name: r'apiServiceProvider',
         isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[],
+        $allTransitiveDependencies: const <ProviderOrFamily>[],
       );
 
   @override
@@ -52,93 +52,7 @@ final class ApiServiceProvider
   }
 }
 
-String _$apiServiceHash() => r'93a7e3b4d3004741abc3061c4688239c3a72f9c4';
-
-/// ランキングデータのプロバイダー
-
-@ProviderFor(rankingData)
-const rankingDataProvider = RankingDataFamily._();
-
-/// ランキングデータのプロバイダー
-
-final class RankingDataProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<RankingResponse>>,
-          List<RankingResponse>,
-          FutureOr<List<RankingResponse>>
-        >
-    with
-        $FutureModifier<List<RankingResponse>>,
-        $FutureProvider<List<RankingResponse>> {
-  /// ランキングデータのプロバイダー
-  const RankingDataProvider._({
-    required RankingDataFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'rankingDataProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$rankingDataHash();
-
-  @override
-  String toString() {
-    return r'rankingDataProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $FutureProviderElement<List<RankingResponse>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<RankingResponse>> create(Ref ref) {
-    final argument = this.argument as String;
-    return rankingData(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is RankingDataProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$rankingDataHash() => r'82f5d31dbb04f4d9c041c5005fa632e3e07eb0c7';
-
-/// ランキングデータのプロバイダー
-
-final class RankingDataFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<List<RankingResponse>>, String> {
-  const RankingDataFamily._()
-    : super(
-        retry: null,
-        name: r'rankingDataProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  /// ランキングデータのプロバイダー
-
-  RankingDataProvider call(String rankingType) =>
-      RankingDataProvider._(argument: rankingType, from: this);
-
-  @override
-  String toString() => r'rankingDataProvider';
-}
+String _$apiServiceHash() => r'd8a9cf67a08249ea1f590a1d16fea7a883a0523e';
 
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 

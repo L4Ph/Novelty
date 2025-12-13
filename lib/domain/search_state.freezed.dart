@@ -16,7 +16,7 @@ mixin _$SearchState {
 
 /// 現在の検索クエリ
  NovelSearchQuery get query;/// 検索結果の小説リスト
- List<RankingResponse> get results;/// 検索条件に一致する全件数
+ List<NovelInfo> get results;/// 検索条件に一致する全件数
  int get allCount;/// ローディング中かどうか
  bool get isLoading;/// 検索中かどうか（検索結果を表示中）
  bool get isSearching;
@@ -50,7 +50,7 @@ abstract mixin class $SearchStateCopyWith<$Res>  {
   factory $SearchStateCopyWith(SearchState value, $Res Function(SearchState) _then) = _$SearchStateCopyWithImpl;
 @useResult
 $Res call({
- NovelSearchQuery query, List<RankingResponse> results, int allCount, bool isLoading, bool isSearching
+ NovelSearchQuery query, List<NovelInfo> results, int allCount, bool isLoading, bool isSearching
 });
 
 
@@ -71,7 +71,7 @@ class _$SearchStateCopyWithImpl<$Res>
   return _then(_self.copyWith(
 query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as NovelSearchQuery,results: null == results ? _self.results : results // ignore: cast_nullable_to_non_nullable
-as List<RankingResponse>,allCount: null == allCount ? _self.allCount : allCount // ignore: cast_nullable_to_non_nullable
+as List<NovelInfo>,allCount: null == allCount ? _self.allCount : allCount // ignore: cast_nullable_to_non_nullable
 as int,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,isSearching: null == isSearching ? _self.isSearching : isSearching // ignore: cast_nullable_to_non_nullable
 as bool,
@@ -168,7 +168,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( NovelSearchQuery query,  List<RankingResponse> results,  int allCount,  bool isLoading,  bool isSearching)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( NovelSearchQuery query,  List<NovelInfo> results,  int allCount,  bool isLoading,  bool isSearching)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SearchState() when $default != null:
 return $default(_that.query,_that.results,_that.allCount,_that.isLoading,_that.isSearching);case _:
@@ -189,7 +189,7 @@ return $default(_that.query,_that.results,_that.allCount,_that.isLoading,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( NovelSearchQuery query,  List<RankingResponse> results,  int allCount,  bool isLoading,  bool isSearching)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( NovelSearchQuery query,  List<NovelInfo> results,  int allCount,  bool isLoading,  bool isSearching)  $default,) {final _that = this;
 switch (_that) {
 case _SearchState():
 return $default(_that.query,_that.results,_that.allCount,_that.isLoading,_that.isSearching);case _:
@@ -209,7 +209,7 @@ return $default(_that.query,_that.results,_that.allCount,_that.isLoading,_that.i
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( NovelSearchQuery query,  List<RankingResponse> results,  int allCount,  bool isLoading,  bool isSearching)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( NovelSearchQuery query,  List<NovelInfo> results,  int allCount,  bool isLoading,  bool isSearching)?  $default,) {final _that = this;
 switch (_that) {
 case _SearchState() when $default != null:
 return $default(_that.query,_that.results,_that.allCount,_that.isLoading,_that.isSearching);case _:
@@ -224,15 +224,15 @@ return $default(_that.query,_that.results,_that.allCount,_that.isLoading,_that.i
 
 
 class _SearchState implements SearchState {
-  const _SearchState({this.query = const NovelSearchQuery(), final  List<RankingResponse> results = const [], this.allCount = 0, this.isLoading = false, this.isSearching = false}): _results = results;
+  const _SearchState({this.query = const NovelSearchQuery(), final  List<NovelInfo> results = const [], this.allCount = 0, this.isLoading = false, this.isSearching = false}): _results = results;
   
 
 /// 現在の検索クエリ
 @override@JsonKey() final  NovelSearchQuery query;
 /// 検索結果の小説リスト
- final  List<RankingResponse> _results;
+ final  List<NovelInfo> _results;
 /// 検索結果の小説リスト
-@override@JsonKey() List<RankingResponse> get results {
+@override@JsonKey() List<NovelInfo> get results {
   if (_results is EqualUnmodifiableListView) return _results;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_results);
@@ -275,7 +275,7 @@ abstract mixin class _$SearchStateCopyWith<$Res> implements $SearchStateCopyWith
   factory _$SearchStateCopyWith(_SearchState value, $Res Function(_SearchState) _then) = __$SearchStateCopyWithImpl;
 @override @useResult
 $Res call({
- NovelSearchQuery query, List<RankingResponse> results, int allCount, bool isLoading, bool isSearching
+ NovelSearchQuery query, List<NovelInfo> results, int allCount, bool isLoading, bool isSearching
 });
 
 
@@ -296,7 +296,7 @@ class __$SearchStateCopyWithImpl<$Res>
   return _then(_SearchState(
 query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as NovelSearchQuery,results: null == results ? _self._results : results // ignore: cast_nullable_to_non_nullable
-as List<RankingResponse>,allCount: null == allCount ? _self.allCount : allCount // ignore: cast_nullable_to_non_nullable
+as List<NovelInfo>,allCount: null == allCount ? _self.allCount : allCount // ignore: cast_nullable_to_non_nullable
 as int,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,isSearching: null == isSearching ? _self.isSearching : isSearching // ignore: cast_nullable_to_non_nullable
 as bool,

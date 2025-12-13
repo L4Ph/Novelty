@@ -15,7 +15,6 @@ import 'package:novelty/models/novel_download_summary.dart' as _i10;
 import 'package:novelty/models/novel_info.dart' as _i6;
 import 'package:novelty/models/novel_search_query.dart' as _i12;
 import 'package:novelty/models/novel_search_result.dart' as _i8;
-import 'package:novelty/models/ranking_response.dart' as _i13;
 import 'package:novelty/services/api_service.dart' as _i11;
 
 // ignore_for_file: type=lint
@@ -1109,14 +1108,4 @@ class MockApiService extends _i1.Mock implements _i11.ApiService {
             ),
           )
           as _i5.Future<_i8.NovelSearchResult>);
-
-  @override
-  _i5.Future<List<_i13.RankingResponse>> fetchRanking(String? rankingType) =>
-      (super.noSuchMethod(
-            Invocation.method(#fetchRanking, [rankingType]),
-            returnValue: _i5.Future<List<_i13.RankingResponse>>.value(
-              <_i13.RankingResponse>[],
-            ),
-          )
-          as _i5.Future<List<_i13.RankingResponse>>);
 }

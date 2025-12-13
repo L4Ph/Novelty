@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 
 /// ライブラリ追加コールバックの型定義
-typedef AddToLibraryCallback = Future<void> Function(RankingResponse item);
+typedef AddToLibraryCallback = Future<void> Function(NovelInfo item);
 
 /// ライブラリ追加処理を実行する関数
 ///
 /// NovelListとEnrichedNovelListで共通のロジックを提供する。
 Future<void> handleAddToLibrary({
-  required RankingResponse item,
+  required NovelInfo item,
   required BuildContext context,
   required WidgetRef ref,
   required ValueNotifier<Map<String, bool>> isProcessingMap,
   required ValueNotifier<String?> errorMessage,
 }) async {
   final ncode = item.ncode;
+  if (ncode == null) return;
+
   if (isProcessingMap.value[ncode] ?? false) {
     return; // 処理中の場合は何もしない
   }
@@ -31,7 +33,7 @@ Future<void> handleAddToLibrary({
     isProcessingMap.value = {...isProcessingMap.value, ncode: true};
 
     final repository = ref.read(novelRepositoryProvider);
-    final added = await repository.addNovelToLibrary(item.ncode);
+    final added = await repository.addNovelToLibrary(ncode);
 
     if (!added) {
       if (context.mounted) {

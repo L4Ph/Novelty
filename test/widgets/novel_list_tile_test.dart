@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 void main() {
@@ -10,7 +10,7 @@ void main() {
       testWidgets('should display "完結済" for serialized novel with end == 0', (
         WidgetTester tester,
       ) async {
-        const item = RankingResponse(
+        const item = NovelInfo(
           ncode: 'N1234AB',
           title: 'テスト連載小説',
           novelType: 1,
@@ -33,7 +33,7 @@ void main() {
       testWidgets('should display "連載中" for serialized novel with end == 1', (
         WidgetTester tester,
       ) async {
-        const item = RankingResponse(
+        const item = NovelInfo(
           ncode: 'N1234AB',
           title: 'テスト連載小説',
           novelType: 1,
@@ -56,7 +56,7 @@ void main() {
       testWidgets('should display "短編" for short story with end == 0', (
         WidgetTester tester,
       ) async {
-        const item = RankingResponse(
+        const item = NovelInfo(
           ncode: 'N1234AB',
           title: 'テスト短編小説',
           novelType: 2,
@@ -80,7 +80,7 @@ void main() {
       testWidgets('should display "短編" for short story with end == 1', (
         WidgetTester tester,
       ) async {
-        const item = RankingResponse(
+        const item = NovelInfo(
           ncode: 'N1234AB',
           title: 'テスト短編小説',
           novelType: 2,
@@ -104,7 +104,7 @@ void main() {
       testWidgets('should display "情報取得失敗" when end is null', (
         WidgetTester tester,
       ) async {
-        const item = RankingResponse(
+        const item = NovelInfo(
           ncode: 'N1234AB',
           title: 'テスト小説',
           novelType: 1,
@@ -128,7 +128,7 @@ void main() {
       testWidgets('should display "情報取得失敗" when end is -1', (
         WidgetTester tester,
       ) async {
-        const item = RankingResponse(
+        const item = NovelInfo(
           ncode: 'N1234AB',
           title: 'テスト小説',
           novelType: 1,
@@ -151,7 +151,7 @@ void main() {
       testWidgets('should handle null novelType gracefully', (
         WidgetTester tester,
       ) async {
-        const item = RankingResponse(
+        const item = NovelInfo(
           ncode: 'N1234AB',
           title: 'テスト小説',
           // ignore: avoid_redundant_argument_values テストのため
@@ -177,7 +177,7 @@ void main() {
       testWidgets('should display title and ncode', (
         WidgetTester tester,
       ) async {
-        const item = RankingResponse(
+        const item = NovelInfo(
           ncode: 'N1234AB',
           title: 'テストタイトル',
           novelType: 1,
@@ -198,23 +198,22 @@ void main() {
         expect(find.textContaining('N1234AB'), findsOneWidget);
       });
 
-      testWidgets('should display rank when isRanking is true', (
+      testWidgets('should display rank when rank is provided', (
         WidgetTester tester,
       ) async {
-        const item = RankingResponse(
+        const item = NovelInfo(
           ncode: 'N1234AB',
           title: 'テストタイトル',
           novelType: 1,
           end: 0,
           genre: 1,
           writer: 'テスト作者',
-          rank: 5,
         );
 
         await tester.pumpWidget(
           const MaterialApp(
             home: Scaffold(
-              body: NovelListTile(item: item, isRanking: true),
+              body: NovelListTile(item: item, rank: 5),
             ),
           ),
         );
@@ -222,17 +221,16 @@ void main() {
         expect(find.text('5'), findsOneWidget);
       });
 
-      testWidgets('should not display rank when isRanking is false', (
+      testWidgets('should not display rank when rank is null', (
         WidgetTester tester,
       ) async {
-        const item = RankingResponse(
+        const item = NovelInfo(
           ncode: 'N1234AB',
           title: 'テストタイトル',
           novelType: 1,
           end: 0,
           genre: 1,
           writer: 'テスト作者',
-          rank: 5,
         );
 
         await tester.pumpWidget(
@@ -254,7 +252,7 @@ void main() {
     testWidgets('should use HookWidget and maintain same functionality', (
       WidgetTester tester,
     ) async {
-      const item = RankingResponse(
+      const item = NovelInfo(
         ncode: 'N1234AB',
         title: 'テストタイトル',
         novelType: 1,
@@ -285,7 +283,7 @@ void main() {
     testWidgets('should optimize performance with memoization', (
       WidgetTester tester,
     ) async {
-      const item = RankingResponse(
+      const item = NovelInfo(
         ncode: 'N1234AB',
         title: 'テストタイトル',
         novelType: 1,

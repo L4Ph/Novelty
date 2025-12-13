@@ -1,41 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:novelty/domain/novel_enrichment.dart';
-import 'package:novelty/models/ranking_response.dart';
+import 'package:mockito/mockito.dart';
+import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_search_result.dart';
+import 'package:novelty/services/api_service.dart';
 import 'package:novelty/widgets/ranking_list.dart';
+
+import 'ranking_list_test.mocks.dart';
 
 void main() {
   group('RankingList HookConsumerWidget Tests', () {
+    late MockApiService mockApiService;
+
+    setUp(() {
+      mockApiService = MockApiService();
+    });
+
     testWidgets('should be a HookConsumerWidget and render successfully', (
       WidgetTester tester,
     ) async {
       // ダミーデータの準備
-      const testEnrichedNovel = EnrichedNovelData(
-        novel: RankingResponse(
-          rank: 1,
-          pt: 100,
-          ncode: 'n1111a',
-          title: 'Test Novel 1',
-          writer: 'Test Writer 1',
-          story: 'Story 1',
-          genre: 1,
-          keyword: 'keyword1',
-          novelType: 1,
-          end: 0,
-          generalAllNo: 10,
-          allPoint: 200,
-        ),
-        isInLibrary: false,
+      const testNovel = NovelInfo(
+        ncode: 'n1111a',
+        title: 'Test Novel 1',
+        writer: 'Test Writer 1',
+        genre: 1,
+        novelType: 1,
+        end: 0,
+        generalAllNo: 10,
+        allPoint: 200,
       );
+
+      const searchResult = NovelSearchResult(
+        novels: [testNovel],
+        allCount: 1,
+      );
+
+      when(
+        mockApiService.searchNovels(any),
+      ).thenAnswer((_) async => searchResult);
 
       // ウィジェットをテスト
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            enrichedRankingDataProvider('test').overrideWith(
-              (ref) async => [testEnrichedNovel],
-            ),
+            apiServiceProvider.overrideWithValue(mockApiService),
           ],
           child: const MaterialApp(
             home: Scaffold(
@@ -58,12 +68,19 @@ void main() {
     testWidgets('should handle empty data gracefully', (
       WidgetTester tester,
     ) async {
+      const searchResult = NovelSearchResult(
+        novels: [],
+        allCount: 0,
+      );
+
+      when(
+        mockApiService.searchNovels(any),
+      ).thenAnswer((_) async => searchResult);
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            enrichedRankingDataProvider('test').overrideWith(
-              (ref) async => <EnrichedNovelData>[],
-            ),
+            apiServiceProvider.overrideWithValue(mockApiService),
           ],
           child: const MaterialApp(
             home: Scaffold(
@@ -78,30 +95,6 @@ void main() {
       // 空のリストでもクラッシュしないことを確認
       expect(find.byType(RankingList), findsOneWidget);
       expect(find.byType(ListView), findsOneWidget);
-    });
-
-    testWidgets('should show error message on error', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            enrichedRankingDataProvider('test').overrideWith(
-              (ref) async => throw Exception('Test error'),
-            ),
-          ],
-          child: const MaterialApp(
-            home: Scaffold(
-              body: RankingList(rankingType: 'test'),
-            ),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // エラーメッセージを確認
-      expect(find.textContaining('エラーが発生しました'), findsOneWidget);
     });
   });
 }

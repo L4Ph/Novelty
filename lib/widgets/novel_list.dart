@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/utils/library_callbacks.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
@@ -11,7 +11,7 @@ class NovelList extends HookConsumerWidget {
   const NovelList({required this.novels, super.key, this.isRanking = true});
 
   /// 小説のリスト。
-  final List<RankingResponse> novels;
+  final List<NovelInfo> novels;
 
   /// ランキングリストかどうか。
   final bool isRanking;
@@ -24,7 +24,7 @@ class NovelList extends HookConsumerWidget {
 
     // ライブラリ追加処理のコールバック
     final addToLibraryCallback = useCallback(
-      (RankingResponse item) => handleAddToLibrary(
+      (NovelInfo item) => handleAddToLibrary(
         item: item,
         context: context,
         ref: ref,
@@ -40,7 +40,7 @@ class NovelList extends HookConsumerWidget {
         final item = novels[index];
         return NovelListTile(
           item: item,
-          isRanking: isRanking,
+          rank: isRanking ? index + 1 : null,
           onLongPress: () => addToLibraryCallback(item),
         );
       },

@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/domain/library_filter_state.dart';
+import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
-import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/search_page.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
@@ -118,16 +118,8 @@ class LibraryPage extends ConsumerWidget {
             itemBuilder: (context, index) {
               final novel = novels[index];
 
-              // NovelListTileを使用するため、RankingResponseに変換
-              final novelData = RankingResponse(
-                ncode: novel.ncode,
-                title: novel.title,
-                writer: novel.writer,
-                genre: novel.genre,
-                novelType: novel.novelType,
-                end: novel.end,
-                allPoint: novel.allPoint,
-              );
+              // NovelListTileを使用するため、NovelInfoに変換
+              final novelData = novel.toModel();
 
               return NovelListTile(
                 item: novelData,

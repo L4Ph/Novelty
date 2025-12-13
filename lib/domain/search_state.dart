@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
-import 'package:novelty/models/ranking_response.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -16,7 +16,7 @@ abstract class SearchState with _$SearchState {
     @Default(NovelSearchQuery()) NovelSearchQuery query,
 
     /// 検索結果の小説リスト
-    @Default([]) List<RankingResponse> results,
+    @Default([]) List<NovelInfo> results,
 
     /// 検索条件に一致する全件数
     @Default(0) int allCount,
