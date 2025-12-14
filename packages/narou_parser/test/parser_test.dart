@@ -69,8 +69,7 @@ void main() {
     });
 
     test('rpタグとrbタグなしのrubyを正しくパースできるか', () {
-      const html =
-          '<p><ruby>解放<rp>(</rp><rt>リリース</rt><rp>)</rp></ruby>する。</p>';
+      const html = '<p><ruby>解放<rp>(</rp><rt>リリース</rt><rp>)</rp></ruby>する。</p>';
       final result = parseNovelContent(html);
 
       expect(result, hasLength(3));
