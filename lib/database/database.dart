@@ -39,7 +39,7 @@ class ContentConverter
 
   @override
   String toSql(List<NovelContentElement> value) {
-    return json.encode(value.map((e) => e.toJson()).toList());
+    return value.toJsonString();
   }
 }
 

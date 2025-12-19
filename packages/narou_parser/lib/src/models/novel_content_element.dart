@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'novel_content_element.freezed.dart';
@@ -18,4 +20,12 @@ sealed class NovelContentElement with _$NovelContentElement {
   /// JSONからの変換
   factory NovelContentElement.fromJson(Map<String, dynamic> json) =>
       _$NovelContentElementFromJson(json);
+}
+
+/// [NovelContentElement]のリストに対する拡張
+extension NovelContentListExtension on List<NovelContentElement> {
+  /// JSON文字列に変換（Minify適用）
+  String toJsonString() {
+    return json.encode(map((e) => e.toJson()).toList());
+  }
 }
