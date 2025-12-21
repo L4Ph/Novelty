@@ -9,8 +9,8 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/connectivity_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/services/api_service.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:riverpod_swr/riverpod_swr.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// 小説の詳細ページ
@@ -183,7 +183,6 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
   var _isLoading = false;
   var _hasMorePages = true;
   var _initialLoadDone = false;
-  String? _loadingPageKey;
 
   @override
   void initState() {
@@ -205,66 +204,29 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
       return;
     }
 
-    final pageKey = '${widget.ncode}_$_currentPage';
-
     setState(() {
       _isLoading = true;
-      _loadingPageKey = pageKey;
     });
 
     try {
-      // ページ1の場合、初期読み込みですでにデータがあるか確認
-      if (_currentPage == 1 && _episodes.isNotEmpty) {
+      final newEpisodes = await ref.read(
+        episodeListProvider('${widget.ncode}_$_currentPage').future,
+      );
+
+      if (newEpisodes.isEmpty) {
+        _hasMorePages = false;
       } else {
-        final provider = episodeListProvider(pageKey);
-
-        // 1. Try to get current data (Synchronous / Cache)
-        var newEpisodes = ref.read(provider).asData?.value ?? [];
-
-        // 2. If empty, we might be loading fresh data (Fresh Install)
-        if (newEpisodes.isEmpty) {
-          final client = ref.read(swrClientProvider);
-          if (client.isLoading(pageKey)) {
-            // Wait for loading to finish
-            try {
-              await client.loadingUpdates
-                  .firstWhere((event) => event.$1 == pageKey && !event.$2)
-                  .timeout(const Duration(seconds: 10)); // Safety timeout
-
-              // Re-read data after loading finished
-              newEpisodes = ref.read(provider).asData?.value ?? [];
-            } on Object {
-              // Timeout or error, ignore and proceed with what we have
-            }
-          } else {
-            // Not loading, and empty. Try waiting for one emission if we strictly suspect stream lag
-            try {
-              newEpisodes = await ref
-                  .read(provider.future)
-                  .timeout(const Duration(milliseconds: 500));
-            } on Object catch (_) {}
-          }
-        }
-        // End of user's change
-
-        if (newEpisodes.isEmpty) {
+        // Check for duplicates to prevent infinite loading on single-page novels
+        if (_episodes.isNotEmpty &&
+            newEpisodes.isNotEmpty &&
+            _episodes.any((e) => e.url == newEpisodes.first.url)) {
           _hasMorePages = false;
         } else {
-          // 重複チェック
-          if (_episodes.isNotEmpty &&
-              newEpisodes.isNotEmpty &&
-              _episodes.any((e) => e.url == newEpisodes.first.url)) {
-            _hasMorePages = false;
-          } else {
-            _episodes.addAll(newEpisodes);
-          }
+          _episodes.addAll(newEpisodes);
+          _currentPage++;
         }
       }
-
-      if (_hasMorePages) {
-        _currentPage++;
-      }
-    } on Object catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('エピソードの読み込みに失敗しました: $e')),
@@ -276,7 +238,6 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
         setState(() {
           _isLoading = false;
           _initialLoadDone = true;
-          _loadingPageKey = null;
         });
       }
     }
@@ -284,10 +245,6 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loadingPageKey != null) {
-      ref.watch(episodeListProvider(_loadingPageKey!));
-    }
-
     if (!_initialLoadDone) {
       return const SliverToBoxAdapter(
         child: Center(

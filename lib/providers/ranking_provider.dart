@@ -24,7 +24,7 @@ abstract class RankingState with _$RankingState {
   }) = _RankingState;
 }
 
-@Riverpod(dependencies: [apiService])
+@riverpod
 /// ランキングのロジックを管理するNotifier
 class RankingNotifier extends _$RankingNotifier {
   @override

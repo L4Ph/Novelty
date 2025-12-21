@@ -49,8 +49,3 @@ The project follows standard Flutter and Dart conventions. The code is well-stru
 First, **plan your work, write tests (following the TDD cycle of Red, Green, Refactor), and continuously validate your plan** during implementation.
 **Commit after completing each phase** of the work as outlined in your plan.
 Finally, **ensure zero Lint issues** (including those classified as `info`) at all times.
-
-## Language
-
-Please comment on the code and any final communication with me in Japanese.
-Please keep things that don't require an intermediary, such as your own thoughts and planning, in English.
