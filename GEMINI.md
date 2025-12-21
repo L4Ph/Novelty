@@ -44,11 +44,11 @@ fvm flutter run
 
 ## Development Conventions
 
-The project follows standard Flutter and Dart conventions. The code is well-structured, with a clear separation of concerns. The use of Riverpod for state management and GoRouter for navigation indicates a modern and scalable architecture. The project also includes a comprehensive set of dependencies, managed using `pubspec.yaml`, and uses `build_runner` for code generation, which is common in modern Dart projects.
-
-First, **plan your work, write tests (following the TDD cycle of Red, Green, Refactor), and continuously validate your plan** during implementation.
-**Commit after completing each phase** of the work as outlined in your plan.
-Finally, **ensure zero Lint issues** (including those classified as `info`) at all times.
+First, create a work plan and do not start implementation until the plan is approved.
+Then, follow t_wada's TDD cycle to create tests and continuously verify the plan during implementation.
+Once each phase is completed, confirm that there are always zero Lint issues (including those classified as `info`).
+After that, you will be asked whether you want to commit.
+If approved, write a commit message in Japanese and commit.
 
 ## Language
 Please comment on the code and any final communication with me in Japanese.
