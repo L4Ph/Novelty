@@ -217,20 +217,32 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
       } else {
         final provider = episodeListProvider(pageKey);
 
-        final currentState = ref.read(provider);
+        // 1. Try to get current data (Synchronous / Cache)
+        var newEpisodes = ref.read(provider).valueOrNull ?? [];
 
-        var newEpisodes = <Episode>[];
-        if (currentState.hasValue && currentState.value!.isNotEmpty) {
-          newEpisodes = currentState.value!;
-        } else {
-          newEpisodes = await ref
-              .read(provider.future)
-              .timeout(
-                const Duration(seconds: 30),
-                onTimeout: () {
-                  return [];
-                },
-              );
+        // 2. If empty, we might be loading fresh data (Fresh Install)
+        if (newEpisodes.isEmpty) {
+          final client = ref.read(swrClientProvider);
+          if (client.isLoading(pageKey)) {
+            // Wait for loading to finish
+            try {
+              await client.loadingUpdates
+                  .firstWhere((event) => event.$1 == pageKey && !event.$2)
+                  .timeout(const Duration(seconds: 10)); // Safety timeout
+
+              // Re-read data after loading finished
+              newEpisodes = ref.read(provider).valueOrNull ?? [];
+            } catch (e) {
+              // Timeout or error, ignore and proceed with what we have
+            }
+          } else {
+            // Not loading, and empty. Try waiting for one emission if we strictly suspect stream lag
+            try {
+              newEpisodes = await ref
+                  .read(provider.future)
+                  .timeout(const Duration(milliseconds: 500));
+            } catch (_) {}
+          }
         }
         // End of user's change
 

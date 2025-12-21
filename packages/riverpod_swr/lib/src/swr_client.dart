@@ -1,4 +1,4 @@
-// ignore_for_file: unawaited_futures, discarded_futures // SWRの検証（Validation）ロジックにおいて、バックグラウンドでのフェッチ実行は意図的な設計です。
+// ignore_for_file: discarded_futures // SWRの検証（Validation）ロジックにおいて、バックグラウンドでのフェッチ実行は意図的な設計です。
 import 'dart:async';
 
 import 'package:riverpod_swr/src/swr_options.dart';
@@ -34,11 +34,6 @@ class SwrClient {
   // キー -> アクティブなストリームコントローラーのマッピング
   final _activeControllers = <String, StreamController<Object?>>{};
 
-  /// [key]のデータを検証（validate）します。
-  ///
-  /// 1. [watch]からローカルデータを即座に発行します。
-  /// 2. [options]に基づいてフェッチが必要かどうかを確認します。
-  /// 3. 必要に応じて、[fetch]と[persist]を実行します。
   Stream<T> validate<T>({
     required String key,
     required Stream<T> Function() watch,
@@ -52,6 +47,25 @@ class SwrClient {
           StreamSubscription<T>? subscription;
 
           Future<void> start() async {
+            // 1. Start watching local data immediately (stale-while-revalidate)
+            // debugPrint('[SwrClient] starting watch() for $key');
+            subscription = watch().listen(
+              (data) {
+                if (!c.isClosed) {
+                  c.add(data);
+                }
+              },
+              onError: (Object e, StackTrace? st) {
+                if (!c.isClosed) {
+                  c.addError(e, st);
+                }
+              },
+              onDone: () {
+                // Do not close controller here as we might still be fetching
+                // or waiting for more local updates
+              },
+            );
+
             try {
               final shouldFetch = _shouldFetch(key, options);
               Future<T?>? fetchFuture;
@@ -59,38 +73,24 @@ class SwrClient {
                 fetchFuture = _executeFetch(key, fetch, persist, options);
               }
 
-              // 初回取得を待機する必要がある場合
-              if (options.awaitForInitialData &&
-                  _lastFetched[key] == null &&
-                  fetchFuture != null) {
-                final data = await fetchFuture;
-                if (data != null && !c.isClosed) {
-                  c.add(data);
-                }
-              }
+              // Note: We intentionally do NOT await fetchFuture here to block the stream.
+              // The local stream (watch) is already active.
+              // If fetchFuture completes, it will update DB, which triggers watch(),
+              // which pushes new data to 'c'.
 
-              if (c.isClosed) {
-                return;
-              }
+              // If we strictly wanted 'awaitForInitialData' behavior where we block EVERYTHING
+              // until network returns (if no cache), we would need to check cache existence first.
+              // But SWR philosophy is "show what we have".
+              // If cache is empty, watch() yields nothing (or empty), and we wait for fetch.
+              // If fetch fails, we might error.
 
-              // debugPrint('[SwrClient] starting watch() for $key');
-              subscription = watch().listen(
-                (data) {
-                  if (!c.isClosed) {
-                    c.add(data);
-                  }
-                },
-                onError: (Object e, StackTrace? st) {
-                  if (!c.isClosed) {
-                    c.addError(e, st);
-                  }
-                },
-                onDone: () {
-                  if (!c.isClosed) {
-                    c.close();
-                  }
-                },
-              );
+              if (shouldFetch) {
+                // Ensure we catch errors from the background fetch if it wasn't awaited
+                // However, _executeFetch swallows errors internally usually, or we can handle it.
+                // In this implementation _executeFetch returns Future<T?> and handles retries.
+                // We rely on the side-effect of 'persist' updating the DB to notify listeners.
+                unawaited(fetchFuture);
+              }
             } on Object catch (e, st) {
               if (!c.isClosed) {
                 c.addError(e, st);
