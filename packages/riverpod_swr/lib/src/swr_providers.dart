@@ -3,25 +3,25 @@ import 'package:riverpod_swr/src/swr_client.dart';
 
 part 'swr_providers.g.dart';
 
-/// A provider that exposes the [SwrClient] instance.
+/// [SwrClient] インスタンスを提供するプロバイダー。
 ///
-/// This client manages the SWR state, including inflight requests,
-/// caching, and deduplication.
+/// このクライアントは実行中のリクエスト、キャッシュ、重複排除を含む
+/// SWRの状態を管理します。
 @Riverpod(keepAlive: true)
 SwrClient swrClient(Ref ref) {
   return SwrClient();
 }
 
-/// Returns whether a fetch is currently in progress for the given [key].
+/// 指定された [key] のフェッチが現在進行中かどうかを返します。
 @riverpod
 Stream<bool> swrLoading(Ref ref, String key) {
   final client = ref.watch(swrClientProvider);
 
-  // Create a stream that:
-  // 1. Emits the current loading state immediately.
-  // 2. Listens for updates for THIS key.
+  // 以下のストリームを作成します：
+  // 1. 現在のローディング状態を即座に発行する。
+  // 2. このキーに関する更新をリッスンする。
 
-  // Note: We use a generator to combine initial value and stream events.
+  // メモ: 初期値とストリームイベントを組み合わせるために generator を使用します。
   return Stream.multi((controller) {
     controller.add(client.isLoading(key));
 

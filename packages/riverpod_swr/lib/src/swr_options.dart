@@ -1,6 +1,6 @@
-/// Configuration options for SWR (Stale-While-Revalidate) requests.
+/// SWR (Stale-While-Revalidate) リクエストの設定オプション。
 class SwrOptions {
-  /// Creates a new [SwrOptions] configuration.
+  /// [SwrOptions] 設定を新しく作成します。
   const SwrOptions({
     this.staleDuration = Duration.zero,
     this.dedupInterval = const Duration(seconds: 2),
@@ -8,24 +8,24 @@ class SwrOptions {
     this.awaitForInitialData = true,
   });
 
-  /// Date/Time after which data is considered stale.
-  /// If data is fetched within this duration, it will be returned immediately
-  /// without triggering a new fetch.
-  /// Default: `Duration.zero` (always stale).
+  /// データを古い（stale）とみなすまでの期間。
+  /// この期間内にフェッチされたデータがある場合、新しいフェッチをトリガーせずに
+  /// 即座にそのデータが返されます。
+  /// デフォルト: `Duration.zero`（常に古いとみなす）。
   final Duration staleDuration;
 
-  /// Duration to ignore identical requests.
-  /// If a request is made within this interval of a previous IDENTICAL request,
-  /// it will be ignored (deduplicated).
-  /// Default: `Duration(seconds: 2)`.
+  /// 同一のリクエストを無視する期間。
+  /// 前回の「同一」リクエストからこの間隔内にリクエストが行われた場合、
+  /// そのリクエストは無視（重複排除）されます。
+  /// デフォルト: `Duration(seconds: 2)`。
   final Duration dedupInterval;
 
-  /// Number of times to retry a failed fetch.
-  /// Default: 3.
+  /// フェッチに失敗した際の再試行回数。
+  /// デフォルト: 3回。
   final int retryCount;
 
-  /// Whether to wait for the fetch to complete if the local data is empty/null.
-  /// If true, the stream will not emit until the initial fetch completes.
-  /// Default: true.
+  /// ローカルデータが空またはnullの場合にフェッチの完了を待機するかどうか。
+  /// trueの場合、初期フェッチが完了するまでストリームはデータを発行しません。
+  /// デフォルト: true。
   final bool awaitForInitialData;
 }

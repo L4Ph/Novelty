@@ -1,41 +1,41 @@
-// ignore_for_file: unawaited_futures // Fire-and-forget logic used in validate is intentional
+// ignore_for_file: unawaited_futures // validate内でのFire-and-forgetロジックは意図的なものです
 import 'dart:async';
 
 import 'package:riverpod_swr/src/swr_options.dart';
 
-/// Core client for handling SWR operations.
+/// SWR操作を処理するコアクライアント。
 ///
-/// This class manages the state of inflight requests, caching (stale time),
-/// and error reporting.
+/// このクラスは実行中のリクエストの状態、キャッシュ（stale time）、
+/// およびエラー報告を管理します。
 class SwrClient {
-  /// Creates a new [SwrClient].
+  /// [SwrClient]を新しく作成します。
   SwrClient();
 
-  // Key -> Future mapping for inflight requests (Deduplication)
+  // キー -> リクエストのFutureのマッピング（重複排除用）
   final _inflightRequests = <String, Future<void>>{};
 
-  // Key -> Last fetch success time (Throttling / Stale Time)
+  // キー -> 最後にフェッチに成功した時刻（スロットリング / Stale Time用）
   final _lastFetched = <String, DateTime>{};
 
-  // Key -> Loading state (exposed via provider)
+  // キー -> ローディング状態（プロバイダー経由で公開）
   final _loadingStates = <String, bool>{};
 
-  // Stream controller for internal loading state updates
+  // 内部のローディング状態更新用のストリームコントローラー
   final _loadingController = StreamController<(String, bool)>.broadcast();
 
-  /// A stream of loading state updates.
+  /// ローディング状態の更新ストリーム。
   ///
-  /// Emits a record containing the key and the boolean loading status.
+  /// キーとローディング状態（bool）を含むレコードを発行します。
   Stream<(String, bool)> get loadingUpdates => _loadingController.stream;
 
-  /// Returns whether a fetch is currently in progress for the given [key].
+  /// 指定された[key]のフェッチが現在進行中かどうかを返します。
   bool isLoading(String key) => _loadingStates[key] ?? false;
 
-  /// Validates the data for [key].
+  /// [key]のデータを検証（validate）します。
   ///
-  /// 1. Emits local data from [watch] immediately (unless [SwrOptions.awaitForInitialData] holds it).
-  /// 2. Checks if a fetch is needed based on [options].
-  /// 3. If needed, triggers [fetch] and [persist].
+  /// 1. [watch]からローカルデータを即座に発行します。
+  /// 2. [options]に基づいてフェッチが必要かどうかを確認します。
+  /// 3. 必要に応じて、[fetch]と[persist]を実行します。
   Stream<T> validate<T>({
     required String key,
     required Stream<T> Function() watch,
@@ -43,48 +43,44 @@ class SwrClient {
     required Future<void> Function(T) persist,
     SwrOptions options = const SwrOptions(),
   }) async* {
-    // 1. Check local data availability check
-    // We need to peek at the stream to see if it has data without consuming it permanently
-    // But streams are standard here.
-    // Instead, we delegate "waiting" logic to the caller's stream construction or handle it here via yielding.
+    // 1. ローカルデータの可用性チェック
+    // ストリームがデータを消費せずにデータを持っているかを確認する必要があります。
+    // しかし、ストリームはここでは標準です。
+    // 代わりに、「待機」ロジックは呼び出し元のストリーム構築に委ねるか、ここでyieldを介して処理します。
 
-    // Actually, "awaitForInitialData" usually implies we wait for the FETCH if local is empty.
-    // Detecting "empty" depends on the implementation of `watch()`.
-    // For drift, it might emit 'null' or empty list.
-    // Since T is generic, we can't easily check "isEmpty".
-    // A simplified approach: If existing data is likely missing (e.g. we've never fetched), we might block?
-    // Better: let's start listening to `watch`.
+    // 実際、「awaitForInitialData」は通常、ローカルが空の場合にFETCHを待機することを意味します。
+    // 「空」の検出は`watch()`の実装に依存します。
+    // Driftの場合、'null'または空のリストを発行するかもしれません。
+    // Tはジェネリックなので、「isEmpty」を簡単にチェックすることはできません。
+    // 簡略化されたアプローチ：既存のデータが欠落している可能性が高い場合（例：一度もフェッチしていない場合）、ブロックするかもしれません。
+    // より良い方法：`watch`のリスニングを開始しましょう。
 
-    // For this implementation, we will yield the stream from `watch()` directly.
-    // If `awaitForInitialData` is true, we should *pause* yielding from `watch`?
-    // No, `watch` IS the source of truth.
-    // If `awaitForInitialData` is true, it means we await the *Fetch Future* BEFORE returning the stream?
-    // Or we yield nothing until fetch completes if watch is empty?
+    // この実装では、`watch()`からのストリームを直接yieldします。
+    // `awaitForInitialData`がtrueの場合、`watch`からのyieldを一時停止すべきでしょうか？
+    // いいえ、`watch`が真実の源です。
+    // `awaitForInitialData`がtrueの場合、ストリームを返す前に*Fetch Future*を待機することを意味しますか？
+    // または、watchが空の場合、フェッチが完了するまで何もyieldしませんか？
 
-    // Strategy:
-    // Fire the validation logic.
-    // If `awaitForInitialData` is true and we determine we MUST fetch,
-    // we await that fetch before yielding the stream.
+    // 戦略：
+    // 検証ロジックを実行します。
+    // `awaitForInitialData`がtrueで、フェッチが必須であると判断した場合、
+    // ストリームをyieldする前にそのフェッチを待機します。
 
     final shouldFetch = _shouldFetch(key, options);
 
     if (shouldFetch) {
-      // If we need to wait for initial data, we assume the user WANTS to wait for the fetch result
-      // to be persisted before showing anything.
-      // NOTE: This assumes `persist` triggers `watch` updates.
+      // 初期データを待機する必要がある場合、フェッチ結果が永続化されるのを待ってから
+      // データを表示することを想定しています。
+      // 注意: `persist`が`watch`の更新をトリガーすることを前提としています。
 
       final fetchFuture = _executeFetch(key, fetch, persist, options);
 
       if (options.awaitForInitialData) {
-        // We try to wait. But `shouldFetch` might rely on stale time.
-        // If we have stale data, we might not truly "need" to wait if we just want *some* data.
-        // `awaitForInitialData` usually means "I have NO data, please wait".
-        // But here we rely on the caller to know if they have data?
-        // Let's rely on `_lastFetched`? If we never fetched, it's null.
+        // まだ一度もフェッチされていない場合は待機します。
+        // すでにデータがある（スタスタなデータがある）場合はブロックせずにバックグラウンドで実行します。
         if (_lastFetched[key] == null) {
           await fetchFuture;
         } else {
-          // We have stale data. Don't block. Fire and forget.
           unawaited(fetchFuture);
         }
       } else {
@@ -99,14 +95,14 @@ class SwrClient {
     final now = DateTime.now();
     final last = _lastFetched[key];
 
-    // 1. If currently loading (inflight), don't trigger another unless strictly needed?
-    // Actually `_executeFetch` handles dedup.
+    // 1. 現在ローディング中（実行中）の場合、厳密に必要でない限り、別のトリガーはしない？
+    // 実際には`_executeFetch`が重複排除を処理します。
 
-    // 2. Check Stale Duration
+    // 2. Stale Duration のチェック
     if (last != null) {
       final age = now.difference(last);
       if (age < options.staleDuration) {
-        return false; // Fresh enough
+        return false; // 十分に新しい
       }
     }
 
@@ -119,14 +115,14 @@ class SwrClient {
     Future<void> Function(T) persist,
     SwrOptions options,
   ) {
-    // 1. Deduplication
+    // 1. 重複排除
     if (_inflightRequests.containsKey(key)) {
       return _inflightRequests[key]!;
     }
 
-    // 2. Throttling (Dedup Interval) checks could be done here too,
-    // but `_lastFetched` check in `_shouldFetch` covers the "freshness".
-    // The `dedupInterval` is specifically to avoid rapid re-fetches even if stale duration is 0.
+    // 2. スロットリング (重複排除間隔) のチェック
+    // ここでもチェックできますが、`_shouldFetch`の`_lastFetched`チェックが「新鮮さ」をカバーしています。
+    // `dedupInterval`は、staleDurationが0であっても、急速な再フェッチを防ぐためのものです。
     final last = _lastFetched[key];
     if (last != null) {
       final timeSinceLast = DateTime.now().difference(last);
@@ -145,17 +141,17 @@ class SwrClient {
             final data = await fetch();
             await persist(data);
             _lastFetched[key] = DateTime.now();
-            break; // Success
+            break; // 成功
           } on Object catch (e) {
             if (attempts >= options.retryCount) {
-              // TODO(developer): Use proper logger
-              // ignore: avoid_print // Logs to console as fallback
+              // TODO(developer): 適切なロガーを使用する
+              // ignore: avoid_print // フォールバックとしてコンソールにログを出力
               print('SWR Fetch Error [$key] after $attempts attempts: $e');
-              // We don't rethrow to avoid crashing the unawaited future,
-              // but maybe we should expose error state?
+              // unawaitedなFutureをクラッシュさせないために再スローしませんが、
+              // エラー状態を公開すべきでしょうか？
               break;
             }
-            // Exponential backoff or simple delay?
+            // 指数バックオフまたは単純な遅延？
             await Future<void>.delayed(Duration(milliseconds: 500 * attempts));
           }
         }
