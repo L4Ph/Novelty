@@ -24,7 +24,7 @@ class LibraryPage extends ConsumerWidget {
 
     // フィルタリング処理
     final filteredNovelsAsync = libraryNovelsAsync.whenData((novels) {
-      return novels.where((novel) {
+      return novels.cast<Novel>().where((novel) {
         // 連載中のみフィルタ
         if (filter.showOnlyOngoing) {
           // end: 1 = 連載中, 0 = 完結/短編

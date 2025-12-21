@@ -606,7 +606,10 @@ class LibraryStatus extends _$LibraryStatus {
 
 @riverpod
 /// 小説のダウンロード進捗を監視するプロバイダー。
-Stream<DownloadProgress?> downloadProgress(Ref ref, String ncode) {
+Stream<DownloadProgress?> downloadProgress(
+  Ref ref,
+  String ncode,
+) {
   final normalizedNcode = ncode.toNormalizedNcode();
   final repo = ref.watch(novelRepositoryProvider);
   return repo.watchDownloadProgress(normalizedNcode);
@@ -703,7 +706,10 @@ Stream<int?> episodeDownloadStatus(
 
 @riverpod
 /// エピソードリストを取得するプロバイダー
-Future<List<Episode>> episodeList(Ref ref, String ncodeAndPage) async {
+Future<List<Episode>> episodeList(
+  Ref ref,
+  String ncodeAndPage,
+) async {
   final parts = ncodeAndPage.split('_');
   final ncode = parts[0];
   final page = int.parse(parts[1]);

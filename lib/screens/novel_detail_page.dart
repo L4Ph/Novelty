@@ -144,7 +144,15 @@ Widget _buildHeader(BuildContext context, NovelInfo novelInfo) {
         children: [
           const Icon(Icons.person_outline, size: 16),
           const SizedBox(width: 4),
-          Text(novelInfo.writer ?? 'Unknown'),
+          // FIX: 作者名が非常に長い場合に横方向にオーバーフローする問題を解決。
+          // Rowの子要素としてExpandedを使用することで、利用可能なスペースに合わせてテキストを切り詰める。
+          Expanded(
+            child: Text(
+              novelInfo.writer ?? 'Unknown',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           const SizedBox(width: 16),
           const Icon(Icons.star_outline, size: 16),
           const SizedBox(width: 4),

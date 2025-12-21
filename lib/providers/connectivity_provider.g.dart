@@ -113,4 +113,4 @@ final class IsOfflineProvider extends $FunctionalProvider<bool, bool, bool>
   }
 }
 
-String _$isOfflineHash() => r'c528b5ad19823d2dc385a9277cd9fbdff1679d70';
+String _$isOfflineHash() => r'2191bab0a3714f3e50818cfa9604f9e67b1d58a6';

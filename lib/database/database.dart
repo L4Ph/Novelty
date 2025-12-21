@@ -5,15 +5,15 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_download_summary.dart';
-import 'package:novelty/utils/history_grouping.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/search_tokenizer.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+
+export 'database_providers.dart';
 
 part 'database.g.dart';
 
@@ -1100,37 +1100,4 @@ LazyDatabase _openConnection() {
   });
 }
 
-// ==================== Providers ====================
-
-/// アプリケーションデータベースのプロバイダー
-final appDatabaseProvider = Provider<AppDatabase>(
-  (ref) => AppDatabase(),
-  dependencies: const [],
-);
-
-/// ライブラリの小説リストを提供するプロバイダー
-final libraryNovelsProvider = StreamProvider<List<Novel>>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  ref.keepAlive();
-  return db.watchLibraryNovels();
-}, dependencies: [appDatabaseProvider]);
-
-/// 閲覧履歴を提供するプロバイダー
-final historyProvider = StreamProvider<List<HistoryData>>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  ref.keepAlive();
-  return db.watchHistory();
-});
-
-/// 現在時刻を提供するプロバイダー
-final currentTimeProvider = Provider<DateTime>((ref) => DateTime.now());
-
-/// 日付ごとにグループ化された閲覧履歴を提供するプロバイダー
-final groupedHistoryProvider = StreamProvider<List<HistoryGroup>>((ref) {
-  final now = ref.watch(currentTimeProvider);
-  final db = ref.watch(appDatabaseProvider);
-  ref.keepAlive();
-  return db.watchHistory().map((historyItems) {
-    return HistoryGrouping.groupByDate(historyItems, now);
-  });
-});
+// ==================== Providers Moved to database_providers.dart ====================

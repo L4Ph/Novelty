@@ -22,7 +22,11 @@ part 'api_service.g.dart';
 /// なろう小説APIの制限値（最大500件）を最大限活用
 const int allTimeRankingLimit = 500;
 
-@Riverpod(keepAlive: true, dependencies: [])
+/// User-Agent 基本的には最新になるようにする
+const String userAgent =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36';
+
+@Riverpod(keepAlive: true)
 /// APIサービスのプロバイダー
 ApiService apiService(Ref ref) => ApiService();
 
@@ -32,8 +36,7 @@ class ApiService {
     final response = await http.get(
       Uri.parse(url),
       headers: {
-        'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'User-Agent': userAgent,
       },
     );
     return response;
@@ -368,7 +371,19 @@ class ApiService {
   }
 
   Future<List<dynamic>> _fetchData(String url) async {
-    final response = await http.get(Uri.parse(url));
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'User-Agent': userAgent,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to fetch data: ${response.statusCode} ${response.reasonPhrase}',
+      );
+    }
+
     final bytes = response.bodyBytes;
     return compute(_parseJson, bytes.toList());
   }
@@ -413,7 +428,9 @@ class ApiService {
         return NovelSearchResult(novels: novels, allCount: allCount);
       }
       return const NovelSearchResult(novels: [], allCount: 0);
-    } on Exception {
+    } on Object {
+      // 全てのエラーをキャッチして空の結果として返す
+      // これにより、UI側で無限ロードやクラッシュが発生するのを防ぐ
       return const NovelSearchResult(novels: [], allCount: 0);
     }
   }
@@ -448,8 +465,10 @@ class ApiService {
 
 // ==================== Providers ====================
 
-@riverpod
+// ==================== Providers ====================
+
 /// 小説の情報を取得するプロバイダー（シンプル版）。
+@riverpod
 Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   final normalizedNcode = ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
@@ -469,11 +488,14 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   }
 }
 
-@riverpod
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 ///
 /// APIから小説情報を取得し、DBに保存する。
-Future<NovelInfo> novelInfoWithCache(Ref ref, String ncode) async {
+@riverpod
+Future<NovelInfo> novelInfoWithCache(
+  Ref ref,
+  String ncode,
+) async {
   final normalizedNcode = ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
@@ -513,27 +535,26 @@ Future<NovelInfo> novelInfoWithCache(Ref ref, String ncode) async {
   }
 }
 
-@riverpod
 /// 小説のエピソードを取得するプロバイダー。
-Future<Episode> episode(
-  Ref ref, {
-  required String ncode,
-  required int episode,
-}) async {
-  final normalizedNcode = ncode.toNormalizedNcode();
+@riverpod
+Future<Episode> episode(Ref ref, EpisodeParam param) async {
+  final normalizedNcode = param.ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
   final db = ref.read(appDatabaseProvider);
 
   try {
     // 1. Try fetching from API
-    final ep = await apiService.fetchEpisode(normalizedNcode, episode);
+    final ep = await apiService.fetchEpisode(
+      normalizedNcode,
+      param.episode,
+    );
 
     // 2. Save content to DB
     if (ep.body != null) {
       await db.updateEpisodeContent(
         EpisodeEntitiesCompanion(
           ncode: drift.Value(normalizedNcode),
-          episodeId: drift.Value(episode),
+          episodeId: drift.Value(param.episode),
           content: drift.Value(
             parseNovelContent(ep.body!),
           ),
@@ -547,16 +568,19 @@ Future<Episode> episode(
     return ep;
   } catch (e) {
     // 3. Fallback to DB
-    final cachedEp = await db.getEpisodeData(normalizedNcode, episode);
+    final cachedEp = await db.getEpisodeData(
+      normalizedNcode,
+      param.episode,
+    );
     if (cachedEp != null && cachedEp.content != null) {
       // Reconstruct HTML from content elements
-      final elements = cachedEp.content!;
+      final elements = cachedEp.content;
       final htmlBuffer = StringBuffer();
 
-      for (final element in elements) {
+      for (final element in elements!) {
         element.when(
-          plainText: (text) => htmlBuffer.write('<p>$text</p>'),
-          rubyText: (base, ruby) =>
+          plainText: (String text) => htmlBuffer.write('<p>$text</p>'),
+          rubyText: (String base, String ruby) =>
               htmlBuffer.write('<p><ruby>$base<rt>$ruby</rt></ruby></p>'),
           newLine: () => htmlBuffer.write('<br>'),
         );
@@ -574,4 +598,28 @@ Future<Episode> episode(
     }
     rethrow;
   }
+}
+
+@immutable
+/// エピソード取得のためのパラメータ
+class EpisodeParam {
+  /// コンストラクタ
+  const EpisodeParam({required this.ncode, required this.episode});
+
+  /// 小説のNコード
+  final String ncode;
+
+  /// エピソード番号
+  final int episode;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is EpisodeParam &&
+        other.ncode == ncode &&
+        other.episode == episode;
+  }
+
+  @override
+  int get hashCode => ncode.hashCode ^ episode.hashCode;
 }

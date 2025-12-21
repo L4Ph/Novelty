@@ -26,8 +26,8 @@ final class ApiServiceProvider
         retry: null,
         name: r'apiServiceProvider',
         isAutoDispose: false,
-        dependencies: const <ProviderOrFamily>[],
-        $allTransitiveDependencies: const <ProviderOrFamily>[],
+        dependencies: null,
+        $allTransitiveDependencies: null,
       );
 
   @override
@@ -52,7 +52,7 @@ final class ApiServiceProvider
   }
 }
 
-String _$apiServiceHash() => r'd8a9cf67a08249ea1f590a1d16fea7a883a0523e';
+String _$apiServiceHash() => r'93a7e3b4d3004741abc3061c4688239c3a72f9c4';
 
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 
@@ -244,7 +244,7 @@ final class EpisodeProvider
   /// 小説のエピソードを取得するプロバイダー。
   const EpisodeProvider._({
     required EpisodeFamily super.from,
-    required ({String ncode, int episode}) super.argument,
+    required EpisodeParam super.argument,
   }) : super(
          retry: null,
          name: r'episodeProvider',
@@ -260,7 +260,7 @@ final class EpisodeProvider
   String toString() {
     return r'episodeProvider'
         ''
-        '$argument';
+        '($argument)';
   }
 
   @$internal
@@ -270,8 +270,8 @@ final class EpisodeProvider
 
   @override
   FutureOr<Episode> create(Ref ref) {
-    final argument = this.argument as ({String ncode, int episode});
-    return episode(ref, ncode: argument.ncode, episode: argument.episode);
+    final argument = this.argument as EpisodeParam;
+    return episode(ref, argument);
   }
 
   @override
@@ -285,16 +285,12 @@ final class EpisodeProvider
   }
 }
 
-String _$episodeHash() => r'fd78632f5100d45209527425adf801baa31a3c68';
+String _$episodeHash() => r'7a92756bf059268f3f7fdc5d1e8fec0bb56ae035';
 
 /// 小説のエピソードを取得するプロバイダー。
 
 final class EpisodeFamily extends $Family
-    with
-        $FunctionalFamilyOverride<
-          FutureOr<Episode>,
-          ({String ncode, int episode})
-        > {
+    with $FunctionalFamilyOverride<FutureOr<Episode>, EpisodeParam> {
   const EpisodeFamily._()
     : super(
         retry: null,
@@ -306,8 +302,8 @@ final class EpisodeFamily extends $Family
 
   /// 小説のエピソードを取得するプロバイダー。
 
-  EpisodeProvider call({required String ncode, required int episode}) =>
-      EpisodeProvider._(argument: (ncode: ncode, episode: episode), from: this);
+  EpisodeProvider call(EpisodeParam param) =>
+      EpisodeProvider._(argument: param, from: this);
 
   @override
   String toString() => r'episodeProvider';
