@@ -7,7 +7,6 @@ import 'dart:async' as _i5;
 
 import 'package:drift/drift.dart' as _i2;
 import 'package:drift/src/runtime/executor/stream_queries.dart' as _i4;
-import 'package:flutter_riverpod/flutter_riverpod.dart' as _i15;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i11;
 import 'package:narou_parser/narou_parser.dart' as _i18;
@@ -22,6 +21,7 @@ import 'package:novelty/models/novel_search_result.dart' as _i8;
 import 'package:novelty/repositories/novel_repository.dart' as _i14;
 import 'package:novelty/services/api_service.dart' as _i9;
 import 'package:novelty/utils/settings_provider.dart' as _i16;
+import 'package:riverpod_annotation/riverpod_annotation.dart' as _i15;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
