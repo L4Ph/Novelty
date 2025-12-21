@@ -1373,9 +1373,27 @@ class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
           as _i5.Future<void>);
 
   @override
+  _i5.Future<void> saveNovelInfo(_i6.NovelInfo? novelInfo) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveNovelInfo, [novelInfo]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
   _i5.Future<void> syncEpisodeList(String? ncode, int? page) =>
       (super.noSuchMethod(
             Invocation.method(#syncEpisodeList, [ncode, page]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> saveEpisodes(String? ncode, List<_i7.Episode>? episodes) =>
+      (super.noSuchMethod(
+            Invocation.method(#saveEpisodes, [ncode, episodes]),
             returnValue: _i5.Future<void>.value(),
             returnValueForMissingStub: _i5.Future<void>.value(),
           )

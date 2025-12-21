@@ -44,6 +44,13 @@ class ApiService {
     return elements.map((el) {
       final subtitle = el.querySelector('.p-eplist__subtitle');
       final update = el.querySelector('.p-eplist__update');
+
+      if (subtitle == null || update == null) {
+        debugPrint(
+          '[ApiService] _parseEpisodes: Missing subtitle or update element! subtitle=$subtitle, update=$update',
+        );
+      }
+
       final revisedAttr = update?.querySelector('span')?.attributes['title'];
       final url = subtitle?.attributes['href'];
       int? index;
@@ -195,6 +202,7 @@ class ApiService {
 
   /// 小説のエピソードを取得するメソッド。
   Future<List<Episode>> fetchEpisodeList(String ncode, int page) async {
+    debugPrint('[ApiService] fetchEpisodeList requested for $ncode page $page');
     final pageUrl = page == 1
         ? 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/'
         : 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/?p=$page';

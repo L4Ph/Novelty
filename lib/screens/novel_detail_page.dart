@@ -22,6 +22,7 @@ class NovelDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    debugPrint('[NovelDetailPage] build: ncode=$ncode');
     final novelInfoAsync = ref.watch(novelInfoWithCacheProvider(ncode));
 
     return novelInfoAsync.when(
@@ -182,6 +183,7 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
   var _isLoading = false;
   var _hasMorePages = true;
   var _initialLoadDone = false;
+  String? _loadingPageKey;
 
   @override
   void initState() {
@@ -203,29 +205,90 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
       return;
     }
 
+    final pageKey = '${widget.ncode}_$_currentPage';
+
     setState(() {
       _isLoading = true;
+      _loadingPageKey = pageKey;
     });
 
     try {
-      final newEpisodes = await ref.read(
-        episodeListProvider('${widget.ncode}_$_currentPage').future,
+      debugPrint(
+        '[NovelDetailPage] _loadMoreEpisodes START: page=$_currentPage',
       );
 
-      if (newEpisodes.isEmpty) {
-        _hasMorePages = false;
+      // ページ1の場合、初期読み込みですでにデータがあるか確認
+      if (_currentPage == 1 && _episodes.isNotEmpty) {
+        debugPrint(
+          '[NovelDetailPage] _loadMoreEpisodes: page 1 already has ${_episodes.length} items',
+        );
       } else {
-        // Check for duplicates to prevent infinite loading on single-page novels
-        if (_episodes.isNotEmpty &&
-            newEpisodes.isNotEmpty &&
-            _episodes.any((e) => e.url == newEpisodes.first.url)) {
+        final provider = episodeListProvider(pageKey);
+
+        final currentState = ref.read(provider);
+        debugPrint(
+          '[NovelDetailPage] _loadMoreEpisodes: current state is ${currentState.runtimeType}',
+        );
+
+        var newEpisodes = <Episode>[];
+        if (currentState.hasValue && currentState.value!.isNotEmpty) {
+          newEpisodes = currentState.value!;
+          debugPrint(
+            '[NovelDetailPage] _loadMoreEpisodes: using existing data from provider: ${newEpisodes.length} items',
+          );
+        } else {
+          debugPrint(
+            '[NovelDetailPage] _loadMoreEpisodes: awaiting provider future for $pageKey (with 30s timeout)',
+          );
+
+          newEpisodes = await ref
+              .read(provider.future)
+              .timeout(
+                const Duration(seconds: 30),
+                onTimeout: () {
+                  debugPrint(
+                    '[NovelDetailPage] _loadMoreEpisodes: TIMEOUT awaiting provider future for $pageKey',
+                  );
+                  return [];
+                },
+              );
+          debugPrint(
+            '[NovelDetailPage] _loadMoreEpisodes: future resolved with ${newEpisodes.length} items',
+          );
+        }
+        // End of user's change
+
+        if (newEpisodes.isEmpty) {
+          debugPrint(
+            '[NovelDetailPage] _loadMoreEpisodes: newEpisodes is empty, setting hasMorePages=false',
+          );
           _hasMorePages = false;
         } else {
-          _episodes.addAll(newEpisodes);
-          _currentPage++;
+          // 重複チェック
+          if (_episodes.isNotEmpty &&
+              newEpisodes.isNotEmpty &&
+              _episodes.any((e) => e.url == newEpisodes.first.url)) {
+            debugPrint(
+              '[NovelDetailPage] _loadMoreEpisodes: duplicate data detected, setting hasMorePages=false',
+            );
+            _hasMorePages = false;
+          } else {
+            _episodes.addAll(newEpisodes);
+            debugPrint(
+              '[NovelDetailPage] _loadMoreEpisodes: added ${newEpisodes.length} episodes. Total: ${_episodes.length}',
+            );
+          }
         }
       }
-    } on Exception catch (e) {
+
+      if (_hasMorePages) {
+        _currentPage++;
+        debugPrint(
+          '[NovelDetailPage] _loadMoreEpisodes: incremented page to $_currentPage',
+        );
+      }
+    } on Object catch (e, st) {
+      debugPrint('[NovelDetailPage] _loadMoreEpisodes ERROR: $e\n$st');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('エピソードの読み込みに失敗しました: $e')),
@@ -233,10 +296,14 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
       }
       _hasMorePages = false;
     } finally {
+      debugPrint(
+        '[NovelDetailPage] _loadMoreEpisodes FINALLY: mounting=$mounted, epCount=${_episodes.length}',
+      );
       if (mounted) {
         setState(() {
           _isLoading = false;
           _initialLoadDone = true;
+          _loadingPageKey = null;
         });
       }
     }
@@ -244,6 +311,10 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loadingPageKey != null) {
+      ref.watch(episodeListProvider(_loadingPageKey!));
+    }
+
     if (!_initialLoadDone) {
       return const SliverToBoxAdapter(
         child: Center(

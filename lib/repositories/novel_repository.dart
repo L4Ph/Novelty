@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/download_progress.dart';
@@ -561,55 +562,59 @@ class NovelRepository {
   }
 
   /// 小説情報の同期（SWR用）
-  Future<void> syncNovelInfo(String ncode) async {
+  Future<NovelInfo> syncNovelInfo(String ncode) async {
     final normalizedNcode = ncode.toNormalizedNcode();
     try {
-      // APIから最新情報を取得（3秒タイムアウト）
-      final novelInfo = await apiService.fetchNovelInfo(normalizedNcode);
-
-      // Novel/Episodesテーブルを更新
-      await _db.insertNovel(novelInfo.toDbCompanion());
-
-      if (novelInfo.episodes != null) {
-        final episodesCompanions = novelInfo.episodes!.map((e) {
-          return EpisodeEntitiesCompanion(
-            ncode: Value(normalizedNcode),
-            episodeId: Value(e.index ?? 0),
-            subtitle: Value(e.subtitle),
-            url: Value(e.url),
-            publishedAt: Value(e.update),
-            revisedAt: Value(e.revised),
-          );
-        }).toList();
-        await _db.upsertEpisodes(episodesCompanions);
-      }
+      // APIから最新情報を取得
+      final info = await apiService.fetchNovelInfo(normalizedNcode);
+      return info;
     } on Exception {
-      // バックグラウンド同期のエラーはログ出力のみにとどめる（上位には投げない）
+      rethrow;
+    }
+  }
+
+  /// 小説情報をDBに保存する
+  Future<void> saveNovelInfo(NovelInfo novelInfo) async {
+    final ncode = novelInfo.ncode?.toNormalizedNcode();
+    if (ncode == null) return;
+
+    debugPrint('[NovelRepository] saveNovelInfo: $ncode');
+    await _db.insertNovel(novelInfo.toDbCompanion());
+
+    if (novelInfo.episodes != null) {
+      await saveEpisodes(ncode, novelInfo.episodes!);
     }
   }
 
   /// エピソードリストの同期（SWR用）
-  Future<void> syncEpisodeList(String ncode, int page) async {
+  Future<List<Episode>> syncEpisodeList(String ncode, int page) async {
     final normalizedNcode = ncode.toNormalizedNcode();
     try {
-      // APIから取得（3秒タイムアウト）
+      // APIから取得
       final episodes = await apiService.fetchEpisodeList(normalizedNcode, page);
-
-      // DBに保存
-      final episodesCompanions = episodes.map((e) {
-        return EpisodeEntitiesCompanion(
-          ncode: Value(normalizedNcode),
-          episodeId: Value(e.index ?? 0),
-          subtitle: Value(e.subtitle),
-          url: Value(e.url),
-          publishedAt: Value(e.update),
-          revisedAt: Value(e.revised),
-        );
-      }).toList();
-      await _db.upsertEpisodes(episodesCompanions);
+      return episodes;
     } on Exception {
-      // バックグラウンド同期のエラーはログ出力のみにとどめる
+      rethrow;
     }
+  }
+
+  /// エピソードリストをDBに保存する
+  Future<void> saveEpisodes(String ncode, List<Episode> episodes) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    debugPrint(
+      '[NovelRepository] saveEpisodes: $normalizedNcode, count=${episodes.length}',
+    );
+    final companions = episodes.map((e) {
+      return EpisodeEntitiesCompanion(
+        ncode: Value(normalizedNcode),
+        episodeId: Value(e.index ?? 0),
+        subtitle: Value(e.subtitle),
+        url: Value(e.url),
+        publishedAt: Value(e.update),
+        revisedAt: Value(e.revised),
+      );
+    }).toList();
+    await _db.upsertEpisodes(companions);
   }
 }
 
@@ -759,11 +764,14 @@ Stream<int?> episodeDownloadStatus(
   });
 }
 
-@Riverpod(dependencies: [apiService, novelRepository, appDatabase])
+@Riverpod(
+  keepAlive: true,
+  dependencies: [apiService, novelRepository, appDatabase],
+)
 /// エピソードリストを取得するプロバイダー（SWR）
 Stream<List<Episode>> episodeList(Ref ref, String ncodeAndPage) {
   final parts = ncodeAndPage.split('_');
-  final ncode = parts[0];
+  final normalizedNcode = parts[0].toNormalizedNcode();
   final page = int.parse(parts[1]);
   final db = ref.watch<AppDatabase>(appDatabaseProvider);
   final repo = ref.read<NovelRepository>(novelRepositoryProvider);
@@ -771,19 +779,34 @@ Stream<List<Episode>> episodeList(Ref ref, String ncodeAndPage) {
   final start = (page - 1) * 100 + 1;
   final end = page * 100;
 
+  ref
+    ..onCancel(
+      () => debugPrint('[episodeListProvider] onCancel: $ncodeAndPage'),
+    )
+    ..onDispose(
+      () => debugPrint('[episodeListProvider] onDispose: $ncodeAndPage'),
+    )
+    ..onAddListener(
+      () => debugPrint('[episodeListProvider] onAddListener: $ncodeAndPage'),
+    )
+    ..onRemoveListener(
+      () => debugPrint('[episodeListProvider] onRemoveListener: $ncodeAndPage'),
+    );
+
   return ref.swr<List<Episode>>(
-    key: 'episodeList_$ncodeAndPage',
-    watch: () => db.watchEpisodesRange(ncode, start, end),
-    fetch: () async {
-      return ref.read(apiServiceProvider).fetchEpisodeList(ncode, page);
-    },
-    persist: (List<Episode> _) async {
-      await repo.syncEpisodeList(ncode, page);
+    key: 'episodeList_${normalizedNcode}_$page',
+    watch: () => db.watchEpisodesRange(normalizedNcode, start, end),
+    fetch: () => repo.syncEpisodeList(normalizedNcode, page),
+    persist: (List<Episode> episodes) async {
+      await repo.saveEpisodes(normalizedNcode, episodes);
     },
   );
 }
 
-@Riverpod(dependencies: [apiService, novelRepository, appDatabase])
+@Riverpod(
+  keepAlive: true,
+  dependencies: [apiService, novelRepository, appDatabase],
+)
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
 Stream<NovelInfo> novelInfoWithCache(Ref ref, String ncode) {
   final normalizedNcode = ncode.toNormalizedNcode();
@@ -792,15 +815,13 @@ Stream<NovelInfo> novelInfoWithCache(Ref ref, String ncode) {
 
   return ref.swr<NovelInfo>(
     key: 'novelInfo_$normalizedNcode',
-    watch: () => db.watchNovel(normalizedNcode).map((n) {
-      if (n == null) throw Exception('Novel not found in DB');
-      return n.toModel();
-    }),
-    fetch: () async {
-      return ref.read(apiServiceProvider).fetchNovelInfo(normalizedNcode);
-    },
-    persist: (NovelInfo _) async {
-      await repo.syncNovelInfo(normalizedNcode);
+    watch: () => db
+        .watchNovel(normalizedNcode)
+        .where((n) => n != null)
+        .map((n) => n!.toModel()),
+    fetch: () => repo.syncNovelInfo(normalizedNcode),
+    persist: (NovelInfo info) async {
+      await repo.saveNovelInfo(info);
     },
   );
 }

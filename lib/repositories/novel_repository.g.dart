@@ -601,7 +601,7 @@ final class EpisodeListProvider
   }) : super(
          retry: null,
          name: r'episodeListProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -646,7 +646,7 @@ final class EpisodeListProvider
   }
 }
 
-String _$episodeListHash() => r'a6ca1676923a70e8c0d74a97167bea33c684cc26';
+String _$episodeListHash() => r'56f272ee5cc659754180ce2641d08603a2df4989';
 
 /// エピソードリストを取得するプロバイダー（SWR）
 
@@ -667,7 +667,7 @@ final class EpisodeListFamily extends $Family
           EpisodeListProvider.$allTransitiveDependencies2,
           EpisodeListProvider.$allTransitiveDependencies3,
         },
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   /// エピソードリストを取得するプロバイダー（SWR）
@@ -697,7 +697,7 @@ final class NovelInfoWithCacheProvider
   }) : super(
          retry: null,
          name: r'novelInfoWithCacheProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -742,7 +742,7 @@ final class NovelInfoWithCacheProvider
 }
 
 String _$novelInfoWithCacheHash() =>
-    r'1e996b13b4d7ffdb05ee622bb985622ca54e3f1b';
+    r'0e1f3c66a1f430566c2853058adebcf3bfa6bab2';
 
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
 
@@ -763,7 +763,7 @@ final class NovelInfoWithCacheFamily extends $Family
           NovelInfoWithCacheProvider.$allTransitiveDependencies2,
           NovelInfoWithCacheProvider.$allTransitiveDependencies3,
         },
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。

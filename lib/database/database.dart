@@ -765,24 +765,17 @@ class AppDatabase extends _$AppDatabase {
 
     await batch((batch) {
       for (final episode in newEpisodes) {
-        batch.customStatement(
-          '''
-          INSERT INTO episodes (ncode, episode_id, subtitle, url, published_at, revised_at)
-          VALUES (?, ?, ?, ?, ?, ?)
-          ON CONFLICT(ncode, episode_id) DO UPDATE SET
-            subtitle = excluded.subtitle,
-            url = excluded.url,
-            published_at = excluded.published_at,
-            revised_at = excluded.revised_at;
-        ''',
-          [
-            episode.ncode.value,
-            episode.episodeId.value,
-            episode.subtitle.value,
-            episode.url.value,
-            episode.publishedAt.value,
-            episode.revisedAt.value,
-          ],
+        batch.insert(
+          episodeEntities,
+          episode,
+          onConflict: DoUpdate(
+            (old) => EpisodeEntitiesCompanion(
+              subtitle: episode.subtitle,
+              url: episode.url,
+              publishedAt: episode.publishedAt,
+              revisedAt: episode.revisedAt,
+            ),
+          ),
         );
       }
     });
