@@ -28,7 +28,7 @@ const String userAgent =
 
 @Riverpod(keepAlive: true, dependencies: [])
 /// APIサービスのプロバイダー
-ApiService apiService(Ref ref) => ApiService();
+ApiService apiService(ApiServiceRef ref) => ApiService();
 
 /// APIサービスクラス。
 class ApiService {
@@ -468,9 +468,8 @@ class ApiService {
 // ==================== Providers ====================
 
 /// 小説の情報を取得するプロバイダー（シンプル版）。
-/// 小説の情報を取得するプロバイダー（シンプル版）。
-@Riverpod(dependencies: [apiService])
-Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
+@Riverpod(dependencies: [apiService, appDatabase])
+Future<NovelInfo> novelInfo(NovelInfoRef ref, String ncode) async {
   final normalizedNcode = ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
 
@@ -492,8 +491,11 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 ///
 /// APIから小説情報を取得し、DBに保存する。
-@Riverpod(dependencies: [apiService])
-Future<NovelInfo> novelInfoWithCache(Ref ref, String ncode) async {
+@Riverpod(dependencies: [apiService, appDatabase])
+Future<NovelInfo> novelInfoWithCache(
+  NovelInfoWithCacheRef ref,
+  String ncode,
+) async {
   final normalizedNcode = ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
@@ -534,8 +536,8 @@ Future<NovelInfo> novelInfoWithCache(Ref ref, String ncode) async {
 }
 
 /// 小説のエピソードを取得するプロバイダー。
-@Riverpod(dependencies: [apiService])
-Future<Episode> episode(Ref ref, EpisodeParam param) async {
+@Riverpod(dependencies: [apiService, appDatabase])
+Future<Episode> episode(EpisodeRef ref, EpisodeParam param) async {
   final normalizedNcode = param.ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
   final db = ref.read(appDatabaseProvider);
@@ -572,7 +574,7 @@ Future<Episode> episode(Ref ref, EpisodeParam param) async {
     );
     if (cachedEp != null && cachedEp.content != null) {
       // Reconstruct HTML from content elements
-      final elements = cachedEp.content!;
+      final elements = cachedEp.content;
       final htmlBuffer = StringBuffer();
 
       for (final element in elements) {

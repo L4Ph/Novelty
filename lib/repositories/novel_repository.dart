@@ -17,9 +17,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'novel_repository.g.dart';
 
-@Riverpod(keepAlive: true, dependencies: [apiService])
+@Riverpod(
+  keepAlive: true,
+  dependencies: [apiService, Settings, isOffline, appDatabase],
+)
 /// 小説のダウンロードと管理を行うリポジトリ。
-NovelRepository novelRepository(Ref ref) {
+NovelRepository novelRepository(NovelRepositoryRef ref) {
   final apiService = ref.watch(apiServiceProvider);
   final settings = ref.watch(settingsProvider);
   final db = ref.watch(appDatabaseProvider);
@@ -560,7 +563,7 @@ class NovelRepository {
 @Riverpod(dependencies: [novelRepository])
 /// 小説のコンテンツを取得するプロバイダー。
 Future<List<NovelContentElement>> novelContent(
-  Ref ref, {
+  NovelContentRef ref, {
   required String ncode,
   required int episode,
   String? revised,
@@ -570,7 +573,7 @@ Future<List<NovelContentElement>> novelContent(
   return repository.getEpisode(normalizedNcode, episode, revised: revised);
 }
 
-@riverpod
+@Riverpod(dependencies: [appDatabase, libraryNovels, Settings])
 /// 小説のライブラリ状態を管理するプロバイダー。
 class LibraryStatus extends _$LibraryStatus {
   @override
@@ -606,7 +609,10 @@ class LibraryStatus extends _$LibraryStatus {
 
 @Riverpod(dependencies: [novelRepository])
 /// 小説のダウンロード進捗を監視するプロバイダー。
-Stream<DownloadProgress?> downloadProgress(Ref ref, String ncode) {
+Stream<DownloadProgress?> downloadProgress(
+  DownloadProgressRef ref,
+  String ncode,
+) {
   final normalizedNcode = ncode.toNormalizedNcode();
   final repo = ref.watch(novelRepositoryProvider);
   return repo.watchDownloadProgress(normalizedNcode);
@@ -678,12 +684,12 @@ class DownloadStatus extends _$DownloadStatus {
   }
 }
 
-@riverpod
+@Riverpod(dependencies: [appDatabase])
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
 /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
 Stream<int?> episodeDownloadStatus(
-  Ref ref, {
+  EpisodeDownloadStatusRef ref, {
   required String ncode,
   required int episode,
 }) {
@@ -703,7 +709,10 @@ Stream<int?> episodeDownloadStatus(
 
 @Riverpod(dependencies: [novelRepository])
 /// エピソードリストを取得するプロバイダー
-Future<List<Episode>> episodeList(Ref ref, String ncodeAndPage) async {
+Future<List<Episode>> episodeList(
+  EpisodeListRef ref,
+  String ncodeAndPage,
+) async {
   final parts = ncodeAndPage.split('_');
   final ncode = parts[0];
   final page = int.parse(parts[1]);

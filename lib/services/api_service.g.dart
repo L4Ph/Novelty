@@ -52,15 +52,13 @@ final class ApiServiceProvider
   }
 }
 
-String _$apiServiceHash() => r'd8a9cf67a08249ea1f590a1d16fea7a883a0523e';
+String _$apiServiceHash() => r'5b3883996042b6708843e5d7d22ed12ce1c4241e';
 
-/// 小説の情報を取得するプロバイダー（シンプル版）。
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 
 @ProviderFor(novelInfo)
 const novelInfoProvider = NovelInfoFamily._();
 
-/// 小説の情報を取得するプロバイダー（シンプル版）。
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 
 final class NovelInfoProvider
@@ -71,7 +69,6 @@ final class NovelInfoProvider
           FutureOr<NovelInfo>
         >
     with $FutureModifier<NovelInfo>, $FutureProvider<NovelInfo> {
-  /// 小説の情報を取得するプロバイダー（シンプル版）。
   /// 小説の情報を取得するプロバイダー（シンプル版）。
   const NovelInfoProvider._({
     required NovelInfoFamily super.from,
@@ -85,6 +82,7 @@ final class NovelInfoProvider
        );
 
   static const $allTransitiveDependencies0 = apiServiceProvider;
+  static const $allTransitiveDependencies1 = appDatabaseProvider;
 
   @override
   String debugGetCreateSourceHash() => _$novelInfoHash();
@@ -118,9 +116,8 @@ final class NovelInfoProvider
   }
 }
 
-String _$novelInfoHash() => r'2f7333062cfebde0b9f218a674015c8cd442ae32';
+String _$novelInfoHash() => r'519e7a78cd4b2ba90ee08c22aab1f87349527d55';
 
-/// 小説の情報を取得するプロバイダー（シンプル版）。
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 
 final class NovelInfoFamily extends $Family
@@ -129,14 +126,17 @@ final class NovelInfoFamily extends $Family
     : super(
         retry: null,
         name: r'novelInfoProvider',
-        dependencies: const <ProviderOrFamily>[apiServiceProvider],
+        dependencies: const <ProviderOrFamily>[
+          apiServiceProvider,
+          appDatabaseProvider,
+        ],
         $allTransitiveDependencies: const <ProviderOrFamily>[
           NovelInfoProvider.$allTransitiveDependencies0,
+          NovelInfoProvider.$allTransitiveDependencies1,
         ],
         isAutoDispose: true,
       );
 
-  /// 小説の情報を取得するプロバイダー（シンプル版）。
   /// 小説の情報を取得するプロバイダー（シンプル版）。
 
   NovelInfoProvider call(String ncode) =>
@@ -180,6 +180,7 @@ final class NovelInfoWithCacheProvider
        );
 
   static const $allTransitiveDependencies0 = apiServiceProvider;
+  static const $allTransitiveDependencies1 = appDatabaseProvider;
 
   @override
   String debugGetCreateSourceHash() => _$novelInfoWithCacheHash();
@@ -214,7 +215,7 @@ final class NovelInfoWithCacheProvider
 }
 
 String _$novelInfoWithCacheHash() =>
-    r'a510ecfbe1173c65aed549ba9bc8ea7ab8bcc898';
+    r'9962d1fc0cb9f4353b676c6af8f8825ff5d1ebe3';
 
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 ///
@@ -226,9 +227,13 @@ final class NovelInfoWithCacheFamily extends $Family
     : super(
         retry: null,
         name: r'novelInfoWithCacheProvider',
-        dependencies: const <ProviderOrFamily>[apiServiceProvider],
+        dependencies: const <ProviderOrFamily>[
+          apiServiceProvider,
+          appDatabaseProvider,
+        ],
         $allTransitiveDependencies: const <ProviderOrFamily>[
           NovelInfoWithCacheProvider.$allTransitiveDependencies0,
+          NovelInfoWithCacheProvider.$allTransitiveDependencies1,
         ],
         isAutoDispose: true,
       );
@@ -267,6 +272,7 @@ final class EpisodeProvider
        );
 
   static const $allTransitiveDependencies0 = apiServiceProvider;
+  static const $allTransitiveDependencies1 = appDatabaseProvider;
 
   @override
   String debugGetCreateSourceHash() => _$episodeHash();
@@ -300,7 +306,7 @@ final class EpisodeProvider
   }
 }
 
-String _$episodeHash() => r'2080f0f72a835e94092e04f6a35e65ff18f15b9d';
+String _$episodeHash() => r'c87869bae87816bc12bd35bb52434de21f89a555';
 
 /// 小説のエピソードを取得するプロバイダー。
 
@@ -310,9 +316,13 @@ final class EpisodeFamily extends $Family
     : super(
         retry: null,
         name: r'episodeProvider',
-        dependencies: const <ProviderOrFamily>[apiServiceProvider],
+        dependencies: const <ProviderOrFamily>[
+          apiServiceProvider,
+          appDatabaseProvider,
+        ],
         $allTransitiveDependencies: const <ProviderOrFamily>[
           EpisodeProvider.$allTransitiveDependencies0,
+          EpisodeProvider.$allTransitiveDependencies1,
         ],
         isAutoDispose: true,
       );
