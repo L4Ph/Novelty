@@ -37,8 +37,6 @@ final class EnrichedSearchDataProvider
          $allTransitiveDependencies: null,
        );
 
-  static const $allTransitiveDependencies0 = appDatabaseProvider;
-
   @override
   String debugGetCreateSourceHash() => _$enrichedSearchDataHash();
 
@@ -73,7 +71,7 @@ final class EnrichedSearchDataProvider
 }
 
 String _$enrichedSearchDataHash() =>
-    r'c90011901c2e1c8384dde6143a930247ae6d6d1d';
+    r'115177828802ddbca70bb85e09354c694f65fe06';
 
 /// 検索結果をデータベースのライブラリ状態で強化するプロバイダー
 
@@ -87,10 +85,8 @@ final class EnrichedSearchDataFamily extends $Family
     : super(
         retry: null,
         name: r'enrichedSearchDataProvider',
-        dependencies: const <ProviderOrFamily>[appDatabaseProvider],
-        $allTransitiveDependencies: const <ProviderOrFamily>[
-          EnrichedSearchDataProvider.$allTransitiveDependencies0,
-        ],
+        dependencies: null,
+        $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
@@ -132,9 +128,6 @@ final class EnrichedNovelProvider
          $allTransitiveDependencies: null,
        );
 
-  static const $allTransitiveDependencies0 = apiServiceProvider;
-  static const $allTransitiveDependencies1 = appDatabaseProvider;
-
   @override
   String debugGetCreateSourceHash() => _$enrichedNovelHash();
 
@@ -168,7 +161,7 @@ final class EnrichedNovelProvider
   }
 }
 
-String _$enrichedNovelHash() => r'2912034138e53b5b81b66a7477e6be90e6f2de0b';
+String _$enrichedNovelHash() => r'4c5408924b9b046662f7709784685f107d29d0a5';
 
 /// ncodeから単一の豊富な小説データを取得するプロバイダー
 
@@ -178,14 +171,8 @@ final class EnrichedNovelFamily extends $Family
     : super(
         retry: null,
         name: r'enrichedNovelProvider',
-        dependencies: const <ProviderOrFamily>[
-          apiServiceProvider,
-          appDatabaseProvider,
-        ],
-        $allTransitiveDependencies: const <ProviderOrFamily>[
-          EnrichedNovelProvider.$allTransitiveDependencies0,
-          EnrichedNovelProvider.$allTransitiveDependencies1,
-        ],
+        dependencies: null,
+        $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 

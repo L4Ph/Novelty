@@ -31,10 +31,10 @@ class EnrichedNovelData {
   }
 }
 
-@Riverpod(dependencies: [appDatabase])
+@riverpod
 /// 検索結果をデータベースのライブラリ状態で強化するプロバイダー
 Future<List<EnrichedNovelData>> enrichedSearchData(
-  EnrichedSearchDataRef ref,
+  Ref ref,
   List<NovelInfo> searchResults,
 ) async {
   final db = ref.watch(appDatabaseProvider);
@@ -68,10 +68,10 @@ Future<Set<String>> getLibraryNcodes(WidgetRef ref) async {
   return libraryNovels.map((novel) => novel.ncode).toSet();
 }
 
-@Riverpod(dependencies: [apiService, appDatabase])
+@riverpod
 /// ncodeから単一の豊富な小説データを取得するプロバイダー
 Future<EnrichedNovelData> enrichedNovel(
-  EnrichedNovelRef ref,
+  Ref ref,
   String ncode,
 ) async {
   final apiService = ref.watch(apiServiceProvider);

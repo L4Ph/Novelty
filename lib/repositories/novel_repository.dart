@@ -17,12 +17,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'novel_repository.g.dart';
 
-@Riverpod(
-  keepAlive: true,
-  dependencies: [apiService, Settings, isOffline, appDatabase],
-)
+@Riverpod(keepAlive: true)
 /// 小説のダウンロードと管理を行うリポジトリ。
-NovelRepository novelRepository(NovelRepositoryRef ref) {
+NovelRepository novelRepository(Ref ref) {
   final apiService = ref.watch(apiServiceProvider);
   final settings = ref.watch(settingsProvider);
   final db = ref.watch(appDatabaseProvider);
@@ -560,10 +557,10 @@ class NovelRepository {
 
 // ==================== Providers ====================
 
-@Riverpod(dependencies: [novelRepository])
+@riverpod
 /// 小説のコンテンツを取得するプロバイダー。
 Future<List<NovelContentElement>> novelContent(
-  NovelContentRef ref, {
+  Ref ref, {
   required String ncode,
   required int episode,
   String? revised,
@@ -573,7 +570,7 @@ Future<List<NovelContentElement>> novelContent(
   return repository.getEpisode(normalizedNcode, episode, revised: revised);
 }
 
-@Riverpod(dependencies: [appDatabase, libraryNovels, Settings])
+@riverpod
 /// 小説のライブラリ状態を管理するプロバイダー。
 class LibraryStatus extends _$LibraryStatus {
   @override
@@ -607,10 +604,10 @@ class LibraryStatus extends _$LibraryStatus {
   }
 }
 
-@Riverpod(dependencies: [novelRepository])
+@riverpod
 /// 小説のダウンロード進捗を監視するプロバイダー。
 Stream<DownloadProgress?> downloadProgress(
-  DownloadProgressRef ref,
+  Ref ref,
   String ncode,
 ) {
   final normalizedNcode = ncode.toNormalizedNcode();
@@ -618,7 +615,7 @@ Stream<DownloadProgress?> downloadProgress(
   return repo.watchDownloadProgress(normalizedNcode);
 }
 
-@Riverpod(dependencies: [novelRepository, downloadProgress])
+@riverpod
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
 /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
@@ -684,12 +681,12 @@ class DownloadStatus extends _$DownloadStatus {
   }
 }
 
-@Riverpod(dependencies: [appDatabase])
+@riverpod
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
 /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
 Stream<int?> episodeDownloadStatus(
-  EpisodeDownloadStatusRef ref, {
+  Ref ref, {
   required String ncode,
   required int episode,
 }) {
@@ -707,10 +704,10 @@ Stream<int?> episodeDownloadStatus(
   });
 }
 
-@Riverpod(dependencies: [novelRepository])
+@riverpod
 /// エピソードリストを取得するプロバイダー
 Future<List<Episode>> episodeList(
-  EpisodeListRef ref,
+  Ref ref,
   String ncodeAndPage,
 ) async {
   final parts = ncodeAndPage.split('_');

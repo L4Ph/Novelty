@@ -19,7 +19,7 @@ class ConnectivityStatus extends _$ConnectivityStatus {
 
 /// オフラインかどうかを判定するプロバイダー
 @riverpod
-bool isOffline(IsOfflineRef ref) {
+bool isOffline(Ref ref) {
   final status = ref.watch(connectivityStatusProvider);
   return status.maybeWhen(
     data: (result) => result.contains(ConnectivityResult.none),

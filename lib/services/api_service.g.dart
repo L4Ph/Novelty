@@ -26,8 +26,8 @@ final class ApiServiceProvider
         retry: null,
         name: r'apiServiceProvider',
         isAutoDispose: false,
-        dependencies: const <ProviderOrFamily>[],
-        $allTransitiveDependencies: const <ProviderOrFamily>[],
+        dependencies: null,
+        $allTransitiveDependencies: null,
       );
 
   @override
@@ -52,7 +52,7 @@ final class ApiServiceProvider
   }
 }
 
-String _$apiServiceHash() => r'5b3883996042b6708843e5d7d22ed12ce1c4241e';
+String _$apiServiceHash() => r'93a7e3b4d3004741abc3061c4688239c3a72f9c4';
 
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 
@@ -80,9 +80,6 @@ final class NovelInfoProvider
          dependencies: null,
          $allTransitiveDependencies: null,
        );
-
-  static const $allTransitiveDependencies0 = apiServiceProvider;
-  static const $allTransitiveDependencies1 = appDatabaseProvider;
 
   @override
   String debugGetCreateSourceHash() => _$novelInfoHash();
@@ -116,7 +113,7 @@ final class NovelInfoProvider
   }
 }
 
-String _$novelInfoHash() => r'519e7a78cd4b2ba90ee08c22aab1f87349527d55';
+String _$novelInfoHash() => r'a044759c69e959c739cf07f33f1545371e1f2cd1';
 
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 
@@ -126,14 +123,8 @@ final class NovelInfoFamily extends $Family
     : super(
         retry: null,
         name: r'novelInfoProvider',
-        dependencies: const <ProviderOrFamily>[
-          apiServiceProvider,
-          appDatabaseProvider,
-        ],
-        $allTransitiveDependencies: const <ProviderOrFamily>[
-          NovelInfoProvider.$allTransitiveDependencies0,
-          NovelInfoProvider.$allTransitiveDependencies1,
-        ],
+        dependencies: null,
+        $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
@@ -179,9 +170,6 @@ final class NovelInfoWithCacheProvider
          $allTransitiveDependencies: null,
        );
 
-  static const $allTransitiveDependencies0 = apiServiceProvider;
-  static const $allTransitiveDependencies1 = appDatabaseProvider;
-
   @override
   String debugGetCreateSourceHash() => _$novelInfoWithCacheHash();
 
@@ -215,7 +203,7 @@ final class NovelInfoWithCacheProvider
 }
 
 String _$novelInfoWithCacheHash() =>
-    r'9962d1fc0cb9f4353b676c6af8f8825ff5d1ebe3';
+    r'd3d9a381bb6f41093cdb2804934fa3e553172617';
 
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 ///
@@ -227,14 +215,8 @@ final class NovelInfoWithCacheFamily extends $Family
     : super(
         retry: null,
         name: r'novelInfoWithCacheProvider',
-        dependencies: const <ProviderOrFamily>[
-          apiServiceProvider,
-          appDatabaseProvider,
-        ],
-        $allTransitiveDependencies: const <ProviderOrFamily>[
-          NovelInfoWithCacheProvider.$allTransitiveDependencies0,
-          NovelInfoWithCacheProvider.$allTransitiveDependencies1,
-        ],
+        dependencies: null,
+        $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
@@ -271,9 +253,6 @@ final class EpisodeProvider
          $allTransitiveDependencies: null,
        );
 
-  static const $allTransitiveDependencies0 = apiServiceProvider;
-  static const $allTransitiveDependencies1 = appDatabaseProvider;
-
   @override
   String debugGetCreateSourceHash() => _$episodeHash();
 
@@ -306,7 +285,7 @@ final class EpisodeProvider
   }
 }
 
-String _$episodeHash() => r'c87869bae87816bc12bd35bb52434de21f89a555';
+String _$episodeHash() => r'7a92756bf059268f3f7fdc5d1e8fec0bb56ae035';
 
 /// 小説のエピソードを取得するプロバイダー。
 
@@ -316,14 +295,8 @@ final class EpisodeFamily extends $Family
     : super(
         retry: null,
         name: r'episodeProvider',
-        dependencies: const <ProviderOrFamily>[
-          apiServiceProvider,
-          appDatabaseProvider,
-        ],
-        $allTransitiveDependencies: const <ProviderOrFamily>[
-          EpisodeProvider.$allTransitiveDependencies0,
-          EpisodeProvider.$allTransitiveDependencies1,
-        ],
+        dependencies: null,
+        $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 

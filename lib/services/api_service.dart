@@ -26,9 +26,9 @@ const int allTimeRankingLimit = 500;
 const String userAgent =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36';
 
-@Riverpod(keepAlive: true, dependencies: [])
+@Riverpod(keepAlive: true)
 /// APIサービスのプロバイダー
-ApiService apiService(ApiServiceRef ref) => ApiService();
+ApiService apiService(Ref ref) => ApiService();
 
 /// APIサービスクラス。
 class ApiService {
@@ -468,8 +468,8 @@ class ApiService {
 // ==================== Providers ====================
 
 /// 小説の情報を取得するプロバイダー（シンプル版）。
-@Riverpod(dependencies: [apiService, appDatabase])
-Future<NovelInfo> novelInfo(NovelInfoRef ref, String ncode) async {
+@riverpod
+Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   final normalizedNcode = ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
 
@@ -491,9 +491,9 @@ Future<NovelInfo> novelInfo(NovelInfoRef ref, String ncode) async {
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 ///
 /// APIから小説情報を取得し、DBに保存する。
-@Riverpod(dependencies: [apiService, appDatabase])
+@riverpod
 Future<NovelInfo> novelInfoWithCache(
-  NovelInfoWithCacheRef ref,
+  Ref ref,
   String ncode,
 ) async {
   final normalizedNcode = ncode.toNormalizedNcode();
@@ -536,8 +536,8 @@ Future<NovelInfo> novelInfoWithCache(
 }
 
 /// 小説のエピソードを取得するプロバイダー。
-@Riverpod(dependencies: [apiService, appDatabase])
-Future<Episode> episode(EpisodeRef ref, EpisodeParam param) async {
+@riverpod
+Future<Episode> episode(Ref ref, EpisodeParam param) async {
   final normalizedNcode = param.ncode.toNormalizedNcode();
   final apiService = ref.read(apiServiceProvider);
   final db = ref.read(appDatabaseProvider);
@@ -577,10 +577,10 @@ Future<Episode> episode(EpisodeRef ref, EpisodeParam param) async {
       final elements = cachedEp.content;
       final htmlBuffer = StringBuffer();
 
-      for (final element in elements) {
+      for (final element in elements!) {
         element.when(
-          plainText: (text) => htmlBuffer.write('<p>$text</p>'),
-          rubyText: (base, ruby) =>
+          plainText: (String text) => htmlBuffer.write('<p>$text</p>'),
+          rubyText: (String base, String ruby) =>
               htmlBuffer.write('<p><ruby>$base<rt>$ruby</rt></ruby></p>'),
           newLine: () => htmlBuffer.write('<br>'),
         );
