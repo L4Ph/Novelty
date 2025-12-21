@@ -49,7 +49,7 @@ class SwrClient {
     return _activeControllers
         .putIfAbsent(key, () {
           late StreamController<Object?> c;
-          StreamSubscription? subscription;
+          StreamSubscription<T>? subscription;
 
           Future<void> start() async {
             try {
@@ -98,7 +98,7 @@ class SwrClient {
             }
           }
 
-          c = StreamController<Object?>.broadcast(
+          return c = StreamController<Object?>.broadcast(
             onListen: () {
               unawaited(start());
             },
@@ -109,7 +109,6 @@ class SwrClient {
               c.close();
             },
           );
-          return c;
         })
         .stream
         .cast<T>();
@@ -167,7 +166,7 @@ class SwrClient {
             _lastFetched[key] = DateTime.now();
             result = data;
             break; // 成功
-          } on Object catch (e) {
+          } on Object {
             if (attempts >= options.retryCount) {
               break;
             }
@@ -182,8 +181,7 @@ class SwrClient {
       }
     });
 
-    _inflightRequests[key] = future;
-    return future;
+    return _inflightRequests[key] = future;
   }
 
   void _setLoading(String key, bool loading) {
