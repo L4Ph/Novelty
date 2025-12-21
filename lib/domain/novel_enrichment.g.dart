@@ -128,8 +128,6 @@ final class EnrichedNovelProvider
          $allTransitiveDependencies: null,
        );
 
-  static const $allTransitiveDependencies0 = apiServiceProvider;
-
   @override
   String debugGetCreateSourceHash() => _$enrichedNovelHash();
 
@@ -163,7 +161,7 @@ final class EnrichedNovelProvider
   }
 }
 
-String _$enrichedNovelHash() => r'b8715ebeab43e5641d0eb749c558030ae7f74468';
+String _$enrichedNovelHash() => r'4c5408924b9b046662f7709784685f107d29d0a5';
 
 /// ncodeから単一の豊富な小説データを取得するプロバイダー
 
@@ -173,10 +171,8 @@ final class EnrichedNovelFamily extends $Family
     : super(
         retry: null,
         name: r'enrichedNovelProvider',
-        dependencies: const <ProviderOrFamily>[apiServiceProvider],
-        $allTransitiveDependencies: const <ProviderOrFamily>[
-          EnrichedNovelProvider.$allTransitiveDependencies0,
-        ],
+        dependencies: null,
+        $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 

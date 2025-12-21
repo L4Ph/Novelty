@@ -351,14 +351,6 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<_i3.Novel?>);
 
   @override
-  _i5.Stream<_i3.Novel?> watchNovel(String? ncode) =>
-      (super.noSuchMethod(
-            Invocation.method(#watchNovel, [ncode]),
-            returnValue: _i5.Stream<_i3.Novel?>.empty(),
-          )
-          as _i5.Stream<_i3.Novel?>);
-
-  @override
   _i5.Future<List<_i3.Novel>> searchNovels(String? query) =>
       (super.noSuchMethod(
             Invocation.method(#searchNovels, [query]),
@@ -523,18 +515,6 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
             returnValue: _i5.Future<List<_i7.Episode>>.value(<_i7.Episode>[]),
           )
           as _i5.Future<List<_i7.Episode>>);
-
-  @override
-  _i5.Stream<List<_i7.Episode>> watchEpisodesRange(
-    String? ncode,
-    int? start,
-    int? end,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#watchEpisodesRange, [ncode, start, end]),
-            returnValue: _i5.Stream<List<_i7.Episode>>.empty(),
-          )
-          as _i5.Stream<List<_i7.Episode>>);
 
   @override
   _i5.Stream<_i3.EpisodeRow?> watchEpisodeEntity(

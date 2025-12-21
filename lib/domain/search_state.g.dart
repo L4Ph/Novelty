@@ -24,13 +24,9 @@ final class SearchStateNotifierProvider
         retry: null,
         name: r'searchStateProvider',
         isAutoDispose: true,
-        dependencies: const <ProviderOrFamily>[apiServiceProvider],
-        $allTransitiveDependencies: const <ProviderOrFamily>[
-          SearchStateNotifierProvider.$allTransitiveDependencies0,
-        ],
+        dependencies: null,
+        $allTransitiveDependencies: null,
       );
-
-  static const $allTransitiveDependencies0 = apiServiceProvider;
 
   @override
   String debugGetCreateSourceHash() => _$searchStateNotifierHash();
@@ -49,7 +45,7 @@ final class SearchStateNotifierProvider
 }
 
 String _$searchStateNotifierHash() =>
-    r'0825c84da5793310c984406bb260736f3799a8ea';
+    r'9945052144c3845c69aae597406f2c64437112eb';
 
 /// 検索状態を管理するNotifierプロバイダー。
 

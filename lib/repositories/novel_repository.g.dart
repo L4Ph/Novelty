@@ -27,21 +27,9 @@ final class NovelRepositoryProvider
         retry: null,
         name: r'novelRepositoryProvider',
         isAutoDispose: false,
-        dependencies: const <ProviderOrFamily>[
-          apiServiceProvider,
-          appDatabaseProvider,
-          settingsProvider,
-        ],
-        $allTransitiveDependencies: const <ProviderOrFamily>[
-          NovelRepositoryProvider.$allTransitiveDependencies0,
-          NovelRepositoryProvider.$allTransitiveDependencies1,
-          NovelRepositoryProvider.$allTransitiveDependencies2,
-        ],
+        dependencies: null,
+        $allTransitiveDependencies: null,
       );
-
-  static const $allTransitiveDependencies0 = apiServiceProvider;
-  static const $allTransitiveDependencies1 = appDatabaseProvider;
-  static const $allTransitiveDependencies2 = settingsProvider;
 
   @override
   String debugGetCreateSourceHash() => _$novelRepositoryHash();
@@ -65,7 +53,7 @@ final class NovelRepositoryProvider
   }
 }
 
-String _$novelRepositoryHash() => r'a0a8162a93a68d29f7fd5880cdb95b3c38bf9028';
+String _$novelRepositoryHash() => r'2e5398c23a6f338f7d37b8928e2cce71860f7f06';
 
 /// 小説のコンテンツを取得するプロバイダー。
 
@@ -95,14 +83,6 @@ final class NovelContentProvider
          dependencies: null,
          $allTransitiveDependencies: null,
        );
-
-  static const $allTransitiveDependencies0 = novelRepositoryProvider;
-  static const $allTransitiveDependencies1 =
-      NovelRepositoryProvider.$allTransitiveDependencies0;
-  static const $allTransitiveDependencies2 =
-      NovelRepositoryProvider.$allTransitiveDependencies1;
-  static const $allTransitiveDependencies3 =
-      NovelRepositoryProvider.$allTransitiveDependencies2;
 
   @override
   String debugGetCreateSourceHash() => _$novelContentHash();
@@ -143,7 +123,7 @@ final class NovelContentProvider
   }
 }
 
-String _$novelContentHash() => r'101d1862e824c2d3ae7370f7990f24a36f06df23';
+String _$novelContentHash() => r'946148ce819d122abf573b303eddb7fb79334a2e';
 
 /// 小説のコンテンツを取得するプロバイダー。
 
@@ -157,13 +137,8 @@ final class NovelContentFamily extends $Family
     : super(
         retry: null,
         name: r'novelContentProvider',
-        dependencies: const <ProviderOrFamily>[novelRepositoryProvider],
-        $allTransitiveDependencies: const <ProviderOrFamily>{
-          NovelContentProvider.$allTransitiveDependencies0,
-          NovelContentProvider.$allTransitiveDependencies1,
-          NovelContentProvider.$allTransitiveDependencies2,
-          NovelContentProvider.$allTransitiveDependencies3,
-        },
+        dependencies: null,
+        $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
@@ -579,39 +554,32 @@ final class EpisodeDownloadStatusFamily extends $Family
   String toString() => r'episodeDownloadStatusProvider';
 }
 
-/// エピソードリストを取得するプロバイダー（SWR）
+/// エピソードリストを取得するプロバイダー
 
 @ProviderFor(episodeList)
 const episodeListProvider = EpisodeListFamily._();
 
-/// エピソードリストを取得するプロバイダー（SWR）
+/// エピソードリストを取得するプロバイダー
 
 final class EpisodeListProvider
     extends
         $FunctionalProvider<
           AsyncValue<List<Episode>>,
           List<Episode>,
-          Stream<List<Episode>>
+          FutureOr<List<Episode>>
         >
-    with $FutureModifier<List<Episode>>, $StreamProvider<List<Episode>> {
-  /// エピソードリストを取得するプロバイダー（SWR）
+    with $FutureModifier<List<Episode>>, $FutureProvider<List<Episode>> {
+  /// エピソードリストを取得するプロバイダー
   const EpisodeListProvider._({
     required EpisodeListFamily super.from,
     required String super.argument,
   }) : super(
          retry: null,
          name: r'episodeListProvider',
-         isAutoDispose: false,
+         isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
-
-  static const $allTransitiveDependencies0 = apiServiceProvider;
-  static const $allTransitiveDependencies1 = novelRepositoryProvider;
-  static const $allTransitiveDependencies2 =
-      NovelRepositoryProvider.$allTransitiveDependencies1;
-  static const $allTransitiveDependencies3 =
-      NovelRepositoryProvider.$allTransitiveDependencies2;
 
   @override
   String debugGetCreateSourceHash() => _$episodeListHash();
@@ -625,12 +593,12 @@ final class EpisodeListProvider
 
   @$internal
   @override
-  $StreamProviderElement<List<Episode>> $createElement(
+  $FutureProviderElement<List<Episode>> $createElement(
     $ProviderPointer pointer,
-  ) => $StreamProviderElement(pointer);
+  ) => $FutureProviderElement(pointer);
 
   @override
-  Stream<List<Episode>> create(Ref ref) {
+  FutureOr<List<Episode>> create(Ref ref) {
     final argument = this.argument as String;
     return episodeList(ref, argument);
   }
@@ -646,131 +614,26 @@ final class EpisodeListProvider
   }
 }
 
-String _$episodeListHash() => r'56f272ee5cc659754180ce2641d08603a2df4989';
+String _$episodeListHash() => r'eac464a5085d796cfee879af15cc876d0ca3c5ee';
 
-/// エピソードリストを取得するプロバイダー（SWR）
+/// エピソードリストを取得するプロバイダー
 
 final class EpisodeListFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<List<Episode>>, String> {
+    with $FunctionalFamilyOverride<FutureOr<List<Episode>>, String> {
   const EpisodeListFamily._()
     : super(
         retry: null,
         name: r'episodeListProvider',
-        dependencies: const <ProviderOrFamily>[
-          apiServiceProvider,
-          novelRepositoryProvider,
-          appDatabaseProvider,
-        ],
-        $allTransitiveDependencies: const <ProviderOrFamily>{
-          EpisodeListProvider.$allTransitiveDependencies0,
-          EpisodeListProvider.$allTransitiveDependencies1,
-          EpisodeListProvider.$allTransitiveDependencies2,
-          EpisodeListProvider.$allTransitiveDependencies3,
-        },
-        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
       );
 
-  /// エピソードリストを取得するプロバイダー（SWR）
+  /// エピソードリストを取得するプロバイダー
 
   EpisodeListProvider call(String ncodeAndPage) =>
       EpisodeListProvider._(argument: ncodeAndPage, from: this);
 
   @override
   String toString() => r'episodeListProvider';
-}
-
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
-
-@ProviderFor(novelInfoWithCache)
-const novelInfoWithCacheProvider = NovelInfoWithCacheFamily._();
-
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
-
-final class NovelInfoWithCacheProvider
-    extends
-        $FunctionalProvider<AsyncValue<NovelInfo>, NovelInfo, Stream<NovelInfo>>
-    with $FutureModifier<NovelInfo>, $StreamProvider<NovelInfo> {
-  /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
-  const NovelInfoWithCacheProvider._({
-    required NovelInfoWithCacheFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'novelInfoWithCacheProvider',
-         isAutoDispose: false,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  static const $allTransitiveDependencies0 = apiServiceProvider;
-  static const $allTransitiveDependencies1 = novelRepositoryProvider;
-  static const $allTransitiveDependencies2 =
-      NovelRepositoryProvider.$allTransitiveDependencies1;
-  static const $allTransitiveDependencies3 =
-      NovelRepositoryProvider.$allTransitiveDependencies2;
-
-  @override
-  String debugGetCreateSourceHash() => _$novelInfoWithCacheHash();
-
-  @override
-  String toString() {
-    return r'novelInfoWithCacheProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $StreamProviderElement<NovelInfo> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
-
-  @override
-  Stream<NovelInfo> create(Ref ref) {
-    final argument = this.argument as String;
-    return novelInfoWithCache(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is NovelInfoWithCacheProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$novelInfoWithCacheHash() =>
-    r'0e1f3c66a1f430566c2853058adebcf3bfa6bab2';
-
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
-
-final class NovelInfoWithCacheFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<NovelInfo>, String> {
-  const NovelInfoWithCacheFamily._()
-    : super(
-        retry: null,
-        name: r'novelInfoWithCacheProvider',
-        dependencies: const <ProviderOrFamily>[
-          apiServiceProvider,
-          novelRepositoryProvider,
-          appDatabaseProvider,
-        ],
-        $allTransitiveDependencies: const <ProviderOrFamily>{
-          NovelInfoWithCacheProvider.$allTransitiveDependencies0,
-          NovelInfoWithCacheProvider.$allTransitiveDependencies1,
-          NovelInfoWithCacheProvider.$allTransitiveDependencies2,
-          NovelInfoWithCacheProvider.$allTransitiveDependencies3,
-        },
-        isAutoDispose: false,
-      );
-
-  /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
-
-  NovelInfoWithCacheProvider call(String ncode) =>
-      NovelInfoWithCacheProvider._(argument: ncode, from: this);
-
-  @override
-  String toString() => r'novelInfoWithCacheProvider';
 }

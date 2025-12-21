@@ -39,7 +39,7 @@ class AppSettings {
   }
 }
 
-@Riverpod(keepAlive: true, dependencies: [])
+@Riverpod(keepAlive: true)
 /// アプリケーションの設定を提供するプロバイダー。
 class Settings extends _$Settings {
   static const _fontSizePreferenceKey = 'font_size';
