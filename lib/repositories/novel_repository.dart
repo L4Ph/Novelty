@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/download_progress.dart';
@@ -578,7 +577,6 @@ class NovelRepository {
     final ncode = novelInfo.ncode?.toNormalizedNcode();
     if (ncode == null) return;
 
-    debugPrint('[NovelRepository] saveNovelInfo: $ncode');
     await _db.insertNovel(novelInfo.toDbCompanion());
 
     if (novelInfo.episodes != null) {
@@ -601,9 +599,6 @@ class NovelRepository {
   /// エピソードリストをDBに保存する
   Future<void> saveEpisodes(String ncode, List<Episode> episodes) async {
     final normalizedNcode = ncode.toNormalizedNcode();
-    debugPrint(
-      '[NovelRepository] saveEpisodes: $normalizedNcode, count=${episodes.length}',
-    );
     final companions = episodes.map((e) {
       return EpisodeEntitiesCompanion(
         ncode: Value(normalizedNcode),
@@ -778,20 +773,6 @@ Stream<List<Episode>> episodeList(Ref ref, String ncodeAndPage) {
 
   final start = (page - 1) * 100 + 1;
   final end = page * 100;
-
-  ref
-    ..onCancel(
-      () => debugPrint('[episodeListProvider] onCancel: $ncodeAndPage'),
-    )
-    ..onDispose(
-      () => debugPrint('[episodeListProvider] onDispose: $ncodeAndPage'),
-    )
-    ..onAddListener(
-      () => debugPrint('[episodeListProvider] onAddListener: $ncodeAndPage'),
-    )
-    ..onRemoveListener(
-      () => debugPrint('[episodeListProvider] onRemoveListener: $ncodeAndPage'),
-    );
 
   return ref.swr<List<Episode>>(
     key: 'episodeList_${normalizedNcode}_$page',

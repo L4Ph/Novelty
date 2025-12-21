@@ -1,7 +1,6 @@
 // ignore_for_file: unawaited_futures, discarded_futures // SWRの検証（Validation）ロジックにおいて、バックグラウンドでのフェッチ実行は意図的な設計です。
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_swr/src/swr_options.dart';
 
 /// SWR操作を処理するコアクライアント。
@@ -47,11 +46,8 @@ class SwrClient {
     required Future<void> Function(T) persist,
     SwrOptions options = const SwrOptions(),
   }) {
-    // debugPrint('[SwrClient] validate called for key: $key');
-
     return _activeControllers
         .putIfAbsent(key, () {
-          // debugPrint('[SwrClient] creating new session controller for $key');
           late StreamController<Object?> c;
           StreamSubscription? subscription;
 
@@ -67,50 +63,35 @@ class SwrClient {
               if (options.awaitForInitialData &&
                   _lastFetched[key] == null &&
                   fetchFuture != null) {
-                // debugPrint('[SwrClient] awaiting initial fetch for $key');
                 final data = await fetchFuture;
                 if (data != null && !c.isClosed) {
-                  // debugPrint(
-                  //   '[SwrClient] explicitly emitting initial data for $key',
-                  // );
                   c.add(data);
                 }
               }
 
               if (c.isClosed) {
-                // debugPrint(
-                //   '[SwrClient] session closed before watch start for $key',
-                // );
                 return;
               }
 
               // debugPrint('[SwrClient] starting watch() for $key');
               subscription = watch().listen(
                 (data) {
-                  // debugPrint(
-                  //   '[SwrClient] watch() emitted for $key: ${data is List ? (data as List).length : "data"}',
-                  // );
                   if (!c.isClosed) {
                     c.add(data);
                   }
                 },
                 onError: (Object e, StackTrace? st) {
-                  debugPrint('[SwrClient] watch() error for $key: $e');
                   if (!c.isClosed) {
                     c.addError(e, st);
                   }
                 },
                 onDone: () {
-                  // debugPrint('[SwrClient] watch() done for $key');
                   if (!c.isClosed) {
                     c.close();
                   }
                 },
               );
             } on Object catch (e, st) {
-              debugPrint(
-                '[SwrClient] FATAL ERROR in session for $key: $e\n$st',
-              );
               if (!c.isClosed) {
                 c.addError(e, st);
               }
@@ -119,11 +100,9 @@ class SwrClient {
 
           c = StreamController<Object?>.broadcast(
             onListen: () {
-              // debugPrint('[SwrClient] session onListen for $key');
               unawaited(start());
             },
             onCancel: () {
-              // debugPrint('[SwrClient] session onCancel for $key');
               subscription?.cancel();
               subscription = null;
               _activeControllers.remove(key);
@@ -186,14 +165,10 @@ class SwrClient {
             final data = await fetch();
             await persist(data);
             _lastFetched[key] = DateTime.now();
-            debugPrint('[SwrClient] Fetch success and persisted for key: $key');
             result = data;
             break; // 成功
           } on Object catch (e) {
             if (attempts >= options.retryCount) {
-              debugPrint('[SwrClient] SWR取得エラー [$key] $attempts 回試行後: $e');
-              // unawaitedなFutureをクラッシュさせないために再スローしませんが、
-              // エラー状態を公開すべきでしょうか？
               break;
             }
             // 指数バックオフまたは単純な遅延？
