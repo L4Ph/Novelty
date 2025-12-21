@@ -10,6 +10,7 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/connectivity_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:riverpod_swr/riverpod_swr.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// 小説の詳細ページ
@@ -218,7 +219,7 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
         final provider = episodeListProvider(pageKey);
 
         // 1. Try to get current data (Synchronous / Cache)
-        var newEpisodes = ref.read(provider).valueOrNull ?? [];
+        var newEpisodes = ref.read(provider).asData?.value ?? [];
 
         // 2. If empty, we might be loading fresh data (Fresh Install)
         if (newEpisodes.isEmpty) {
@@ -231,8 +232,8 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
                   .timeout(const Duration(seconds: 10)); // Safety timeout
 
               // Re-read data after loading finished
-              newEpisodes = ref.read(provider).valueOrNull ?? [];
-            } catch (e) {
+              newEpisodes = ref.read(provider).asData?.value ?? [];
+            } on Object {
               // Timeout or error, ignore and proceed with what we have
             }
           } else {
@@ -241,7 +242,7 @@ class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
               newEpisodes = await ref
                   .read(provider.future)
                   .timeout(const Duration(milliseconds: 500));
-            } catch (_) {}
+            } on Object catch (_) {}
           }
         }
         // End of user's change

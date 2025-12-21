@@ -34,6 +34,10 @@ class SwrClient {
   // キー -> アクティブなストリームコントローラーのマッピング
   final _activeControllers = <String, StreamController<Object?>>{};
 
+  /// データの検証と取得を管理するメインメソッド。
+  ///
+  /// [watch] でローカルデータの変更を監視し、
+  /// 必要に応じて [fetch] でリモートデータを取得して [persist] で保存します。
   Stream<T> validate<T>({
     required String key,
     required Stream<T> Function() watch,
@@ -153,8 +157,11 @@ class SwrClient {
       }
     }
 
+    // [Fix] Race Condition: Update loading state SYNCHRONOUSLY before scheduling the future.
+    _setLoading(key, true);
+
     final future = Future<T?>(() async {
-      _setLoading(key, true);
+      // _setLoading(key, true); // Moved up
       try {
         T? result;
         var attempts = 0;
@@ -176,7 +183,7 @@ class SwrClient {
         }
         return result;
       } finally {
-        _inflightRequests.remove(key);
+        _inflightRequests.remove(key)?.ignore();
         _setLoading(key, false);
       }
     });
