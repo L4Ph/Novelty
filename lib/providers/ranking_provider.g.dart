@@ -29,6 +29,7 @@ final class RankingNotifierProvider
        );
 
   static const $allTransitiveDependencies0 = apiServiceProvider;
+  static const $allTransitiveDependencies1 = rankingFilterStateProvider;
 
   @override
   String debugGetCreateSourceHash() => _$rankingNotifierHash();
@@ -63,7 +64,7 @@ final class RankingNotifierProvider
   }
 }
 
-String _$rankingNotifierHash() => r'a5c9a5ad257b24ef27c0f21041c794d20b643fa1';
+String _$rankingNotifierHash() => r'3b6a02c13d719683225b0b561b6f44f370694306';
 
 /// ランキングのロジックを管理するNotifier
 
@@ -80,9 +81,13 @@ final class RankingNotifierFamily extends $Family
     : super(
         retry: null,
         name: r'rankingProvider',
-        dependencies: const <ProviderOrFamily>[apiServiceProvider],
+        dependencies: const <ProviderOrFamily>[
+          apiServiceProvider,
+          rankingFilterStateProvider,
+        ],
         $allTransitiveDependencies: const <ProviderOrFamily>[
           RankingNotifierProvider.$allTransitiveDependencies0,
+          RankingNotifierProvider.$allTransitiveDependencies1,
         ],
         isAutoDispose: true,
       );

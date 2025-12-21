@@ -27,9 +27,13 @@ final class NovelRepositoryProvider
         retry: null,
         name: r'novelRepositoryProvider',
         isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[apiServiceProvider],
+        $allTransitiveDependencies: const <ProviderOrFamily>[
+          NovelRepositoryProvider.$allTransitiveDependencies0,
+        ],
       );
+
+  static const $allTransitiveDependencies0 = apiServiceProvider;
 
   @override
   String debugGetCreateSourceHash() => _$novelRepositoryHash();
@@ -53,7 +57,7 @@ final class NovelRepositoryProvider
   }
 }
 
-String _$novelRepositoryHash() => r'2e5398c23a6f338f7d37b8928e2cce71860f7f06';
+String _$novelRepositoryHash() => r'48fd661135a577e6185e1d494b4915f8e452456e';
 
 /// 小説のコンテンツを取得するプロバイダー。
 
@@ -83,6 +87,10 @@ final class NovelContentProvider
          dependencies: null,
          $allTransitiveDependencies: null,
        );
+
+  static const $allTransitiveDependencies0 = novelRepositoryProvider;
+  static const $allTransitiveDependencies1 =
+      NovelRepositoryProvider.$allTransitiveDependencies0;
 
   @override
   String debugGetCreateSourceHash() => _$novelContentHash();
@@ -123,7 +131,7 @@ final class NovelContentProvider
   }
 }
 
-String _$novelContentHash() => r'946148ce819d122abf573b303eddb7fb79334a2e';
+String _$novelContentHash() => r'101d1862e824c2d3ae7370f7990f24a36f06df23';
 
 /// 小説のコンテンツを取得するプロバイダー。
 
@@ -137,8 +145,11 @@ final class NovelContentFamily extends $Family
     : super(
         retry: null,
         name: r'novelContentProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[novelRepositoryProvider],
+        $allTransitiveDependencies: const <ProviderOrFamily>[
+          NovelContentProvider.$allTransitiveDependencies0,
+          NovelContentProvider.$allTransitiveDependencies1,
+        ],
         isAutoDispose: true,
       );
 
@@ -286,6 +297,10 @@ final class DownloadProgressProvider
          $allTransitiveDependencies: null,
        );
 
+  static const $allTransitiveDependencies0 = novelRepositoryProvider;
+  static const $allTransitiveDependencies1 =
+      NovelRepositoryProvider.$allTransitiveDependencies0;
+
   @override
   String debugGetCreateSourceHash() => _$downloadProgressHash();
 
@@ -319,7 +334,7 @@ final class DownloadProgressProvider
   }
 }
 
-String _$downloadProgressHash() => r'c336d2d44503f03a40ba05cdff963fdeeab7d305';
+String _$downloadProgressHash() => r'060ec51f20fa759c9172fd715a8726442071b92a';
 
 /// 小説のダウンロード進捗を監視するプロバイダー。
 
@@ -329,8 +344,11 @@ final class DownloadProgressFamily extends $Family
     : super(
         retry: null,
         name: r'downloadProgressProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[novelRepositoryProvider],
+        $allTransitiveDependencies: const <ProviderOrFamily>[
+          DownloadProgressProvider.$allTransitiveDependencies0,
+          DownloadProgressProvider.$allTransitiveDependencies1,
+        ],
         isAutoDispose: true,
       );
 
@@ -369,6 +387,11 @@ final class DownloadStatusProvider
          $allTransitiveDependencies: null,
        );
 
+  static const $allTransitiveDependencies0 = novelRepositoryProvider;
+  static const $allTransitiveDependencies1 =
+      NovelRepositoryProvider.$allTransitiveDependencies0;
+  static const $allTransitiveDependencies2 = downloadProgressProvider;
+
   @override
   String debugGetCreateSourceHash() => _$downloadStatusHash();
 
@@ -394,7 +417,7 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'5f53b64ce5cd55b3a45506cd9ad3843dcf7887f7';
+String _$downloadStatusHash() => r'8b46dfab2a0b7de54a8cd5a0d2bf0de2a330c5ad';
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
@@ -413,8 +436,15 @@ final class DownloadStatusFamily extends $Family
     : super(
         retry: null,
         name: r'downloadStatusProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[
+          novelRepositoryProvider,
+          downloadProgressProvider,
+        ],
+        $allTransitiveDependencies: const <ProviderOrFamily>[
+          DownloadStatusProvider.$allTransitiveDependencies0,
+          DownloadStatusProvider.$allTransitiveDependencies1,
+          DownloadStatusProvider.$allTransitiveDependencies2,
+        ],
         isAutoDispose: true,
       );
 
@@ -581,6 +611,10 @@ final class EpisodeListProvider
          $allTransitiveDependencies: null,
        );
 
+  static const $allTransitiveDependencies0 = novelRepositoryProvider;
+  static const $allTransitiveDependencies1 =
+      NovelRepositoryProvider.$allTransitiveDependencies0;
+
   @override
   String debugGetCreateSourceHash() => _$episodeListHash();
 
@@ -614,7 +648,7 @@ final class EpisodeListProvider
   }
 }
 
-String _$episodeListHash() => r'eac464a5085d796cfee879af15cc876d0ca3c5ee';
+String _$episodeListHash() => r'7451c7103105b1b8360af8f2ed58ee58c2f8f3fb';
 
 /// エピソードリストを取得するプロバイダー
 
@@ -624,8 +658,11 @@ final class EpisodeListFamily extends $Family
     : super(
         retry: null,
         name: r'episodeListProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[novelRepositoryProvider],
+        $allTransitiveDependencies: const <ProviderOrFamily>[
+          EpisodeListProvider.$allTransitiveDependencies0,
+          EpisodeListProvider.$allTransitiveDependencies1,
+        ],
         isAutoDispose: true,
       );
 

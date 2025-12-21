@@ -17,7 +17,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'novel_repository.g.dart';
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [apiService])
 /// 小説のダウンロードと管理を行うリポジトリ。
 NovelRepository novelRepository(Ref ref) {
   final apiService = ref.watch(apiServiceProvider);
@@ -557,7 +557,7 @@ class NovelRepository {
 
 // ==================== Providers ====================
 
-@riverpod
+@Riverpod(dependencies: [novelRepository])
 /// 小説のコンテンツを取得するプロバイダー。
 Future<List<NovelContentElement>> novelContent(
   Ref ref, {
@@ -604,7 +604,7 @@ class LibraryStatus extends _$LibraryStatus {
   }
 }
 
-@riverpod
+@Riverpod(dependencies: [novelRepository])
 /// 小説のダウンロード進捗を監視するプロバイダー。
 Stream<DownloadProgress?> downloadProgress(Ref ref, String ncode) {
   final normalizedNcode = ncode.toNormalizedNcode();
@@ -612,7 +612,7 @@ Stream<DownloadProgress?> downloadProgress(Ref ref, String ncode) {
   return repo.watchDownloadProgress(normalizedNcode);
 }
 
-@riverpod
+@Riverpod(dependencies: [novelRepository, downloadProgress])
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
 /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
@@ -701,7 +701,7 @@ Stream<int?> episodeDownloadStatus(
   });
 }
 
-@riverpod
+@Riverpod(dependencies: [novelRepository])
 /// エピソードリストを取得するプロバイダー
 Future<List<Episode>> episodeList(Ref ref, String ncodeAndPage) async {
   final parts = ncodeAndPage.split('_');

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:archive/archive.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/foundation.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
 import 'package:http/http.dart' as http;
@@ -15,7 +14,6 @@ import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/utils/ncode_utils.dart';
-import 'package:riverpod/src/providers/future_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'api_service.g.dart';
@@ -23,6 +21,10 @@ part 'api_service.g.dart';
 /// 累計ランキングの表示上限数
 /// なろう小説APIの制限値（最大500件）を最大限活用
 const int allTimeRankingLimit = 500;
+
+/// User-Agent 基本的には最新になるようにする
+const String userAgent =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36';
 
 @Riverpod(keepAlive: true, dependencies: [])
 /// APIサービスのプロバイダー
@@ -34,8 +36,7 @@ class ApiService {
     final response = await http.get(
       Uri.parse(url),
       headers: {
-        'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'User-Agent': userAgent,
       },
     );
     return response;
@@ -373,8 +374,7 @@ class ApiService {
     final response = await http.get(
       Uri.parse(url),
       headers: {
-        'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36',
+        'User-Agent': userAgent,
       },
     );
 
@@ -468,144 +468,135 @@ class ApiService {
 // ==================== Providers ====================
 
 /// 小説の情報を取得するプロバイダー（シンプル版）。
-final FutureProviderFamily<NovelInfo, String> novelInfoProvider = FutureProvider
-    .autoDispose
-    .family<NovelInfo, String>(
-      (ref, ncode) async {
-        final normalizedNcode = ncode.toNormalizedNcode();
-        final apiService = ref.read(apiServiceProvider);
+/// 小説の情報を取得するプロバイダー（シンプル版）。
+@Riverpod(dependencies: [apiService])
+Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
+  final normalizedNcode = ncode.toNormalizedNcode();
+  final apiService = ref.read(apiServiceProvider);
 
-        try {
-          return await apiService.fetchNovelInfo(normalizedNcode);
-        } catch (e) {
-          // API取得失敗時はDBから取得を試みる
-          final db = ref.read(appDatabaseProvider);
-          final cachedNovel = await db.getNovel(normalizedNcode);
-          if (cachedNovel != null) {
-            // Episodesテーブルからも目次を取得
-            final episodes = await db.getEpisodes(normalizedNcode);
-            return cachedNovel.toModel(episodes: episodes);
-          }
-          rethrow;
-        }
-      },
-      dependencies: [apiServiceProvider, appDatabaseProvider],
-    );
+  try {
+    return await apiService.fetchNovelInfo(normalizedNcode);
+  } catch (e) {
+    // API取得失敗時はDBから取得を試みる
+    final db = ref.read(appDatabaseProvider);
+    final cachedNovel = await db.getNovel(normalizedNcode);
+    if (cachedNovel != null) {
+      // Episodesテーブルからも目次を取得
+      final episodes = await db.getEpisodes(normalizedNcode);
+      return cachedNovel.toModel(episodes: episodes);
+    }
+    rethrow;
+  }
+}
 
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 ///
 /// APIから小説情報を取得し、DBに保存する。
-final FutureProviderFamily<NovelInfo, String> novelInfoWithCacheProvider =
-    FutureProvider.autoDispose.family<NovelInfo, String>(
-      (ref, ncode) async {
-        final normalizedNcode = ncode.toNormalizedNcode();
-        final apiService = ref.read(apiServiceProvider);
-        final db = ref.watch(appDatabaseProvider);
+@Riverpod(dependencies: [apiService])
+Future<NovelInfo> novelInfoWithCache(Ref ref, String ncode) async {
+  final normalizedNcode = ncode.toNormalizedNcode();
+  final apiService = ref.read(apiServiceProvider);
+  final db = ref.watch(appDatabaseProvider);
 
-        try {
-          final novelInfo = await apiService.fetchNovelInfo(normalizedNcode);
+  try {
+    final novelInfo = await apiService.fetchNovelInfo(normalizedNcode);
 
-          // Save Novel data
-          await db.insertNovel(novelInfo.toDbCompanion());
+    // Save Novel data
+    await db.insertNovel(novelInfo.toDbCompanion());
 
-          // Save Episodes metadata (TOC)
-          if (novelInfo.episodes != null) {
-            final episodesCompanions = novelInfo.episodes!.map((e) {
-              return EpisodeEntitiesCompanion(
-                ncode: drift.Value(normalizedNcode),
-                episodeId: drift.Value(e.index ?? 0),
-                subtitle: drift.Value(e.subtitle),
-                url: drift.Value(e.url),
-                publishedAt: drift.Value(e.update),
-                revisedAt: drift.Value(e.revised),
-                // content is not updated here
-              );
-            }).toList();
-            await db.upsertEpisodes(episodesCompanions);
-          }
+    // Save Episodes metadata (TOC)
+    if (novelInfo.episodes != null) {
+      final episodesCompanions = novelInfo.episodes!.map((e) {
+        return EpisodeEntitiesCompanion(
+          ncode: drift.Value(normalizedNcode),
+          episodeId: drift.Value(e.index ?? 0),
+          subtitle: drift.Value(e.subtitle),
+          url: drift.Value(e.url),
+          publishedAt: drift.Value(e.update),
+          revisedAt: drift.Value(e.revised),
+          // content is not updated here
+        );
+      }).toList();
+      await db.upsertEpisodes(episodesCompanions);
+    }
 
-          return novelInfo;
-        } catch (e) {
-          // API取得失敗時はDBから取得を試みる
-          final cachedNovel = await db.getNovel(normalizedNcode);
-          if (cachedNovel != null) {
-            // Episodesテーブルからも目次を取得
-            final episodes = await db.getEpisodes(normalizedNcode);
-            return cachedNovel.toModel(episodes: episodes);
-          }
-          rethrow;
-        }
-      },
-      dependencies: [apiServiceProvider, appDatabaseProvider],
-    );
+    return novelInfo;
+  } catch (e) {
+    // API取得失敗時はDBから取得を試みる
+    final cachedNovel = await db.getNovel(normalizedNcode);
+    if (cachedNovel != null) {
+      // Episodesテーブルからも目次を取得
+      final episodes = await db.getEpisodes(normalizedNcode);
+      return cachedNovel.toModel(episodes: episodes);
+    }
+    rethrow;
+  }
+}
 
 /// 小説のエピソードを取得するプロバイダー。
-final FutureProviderFamily<Episode, EpisodeParam> episodeProvider =
-    FutureProvider.autoDispose.family<Episode, EpisodeParam>(
-      (ref, param) async {
-        final normalizedNcode = param.ncode.toNormalizedNcode();
-        final apiService = ref.read(apiServiceProvider);
-        final db = ref.read(appDatabaseProvider);
+@Riverpod(dependencies: [apiService])
+Future<Episode> episode(Ref ref, EpisodeParam param) async {
+  final normalizedNcode = param.ncode.toNormalizedNcode();
+  final apiService = ref.read(apiServiceProvider);
+  final db = ref.read(appDatabaseProvider);
 
-        try {
-          // 1. Try fetching from API
-          final ep = await apiService.fetchEpisode(
-            normalizedNcode,
-            param.episode,
-          );
-
-          // 2. Save content to DB
-          if (ep.body != null) {
-            await db.updateEpisodeContent(
-              EpisodeEntitiesCompanion(
-                ncode: drift.Value(normalizedNcode),
-                episodeId: drift.Value(param.episode),
-                content: drift.Value(
-                  parseNovelContent(ep.body!),
-                ),
-                fetchedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
-                subtitle: drift.Value(ep.subtitle),
-                url: drift.Value(ep.url),
-              ),
-            );
-          }
-
-          return ep;
-        } catch (e) {
-          // 3. Fallback to DB
-          final cachedEp = await db.getEpisodeData(
-            normalizedNcode,
-            param.episode,
-          );
-          if (cachedEp != null && cachedEp.content != null) {
-            // Reconstruct HTML from content elements
-            final elements = cachedEp.content!;
-            final htmlBuffer = StringBuffer();
-
-            for (final element in elements) {
-              element.when(
-                plainText: (text) => htmlBuffer.write('<p>$text</p>'),
-                rubyText: (base, ruby) =>
-                    htmlBuffer.write('<p><ruby>$base<rt>$ruby</rt></ruby></p>'),
-                newLine: () => htmlBuffer.write('<br>'),
-              );
-            }
-
-            return Episode(
-              ncode: cachedEp.ncode,
-              index: cachedEp.episodeId,
-              subtitle: cachedEp.subtitle,
-              url: cachedEp.url,
-              update: cachedEp.publishedAt,
-              revised: cachedEp.revisedAt,
-              body: htmlBuffer.toString(),
-            );
-          }
-          rethrow;
-        }
-      },
-      dependencies: [apiServiceProvider, appDatabaseProvider],
+  try {
+    // 1. Try fetching from API
+    final ep = await apiService.fetchEpisode(
+      normalizedNcode,
+      param.episode,
     );
+
+    // 2. Save content to DB
+    if (ep.body != null) {
+      await db.updateEpisodeContent(
+        EpisodeEntitiesCompanion(
+          ncode: drift.Value(normalizedNcode),
+          episodeId: drift.Value(param.episode),
+          content: drift.Value(
+            parseNovelContent(ep.body!),
+          ),
+          fetchedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
+          subtitle: drift.Value(ep.subtitle),
+          url: drift.Value(ep.url),
+        ),
+      );
+    }
+
+    return ep;
+  } catch (e) {
+    // 3. Fallback to DB
+    final cachedEp = await db.getEpisodeData(
+      normalizedNcode,
+      param.episode,
+    );
+    if (cachedEp != null && cachedEp.content != null) {
+      // Reconstruct HTML from content elements
+      final elements = cachedEp.content!;
+      final htmlBuffer = StringBuffer();
+
+      for (final element in elements) {
+        element.when(
+          plainText: (text) => htmlBuffer.write('<p>$text</p>'),
+          rubyText: (base, ruby) =>
+              htmlBuffer.write('<p><ruby>$base<rt>$ruby</rt></ruby></p>'),
+          newLine: () => htmlBuffer.write('<br>'),
+        );
+      }
+
+      return Episode(
+        ncode: cachedEp.ncode,
+        index: cachedEp.episodeId,
+        subtitle: cachedEp.subtitle,
+        url: cachedEp.url,
+        update: cachedEp.publishedAt,
+        revised: cachedEp.revisedAt,
+        body: htmlBuffer.toString(),
+      );
+    }
+    rethrow;
+  }
+}
 
 @immutable
 /// エピソード取得のためのパラメータ
