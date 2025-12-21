@@ -8,16 +8,22 @@ import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/providers/connectivity_provider.dart';
+import 'package:novelty/providers/database_providers.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:riverpod_swr/riverpod_swr.dart';
 
 part 'novel_repository.g.dart';
 
-@Riverpod(keepAlive: true)
+@Riverpod(
+  keepAlive: true,
+  dependencies: [apiService, appDatabase, Settings],
+)
 /// 小説のダウンロードと管理を行うリポジトリ。
 NovelRepository novelRepository(Ref ref) {
   final apiService = ref.watch(apiServiceProvider);
@@ -553,11 +559,63 @@ class NovelRepository {
       rethrow;
     }
   }
+
+  /// 小説情報の同期（SWR用）
+  Future<NovelInfo> syncNovelInfo(String ncode) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    try {
+      // APIから最新情報を取得
+      final info = await apiService.fetchNovelInfo(normalizedNcode);
+      return info;
+    } on Exception {
+      rethrow;
+    }
+  }
+
+  /// 小説情報をDBに保存する
+  Future<void> saveNovelInfo(NovelInfo novelInfo) async {
+    final ncode = novelInfo.ncode?.toNormalizedNcode();
+    if (ncode == null) return;
+
+    await _db.insertNovel(novelInfo.toDbCompanion());
+
+    if (novelInfo.episodes != null) {
+      await saveEpisodes(ncode, novelInfo.episodes!);
+    }
+  }
+
+  /// エピソードリストの同期（SWR用）
+  Future<List<Episode>> syncEpisodeList(String ncode, int page) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    try {
+      // APIから取得
+      final episodes = await apiService.fetchEpisodeList(normalizedNcode, page);
+      return episodes;
+    } on Exception {
+      rethrow;
+    }
+  }
+
+  /// エピソードリストをDBに保存する
+  Future<void> saveEpisodes(String ncode, List<Episode> episodes) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    final companions = episodes.map((e) {
+      return EpisodeEntitiesCompanion(
+        ncode: Value(normalizedNcode),
+        episodeId: Value(e.index ?? 0),
+        subtitle: Value(e.subtitle),
+        url: Value(e.url),
+        publishedAt: Value(e.update),
+        revisedAt: Value(e.revised),
+      );
+    }).toList();
+    await _db.upsertEpisodes(companions);
+  }
 }
 
 // ==================== Providers ====================
 
-@riverpod
+@Riverpod(dependencies: [novelRepository])
 /// 小説のコンテンツを取得するプロバイダー。
 Future<List<NovelContentElement>> novelContent(
   Ref ref, {
@@ -701,12 +759,50 @@ Stream<int?> episodeDownloadStatus(
   });
 }
 
-@riverpod
-/// エピソードリストを取得するプロバイダー
-Future<List<Episode>> episodeList(Ref ref, String ncodeAndPage) async {
+@Riverpod(
+  keepAlive: true,
+  dependencies: [apiService, novelRepository, appDatabase],
+)
+/// エピソードリストを取得するプロバイダー（SWR）
+Stream<List<Episode>> episodeList(Ref ref, String ncodeAndPage) {
   final parts = ncodeAndPage.split('_');
-  final ncode = parts[0];
+  final normalizedNcode = parts[0].toNormalizedNcode();
   final page = int.parse(parts[1]);
-  final repository = ref.read(novelRepositoryProvider);
-  return repository.fetchEpisodeList(ncode, page);
+  final db = ref.watch<AppDatabase>(appDatabaseProvider);
+  final repo = ref.read<NovelRepository>(novelRepositoryProvider);
+
+  final start = (page - 1) * 100 + 1;
+  final end = page * 100;
+
+  return ref.swr<List<Episode>>(
+    key: 'episodeList_${normalizedNcode}_$page',
+    watch: () => db.watchEpisodesRange(normalizedNcode, start, end),
+    fetch: () => repo.syncEpisodeList(normalizedNcode, page),
+    persist: (List<Episode> episodes) async {
+      await repo.saveEpisodes(normalizedNcode, episodes);
+    },
+  );
+}
+
+@Riverpod(
+  keepAlive: true,
+  dependencies: [apiService, novelRepository, appDatabase],
+)
+/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+Stream<NovelInfo> novelInfoWithCache(Ref ref, String ncode) {
+  final normalizedNcode = ncode.toNormalizedNcode();
+  final db = ref.watch(appDatabaseProvider);
+  final repo = ref.read(novelRepositoryProvider);
+
+  return ref.swr<NovelInfo>(
+    key: 'novelInfo_$normalizedNcode',
+    watch: () => db
+        .watchNovel(normalizedNcode)
+        .where((n) => n != null)
+        .map((n) => n!.toModel()),
+    fetch: () => repo.syncNovelInfo(normalizedNcode),
+    persist: (NovelInfo info) async {
+      await repo.saveNovelInfo(info);
+    },
+  );
 }

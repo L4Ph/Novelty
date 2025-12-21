@@ -36,7 +36,7 @@ extension SearchStateEx on SearchState {
 }
 
 /// 検索状態を管理するNotifierプロバイダー。
-@riverpod
+@Riverpod(dependencies: [apiService])
 class SearchStateNotifier extends _$SearchStateNotifier {
   @override
   SearchState build() => const SearchState();

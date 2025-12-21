@@ -81,6 +81,9 @@ final class NovelInfoProvider
          $allTransitiveDependencies: null,
        );
 
+  static const $allTransitiveDependencies0 = apiServiceProvider;
+  static const $allTransitiveDependencies1 = appDatabaseProvider;
+
   @override
   String debugGetCreateSourceHash() => _$novelInfoHash();
 
@@ -113,7 +116,7 @@ final class NovelInfoProvider
   }
 }
 
-String _$novelInfoHash() => r'a044759c69e959c739cf07f33f1545371e1f2cd1';
+String _$novelInfoHash() => r'7b355fc1a9ea34d9ee85f74cfaf27810f3de8bd9';
 
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 
@@ -123,8 +126,14 @@ final class NovelInfoFamily extends $Family
     : super(
         retry: null,
         name: r'novelInfoProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[
+          apiServiceProvider,
+          appDatabaseProvider,
+        ],
+        $allTransitiveDependencies: const <ProviderOrFamily>[
+          NovelInfoProvider.$allTransitiveDependencies0,
+          NovelInfoProvider.$allTransitiveDependencies1,
+        ],
         isAutoDispose: true,
       );
 
@@ -135,100 +144,6 @@ final class NovelInfoFamily extends $Family
 
   @override
   String toString() => r'novelInfoProvider';
-}
-
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー。
-///
-/// APIから小説情報を取得し、DBに保存する。
-
-@ProviderFor(novelInfoWithCache)
-const novelInfoWithCacheProvider = NovelInfoWithCacheFamily._();
-
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー。
-///
-/// APIから小説情報を取得し、DBに保存する。
-
-final class NovelInfoWithCacheProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<NovelInfo>,
-          NovelInfo,
-          FutureOr<NovelInfo>
-        >
-    with $FutureModifier<NovelInfo>, $FutureProvider<NovelInfo> {
-  /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
-  ///
-  /// APIから小説情報を取得し、DBに保存する。
-  const NovelInfoWithCacheProvider._({
-    required NovelInfoWithCacheFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'novelInfoWithCacheProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$novelInfoWithCacheHash();
-
-  @override
-  String toString() {
-    return r'novelInfoWithCacheProvider'
-        ''
-        '($argument)';
-  }
-
-  @$internal
-  @override
-  $FutureProviderElement<NovelInfo> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<NovelInfo> create(Ref ref) {
-    final argument = this.argument as String;
-    return novelInfoWithCache(ref, argument);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is NovelInfoWithCacheProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$novelInfoWithCacheHash() =>
-    r'd3d9a381bb6f41093cdb2804934fa3e553172617';
-
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー。
-///
-/// APIから小説情報を取得し、DBに保存する。
-
-final class NovelInfoWithCacheFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<NovelInfo>, String> {
-  const NovelInfoWithCacheFamily._()
-    : super(
-        retry: null,
-        name: r'novelInfoWithCacheProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: true,
-      );
-
-  /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
-  ///
-  /// APIから小説情報を取得し、DBに保存する。
-
-  NovelInfoWithCacheProvider call(String ncode) =>
-      NovelInfoWithCacheProvider._(argument: ncode, from: this);
-
-  @override
-  String toString() => r'novelInfoWithCacheProvider';
 }
 
 /// 小説のエピソードを取得するプロバイダー。
@@ -252,6 +167,9 @@ final class EpisodeProvider
          dependencies: null,
          $allTransitiveDependencies: null,
        );
+
+  static const $allTransitiveDependencies0 = apiServiceProvider;
+  static const $allTransitiveDependencies1 = appDatabaseProvider;
 
   @override
   String debugGetCreateSourceHash() => _$episodeHash();
@@ -285,7 +203,7 @@ final class EpisodeProvider
   }
 }
 
-String _$episodeHash() => r'fd78632f5100d45209527425adf801baa31a3c68';
+String _$episodeHash() => r'701f6c1faf3f3d78a0a5334bed7a289b7493a6e6';
 
 /// 小説のエピソードを取得するプロバイダー。
 
@@ -299,8 +217,14 @@ final class EpisodeFamily extends $Family
     : super(
         retry: null,
         name: r'episodeProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[
+          apiServiceProvider,
+          appDatabaseProvider,
+        ],
+        $allTransitiveDependencies: const <ProviderOrFamily>[
+          EpisodeProvider.$allTransitiveDependencies0,
+          EpisodeProvider.$allTransitiveDependencies1,
+        ],
         isAutoDispose: true,
       );
 

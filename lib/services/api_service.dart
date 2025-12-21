@@ -44,6 +44,7 @@ class ApiService {
     return elements.map((el) {
       final subtitle = el.querySelector('.p-eplist__subtitle');
       final update = el.querySelector('.p-eplist__update');
+
       final revisedAttr = update?.querySelector('span')?.attributes['title'];
       final url = subtitle?.attributes['href'];
       int? index;
@@ -448,7 +449,7 @@ class ApiService {
 
 // ==================== Providers ====================
 
-@riverpod
+@Riverpod(dependencies: [apiService, appDatabase])
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   final normalizedNcode = ncode.toNormalizedNcode();
@@ -469,51 +470,7 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   }
 }
 
-@riverpod
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー。
-///
-/// APIから小説情報を取得し、DBに保存する。
-Future<NovelInfo> novelInfoWithCache(Ref ref, String ncode) async {
-  final normalizedNcode = ncode.toNormalizedNcode();
-  final apiService = ref.read(apiServiceProvider);
-  final db = ref.watch(appDatabaseProvider);
-
-  try {
-    final novelInfo = await apiService.fetchNovelInfo(normalizedNcode);
-
-    // Save Novel data
-    await db.insertNovel(novelInfo.toDbCompanion());
-
-    // Save Episodes metadata (TOC)
-    if (novelInfo.episodes != null) {
-      final episodesCompanions = novelInfo.episodes!.map((e) {
-        return EpisodeEntitiesCompanion(
-          ncode: drift.Value(normalizedNcode),
-          episodeId: drift.Value(e.index ?? 0),
-          subtitle: drift.Value(e.subtitle),
-          url: drift.Value(e.url),
-          publishedAt: drift.Value(e.update),
-          revisedAt: drift.Value(e.revised),
-          // content is not updated here
-        );
-      }).toList();
-      await db.upsertEpisodes(episodesCompanions);
-    }
-
-    return novelInfo;
-  } catch (e) {
-    // API取得失敗時はDBから取得を試みる
-    final cachedNovel = await db.getNovel(normalizedNcode);
-    if (cachedNovel != null) {
-      // Episodesテーブルからも目次を取得
-      final episodes = await db.getEpisodes(normalizedNcode);
-      return cachedNovel.toModel(episodes: episodes);
-    }
-    rethrow;
-  }
-}
-
-@riverpod
+@Riverpod(dependencies: [apiService, appDatabase])
 /// 小説のエピソードを取得するプロバイダー。
 Future<Episode> episode(
   Ref ref, {

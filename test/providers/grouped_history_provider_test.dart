@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/providers/database_providers.dart';
 
 @GenerateMocks([AppDatabase])
 import 'grouped_history_provider_test.mocks.dart';
