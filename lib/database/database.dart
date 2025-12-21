@@ -1136,6 +1136,6 @@ LazyDatabase _openConnection() {
   });
 }
 
-@Riverpod(keepAlive: true)
+@Riverpod(keepAlive: true, dependencies: [])
 /// アプリケーションデータベースのプロバイダー
 AppDatabase appDatabase(Ref ref) => AppDatabase();

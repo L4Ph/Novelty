@@ -4893,8 +4893,8 @@ final class AppDatabaseProvider
         retry: null,
         name: r'appDatabaseProvider',
         isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[],
+        $allTransitiveDependencies: const <ProviderOrFamily>[],
       );
 
   @override
@@ -4919,4 +4919,4 @@ final class AppDatabaseProvider
   }
 }
 
-String _$appDatabaseHash() => r'98a09c6cfd43966155dfbdb0787fa18c85438e13';
+String _$appDatabaseHash() => r'db849c793c187a49cae9ec35f40b15896e6e8bb0';

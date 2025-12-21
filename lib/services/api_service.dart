@@ -448,7 +448,7 @@ class ApiService {
 
 // ==================== Providers ====================
 
-@riverpod
+@Riverpod(dependencies: [apiService, appDatabase])
 /// 小説の情報を取得するプロバイダー（シンプル版）。
 Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   final normalizedNcode = ncode.toNormalizedNcode();
@@ -469,7 +469,7 @@ Future<NovelInfo> novelInfo(Ref ref, String ncode) async {
   }
 }
 
-@riverpod
+@Riverpod(dependencies: [apiService, appDatabase])
 /// 小説のエピソードを取得するプロバイダー。
 Future<Episode> episode(
   Ref ref, {

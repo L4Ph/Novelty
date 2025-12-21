@@ -27,9 +27,13 @@ final class LibraryNovelsProvider
         retry: null,
         name: r'libraryNovelsProvider',
         isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[appDatabaseProvider],
+        $allTransitiveDependencies: const <ProviderOrFamily>[
+          LibraryNovelsProvider.$allTransitiveDependencies0,
+        ],
       );
+
+  static const $allTransitiveDependencies0 = appDatabaseProvider;
 
   @override
   String debugGetCreateSourceHash() => _$libraryNovelsHash();
@@ -45,7 +49,7 @@ final class LibraryNovelsProvider
   }
 }
 
-String _$libraryNovelsHash() => r'4b0a3482a1b21159250abf1676f76b2adcd83265';
+String _$libraryNovelsHash() => r'5f9c5c30fcfda38dbe999d20658680ec931df8ab';
 
 /// 閲覧履歴を提供するプロバイダー
 
@@ -72,9 +76,13 @@ final class HistoryProvider
         retry: null,
         name: r'historyProvider',
         isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[appDatabaseProvider],
+        $allTransitiveDependencies: const <ProviderOrFamily>[
+          HistoryProvider.$allTransitiveDependencies0,
+        ],
       );
+
+  static const $allTransitiveDependencies0 = appDatabaseProvider;
 
   @override
   String debugGetCreateSourceHash() => _$historyHash();
@@ -91,7 +99,7 @@ final class HistoryProvider
   }
 }
 
-String _$historyHash() => r'd793d980061255cbc26364bb0e20d92252403a72';
+String _$historyHash() => r'b539384484ab9b62af3fad72d7b7135cf3e65beb';
 
 /// 現在時刻を提供するプロバイダー
 
@@ -111,8 +119,8 @@ final class CurrentTimeProvider
         retry: null,
         name: r'currentTimeProvider',
         isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[],
+        $allTransitiveDependencies: const <ProviderOrFamily>[],
       );
 
   @override
@@ -137,7 +145,7 @@ final class CurrentTimeProvider
   }
 }
 
-String _$currentTimeHash() => r'0447979bc20456d337c44a22640bc32ac172824f';
+String _$currentTimeHash() => r'36e44b77a675f60533a16f3832d550740da21647';
 
 /// 日付ごとにグループ化された閲覧履歴を提供するプロバイダー
 
@@ -164,9 +172,18 @@ final class GroupedHistoryProvider
         retry: null,
         name: r'groupedHistoryProvider',
         isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[
+          appDatabaseProvider,
+          currentTimeProvider,
+        ],
+        $allTransitiveDependencies: const <ProviderOrFamily>[
+          GroupedHistoryProvider.$allTransitiveDependencies0,
+          GroupedHistoryProvider.$allTransitiveDependencies1,
+        ],
       );
+
+  static const $allTransitiveDependencies0 = appDatabaseProvider;
+  static const $allTransitiveDependencies1 = currentTimeProvider;
 
   @override
   String debugGetCreateSourceHash() => _$groupedHistoryHash();
@@ -183,4 +200,4 @@ final class GroupedHistoryProvider
   }
 }
 
-String _$groupedHistoryHash() => r'978b1a1579be3f3e0a811a86e0787dbadb9080f2';
+String _$groupedHistoryHash() => r'b2e92d0849acfa124050ac43abaef7eccf083c41';

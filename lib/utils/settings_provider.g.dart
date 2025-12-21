@@ -24,8 +24,8 @@ final class SettingsProvider
         retry: null,
         name: r'settingsProvider',
         isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
+        dependencies: const <ProviderOrFamily>[],
+        $allTransitiveDependencies: const <ProviderOrFamily>[],
       );
 
   @override
@@ -36,7 +36,7 @@ final class SettingsProvider
   Settings create() => Settings();
 }
 
-String _$settingsHash() => r'95e9f81098dddf6c539fd53d3f89f46fcd1ed6cb';
+String _$settingsHash() => r'd107da5e7954bda901e4273d4c8cdf4aefa5bd24';
 
 /// アプリケーションの設定を提供するプロバイダー。
 

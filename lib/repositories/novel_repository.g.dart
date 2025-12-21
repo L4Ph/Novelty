@@ -646,7 +646,7 @@ final class EpisodeListProvider
   }
 }
 
-String _$episodeListHash() => r'95ab83d6a1b0b85ba0fd4b56b887cd31b9c802b8';
+String _$episodeListHash() => r'a6ca1676923a70e8c0d74a97167bea33c684cc26';
 
 /// エピソードリストを取得するプロバイダー（SWR）
 
@@ -659,6 +659,7 @@ final class EpisodeListFamily extends $Family
         dependencies: const <ProviderOrFamily>[
           apiServiceProvider,
           novelRepositoryProvider,
+          appDatabaseProvider,
         ],
         $allTransitiveDependencies: const <ProviderOrFamily>{
           EpisodeListProvider.$allTransitiveDependencies0,
@@ -741,7 +742,7 @@ final class NovelInfoWithCacheProvider
 }
 
 String _$novelInfoWithCacheHash() =>
-    r'245ff24882f6f172ec3ae0e7b79adca2f6b62503';
+    r'1e996b13b4d7ffdb05ee622bb985622ca54e3f1b';
 
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
 
@@ -754,6 +755,7 @@ final class NovelInfoWithCacheFamily extends $Family
         dependencies: const <ProviderOrFamily>[
           apiServiceProvider,
           novelRepositoryProvider,
+          appDatabaseProvider,
         ],
         $allTransitiveDependencies: const <ProviderOrFamily>{
           NovelInfoWithCacheProvider.$allTransitiveDependencies0,

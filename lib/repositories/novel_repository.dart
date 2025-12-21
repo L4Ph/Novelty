@@ -759,7 +759,7 @@ Stream<int?> episodeDownloadStatus(
   });
 }
 
-@Riverpod(dependencies: [apiService, novelRepository])
+@Riverpod(dependencies: [apiService, novelRepository, appDatabase])
 /// エピソードリストを取得するプロバイダー（SWR）
 Stream<List<Episode>> episodeList(Ref ref, String ncodeAndPage) {
   final parts = ncodeAndPage.split('_');
@@ -783,7 +783,7 @@ Stream<List<Episode>> episodeList(Ref ref, String ncodeAndPage) {
   );
 }
 
-@Riverpod(dependencies: [apiService, novelRepository])
+@Riverpod(dependencies: [apiService, novelRepository, appDatabase])
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
 Stream<NovelInfo> novelInfoWithCache(Ref ref, String ncode) {
   final normalizedNcode = ncode.toNormalizedNcode();
