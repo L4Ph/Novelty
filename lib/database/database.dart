@@ -1120,7 +1120,7 @@ final historyProvider = StreamProvider<List<HistoryData>>((ref) {
   final db = ref.watch(appDatabaseProvider);
   ref.keepAlive();
   return db.watchHistory();
-});
+}, dependencies: [appDatabaseProvider]);
 
 /// 現在時刻を提供するプロバイダー
 final currentTimeProvider = Provider<DateTime>((ref) => DateTime.now());
@@ -1133,4 +1133,4 @@ final groupedHistoryProvider = StreamProvider<List<HistoryGroup>>((ref) {
   return db.watchHistory().map((historyItems) {
     return HistoryGrouping.groupByDate(historyItems, now);
   });
-});
+}, dependencies: [currentTimeProvider, appDatabaseProvider]);
