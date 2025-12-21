@@ -68,7 +68,7 @@ Future<Set<String>> getLibraryNcodes(WidgetRef ref) async {
   return libraryNovels.map((novel) => novel.ncode).toSet();
 }
 
-@riverpod
+@Riverpod(dependencies: [apiService])
 /// ncodeから単一の豊富な小説データを取得するプロバイダー
 Future<EnrichedNovelData> enrichedNovel(Ref ref, String ncode) async {
   final apiService = ref.watch(apiServiceProvider);

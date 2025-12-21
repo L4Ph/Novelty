@@ -5,15 +5,14 @@ import 'package:drift/drift.dart' as drift;
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_download_summary.dart';
-import 'package:novelty/utils/history_grouping.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/search_tokenizer.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'database.g.dart';
 
@@ -498,6 +497,13 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
+  /// 小説情報の監視
+  Stream<Novel?> watchNovel(String ncode) {
+    return (select(novels)
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
+        .watchSingleOrNull();
+  }
+
   /// 小説の検索
   Future<List<Novel>> searchNovels(String query) async {
     final tokenizedQuery = SearchTokenizer.tokenize(query);
@@ -919,6 +925,36 @@ class AppDatabase extends _$AppDatabase {
         .toList();
   }
 
+  /// 指定範囲のエピソード一覧を監視
+  Stream<List<Episode>> watchEpisodesRange(
+    String ncode,
+    int start,
+    int end,
+  ) {
+    final query = select(episodeEntities)
+      ..where(
+        (t) =>
+            t.ncode.equals(ncode.toNormalizedNcode()) &
+            t.episodeId.isBetweenValues(start, end),
+      )
+      ..orderBy([(t) => OrderingTerm(expression: t.episodeId)]);
+
+    return query.watch().map((rows) {
+      return rows
+          .map(
+            (row) => Episode(
+              ncode: row.ncode,
+              index: row.episodeId,
+              subtitle: row.subtitle,
+              url: row.url,
+              update: row.publishedAt,
+              revised: row.revisedAt,
+            ),
+          )
+          .toList();
+    });
+  }
+
   /// 特定エピソードのEntityを監視
   Stream<EpisodeRow?> watchEpisodeEntity(String ncode, int episodeId) {
     return (select(episodeEntities)..where(
@@ -1100,37 +1136,6 @@ LazyDatabase _openConnection() {
   });
 }
 
-// ==================== Providers ====================
-
+@Riverpod(keepAlive: true)
 /// アプリケーションデータベースのプロバイダー
-final appDatabaseProvider = Provider<AppDatabase>(
-  (ref) => AppDatabase(),
-  dependencies: const [],
-);
-
-/// ライブラリの小説リストを提供するプロバイダー
-final libraryNovelsProvider = StreamProvider<List<Novel>>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  ref.keepAlive();
-  return db.watchLibraryNovels();
-}, dependencies: [appDatabaseProvider]);
-
-/// 閲覧履歴を提供するプロバイダー
-final historyProvider = StreamProvider<List<HistoryData>>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  ref.keepAlive();
-  return db.watchHistory();
-});
-
-/// 現在時刻を提供するプロバイダー
-final currentTimeProvider = Provider<DateTime>((ref) => DateTime.now());
-
-/// 日付ごとにグループ化された閲覧履歴を提供するプロバイダー
-final groupedHistoryProvider = StreamProvider<List<HistoryGroup>>((ref) {
-  final now = ref.watch(currentTimeProvider);
-  final db = ref.watch(appDatabaseProvider);
-  ref.keepAlive();
-  return db.watchHistory().map((historyItems) {
-    return HistoryGrouping.groupByDate(historyItems, now);
-  });
-});
+AppDatabase appDatabase(Ref ref) => AppDatabase();

@@ -7,7 +7,6 @@ import 'dart:async' as _i5;
 
 import 'package:drift/drift.dart' as _i2;
 import 'package:drift/src/runtime/executor/stream_queries.dart' as _i4;
-import 'package:flutter_riverpod/flutter_riverpod.dart' as _i15;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i11;
 import 'package:narou_parser/narou_parser.dart' as _i18;
@@ -22,6 +21,7 @@ import 'package:novelty/models/novel_search_result.dart' as _i8;
 import 'package:novelty/repositories/novel_repository.dart' as _i14;
 import 'package:novelty/services/api_service.dart' as _i9;
 import 'package:novelty/utils/settings_provider.dart' as _i16;
+import 'package:riverpod_annotation/riverpod_annotation.dart' as _i15;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -388,6 +388,14 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<_i3.Novel?>);
 
   @override
+  _i5.Stream<_i3.Novel?> watchNovel(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#watchNovel, [ncode]),
+            returnValue: _i5.Stream<_i3.Novel?>.empty(),
+          )
+          as _i5.Stream<_i3.Novel?>);
+
+  @override
   _i5.Future<List<_i3.Novel>> searchNovels(String? query) =>
       (super.noSuchMethod(
             Invocation.method(#searchNovels, [query]),
@@ -552,6 +560,18 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
             returnValue: _i5.Future<List<_i7.Episode>>.value(<_i7.Episode>[]),
           )
           as _i5.Future<List<_i7.Episode>>);
+
+  @override
+  _i5.Stream<List<_i7.Episode>> watchEpisodesRange(
+    String? ncode,
+    int? start,
+    int? end,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#watchEpisodesRange, [ncode, start, end]),
+            returnValue: _i5.Stream<List<_i7.Episode>>.empty(),
+          )
+          as _i5.Stream<List<_i7.Episode>>);
 
   @override
   _i5.Stream<_i3.EpisodeRow?> watchEpisodeEntity(
@@ -1342,4 +1362,22 @@ class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
             returnValue: _i5.Future<List<_i7.Episode>>.value(<_i7.Episode>[]),
           )
           as _i5.Future<List<_i7.Episode>>);
+
+  @override
+  _i5.Future<void> syncNovelInfo(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#syncNovelInfo, [ncode]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> syncEpisodeList(String? ncode, int? page) =>
+      (super.noSuchMethod(
+            Invocation.method(#syncEpisodeList, [ncode, page]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
 }

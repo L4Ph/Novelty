@@ -8,16 +8,22 @@ import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/providers/connectivity_provider.dart';
+import 'package:novelty/providers/database_providers.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:riverpod_swr/riverpod_swr.dart';
 
 part 'novel_repository.g.dart';
 
-@Riverpod(keepAlive: true)
+@Riverpod(
+  keepAlive: true,
+  dependencies: [apiService, appDatabase, Settings],
+)
 /// 小説のダウンロードと管理を行うリポジトリ。
 NovelRepository novelRepository(Ref ref) {
   final apiService = ref.watch(apiServiceProvider);
@@ -553,11 +559,63 @@ class NovelRepository {
       rethrow;
     }
   }
+
+  /// 小説情報の同期（SWR用）
+  Future<void> syncNovelInfo(String ncode) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    try {
+      // APIから最新情報を取得（3秒タイムアウト）
+      final novelInfo = await apiService.fetchNovelInfo(normalizedNcode);
+
+      // Novel/Episodesテーブルを更新
+      await _db.insertNovel(novelInfo.toDbCompanion());
+
+      if (novelInfo.episodes != null) {
+        final episodesCompanions = novelInfo.episodes!.map((e) {
+          return EpisodeEntitiesCompanion(
+            ncode: Value(normalizedNcode),
+            episodeId: Value(e.index ?? 0),
+            subtitle: Value(e.subtitle),
+            url: Value(e.url),
+            publishedAt: Value(e.update),
+            revisedAt: Value(e.revised),
+          );
+        }).toList();
+        await _db.upsertEpisodes(episodesCompanions);
+      }
+    } on Exception {
+      // バックグラウンド同期のエラーはログ出力のみにとどめる（上位には投げない）
+    }
+  }
+
+  /// エピソードリストの同期（SWR用）
+  Future<void> syncEpisodeList(String ncode, int page) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    try {
+      // APIから取得（3秒タイムアウト）
+      final episodes = await apiService.fetchEpisodeList(normalizedNcode, page);
+
+      // DBに保存
+      final episodesCompanions = episodes.map((e) {
+        return EpisodeEntitiesCompanion(
+          ncode: Value(normalizedNcode),
+          episodeId: Value(e.index ?? 0),
+          subtitle: Value(e.subtitle),
+          url: Value(e.url),
+          publishedAt: Value(e.update),
+          revisedAt: Value(e.revised),
+        );
+      }).toList();
+      await _db.upsertEpisodes(episodesCompanions);
+    } on Exception {
+      // バックグラウンド同期のエラーはログ出力のみにとどめる
+    }
+  }
 }
 
 // ==================== Providers ====================
 
-@riverpod
+@Riverpod(dependencies: [novelRepository])
 /// 小説のコンテンツを取得するプロバイダー。
 Future<List<NovelContentElement>> novelContent(
   Ref ref, {
@@ -701,12 +759,48 @@ Stream<int?> episodeDownloadStatus(
   });
 }
 
-@riverpod
-/// エピソードリストを取得するプロバイダー
-Future<List<Episode>> episodeList(Ref ref, String ncodeAndPage) async {
+@Riverpod(dependencies: [apiService, novelRepository])
+/// エピソードリストを取得するプロバイダー（SWR）
+Stream<List<Episode>> episodeList(Ref ref, String ncodeAndPage) {
   final parts = ncodeAndPage.split('_');
   final ncode = parts[0];
   final page = int.parse(parts[1]);
-  final repository = ref.read(novelRepositoryProvider);
-  return repository.fetchEpisodeList(ncode, page);
+  final db = ref.watch<AppDatabase>(appDatabaseProvider);
+  final repo = ref.read<NovelRepository>(novelRepositoryProvider);
+
+  final start = (page - 1) * 100 + 1;
+  final end = page * 100;
+
+  return ref.swr<List<Episode>>(
+    key: 'episodeList_$ncodeAndPage',
+    watch: () => db.watchEpisodesRange(ncode, start, end),
+    fetch: () async {
+      return ref.read(apiServiceProvider).fetchEpisodeList(ncode, page);
+    },
+    persist: (List<Episode> _) async {
+      await repo.syncEpisodeList(ncode, page);
+    },
+  );
+}
+
+@Riverpod(dependencies: [apiService, novelRepository])
+/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+Stream<NovelInfo> novelInfoWithCache(Ref ref, String ncode) {
+  final normalizedNcode = ncode.toNormalizedNcode();
+  final db = ref.watch(appDatabaseProvider);
+  final repo = ref.read(novelRepositoryProvider);
+
+  return ref.swr<NovelInfo>(
+    key: 'novelInfo_$normalizedNcode',
+    watch: () => db.watchNovel(normalizedNcode).map((n) {
+      if (n == null) throw Exception('Novel not found in DB');
+      return n.toModel();
+    }),
+    fetch: () async {
+      return ref.read(apiServiceProvider).fetchNovelInfo(normalizedNcode);
+    },
+    persist: (NovelInfo _) async {
+      await repo.syncNovelInfo(normalizedNcode);
+    },
+  );
 }
