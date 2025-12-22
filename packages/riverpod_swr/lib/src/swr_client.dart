@@ -207,7 +207,9 @@ class _SwrSubscription<T> {
 
     final currentData = client._cache[key] as T?;
     if (currentData != null) {
+      // ignore: SWR logic requires manual state transition.
       _controller
+          // ignore: invalid_use_of_internal_member
           .add(AsyncLoading<T>().copyWithPrevious(AsyncData(currentData)));
     } else {
       _controller.add(AsyncLoading<T>());
@@ -216,14 +218,13 @@ class _SwrSubscription<T> {
     try {
       final newData =
           await client._executeFetch(key, fetcher, onPersist, options);
-      // Note: If we have a watcher, it will emit the new data via DB update.
-      // If we don't have a watcher, we need to emit it manually.
       if (watcher == null) {
         _controller.add(AsyncData(newData));
       }
     } on Object catch (e, st) {
       if (currentData != null) {
         _controller
+            // ignore: invalid_use_of_internal_member
             .add(AsyncError<T>(e, st).copyWithPrevious(AsyncData(currentData)));
       } else {
         _controller.add(AsyncError(e, st));
