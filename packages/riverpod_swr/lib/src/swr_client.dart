@@ -207,9 +207,12 @@ class _SwrSubscription<T> {
 
     final currentData = client._cache[key] as T?;
     if (currentData != null) {
-      // ignore: SWR logic requires manual state transition.
+      // SWRパターン（読み込み中も以前のデータを表示）を実装するため、
+      // AsyncValueの状態遷移を手動で行う必要があります。
+      // 現状のRiverpod 3には以前のデータを引き継いでLoading状態を生成する公開APIがないため、
+      // 内部メンバであるcopyWithPreviousを使用しています。
       _controller
-          // ignore: invalid_use_of_internal_member
+          // ignore: invalid_use_of_internal_member, SWRパターン実装のため以前の状態を引き継ぐ必要があります
           .add(AsyncLoading<T>().copyWithPrevious(AsyncData(currentData)));
     } else {
       _controller.add(AsyncLoading<T>());
@@ -223,8 +226,10 @@ class _SwrSubscription<T> {
       }
     } on Object catch (e, st) {
       if (currentData != null) {
+        // エラー発生時も以前のデータを保持しつつエラーを表示するため、
+        // 内部メンバであるcopyWithPreviousを使用して以前の状態を引き継ぎます。
         _controller
-            // ignore: invalid_use_of_internal_member
+            // ignore: invalid_use_of_internal_member, エラー時も以前の状態を引き継ぐ必要があります
             .add(AsyncError<T>(e, st).copyWithPrevious(AsyncData(currentData)));
       } else {
         _controller.add(AsyncError(e, st));
