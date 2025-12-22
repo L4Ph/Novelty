@@ -3,25 +3,25 @@ import 'dart:async';
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_swr/src/types.dart';
 
-/// The core client for SWR operations.
-/// It manages in-flight requests, cache, and revalidation logic.
+/// SWR 操作を行うためのコアクライアント。
+/// リクエストの重複排除、キャッシュ管理、および再検証ロジックを制御します。
 class SwrClient {
-  /// Creates a new [SwrClient] instance.
+  /// [SwrClient] インスタンスを作成します。
   SwrClient();
 
-  // Cache: key -> data
+  // キャッシュ: key -> data
   final Map<String, Object?> _cache = {};
 
-  // Last fetched timestamp: key -> timestamp
+  // 最終フェッチ日時: key -> timestamp
   final Map<String, DateTime> _lastFetched = {};
 
-  // In-flight requests: key -> future
+  // 実行中のリクエスト: key -> future
   final Map<String, Future<Object?>> _inflightRequests = {};
 
-  // Active controllers: key -> controller
+  // アクティブなサブスクリプション: key -> controller
   final Map<String, _SwrSubscription<Object?>> _subscriptions = {};
 
-  /// Watches a resource and triggers revalidation if necessary.
+  /// リソースを監視（watch）し、必要に応じて再検証をトリガーします。
   Stream<AsyncValue<T>> watch<T>({
     required String key,
     required Future<T> Function() fetcher,
@@ -43,7 +43,7 @@ class SwrClient {
     return subscription.stream;
   }
 
-  /// Manually invalidates a cache entry.
+  /// キャッシュエントリを手動で無効化します。
   void invalidate(String key) {
     _lastFetched.remove(key);
     final sub = _subscriptions[key];
@@ -52,7 +52,7 @@ class SwrClient {
     }
   }
 
-  /// Revalidates all active subscriptions.
+  /// すべてのアクティブなサブスクリプションを再検証します。
   void revalidateAll({bool onlyStale = true}) {
     for (final key in _subscriptions.keys) {
       final sub = _subscriptions[key]!;
@@ -62,7 +62,7 @@ class SwrClient {
     }
   }
 
-  /// Manually sets data for a key (e.g., for optimistic updates).
+  /// 特定のキーに対してデータを手動で設定します（例: 楽観的アップデートなど）。
   void setData<T>(String key, T data) {
     _cache[key] = data;
     _lastFetched[key] = DateTime.now();
@@ -83,7 +83,7 @@ class SwrClient {
     Future<void> Function(T)? onPersist,
     SwrOptions options,
   ) async {
-    // Deduplication
+    // 重複排除
     if (_inflightRequests.containsKey(key)) {
       return (await _inflightRequests[key]) as T;
     }
@@ -110,7 +110,7 @@ class SwrClient {
         }
         return data;
       } finally {
-        // ignore: unawaited_futures, Cleanup of in-flight request.
+        // ignore: unawaited_futures, 実行中リクエストのクリーンアップ。
         _inflightRequests.remove(key);
       }
     });
@@ -152,24 +152,24 @@ class _SwrSubscription<T> {
     _gcTimer?.cancel();
     _gcTimer = null;
 
-    // 1. Emit cached data or loading
+    // 1. キャッシュデータまたはローディング状態を送出
     final cachedData = client._cache[key];
     final shouldFetch = client._shouldFetch(key, options);
 
     if (cachedData != null) {
       _controller.add(AsyncData(cachedData as T));
     } else {
-      // Only emit AsyncLoading here if we are NOT going to fetch immediately.
-      // If we fetch, revalidate() will emit AsyncLoading, avoiding duplicate events.
+      // 直ちにフェッチを開始しない場合のみ、ここで Loading を送出します。
+      // フェッチを行う場合、revalidate() 内で Loading が送出されるため、重複を避けます。
       if (!shouldFetch) {
         _controller.add(AsyncLoading<T>());
       }
     }
 
-    // 2. Start watching if provided
+    // 2. watcher が指定されている場合は監視を開始
     _startWatcher();
 
-    // 3. Trigger initial revalidation if stale
+    // 3. stale（古い）状態であれば初期再検証をトリガー
     if (shouldFetch) {
       unawaited(revalidate());
     }
@@ -221,6 +221,8 @@ class _SwrSubscription<T> {
     try {
       final newData =
           await client._executeFetch(key, fetcher, onPersist, options);
+      // watcher が存在しない場合は、手動でデータを送出する必要があります。
+      // （watcher がある場合は DB アップデート経由でデータが送出されます）
       if (watcher == null) {
         _controller.add(AsyncData(newData));
       }

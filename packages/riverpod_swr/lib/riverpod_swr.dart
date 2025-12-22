@@ -9,7 +9,7 @@ export 'src/types.dart';
 
 part 'riverpod_swr.g.dart';
 
-/// Provider for the [SwrClient] singleton.
+/// [SwrClient] のシングルトンを提供するプロバイダー。
 @Riverpod(keepAlive: true)
 SwrClient swrClient(Ref ref) {
   return SwrClient();

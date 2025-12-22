@@ -4,21 +4,21 @@ import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_swr/src/swr_client.dart';
 import 'package:riverpod_swr/src/types.dart';
 
-/// Extension on [SwrClient] to support infinite (paginated) queries.
+/// 無限スクロール（ページネーション）クエリをサポートするための [SwrClient] 拡張。
 extension InfiniteSwrExtension on SwrClient {
-  /// Watches an infinite (paginated) resource.
-  /// [key] should be a base key for the collection.
+  /// 無限スクロール形式のリソースを監視します。
+  /// [key] はコレクションのベースとなるキーを指定してください。
   Stream<AsyncValue<List<T>>> watchInfinite<T>({
     required String key,
     required Future<List<T>> Function(int page) fetcher,
     int initialPage = 0,
     SwrOptions options = const SwrOptions(),
   }) {
-    // This is a simplified implementation of infinite queries.
-    // In a real-world scenario, we might want to track each page separately in the cache.
-    // For now, we'll treat the whole list as a single resource.
+    // これは無限クエリの簡易的な実装です。
+    // 実用的なシナリオでは、各ページを個別にキャッシュに保持することが望ましい場合があります。
+    // 現時点では、リスト全体を単一のリソースとして扱っています。
 
-    // We can use a composite key like 'infinite:$key'
+    // 'infinite:$key' のような複合キーを使用します。
     final compositeKey = 'infinite:$key';
 
     return watch<List<T>>(

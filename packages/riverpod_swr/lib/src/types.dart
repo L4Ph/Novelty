@@ -1,9 +1,9 @@
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart' show AsyncValue;
 
-/// Configuration options for SWR data fetching.
+/// SWRデータ取得の設定オプション。
 class SwrOptions {
-  /// Creates a new [SwrOptions] instance.
+  /// [SwrOptions] インスタンスを作成します。
   const SwrOptions({
     this.staleTime = Duration.zero,
     this.gcTime = const Duration(minutes: 5),
@@ -14,29 +14,29 @@ class SwrOptions {
     this.dedupInterval = const Duration(seconds: 2),
   });
 
-  /// The duration until a cache entry is considered stale.
-  /// If the cache is newer than this, no fetch will be triggered.
+  /// キャッシュが古い（stale）とみなされるまでの期間。
+  /// キャッシュがこれより新しい場合、フェッチはトリガーされません。
   final Duration staleTime;
 
-  /// The duration that an unused cache entry stays in memory before being garbage collected.
+  /// 使用されていないキャッシュがメモリに保持され、GC（ガベージコレクション）されるまでの期間。
   final Duration gcTime;
 
-  /// The number of times to retry a failed fetch.
+  /// フェッチが失敗した際の最大リトライ回数。
   final int retryCount;
 
-  /// The delay between retries.
+  /// リトライ間の遅延時間。
   final Duration retryDelay;
 
-  /// Whether to revalidate the data when the app gains focus.
+  /// アプリにフォーカスが戻った際に再検証（revalidate）するかどうか。
   final bool revalidateOnFocus;
 
-  /// Whether to revalidate the data when the network reconnects.
+  /// ネットワークが再接続された際に再検証（revalidate）するかどうか。
   final bool revalidateOnReconnect;
 
-  /// The interval during which duplicate requests for the same key are ignored.
+  /// 同じキーに対する重複したリクエストを無視する間隔。
   final Duration dedupInterval;
 }
 
-/// A wrapper around [AsyncValue] that can hold extra SWR-specific metadata if needed.
-/// For now, we use [AsyncValue] directly as it supports `hasValue`, `hasError`, and `isLoading`.
+/// 必要に応じてSWR固有のメタデータを保持できる [AsyncValue] のラッパー。
+/// 現時点では `hasValue`、`hasError`、`isLoading` をサポートする [AsyncValue] を直接使用しています。
 typedef SwrState<T> = AsyncValue<T>;
