@@ -564,7 +564,7 @@ class NovelRepository {
   }
 
   /// 小説情報を監視する（SWR）
-  Stream<AsyncValue<NovelInfo>> watchNovelInfo(String ncode) {
+  Stream<NovelInfo> watchNovelInfo(String ncode) {
     final normalizedNcode = ncode.toNormalizedNcode();
     return _swrClient.watch<NovelInfo>(
       key: 'novel_info:$normalizedNcode',
@@ -580,15 +580,18 @@ class NovelRepository {
   }
 
   /// エピソードリストを監視する（SWR）
-  Stream<AsyncValue<List<Episode>>> watchEpisodeList(String ncode, int page) {
+  Stream<List<Episode>> watchEpisodeList(String ncode, int page) {
     final normalizedNcode = ncode.toNormalizedNcode();
     final start = (page - 1) * 100 + 1;
-    final end = page * 100;
 
     return _swrClient.watch<List<Episode>>(
       key: 'episode_list:$normalizedNcode:$page',
       fetcher: () => apiService.fetchEpisodeList(normalizedNcode, page),
-      watcher: () => _db.watchEpisodesRange(normalizedNcode, start, end),
+      watcher: () => _db.watchEpisodesRange(
+        normalizedNcode,
+        start,
+        start + 99,
+      ), // Assuming 100 episodes per page
       onPersist: (data) async {
         final companions = data.map((Episode e) {
           return EpisodeEntitiesCompanion(
@@ -614,12 +617,10 @@ Stream<NovelInfo> novelInfoWithCache(
   Ref ref,
   String ncode,
 ) {
+  ref.keepAlive();
   final normalizedNcode = ncode.toNormalizedNcode();
   final repository = ref.watch(novelRepositoryProvider);
-  return repository
-      .watchNovelInfo(normalizedNcode)
-      .where((av) => av.hasValue)
-      .map((av) => av.value!);
+  return repository.watchNovelInfo(normalizedNcode);
 }
 
 @riverpod
@@ -775,13 +776,11 @@ Stream<List<Episode>> episodeList(
   Ref ref,
   String ncodeAndPage,
 ) {
+  ref.keepAlive();
   final parts = ncodeAndPage.split('_');
   final ncode = parts[0];
   final page = int.parse(parts[1]);
   final repository = ref.watch(novelRepositoryProvider);
 
-  return repository
-      .watchEpisodeList(ncode, page)
-      .where((av) => av.hasValue)
-      .map((av) => av.value!);
+  return repository.watchEpisodeList(ncode, page);
 }

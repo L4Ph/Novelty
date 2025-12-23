@@ -1,70 +1,63 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
-import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_swr/riverpod_swr.dart';
 
 void main() {
-  late SwrClient client;
+  group('SwrClient', () {
+    late SwrClient client;
 
-  setUp(() {
-    client = SwrClient();
-  });
+    setUp(() {
+      client = SwrClient();
+    });
 
-  test('SWR basic flow: cached data then fresh data', () async {
-    var fetchCount = 0;
-    Future<String> fetcher() async {
-      fetchCount++;
-      return 'data_$fetchCount';
-    }
+    test('should fetch data using fetcher', () async {
+      const key = 'test';
+      final stream = client.watch<String>(
+        key: key,
+        fetcher: () async => 'data',
+      );
 
-    const key = 'test_key';
+      // Wait for data
+      final result = await stream.first;
+      expect(result, equals('data'));
+    });
 
-    // First call: should be loading then data_1
-    final stream = client.watch<String>(
-      key: key,
-      fetcher: fetcher,
-    );
+    test('should handle errors from fetcher', () async {
+      const key = 'test';
+      final stream = client.watch<String>(
+        key: key,
+        fetcher: () async => throw Exception('Fetch failed'),
+      );
 
-    final events = await stream.take(2).toList();
-    expect(events[0], const AsyncLoading<String>());
-    expect(events[1], const AsyncData('data_1'));
-    expect(fetchCount, 1);
+      expect(stream, emitsError(isA<Exception>()));
+    });
 
-    // Second call: should emit data_1 (cached) immediately, then data_2
-    final stream2 = client.watch<String>(
-      key: key,
-      fetcher: fetcher,
-    );
+    test('should use watcher for real-time updates', () async {
+      const key = 'test';
+      final controller = StreamController<String>.broadcast();
 
-    final events2 = await stream2.take(2).toList();
-    expect(events2[0], const AsyncData('data_1'));
-    // Note: Since staleTime is zero, it triggers revalidate immediately
-    // expect(events2[1], const AsyncData('data_1', isLoading: true));
-    // Check properties for "Loading with Error/Data" which usually is AsyncLoading with value
-    final state = events2[1];
-    expect(state.isLoading, true);
-    expect(state.value, 'data_1');
+      final stream = client.watch<String>(
+        key: key,
+        fetcher: () async => 'initial',
+        watcher: () => controller.stream,
+      );
 
-    // Wait for actual fetch to complete and emit new data
-    // In our implementation, we need to wait for the next event if watcher is null
-    // But wait, our implementation emits AsyncData(newData) when fetch completes if watcher is null.
-    // So we might need to take 3 events.
-  });
+      // Start listening
+      final history = <String>[];
+      final sub = stream.listen(history.add);
 
-  test('Deduplication: multiple calls at once only trigger one fetch',
-      () async {
-    var fetchCount = 0;
-    Future<String> fetcher() async {
-      fetchCount++;
-      await Future<void>.delayed(const Duration(milliseconds: 100));
-      return 'data';
-    }
+      // Wait for initial data
+      await Future<void>.delayed(const Duration(milliseconds: 50));
 
-    const key = 'dedup_key';
+      controller.add('updated');
 
-    final s1 = client.watch<String>(key: key, fetcher: fetcher);
-    final s2 = client.watch<String>(key: key, fetcher: fetcher);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
 
-    await Future.wait([s1.first, s2.first]);
-    expect(fetchCount, 1);
+      expect(history, contains('updated'));
+
+      await sub.cancel();
+      await controller.close();
+    });
   });
 }

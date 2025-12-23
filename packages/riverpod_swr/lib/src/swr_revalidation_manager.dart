@@ -21,7 +21,7 @@ class SwrRevalidationManager extends WidgetsBindingObserver {
     _connectivitySubscription =
         Connectivity().onConnectivityChanged.listen((results) {
       if (results.any((r) => r != ConnectivityResult.none)) {
-        client.revalidateAll();
+        unawaited(client.revalidateAll());
       }
     });
   }
@@ -35,7 +35,7 @@ class SwrRevalidationManager extends WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      client.revalidateAll();
+      unawaited(client.revalidateAll());
     }
   }
 }

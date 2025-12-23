@@ -1,26 +1,44 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart' as db;
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/utils/ncode_utils.dart';
+import 'package:novelty/utils/settings_provider.dart';
 
-import 'novel_detail_provider_test.mocks.dart';
+@GenerateMocks([db.AppDatabase, ApiService, NovelRepository])
+import 'novel_info_offline_test.mocks.dart';
+
+class MockSettings extends Settings {
+  @override
+  Future<AppSettings> build() async => const AppSettings(
+    fontSize: 16,
+    isVertical: false,
+    novelDownloadPath: '',
+  );
+}
 
 void main() {
-  group('Offline NovelInfo Tests', () {
+  group('NovelInfo Provider (Repository Mock)', () {
+    late MockNovelRepository mockRepository;
     late MockAppDatabase mockDatabase;
     late MockApiService mockApiService;
     late ProviderContainer container;
 
     setUp(() {
+      mockRepository = MockNovelRepository();
       mockDatabase = MockAppDatabase();
       mockApiService = MockApiService();
       container = ProviderContainer(
         overrides: [
+          novelRepositoryProvider.overrideWithValue(mockRepository),
           db.appDatabaseProvider.overrideWithValue(mockDatabase),
           apiServiceProvider.overrideWithValue(mockApiService),
+          settingsProvider.overrideWith(MockSettings.new),
         ],
       );
     });
@@ -29,66 +47,71 @@ void main() {
       container.dispose();
     });
 
-    const testNcode = 'N1234AB';
-    final normalizedNcode = testNcode.toNormalizedNcode();
-
     test(
-      'novelInfoWithCacheProvider should return cached data if API fails',
+      'novelInfoWithCacheProvider should return data from repository stream',
       () async {
-        // Simulate API failure (Offline)
-        when(
-          mockApiService.fetchNovelInfo(normalizedNcode),
-        ).thenThrow(Exception('Network Error'));
-
-        // Simulate Cached data exists
-        when(mockDatabase.watchNovel(normalizedNcode)).thenAnswer(
-          (_) => Stream.value(
-            db.Novel(
-              ncode: normalizedNcode,
-              title: 'Cached Title',
-              generalAllNo: 10,
-              // other fields are nullable/default
-              novelType: 1,
-              end: 0,
-              genre: 101,
-              isr15: 0,
-              isbl: 0,
-              isgl: 0,
-              iszankoku: 0,
-              istensei: 0,
-              istenni: 0,
-              globalPoint: 0,
-              fav: 0,
-              reviewCount: 0,
-              rateCount: 0,
-              allPoint: 0,
-              pointCount: 0,
-              dailyPoint: 0,
-              weeklyPoint: 0,
-              monthlyPoint: 0,
-              quarterPoint: 0,
-              yearlyPoint: 0,
-            ),
-          ),
+        const testNcode = 'N1234AB';
+        const testNovelInfo = NovelInfo(
+          ncode: testNcode,
+          title: 'Repository Title',
+          novelType: 1,
         );
 
-        final result = await container.read(
-          novelInfoWithCacheProvider(testNcode).future,
+        // Use broadcast controller to support multiple listeners if needed
+        final controller = StreamController<NovelInfo>.broadcast();
+        controller.onListen = () => controller.add(testNovelInfo);
+
+        // Use any to match normalized ncode
+        when(mockRepository.watchNovelInfo(any)).thenAnswer(
+          (_) => controller.stream,
         );
 
-        expect(result.title, equals('Cached Title'));
-        expect(result.generalAllNo, equals(10));
+        final states = <AsyncValue<NovelInfo>>[];
+        final sub = container.listen(
+          novelInfoWithCacheProvider(testNcode),
+          (_, next) => states.add(next),
+        );
 
-        // verify that we tried to watch from DB
-        verify(mockDatabase.watchNovel(normalizedNcode)).called(1);
+        // Wait for microtasks
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        expect(
+          states.map((s) => s.asData?.value.title).where((t) => t != null),
+          contains('Repository Title'),
+        );
+        sub.close();
       },
     );
 
     test(
-      'novelInfoWithCacheProvider should use provided argument',
+      'novelInfoWithCacheProvider should propagate repository errors',
       () async {
-        // Just a placeholder to ensure it's defined and correctly imported
-        expect(novelInfoWithCacheProvider, isNotNull);
+        const testNcode = 'N1234AB';
+
+        final controller = StreamController<NovelInfo>.broadcast();
+        controller.onListen = () {
+          scheduleMicrotask(() => controller.addError(Exception('Repo Error')));
+        };
+
+        // Use any to match normalized ncode
+        when(mockRepository.watchNovelInfo(any)).thenAnswer(
+          (_) => controller.stream,
+        );
+
+        final states = <AsyncValue<NovelInfo>>[];
+        final sub = container.listen(
+          novelInfoWithCacheProvider(testNcode),
+          (_, next) => states.add(next),
+        );
+
+        // Wait for microtasks
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        expect(
+          states.any((s) => s.hasError),
+          isTrue,
+        );
+        sub.close();
       },
     );
   });

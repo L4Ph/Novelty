@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_swr/src/swr_client.dart';
 import 'package:riverpod_swr/src/types.dart';
 
@@ -8,7 +7,7 @@ import 'package:riverpod_swr/src/types.dart';
 extension InfiniteSwrExtension on SwrClient {
   /// 無限スクロール形式のリソースを監視します。
   /// [key] はコレクションのベースとなるキーを指定してください。
-  Stream<AsyncValue<List<T>>> watchInfinite<T>({
+  Stream<List<T>> watchInfinite<T>({
     required String key,
     required Future<List<T>> Function(int page) fetcher,
     int initialPage = 0,

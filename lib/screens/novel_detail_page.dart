@@ -68,6 +68,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
         episodeListProvider('${widget.ncode}_$_currentPage').future,
       );
 
+      if (!mounted) return;
+
       if (newEpisodes.isEmpty) {
         _hasMoreEpisodes = false;
       } else {

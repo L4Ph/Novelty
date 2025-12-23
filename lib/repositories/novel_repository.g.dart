@@ -111,7 +111,7 @@ final class NovelInfoWithCacheProvider
 }
 
 String _$novelInfoWithCacheHash() =>
-    r'a01f95a111e3820ae5ae22c25f3ee27163368ed9';
+    r'85c561a8aa25cc764fb0c76d7f65d3eed8b24b92';
 
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
 
@@ -694,7 +694,7 @@ final class EpisodeListProvider
   }
 }
 
-String _$episodeListHash() => r'2260593ff3c41295d1a6341e601b8bccb66a8383';
+String _$episodeListHash() => r'729c91da200730b7686dc58033503a05891e5a32';
 
 /// エピソードリストをページ単位で取得するプロバイダー（SWR）
 
