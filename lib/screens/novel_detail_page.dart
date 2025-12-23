@@ -26,95 +26,94 @@ class NovelDetailPage extends ConsumerStatefulWidget {
 
 class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
   int _currentPage = 1;
-  final List<Episode> _episodes = [];
-  bool _isLoadingEpisodes = false;
-  bool _hasMoreEpisodes = true;
-  bool _initialLoadDone = false;
 
   @override
   void initState() {
     super.initState();
-    unawaited(_loadMoreEpisodes());
   }
 
-  Future<void> _loadMoreEpisodes() async {
-    if (_isLoadingEpisodes || !_hasMoreEpisodes) {
-      return;
-    }
-
-    // すべてのエピソードを読み込み済みかチェック
+  void _loadMoreEpisodes() {
     final novelInfo = ref
         .read(novelInfoWithCacheProvider(widget.ncode))
-        .unwrapPrevious()
         .asData
         ?.value;
-    if (novelInfo != null && novelInfo.generalAllNo != null) {
-      if (_episodes.length >= novelInfo.generalAllNo!) {
-        if (mounted) {
-          setState(() {
-            _hasMoreEpisodes = false;
-          });
-        }
+    if (novelInfo?.generalAllNo != null) {
+      final currentTotal = (_currentPage - 1) * 100; // approximation
+      if (currentTotal >= novelInfo!.generalAllNo!) {
         return;
       }
     }
 
     setState(() {
-      _isLoadingEpisodes = true;
+      _currentPage++;
     });
-
-    try {
-      final newEpisodes = await ref.read(
-        episodeListProvider('${widget.ncode}_$_currentPage').future,
-      );
-
-      if (!mounted) return;
-
-      if (newEpisodes.isEmpty) {
-        _hasMoreEpisodes = false;
-      } else {
-        // 重複チェック
-        final duplicate =
-            _episodes.isNotEmpty &&
-            _episodes.any((e) => e.url == newEpisodes.first.url);
-
-        if (duplicate) {
-          _hasMoreEpisodes = false;
-        } else {
-          _episodes.addAll(newEpisodes);
-          _currentPage++;
-        }
-      }
-    } on Exception catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エピソードの読み込みに失敗しました: $e')),
-        );
-      }
-      _hasMoreEpisodes = false;
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingEpisodes = false;
-          _initialLoadDone = true;
-        });
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // 1. ノベル情報の取得とエラー通知
     final novelInfoAsync = ref.watch(novelInfoWithCacheProvider(widget.ncode));
+    ref.listen(novelInfoWithCacheProvider(widget.ncode), (previous, next) {
+      if (next.hasError && !next.isLoading) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ノベル情報の更新に失敗しました: ${next.error}')),
+        );
+      }
+    });
 
-    return novelInfoAsync.when(
-      data: (novelInfo) => _buildContent(context, novelInfo),
-      loading: () => Scaffold(
+    // 2. エピソードリストのリアクティブな集約
+    final allEpisodes = <Episode>[];
+    var isListLoading = false;
+    var listHasError = false;
+
+    // 読み込み済みのページまで全てwatchする
+    // これにより、SWRの再検証やフェッチが自動的にトリガーされる
+    for (var i = 1; i <= _currentPage; i++) {
+      final pageState = ref.watch(episodeListProvider('${widget.ncode}_$i'));
+
+      // エラー通知のためのリスナー
+      ref.listen(episodeListProvider('${widget.ncode}_$i'), (previous, next) {
+        if (next.hasError && !next.isLoading) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('ページ $i の更新に失敗しました: ${next.error}')),
+          );
+        }
+      });
+
+      if (pageState.hasValue) {
+        allEpisodes.addAll(pageState.value!);
+      } else if (pageState.isLoading) {
+        isListLoading = true;
+      } else if (pageState.hasError) {
+        listHasError = true;
+      }
+    }
+
+    // Graceful Degradation: キャッシュがあれば表示優先
+    // novelInfo が取得できていれば画面を構築
+    final novelInfo = novelInfoAsync.asData?.value;
+
+    if (novelInfo != null) {
+      return _buildContent(
+        context,
+        novelInfo,
+        allEpisodes,
+        isLoading: isListLoading,
+        hasError: listHasError,
+      );
+    }
+
+    if (novelInfoAsync.isLoading) {
+      return Scaffold(
         appBar: AppBar(),
         body: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (err, stack) => Scaffold(
-        appBar: AppBar(title: const Text('Error')),
-        body: Center(child: Text('Failed to load novel info: $err')),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Error')),
+      body: Center(
+        child: Text('Failed to load novel info: ${novelInfoAsync.error}'),
       ),
     );
   }
@@ -122,7 +121,10 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
   Widget _buildContent(
     BuildContext context,
     NovelInfo novelInfo,
-  ) {
+    List<Episode> episodes, {
+    required bool isLoading,
+    required bool hasError,
+  }) {
     final isShortStory = novelInfo.generalAllNo == 1;
     final downloadProgressAsync = ref.watch(
       downloadProgressProvider(widget.ncode),
@@ -147,17 +149,15 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
         onRefresh: () async {
           // 詳細情報と読み込み済みの全エピソードページを再検証
           ref.invalidate(novelInfoWithCacheProvider(widget.ncode));
-          for (var i = 1; i < _currentPage; i++) {
+          for (var i = 1; i <= _currentPage; i++) {
             ref.invalidate(episodeListProvider('${widget.ncode}_$i'));
           }
-
-          setState(() {
-            _episodes.clear();
-            _currentPage = 1;
-            _hasMoreEpisodes = true;
-            _initialLoadDone = false;
-          });
-          await _loadMoreEpisodes();
+          // SWRなのでinvalidateしてもキャッシュがあれば即表示されるが、
+          // fetch完了を待ちたい場合はここでは難しい。
+          // RefreshIndicatorはFuture完了で閉じるため、簡単なウェイトを入れるか、
+          // 厳密にはLoading状態の変化を監視する必要がある。
+          // ここではUX向上のため、少し待機してから閉じる
+          await Future<void>.delayed(const Duration(milliseconds: 800));
         },
         child: CustomScrollView(
           slivers: [
@@ -220,10 +220,12 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
               _EpisodeListSliver(
                 ncode: widget.ncode,
                 totalEpisodes: novelInfo.generalAllNo ?? 0,
-                episodes: _episodes,
-                isLoading: _isLoadingEpisodes,
-                hasMore: _hasMoreEpisodes,
-                initialLoadDone: _initialLoadDone,
+                episodes: episodes,
+                isLoading: isLoading,
+                hasMore:
+                    !isShortStory &&
+                    (novelInfo.generalAllNo == null ||
+                        episodes.length < novelInfo.generalAllNo!),
                 onLoadMoreRequested: _loadMoreEpisodes,
               ),
           ],
@@ -327,8 +329,8 @@ class _EpisodeListSliver extends StatelessWidget {
     required this.episodes,
     required this.isLoading,
     required this.hasMore,
-    required this.initialLoadDone,
     required this.onLoadMoreRequested,
+    // initialLoadDone is no longer needed as parent handles loading state
   });
 
   final String ncode;
@@ -336,12 +338,12 @@ class _EpisodeListSliver extends StatelessWidget {
   final List<Episode> episodes;
   final bool isLoading;
   final bool hasMore;
-  final bool initialLoadDone;
   final VoidCallback onLoadMoreRequested;
 
   @override
   Widget build(BuildContext context) {
-    if (!initialLoadDone) {
+    // If we have no episodes and are loading, show spinner (though parent might handle this)
+    if (episodes.isEmpty && isLoading) {
       return const SliverToBoxAdapter(
         child: Center(
           child: Padding(
@@ -380,15 +382,20 @@ class _EpisodeListSliver extends StatelessWidget {
 
           final episodeIndex = index - 1;
           if (episodeIndex >= episodes.length) {
-            if (!isLoading && hasMore) {
-              unawaited(Future.microtask(onLoadMoreRequested));
+            // Reached end of list
+            if (hasMore) {
+              // Trigger load more if we still have more page and not currently loading the NEXT page
+              // Note: isLoading passed here is aggregate. We might want to be more specific.
+              // But strictly, if we are scrolling and see spinner, we shouldn't spam.
+              if (!isLoading) {
+                unawaited(Future.microtask(onLoadMoreRequested));
+              }
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              );
             }
-            return isLoading
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                : const SizedBox.shrink();
+            return const SizedBox.shrink();
           }
 
           final episode = episodes[episodeIndex];
@@ -397,7 +404,7 @@ class _EpisodeListSliver extends StatelessWidget {
             ncode: ncode,
           );
         },
-        childCount: episodes.length + 2,
+        childCount: episodes.length + 2, // Header + Items + Footer
       ),
     );
   }
@@ -798,30 +805,19 @@ class _EpisodeListTile extends ConsumerWidget {
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('第$episodeNumber話をダウンロードしました'),
-            duration: const Duration(seconds: 1),
-          ),
-        );
-        ref.invalidate(
-          episodeDownloadStatusProvider(ncode: ncode, episode: episodeNumber),
+          const SnackBar(content: Text('ダウンロードしました')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('第$episodeNumber話のダウンロードに失敗しました'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+          const SnackBar(content: Text('ダウンロードに失敗しました')),
         );
       }
     } on Exception catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('エラー: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラーが発生しました: $e')),
+        );
+      }
     }
   }
 }
