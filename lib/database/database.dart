@@ -498,6 +498,13 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
+  /// 小説情報の監視
+  Stream<Novel?> watchNovel(String ncode) {
+    return (select(novels)
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
+        .watchSingleOrNull();
+  }
+
   /// 小説の検索
   Future<List<Novel>> searchNovels(String query) async {
     final tokenizedQuery = SearchTokenizer.tokenize(query);
@@ -917,6 +924,36 @@ class AppDatabase extends _$AppDatabase {
           ),
         )
         .toList();
+  }
+
+  /// 指定範囲のエピソード一覧を監視
+  Stream<List<Episode>> watchEpisodesRange(
+    String ncode,
+    int start,
+    int end,
+  ) {
+    return (select(episodeEntities)
+          ..where(
+            (t) =>
+                t.ncode.equals(ncode.toNormalizedNcode()) &
+                t.episodeId.isBetweenValues(start, end),
+          )
+          ..orderBy([(t) => OrderingTerm(expression: t.episodeId)]))
+        .watch()
+        .map(
+          (rows) => rows
+              .map(
+                (row) => Episode(
+                  ncode: row.ncode,
+                  index: row.episodeId,
+                  subtitle: row.subtitle,
+                  url: row.url,
+                  update: row.publishedAt,
+                  revised: row.revisedAt,
+                ),
+              )
+              .toList(),
+        );
   }
 
   /// 特定エピソードのEntityを監視

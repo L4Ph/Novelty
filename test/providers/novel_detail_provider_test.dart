@@ -11,7 +11,7 @@ import 'package:novelty/services/api_service.dart';
 import 'novel_detail_provider_test.mocks.dart';
 
 void main() {
-  group('novelInfoProvider', () {
+  group('novelInfoWithCacheProvider', () {
     late MockAppDatabase mockDatabase;
     late MockApiService mockApiService;
     late ProviderContainer container;
@@ -23,6 +23,7 @@ void main() {
         overrides: [
           appDatabaseProvider.overrideWithValue(mockDatabase),
           apiServiceProvider.overrideWithValue(mockApiService),
+          // swrClientProvider uses the real one by default, which is fine
         ],
       );
     });
@@ -42,17 +43,21 @@ void main() {
         episodes: [],
       );
 
-      when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
+      when(
+        mockDatabase.watchNovel(testNcode),
+      ).thenAnswer((_) => Stream.value(null));
       when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
       when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1);
       when(
         mockApiService.fetchNovelInfo(testNcode),
       ).thenAnswer((_) async => testNovelInfo);
 
-      final result = await container.read(novelInfoProvider(testNcode).future);
+      final result = await container.read(
+        novelInfoWithCacheProvider(testNcode).future,
+      );
 
       expect(result, equals(testNovelInfo));
-      verify(mockDatabase.getNovel(testNcode)).called(1);
+      verify(mockDatabase.watchNovel(testNcode)).called(1);
       verify(mockApiService.fetchNovelInfo(testNcode)).called(1);
       verify(mockDatabase.insertNovel(any)).called(1);
       verify(mockDatabase.addToHistory(any)).called(1);
@@ -69,14 +74,16 @@ void main() {
         episodes: [],
       );
 
-      when(mockDatabase.getNovel(testNcode)).thenAnswer((_) async => null);
+      when(
+        mockDatabase.watchNovel(testNcode),
+      ).thenAnswer((_) => Stream.value(null));
       when(mockDatabase.insertNovel(any)).thenAnswer((_) async => 1);
       when(mockDatabase.addToHistory(any)).thenAnswer((_) async => 1);
       when(
         mockApiService.fetchNovelInfo(testNcode),
       ).thenAnswer((_) async => testNovelInfo);
 
-      await container.read(novelInfoProvider(testNcode).future);
+      await container.read(novelInfoWithCacheProvider(testNcode).future);
 
       verify(mockDatabase.addToHistory(any)).called(1);
     });
@@ -85,8 +92,8 @@ void main() {
       const testNcode = 'N1234AB';
 
       when(
-        mockDatabase.getNovel(testNcode),
-      ).thenThrow(Exception('Database error'));
+        mockDatabase.watchNovel(testNcode),
+      ).thenAnswer((_) => Stream.error(Exception('Database error')));
       when(
         mockApiService.fetchNovelInfo(any),
       ).thenAnswer((_) async => const NovelInfo(ncode: testNcode));
@@ -95,7 +102,7 @@ void main() {
       ).thenAnswer((_) async => 1); // Add stub for addToHistory
 
       await expectLater(
-        container.read(novelInfoProvider(testNcode).future),
+        container.read(novelInfoWithCacheProvider(testNcode).future),
         throwsA(isA<Exception>()),
       );
     });
@@ -104,7 +111,7 @@ void main() {
       const testNcode = 'N1234AB';
 
       container
-        ..read(novelInfoProvider(testNcode))
+        ..read(novelInfoWithCacheProvider(testNcode))
         ..dispose();
 
       final newContainer = ProviderContainer(
@@ -113,7 +120,7 @@ void main() {
         ],
       );
       expect(
-        () => newContainer.read(novelInfoProvider(testNcode)),
+        () => newContainer.read(novelInfoWithCacheProvider(testNcode)),
         returnsNormally,
       );
       newContainer.dispose();

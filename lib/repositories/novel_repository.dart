@@ -8,12 +8,14 @@ import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/providers/connectivity_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:riverpod_swr/riverpod_swr.dart';
 
 part 'novel_repository.g.dart';
 
@@ -23,11 +25,14 @@ NovelRepository novelRepository(Ref ref) {
   final apiService = ref.watch(apiServiceProvider);
   final settings = ref.watch(settingsProvider);
   final db = ref.watch(appDatabaseProvider);
+  final swrClient = ref.watch(swrClientProvider);
+
   final repository = NovelRepository(
     ref: ref,
     apiService: apiService,
     settings: settings,
     db: db,
+    swrClient: swrClient,
   );
 
   ref.onDispose(repository.dispose);
@@ -43,7 +48,9 @@ class NovelRepository {
     required this.apiService,
     required this.settings,
     required AppDatabase db,
-  }) : _db = db;
+    required SwrClient swrClient,
+  }) : _db = db,
+       _swrClient = swrClient;
 
   /// アプリケーションの設定を取得するためのリファレンス。
   final Ref ref;
@@ -55,6 +62,8 @@ class NovelRepository {
   final AsyncValue<AppSettings> settings;
 
   final AppDatabase _db;
+
+  final SwrClient _swrClient;
 
   /// ダウンロード進捗のストリームコントローラー
   final Map<String, StreamController<DownloadProgress>> _progressControllers =
@@ -553,9 +562,65 @@ class NovelRepository {
       rethrow;
     }
   }
+
+  /// 小説情報を監視する（SWR）
+  Stream<AsyncValue<NovelInfo>> watchNovelInfo(String ncode) {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    return _swrClient.watch<NovelInfo>(
+      key: 'novel_info:$normalizedNcode',
+      fetcher: () => apiService.fetchNovelInfo(normalizedNcode),
+      watcher: () => _db
+          .watchNovel(normalizedNcode)
+          .where((novel) => novel != null)
+          .map((novel) => novel!.toModel()),
+      onPersist: (data) async {
+        await _db.insertNovel(data.toDbCompanion());
+      },
+    );
+  }
+
+  /// エピソードリストを監視する（SWR）
+  Stream<AsyncValue<List<Episode>>> watchEpisodeList(String ncode, int page) {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    final start = (page - 1) * 100 + 1;
+    final end = page * 100;
+
+    return _swrClient.watch<List<Episode>>(
+      key: 'episode_list:$normalizedNcode:$page',
+      fetcher: () => apiService.fetchEpisodeList(normalizedNcode, page),
+      watcher: () => _db.watchEpisodesRange(normalizedNcode, start, end),
+      onPersist: (data) async {
+        final companions = data.map((Episode e) {
+          return EpisodeEntitiesCompanion(
+            ncode: Value(normalizedNcode),
+            episodeId: Value(e.index ?? 0),
+            subtitle: Value(e.subtitle ?? ''),
+            url: Value(e.url ?? ''),
+            publishedAt: Value(e.update ?? ''),
+            revisedAt: Value(e.revised ?? ''),
+          );
+        }).toList();
+        await _db.upsertEpisodes(companions);
+      },
+    );
+  }
 }
 
 // ==================== Providers ====================
+
+@riverpod
+/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+Stream<NovelInfo> novelInfoWithCache(
+  Ref ref,
+  String ncode,
+) {
+  final normalizedNcode = ncode.toNormalizedNcode();
+  final repository = ref.watch(novelRepositoryProvider);
+  return repository
+      .watchNovelInfo(normalizedNcode)
+      .where((av) => av.hasValue)
+      .map((av) => av.value!);
+}
 
 @riverpod
 /// 小説のコンテンツを取得するプロバイダー。
@@ -705,14 +770,18 @@ Stream<int?> episodeDownloadStatus(
 }
 
 @riverpod
-/// エピソードリストを取得するプロバイダー
-Future<List<Episode>> episodeList(
+/// エピソードリストをページ単位で取得するプロバイダー（SWR）
+Stream<List<Episode>> episodeList(
   Ref ref,
   String ncodeAndPage,
-) async {
+) {
   final parts = ncodeAndPage.split('_');
   final ncode = parts[0];
   final page = int.parse(parts[1]);
-  final repository = ref.read(novelRepositoryProvider);
-  return repository.fetchEpisodeList(ncode, page);
+  final repository = ref.watch(novelRepositoryProvider);
+
+  return repository
+      .watchEpisodeList(ncode, page)
+      .where((av) => av.hasValue)
+      .map((av) => av.value!);
 }
