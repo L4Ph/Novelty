@@ -9,7 +9,7 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
-import '../providers/novel_detail_provider_test.mocks.dart';
+import '../providers/novel_info_offline_test.mocks.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

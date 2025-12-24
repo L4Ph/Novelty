@@ -5,7 +5,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
-import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
@@ -32,7 +31,7 @@ class NovelPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final novelInfoAsync = ref.watch(novelInfoProvider(ncode));
+    final novelInfoAsync = ref.watch(novelInfoWithCacheProvider(ncode));
     final initialEpisode = episode ?? 1;
 
     // 現在のエピソード番号をローカル状態で管理
@@ -69,7 +68,7 @@ class NovelPage extends HookConsumerWidget {
           }
           return {
             for (final e in novelInfo.episodes!)
-              if (e.index != null) e.index!: e.revised
+              if (e.index != null) e.index!: e.revised,
           };
         }, [novelInfo]);
 
@@ -182,7 +181,9 @@ class NovelPage extends HookConsumerWidget {
 
   void _updateHistory(WidgetRef ref, NovelInfo novelInfo, int episode) {
     unawaited(
-      ref.read(novelRepositoryProvider).addToHistory(
+      ref
+          .read(novelRepositoryProvider)
+          .addToHistory(
             ncode: ncode,
             title: novelInfo.title ?? '',
             writer: novelInfo.writer ?? '',

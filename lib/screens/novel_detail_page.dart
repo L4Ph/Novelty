@@ -9,12 +9,11 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/connectivity_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
-import 'package:novelty/services/api_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// 小説の詳細ページ
-class NovelDetailPage extends ConsumerWidget {
+class NovelDetailPage extends ConsumerStatefulWidget {
   /// コンストラクタ
   const NovelDetailPage({required this.ncode, super.key});
 
@@ -22,29 +21,114 @@ class NovelDetailPage extends ConsumerWidget {
   final String ncode;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final novelInfoAsync = ref.watch(novelInfoWithCacheProvider(ncode));
+  ConsumerState<NovelDetailPage> createState() => _NovelDetailPageState();
+}
 
-    return novelInfoAsync.when(
-      data: (novelInfo) => _buildContent(context, ref, novelInfo),
-      loading: () => Scaffold(
+class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
+  int _currentPage = 1;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void _loadMoreEpisodes() {
+    final novelInfo = ref
+        .read(novelInfoWithCacheProvider(widget.ncode))
+        .asData
+        ?.value;
+    if (novelInfo?.generalAllNo != null) {
+      final currentTotal = (_currentPage - 1) * 100; // approximation
+      if (currentTotal >= novelInfo!.generalAllNo!) {
+        return;
+      }
+    }
+
+    setState(() {
+      _currentPage++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 1. ノベル情報の取得とエラー通知
+    final novelInfoAsync = ref.watch(novelInfoWithCacheProvider(widget.ncode));
+    ref.listen(novelInfoWithCacheProvider(widget.ncode), (previous, next) {
+      if (next.hasError && !next.isLoading) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ノベル情報の更新に失敗しました: ${next.error}')),
+        );
+      }
+    });
+
+    // 2. エピソードリストのリアクティブな集約
+    final allEpisodes = <Episode>[];
+    var isListLoading = false;
+    var listHasError = false;
+
+    // 読み込み済みのページまで全てwatchする
+    // これにより、SWRの再検証やフェッチが自動的にトリガーされる
+    for (var i = 1; i <= _currentPage; i++) {
+      final pageState = ref.watch(episodeListProvider('${widget.ncode}_$i'));
+
+      // エラー通知のためのリスナー
+      ref.listen(episodeListProvider('${widget.ncode}_$i'), (previous, next) {
+        if (next.hasError && !next.isLoading) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('ページ $i の更新に失敗しました: ${next.error}')),
+          );
+        }
+      });
+
+      if (pageState.hasValue) {
+        allEpisodes.addAll(pageState.value!);
+      } else if (pageState.isLoading) {
+        isListLoading = true;
+      } else if (pageState.hasError) {
+        listHasError = true;
+      }
+    }
+
+    // Graceful Degradation: キャッシュがあれば表示優先
+    // novelInfo が取得できていれば画面を構築
+    final novelInfo = novelInfoAsync.asData?.value;
+
+    if (novelInfo != null) {
+      return _buildContent(
+        context,
+        novelInfo,
+        allEpisodes,
+        isLoading: isListLoading,
+        hasError: listHasError,
+      );
+    }
+
+    if (novelInfoAsync.isLoading) {
+      return Scaffold(
         appBar: AppBar(),
         body: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (err, stack) => Scaffold(
-        appBar: AppBar(title: const Text('Error')),
-        body: Center(child: Text('Failed to load novel info: $err')),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Error')),
+      body: Center(
+        child: Text('Failed to load novel info: ${novelInfoAsync.error}'),
       ),
     );
   }
 
   Widget _buildContent(
     BuildContext context,
-    WidgetRef ref,
     NovelInfo novelInfo,
-  ) {
+    List<Episode> episodes, {
+    required bool isLoading,
+    required bool hasError,
+  }) {
     final isShortStory = novelInfo.generalAllNo == 1;
-    final downloadProgressAsync = ref.watch(downloadProgressProvider(ncode));
+    final downloadProgressAsync = ref.watch(
+      downloadProgressProvider(widget.ncode),
+    );
 
     final progressBar = downloadProgressAsync.when(
       data: (progress) {
@@ -61,69 +145,91 @@ class NovelDetailPage extends ConsumerWidget {
     );
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            title: Text(
-              novelInfo.title ?? '',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(2),
-              child: progressBar,
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context, novelInfo),
-                  const SizedBox(height: 24),
-                  _buildActionButtons(
-                    context,
-                    ref,
-                    novelInfo,
-                    ncode,
-                  ),
-                  const SizedBox(height: 24),
-                  _StorySection(story: novelInfo.story ?? ''),
-                  const SizedBox(height: 16),
-                  _buildGenreTags(context, novelInfo),
-                ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // 詳細情報と読み込み済みの全エピソードページを再検証
+          ref.invalidate(novelInfoWithCacheProvider(widget.ncode));
+          for (var i = 1; i <= _currentPage; i++) {
+            ref.invalidate(episodeListProvider('${widget.ncode}_$i'));
+          }
+          // SWRなのでinvalidateしてもキャッシュがあれば即表示されるが、
+          // fetch完了を待ちたい場合はここでは難しい。
+          // RefreshIndicatorはFuture完了で閉じるため、簡単なウェイトを入れるか、
+          // 厳密にはLoading状態の変化を監視する必要がある。
+          // ここではUX向上のため、少し待機してから閉じる
+          await Future<void>.delayed(const Duration(milliseconds: 800));
+        },
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              title: Text(
+                novelInfo.title ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(2),
+                child: progressBar,
               ),
             ),
-          ),
-          if (isShortStory)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.menu_book),
-                    label: const Text('この小説を読む'),
-                    onPressed: () => context.push('/novel/$ncode/1'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(context, novelInfo),
+                    const SizedBox(height: 24),
+                    _buildActionButtons(
+                      context,
+                      ref,
+                      novelInfo,
+                      widget.ncode,
+                    ),
+                    const SizedBox(height: 24),
+                    _StorySection(story: novelInfo.story ?? ''),
+                    const SizedBox(height: 16),
+                    _buildGenreTags(context, novelInfo),
+                  ],
+                ),
+              ),
+            ),
+            if (isShortStory)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.menu_book),
+                      label: const Text('この小説を読む'),
+                      onPressed: () => context.push('/novel/${widget.ncode}/1'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        textStyle: Theme.of(context).textTheme.titleMedium,
                       ),
-                      textStyle: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
                 ),
+              )
+            else
+              _EpisodeListSliver(
+                ncode: widget.ncode,
+                totalEpisodes: novelInfo.generalAllNo ?? 0,
+                episodes: episodes,
+                isLoading: isLoading,
+                hasMore:
+                    !isShortStory &&
+                    (novelInfo.generalAllNo == null ||
+                        episodes.length < novelInfo.generalAllNo!),
+                onLoadMoreRequested: _loadMoreEpisodes,
               ),
-            )
-          else
-            _EpisodeListSliver(
-              ncode: ncode,
-              totalEpisodes: novelInfo.generalAllNo ?? 0,
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -144,8 +250,6 @@ Widget _buildHeader(BuildContext context, NovelInfo novelInfo) {
         children: [
           const Icon(Icons.person_outline, size: 16),
           const SizedBox(width: 4),
-          // FIX: 作者名が非常に長い場合に横方向にオーバーフローする問題を解決。
-          // Rowの子要素としてExpandedを使用することで、利用可能なスペースに合わせてテキストを切り詰める。
           Expanded(
             child: Text(
               novelInfo.writer ?? 'Unknown',
@@ -170,155 +274,6 @@ class _StorySection extends StatefulWidget {
 
   @override
   _StorySectionState createState() => _StorySectionState();
-}
-
-class _EpisodeListSliver extends ConsumerStatefulWidget {
-  const _EpisodeListSliver({
-    required this.ncode,
-    required this.totalEpisodes,
-  });
-
-  final String ncode;
-  final int totalEpisodes;
-
-  @override
-  ConsumerState<_EpisodeListSliver> createState() => _EpisodeListSliverState();
-}
-
-class _EpisodeListSliverState extends ConsumerState<_EpisodeListSliver> {
-  final List<Episode> _episodes = [];
-  var _currentPage = 1;
-  var _isLoading = false;
-  var _hasMorePages = true;
-  var _initialLoadDone = false;
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_loadMoreEpisodes());
-  }
-
-  Future<void> _loadMoreEpisodes() async {
-    if (_isLoading || !_hasMorePages) {
-      return;
-    }
-
-    if (widget.totalEpisodes > 0 && _episodes.length >= widget.totalEpisodes) {
-      if (mounted) {
-        setState(() {
-          _hasMorePages = false;
-        });
-      }
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final newEpisodes = await ref.read(
-        episodeListProvider('${widget.ncode}_$_currentPage').future,
-      );
-
-      if (newEpisodes.isEmpty) {
-        _hasMorePages = false;
-      } else {
-        // Check for duplicates to prevent infinite loading on single-page novels
-        if (_episodes.isNotEmpty &&
-            newEpisodes.isNotEmpty &&
-            _episodes.any((e) => e.url == newEpisodes.first.url)) {
-          _hasMorePages = false;
-        } else {
-          _episodes.addAll(newEpisodes);
-          _currentPage++;
-        }
-      }
-    } on Exception catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エピソードの読み込みに失敗しました: $e')),
-        );
-      }
-      _hasMorePages = false;
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _initialLoadDone = true;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_initialLoadDone) {
-      return const SliverToBoxAdapter(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      );
-    }
-
-    if (_episodes.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('エピソードがありません'),
-          ),
-        ),
-      );
-    }
-
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          if (index == 0) {
-            // Header
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                '${widget.totalEpisodes} 話',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            );
-          }
-
-          final episodeIndex = index - 1;
-          if (episodeIndex >= _episodes.length) {
-            if (!_isLoading && _hasMorePages) {
-              unawaited(Future.microtask(_loadMoreEpisodes));
-            }
-            return _isLoading
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                : const SizedBox.shrink();
-          }
-
-          if (episodeIndex < _episodes.length) {
-            final episode = _episodes[episodeIndex];
-            return _EpisodeListTile(
-              episode: episode,
-              ncode: widget.ncode,
-            );
-          }
-
-          return const SizedBox.shrink();
-        },
-        childCount:
-            _episodes.length + 2, // +1 for header, +1 for loading indicator
-      ),
-    );
-  }
 }
 
 class _StorySectionState extends State<_StorySection> {
@@ -363,6 +318,94 @@ class _StorySectionState extends State<_StorySection> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _EpisodeListSliver extends StatelessWidget {
+  const _EpisodeListSliver({
+    required this.ncode,
+    required this.totalEpisodes,
+    required this.episodes,
+    required this.isLoading,
+    required this.hasMore,
+    required this.onLoadMoreRequested,
+    // initialLoadDone is no longer needed as parent handles loading state
+  });
+
+  final String ncode;
+  final int totalEpisodes;
+  final List<Episode> episodes;
+  final bool isLoading;
+  final bool hasMore;
+  final VoidCallback onLoadMoreRequested;
+
+  @override
+  Widget build(BuildContext context) {
+    // If we have no episodes and are loading, show spinner (though parent might handle this)
+    if (episodes.isEmpty && isLoading) {
+      return const SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
+    if (episodes.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Text('エピソードがありません'),
+          ),
+        ),
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          if (index == 0) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                '$totalEpisodes 話',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          }
+
+          final episodeIndex = index - 1;
+          if (episodeIndex >= episodes.length) {
+            // Reached end of list
+            if (hasMore) {
+              // Trigger load more if we still have more page and not currently loading the NEXT page
+              // Note: isLoading passed here is aggregate. We might want to be more specific.
+              // But strictly, if we are scrolling and see spinner, we shouldn't spam.
+              if (!isLoading) {
+                unawaited(Future.microtask(onLoadMoreRequested));
+              }
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            return const SizedBox.shrink();
+          }
+
+          final episode = episodes[episodeIndex];
+          return _EpisodeListTile(
+            episode: episode,
+            ncode: ncode,
+          );
+        },
+        childCount: episodes.length + 2, // Header + Items + Footer
+      ),
     );
   }
 }
@@ -443,8 +486,6 @@ Widget _buildActionButtons(
             context,
             icon: Icons.downloading,
             label: 'ダウンロード中...',
-            // ignore: avoid_redundant_argument_values テストのため
-            onPressed: null,
           ),
           error: (e, s) =>
               _buildActionButton(context, icon: Icons.error, label: 'Error'),
@@ -473,7 +514,6 @@ Widget _buildDownloadButton(
   bool isDownloaded,
   DownloadProgress? progress,
 ) {
-  // ダウンロード中の場合
   if (progress != null && progress.isDownloading) {
     return _buildActionButton(
       context,
@@ -482,7 +522,6 @@ Widget _buildDownloadButton(
     );
   }
 
-  // エラーがある場合
   if (progress != null && progress.hasError) {
     return _buildActionButton(
       context,
@@ -493,7 +532,6 @@ Widget _buildDownloadButton(
     );
   }
 
-  // 通常の状態
   return _buildActionButton(
     context,
     icon: isDownloaded
@@ -510,7 +548,6 @@ Widget _buildDownloadButton(
   );
 }
 
-/// ダウンロード処理を実行し、結果に応じてUIを表示する
 Future<void> _handleDownload(
   BuildContext context,
   WidgetRef ref,
@@ -566,9 +603,7 @@ Future<void> _handleDownload(
         ),
       );
     },
-    cancelled: () {
-      // キャンセルされた場合は何もしない
-    },
+    cancelled: () {},
     error: (message) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('ダウンロードに失敗しました: $message')),
@@ -577,7 +612,6 @@ Future<void> _handleDownload(
   );
 }
 
-/// 削除処理を実行する
 Future<void> _handleDelete(
   BuildContext context,
   WidgetRef ref,
@@ -610,15 +644,9 @@ Future<void> _handleDelete(
   if (!context.mounted) return;
 
   result.when(
-    success: (_) {
-      // 削除成功時は何もしない
-    },
-    permissionDenied: () {
-      // 削除では発生しない
-    },
-    cancelled: () {
-      // 削除では発生しない
-    },
+    success: (_) {},
+    permissionDenied: () {},
+    cancelled: () {},
     error: (message) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('削除に失敗しました: $message')),
@@ -653,7 +681,6 @@ Widget _buildActionButton(
   );
 }
 
-/// エピソードリストの各アイテムを表示するウィジェット
 class _EpisodeListTile extends ConsumerWidget {
   const _EpisodeListTile({
     required this.episode,
@@ -680,7 +707,6 @@ class _EpisodeListTile extends ConsumerWidget {
     final episodeNumber = _extractEpisodeNumber(episode.url);
     final episodeTitle = episode.subtitle ?? 'No Title';
 
-    // エピソード番号がない場合は通常のListTileを表示
     if (episodeNumber == null) {
       return ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -705,16 +731,14 @@ class _EpisodeListTile extends ConsumerWidget {
           : downloadStatusAsync.when(
               data: (status) {
                 if (status == 2) {
-                  // ダウンロード成功
                   return IconButton(
                     icon: Icon(
                       Icons.download_done,
                       color: Theme.of(context).colorScheme.primary,
                     ),
-                    onPressed: null, // 無効化
+                    onPressed: null,
                   );
                 } else if (status == 3) {
-                  // ダウンロード失敗
                   return IconButton(
                     icon: Icon(
                       Icons.download,
@@ -725,7 +749,6 @@ class _EpisodeListTile extends ConsumerWidget {
                     },
                   );
                 } else {
-                  // 未ダウンロード
                   return IconButton(
                     icon: const Icon(Icons.download),
                     onPressed: () {
@@ -782,31 +805,19 @@ class _EpisodeListTile extends ConsumerWidget {
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('第$episodeNumber話をダウンロードしました'),
-            duration: const Duration(seconds: 1),
-          ),
-        );
-        // プロバイダーを無効化して状態を更新
-        ref.invalidate(
-          episodeDownloadStatusProvider(ncode: ncode, episode: episodeNumber),
+          const SnackBar(content: Text('ダウンロードしました')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('第$episodeNumber話のダウンロードに失敗しました'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+          const SnackBar(content: Text('ダウンロードに失敗しました')),
         );
       }
     } on Exception catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('エラー: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラーが発生しました: $e')),
+        );
+      }
     }
   }
 }

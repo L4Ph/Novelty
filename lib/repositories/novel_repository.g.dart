@@ -53,7 +53,87 @@ final class NovelRepositoryProvider
   }
 }
 
-String _$novelRepositoryHash() => r'2e5398c23a6f338f7d37b8928e2cce71860f7f06';
+String _$novelRepositoryHash() => r'4daeeb4416e0a2340591856b406a4724344c0f5c';
+
+/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+
+@ProviderFor(novelInfoWithCache)
+const novelInfoWithCacheProvider = NovelInfoWithCacheFamily._();
+
+/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+
+final class NovelInfoWithCacheProvider
+    extends
+        $FunctionalProvider<AsyncValue<NovelInfo>, NovelInfo, Stream<NovelInfo>>
+    with $FutureModifier<NovelInfo>, $StreamProvider<NovelInfo> {
+  /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+  const NovelInfoWithCacheProvider._({
+    required NovelInfoWithCacheFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'novelInfoWithCacheProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$novelInfoWithCacheHash();
+
+  @override
+  String toString() {
+    return r'novelInfoWithCacheProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<NovelInfo> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<NovelInfo> create(Ref ref) {
+    final argument = this.argument as String;
+    return novelInfoWithCache(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is NovelInfoWithCacheProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$novelInfoWithCacheHash() =>
+    r'85c561a8aa25cc764fb0c76d7f65d3eed8b24b92';
+
+/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+
+final class NovelInfoWithCacheFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<NovelInfo>, String> {
+  const NovelInfoWithCacheFamily._()
+    : super(
+        retry: null,
+        name: r'novelInfoWithCacheProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+
+  NovelInfoWithCacheProvider call(String ncode) =>
+      NovelInfoWithCacheProvider._(argument: ncode, from: this);
+
+  @override
+  String toString() => r'novelInfoWithCacheProvider';
+}
 
 /// 小説のコンテンツを取得するプロバイダー。
 
@@ -554,22 +634,22 @@ final class EpisodeDownloadStatusFamily extends $Family
   String toString() => r'episodeDownloadStatusProvider';
 }
 
-/// エピソードリストを取得するプロバイダー
+/// エピソードリストをページ単位で取得するプロバイダー（SWR）
 
 @ProviderFor(episodeList)
 const episodeListProvider = EpisodeListFamily._();
 
-/// エピソードリストを取得するプロバイダー
+/// エピソードリストをページ単位で取得するプロバイダー（SWR）
 
 final class EpisodeListProvider
     extends
         $FunctionalProvider<
           AsyncValue<List<Episode>>,
           List<Episode>,
-          FutureOr<List<Episode>>
+          Stream<List<Episode>>
         >
-    with $FutureModifier<List<Episode>>, $FutureProvider<List<Episode>> {
-  /// エピソードリストを取得するプロバイダー
+    with $FutureModifier<List<Episode>>, $StreamProvider<List<Episode>> {
+  /// エピソードリストをページ単位で取得するプロバイダー（SWR）
   const EpisodeListProvider._({
     required EpisodeListFamily super.from,
     required String super.argument,
@@ -593,12 +673,12 @@ final class EpisodeListProvider
 
   @$internal
   @override
-  $FutureProviderElement<List<Episode>> $createElement(
+  $StreamProviderElement<List<Episode>> $createElement(
     $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  ) => $StreamProviderElement(pointer);
 
   @override
-  FutureOr<List<Episode>> create(Ref ref) {
+  Stream<List<Episode>> create(Ref ref) {
     final argument = this.argument as String;
     return episodeList(ref, argument);
   }
@@ -614,12 +694,12 @@ final class EpisodeListProvider
   }
 }
 
-String _$episodeListHash() => r'eac464a5085d796cfee879af15cc876d0ca3c5ee';
+String _$episodeListHash() => r'729c91da200730b7686dc58033503a05891e5a32';
 
-/// エピソードリストを取得するプロバイダー
+/// エピソードリストをページ単位で取得するプロバイダー（SWR）
 
 final class EpisodeListFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<List<Episode>>, String> {
+    with $FunctionalFamilyOverride<Stream<List<Episode>>, String> {
   const EpisodeListFamily._()
     : super(
         retry: null,
@@ -629,7 +709,7 @@ final class EpisodeListFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// エピソードリストを取得するプロバイダー
+  /// エピソードリストをページ単位で取得するプロバイダー（SWR）
 
   EpisodeListProvider call(String ncodeAndPage) =>
       EpisodeListProvider._(argument: ncodeAndPage, from: this);
