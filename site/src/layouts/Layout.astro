@@ -1,5 +1,5 @@
 ---
-import "../pages/assets/app.css";
+import "../styles/app.css";
 
 interface Props {
 	title?: string;
@@ -58,9 +58,6 @@ const { title = "Novelty - Modern Novel Reader" } = Astro.props;
 			}
 		</script>
 
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet" />
 	</head>
 	<body class="min-h-screen bg-base-100 text-base-content selection:bg-primary/30">
 		<slot />
