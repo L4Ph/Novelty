@@ -8,17 +8,17 @@ import { Menu } from '@lucide/astro';
       <!-- Navbar Start: Mobile Menu & Logo -->
       <div class="navbar-start">
         <div class="dropdown">
-          <div tabindex="0" role="button" class="btn btn-ghost lg:hidden mr-2">
+          <div tabindex="0" role="button" class="btn btn-ghost lg:hidden" aria-label="Menu">
             <Menu class="w-5 h-5" />
           </div>
-          <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52 border border-base-content/5">
+          <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-50 p-2 shadow-2xl bg-base-200/95 backdrop-blur-md rounded-2xl w-52 border border-base-content/5">
             <li><a href="#features" class="font-medium">機能</a></li>
             <li><a href="#tech" class="font-medium">技術</a></li>
           </ul>
         </div>
         
-        <a href="/" class="flex items-center gap-2 group hover:opacity-80 transition-opacity">
-          <img src="/favicon.svg" alt="Novelty Logo" class="w-8 h-8 group-hover:rotate-12 transition-transform duration-300" />
+        <a href="/" class="flex items-center gap-2 shrink-0">
+          <img src="/favicon.svg" alt="Novelty - アプリロゴ" class="w-9 h-9" />
           <span class="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#66B9D2] tracking-tighter">
             Novelty
           </span>

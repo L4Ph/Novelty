@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://novelty.l4ph.moe/sitemap-index.xml
