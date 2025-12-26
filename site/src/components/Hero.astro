@@ -1,0 +1,47 @@
+---
+---
+
+<section class="relative overflow-hidden pt-24 pb-32 lg:pt-32 lg:pb-48">
+  <!-- Dynamic Background Effects -->
+  <div class="absolute inset-0 z-0">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[120px] opacity-40"></div>
+    <div class="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-[#66B9D2]/10 rounded-full blur-[100px] opacity-30 animate-float" style="animation-delay: -2s;"></div>
+    <div class="absolute bottom-1/4 right-1/3 w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[100px] opacity-20 animate-float"></div>
+  </div>
+
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+    <div class="inline-flex items-center px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-12 border border-primary/20 backdrop-blur-sm">
+      <span class="flex h-2 w-2 rounded-full bg-primary mr-2 animate-ping"></span>
+      Flutter製の革新的な小説ビューアー
+    </div>
+    
+    <h1 class="text-6xl lg:text-7xl xl:text-8xl font-black tracking-tight mb-8 leading-[1.1] [text-wrap:balance] break-keep">
+      <span class="inline-block">モダンで、</span><span class="inline-block"><span class="text-primary italic">シンプル</span>に。</span><br />
+      <span class="inline-block">最高の読書体験を。</span>
+    </h1>
+    
+    <p class="text-xl text-base-content/70 mb-12 max-w-2xl mx-auto leading-relaxed [text-wrap:balance]">
+      「小説家になろう」を読むためにゼロから再設計された、オフラインファーストの小説ビューアー。<br class="hidden sm:block" />
+      美しさと使いやすさを追求し、あなたの読書時間をより豊かなものにします。
+    </p>
+    
+    <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+      <a href="https://github.com/L4Ph/Novelty/releases/latest" class="btn btn-primary btn-lg rounded-2xl px-12 h-16 text-lg shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
+        今すぐダウンロード
+      </a>
+      <a href="#features" class="btn btn-ghost btn-lg rounded-2xl px-12 h-16 text-lg border border-base-content/10 hover:bg-base-content/5 transition-all">
+        詳しく知る
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+</style>

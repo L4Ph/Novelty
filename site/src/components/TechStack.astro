@@ -1,0 +1,64 @@
+---
+const techStacks = [
+  {
+    category: "Framework",
+    title: "Flutter",
+    description: "美しく、高速で、直感的なUI。すべてのOSへの対応を一本化し、読書効率を最大化します。"
+  },
+  {
+    category: "State Management",
+    title: "Riverpod",
+    description: "堅牢な状態管理とリアクティブな設計。データの流れを透明化し、バグの少ない安定性を実現。"
+  },
+  {
+    category: "Database",
+    title: "Drift",
+    description: "型安全なSQLite。ページ履歴やダウンロードした小説を高速かつ確実に管理します。"
+  },
+  {
+    category: "Internal Tool",
+    title: "narou_parser",
+    description: "「小説家になろう」のために独自開発。高速なHTML解析と正確なデータ変換を担うエンジン。"
+  },
+  {
+    category: "Internal Tool",
+    title: "tategaki",
+    description: "小説の「読みやすさ」に妥協しない。Web技術では難解な縦書き表示を Flutter で実現した独自ライブラリ。"
+  },
+  {
+    category: "Internal Tool",
+    title: "riverpod_swr",
+    description: "SWRパターンを Riverpod に統合。高速なキャッシュ表示と最新データの取得をシームレスに。"
+  }
+];
+---
+
+<section id="tech" class="py-24 lg:py-32 bg-base-100 relative overflow-hidden">
+  <!-- Soft ambiance backgrounds -->
+  <div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_30%,var(--tw-gradient-from)_0%,transparent_50%)] from-primary/5 pointer-events-none"></div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div class="text-center mb-16 lg:mb-24">
+      <h2 class="text-sm font-bold text-primary tracking-widest uppercase mb-3">Technical Craftsmanship</h2>
+      <p class="text-4xl lg:text-5xl font-black tracking-tight mb-4">信頼を支える技術</p>
+      <div class="h-1.5 w-20 bg-primary mx-auto rounded-full"></div>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+      {techStacks.map(tech => (
+        <div class="group p-8 bg-base-200/40 rounded-3xl border border-base-content/5 backdrop-blur-sm hover:bg-base-200/80 hover:border-primary/20 transition-all duration-300 flex flex-col items-start text-left">
+          <div class="mb-6">
+            <span class="text-[10px] uppercase tracking-wider font-bold text-primary px-3 py-1 rounded-full bg-primary/10 mb-3 inline-block">
+              {tech.category}
+            </span>
+            <h3 class="text-3xl font-black group-hover:text-primary transition-colors">{tech.title}</h3>
+          </div>
+          
+          <p class="text-base-content/60 leading-relaxed text-sm lg:text-base">
+            {tech.description}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
