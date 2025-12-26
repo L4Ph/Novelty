@@ -1,0 +1,53 @@
+---
+import { Menu } from '@lucide/astro';
+---
+
+<header class="sticky top-0 z-50 w-full px-4 sm:px-6 lg:px-8 pt-4 pb-0 pointer-events-none">
+  <div class="max-w-7xl mx-auto pointer-events-auto">
+    <nav class="navbar bg-base-100/80 backdrop-blur-xl border border-base-content/5 shadow-2xl rounded-3xl min-h-[4rem] px-4">
+      <!-- Navbar Start: Mobile Menu & Logo -->
+      <div class="navbar-start">
+        <div class="dropdown">
+          <div tabindex="0" role="button" class="btn btn-ghost lg:hidden" aria-label="Menu">
+            <Menu class="w-5 h-5" />
+          </div>
+          <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-50 p-2 shadow-2xl bg-base-200/95 backdrop-blur-md rounded-2xl w-52 border border-base-content/5">
+            <li><a href="#features" class="font-medium">機能</a></li>
+            <li><a href="#tech" class="font-medium">技術</a></li>
+          </ul>
+        </div>
+        
+        <a href="/" class="flex items-center gap-2 shrink-0">
+          <img src="/favicon.svg" alt="Novelty - アプリロゴ" class="w-9 h-9" />
+          <span class="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#66B9D2] tracking-tighter">
+            Novelty
+          </span>
+        </a>
+      </div>
+
+      <!-- Navbar Center: Desktop Links -->
+      <div class="navbar-center hidden lg:flex">
+        <ul class="menu menu-horizontal px-1 gap-2">
+          <li>
+            <a href="#features" class="px-5 py-2 font-bold hover:text-primary transition-colors">機能</a>
+          </li>
+          <li>
+            <a href="#tech" class="px-5 py-2 font-bold hover:text-primary transition-colors">技術</a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Navbar End: Call to Action -->
+      <div class="navbar-end">
+        <a 
+          href="https://github.com/L4Ph/Novelty" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="btn btn-primary btn-sm sm:btn-md rounded-2xl px-6 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all border-none"
+        >
+          GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>

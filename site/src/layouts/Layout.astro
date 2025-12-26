@@ -1,0 +1,68 @@
+---
+import "../pages/assets/app.css";
+
+interface Props {
+	title?: string;
+}
+
+const { title = "Novelty - Modern Novel Reader" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="ja" class="scroll-smooth">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		
+		<!-- Primary Meta Tags -->
+		<title>{title}</title>
+		<meta name="title" content={title} />
+		<meta name="description" content="モダンで、シンプルに。そして透明性高く。「小説家になろう」の読書体験を再定義する、Flutter製クロスプラットフォーム小説ビューアー。ライトノベルやネット小説を、最高の環境で。" />
+		<meta name="keywords" content="小説家になろう, なろう, 読書アプリ, 小説ビューアー, ライトノベル, ラノベ, Flutter, オープンソース, Novelty" />
+		<link rel="canonical" href="https://novelty.l4ph.moe" />
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://novelty.l4ph.moe" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content="モダンでシンプルな「小説家になろう」ビューアー。Flutter製でiOS、Android、デスクトップに対応。" />
+		<meta property="og:image" content="https://novelty.l4ph.moe/ogp.png" />
+
+		<!-- Twitter -->
+		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:url" content="https://novelty.l4ph.moe" />
+		<meta property="twitter:title" content={title} />
+		<meta property="twitter:description" content="モダンでシンプルな「小説家になろう」ビューアー。Flutter製でiOS、Android、デスクトップに対応。" />
+		<meta property="twitter:image" content="https://novelty.l4ph.moe/ogp.png" />
+
+		<!-- Structured Data (JSON-LD) -->
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "SoftwareApplication",
+				"name": "Novelty",
+				"operatingSystem": "iOS, Android, Windows, macOS, Linux",
+				"applicationCategory": "ReadingApplication",
+				"description": "「小説家になろう」を快適に読むための、モダンでシンプルな小説ビューアー。",
+				"offers": {
+					"@type": "Offer",
+					"price": "0",
+					"priceCurrency": "JPY"
+				},
+				"author": {
+					"@type": "Organization",
+					"name": "Novelty Project"
+				}
+			}
+		</script>
+
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet" />
+	</head>
+	<body class="min-h-screen bg-base-100 text-base-content selection:bg-primary/30">
+		<slot />
+	</body>
+</html>

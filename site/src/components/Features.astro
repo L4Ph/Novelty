@@ -1,0 +1,55 @@
+---
+import { BookOpen, CloudOff, MousePointer2, Laptop } from '@lucide/astro';
+
+const features = [
+  {
+    title: "究極の縦書き読書",
+    description: "美しく読みやすいフォントとカスタマイズ可能な段組。紙の本のような没入感を提供します。",
+    icon: BookOpen
+  },
+  {
+    title: "オフライン対応",
+    description: "一度読み込んだ小説は自動的にキャッシュ。電波のない場所でも物語の続きを楽しめます。",
+    icon: CloudOff
+  },
+  {
+    title: "快適な操作性",
+    description: "直感的なジェスチャーと滑らかなアニメーション。長時間の読書でも手が疲れないよう設計されています。",
+    icon: MousePointer2
+  },
+  {
+    title: "マルチデバイス",
+    description: "スマートフォン、タブレット、デスクトップ。あらゆるデバイスで最適化された体験を。",
+    icon: Laptop
+  }
+];
+---
+
+<section id="features" class="py-24 lg:py-32 bg-base-200/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16 lg:mb-24">
+      <h2 class="text-sm font-bold text-primary tracking-widest uppercase mb-3">Core Features</h2>
+      <p class="text-4xl lg:text-5xl font-black tracking-tight">際立つ読書体験</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8">
+      {features.map(feature => (
+        <div class="card bg-base-100 border border-base-content/5 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 group">
+          <div class="card-body p-8 lg:p-10 flex flex-row items-start gap-6">
+            <div class="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-content transition-all duration-300">
+              <feature.icon class="w-7 h-7" />
+            </div>
+            <div>
+              <h3 class="card-title text-2xl font-black mb-3 group-hover:text-primary transition-colors">
+                {feature.title}
+              </h3>
+              <p class="text-base-content/60 leading-relaxed font-medium">
+                {feature.description}
+              </p>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

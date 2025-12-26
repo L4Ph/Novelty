@@ -1,0 +1,52 @@
+---
+import { Github, ExternalLink, Code } from '@lucide/astro';
+---
+
+<!-- Legal Disclaimer Banner -->
+<div class="w-full bg-base-300/30 py-4 border-t border-base-content/5">
+  <div class="max-w-7xl mx-auto px-6 text-center">
+    <p class="text-[11px] text-base-content/40 font-bold italic tracking-wide">
+      ※「小説家になろう」は株式会社ヒナプロジェクトの登録商標です。本アプリは非公式のクライアントアプリであり、同社とは一切関係ありません。
+    </p>
+  </div>
+</div>
+
+<footer class="footer sm:footer-horizontal p-10 bg-base-200 text-base-content border-t border-base-content/5">
+  <aside>
+    <div class="flex items-center gap-2 mb-4 shrink-0">
+      <img src="/favicon.svg" alt="Novelty - モダンでシンプルな小説ビューアー" class="w-10 h-10" />
+      <span class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#66B9D2] tracking-tighter">
+        Novelty
+      </span>
+    </div>
+    <p class="font-medium text-base-content/60 mb-2">
+      モダンでシンプルな「小説家になろう」ビューアー<br/>
+      Providing the best reading experience since 2025.
+    </p>
+  </aside>
+  <nav>
+    <h6 class="footer-title opacity-100 font-black text-primary">アプリ</h6>
+    <a href="https://github.com/L4Ph/Novelty/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="link link-hover font-medium">ライセンス</a>
+    <a href="https://github.com/L4Ph/Novelty/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener noreferrer" class="link link-hover font-medium">プライバシーポリシー</a>
+  </nav>
+  <nav>
+    <h6 class="footer-title opacity-100 font-black text-primary">リンク</h6>
+    <a href="https://github.com/L4Ph/Novelty" target="_blank" rel="noopener noreferrer" class="link link-hover font-medium inline-flex items-center gap-2">
+      <Github class="w-4 h-4" />
+      GitHub
+    </a>
+    <a href="https://syosetu.com" target="_blank" rel="noopener noreferrer" class="link link-hover font-medium inline-flex items-center gap-2">
+      <ExternalLink class="w-4 h-4" />
+      小説家になろう
+    </a>
+  </nav>
+</footer>
+
+<footer class="footer footer-center p-6 bg-base-300 text-base-content/60 font-medium leading-relaxed">
+  <aside>
+    <div class="flex items-center gap-2">
+      <Code class="w-4 h-4" />
+      <p>© 2025 Novelty Project. Built with Astro, daisyUI & Lucide.</p>
+    </div>
+  </aside>
+</footer>

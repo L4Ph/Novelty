@@ -1,0 +1,65 @@
+---
+import { Download, ArrowRight } from '@lucide/astro';
+---
+
+<section class="hero min-h-[80vh] relative overflow-hidden bg-base-100 pt-20">
+  <!-- Dynamic Background Effects -->
+  <div class="absolute inset-0 z-0 pointer-events-none">
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 blur-[120px] rounded-full animate-pulse"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-[#66B9D2]/10 blur-[150px] rounded-full animate-pulse" style="animation-delay: 1s;"></div>
+  </div>
+
+  <div class="hero-content text-center z-10 px-4">
+    <div class="max-w-3xl">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-sm font-bold mb-8 animate-fade-in">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+        </span>
+        Web小説読書体験の再定義
+      </div>
+      
+      <h1 class="text-5xl lg:text-7xl font-black tracking-tight mb-8 leading-[1.1]">
+        モダンでシンプルな<br/>
+        <span class="bg-clip-text text-transparent bg-gradient-to-r from-primary via-[#66B9D2] to-primary bg-[length:200%_auto] animate-gradient">
+          小説ビューアー
+        </span>
+      </h1>
+      
+      <p class="text-lg lg:text-xl text-base-content/60 leading-relaxed mb-12 max-w-2xl mx-auto font-medium">
+        「小説家になろう」の読書を、より快適に、より美しく。<br class="hidden sm:block"/>
+        余計なものを削ぎ落とし、物語に没入するための究極のクライアントアプリ。
+      </p>
+      
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a 
+          href="https://github.com/L4Ph/Novelty/releases/latest" 
+          class="btn btn-primary btn-lg rounded-2xl px-10 font-black shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all border-none h-16 min-h-[4rem] gap-3"
+        >
+          <Download class="w-6 h-6" />
+          今すぐダウンロード
+        </a>
+        <a 
+          href="#features" 
+          class="btn btn-ghost btn-lg rounded-2xl px-10 font-bold hover:bg-base-200 transition-all h-16 min-h-[4rem] gap-2"
+        >
+          機能を見る
+          <ArrowRight class="w-5 h-5" />
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Abstract Bottom Decoration -->
+  <div class="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-base-content/10 to-transparent"></div>
+</section>
+
+<style>
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+</style>
