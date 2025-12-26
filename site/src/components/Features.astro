@@ -1,47 +1,52 @@
 ---
+import { BookOpen, CloudOff, MousePointer2, Laptop } from '@lucide/astro';
+
 const features = [
   {
-    title: "オフラインファースト",
-    description: "一度読み込んだ作品はオフラインでも閲覧可能。地下鉄や飛行機の中でも読書を中断させません。",
-    icon: "M13 10V3L4 14h7v7l9-11h-7z"
+    title: "究極の縦書き読書",
+    description: "美しく読みやすいフォントとカスタマイズ可能な段組。紙の本のような没入感を提供します。",
+    icon: BookOpen
   },
   {
-    title: "縦書き・横書き対応",
-    description: "日本語の小説に最適な縦書き表示をサポート。好みに合わせて一瞬で切り替え可能です。",
-    icon: "M3 5h18M3 10h18M3 15h18M3 20h18"
+    title: "オフライン対応",
+    description: "一度読み込んだ小説は自動的にキャッシュ。電波のない場所でも物語の続きを楽しめます。",
+    icon: CloudOff
   },
   {
-    title: "詳細なカスタマイズ",
-    description: "フォント、サイズ、行間、背景色などを自由に調整。あなただけの読書環境を。",
-    icon: "M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+    title: "快適な操作性",
+    description: "直感的なジェスチャーと滑らかなアニメーション。長時間の読書でも手が疲れないよう設計されています。",
+    icon: MousePointer2
   },
   {
-    title: "プライバシー重視",
-    description: "不必要な権限は一切要求しません。あなたの読書データはあなたのデバイスの中に。",
-    icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+    title: "マルチデバイス",
+    description: "スマートフォン、タブレット、デスクトップ。あらゆるデバイスで最適化された体験を。",
+    icon: Laptop
   }
 ];
 ---
 
-<section id="features" class="py-24 bg-base-200/50">
+<section id="features" class="py-24 lg:py-32 bg-base-200/50">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-16">
-      <h2 class="text-3xl lg:text-4xl font-bold mb-4">読書を、もっと自由に。</h2>
-      <p class="text-base-content/60 max-w-2xl mx-auto italic">
-        ただ読むだけではない、新しい体験。
-      </p>
+    <div class="text-center mb-16 lg:mb-24">
+      <h2 class="text-sm font-bold text-primary tracking-widest uppercase mb-3">Core Features</h2>
+      <p class="text-4xl lg:text-5xl font-black tracking-tight">際立つ読書体験</p>
     </div>
-    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+
+    <div class="grid md:grid-cols-2 gap-8">
       {features.map(feature => (
-        <div class="card bg-base-100 shadow-xl border border-base-content/5 hover:border-primary/20 transition-all hover:-translate-y-1">
-          <div class="card-body">
-            <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={feature.icon} />
-              </svg>
+        <div class="card bg-base-100 border border-base-content/5 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 group">
+          <div class="card-body p-8 lg:p-10 flex flex-row items-start gap-6">
+            <div class="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-content transition-all duration-300">
+              <feature.icon class="w-7 h-7" />
             </div>
-            <h3 class="card-title text-xl mb-2">{feature.title}</h3>
-            <p class="text-sm text-base-content/70">{feature.description}</p>
+            <div>
+              <h3 class="card-title text-2xl font-black mb-3 group-hover:text-primary transition-colors">
+                {feature.title}
+              </h3>
+              <p class="text-base-content/60 leading-relaxed font-medium">
+                {feature.description}
+              </p>
+            </div>
           </div>
         </div>
       ))}
