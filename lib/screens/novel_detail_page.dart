@@ -298,6 +298,9 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                       width: double.infinity,
                       child: isInLibrary
                           ? OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size.fromHeight(40),
+                              ),
                               onPressed: () {
                                 unawaited(
                                   ref
@@ -313,6 +316,9 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                               label: const Text('ライブラリから削除'),
                             )
                           : FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size.fromHeight(40),
+                              ),
                               onPressed: () {
                                 unawaited(
                                   ref
