@@ -558,7 +558,7 @@ final class EpisodeDownloadStatusProvider
   }) : super(
          retry: null,
          name: r'episodeDownloadStatusProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -600,7 +600,7 @@ final class EpisodeDownloadStatusProvider
 }
 
 String _$episodeDownloadStatusHash() =>
-    r'd35b31e59af860b089466eb79f5808081d5ebf90';
+    r'b8ec3c7cd84ceb7ec443eb99ac69b891b9350d38';
 
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
@@ -615,7 +615,7 @@ final class EpisodeDownloadStatusFamily extends $Family
         name: r'episodeDownloadStatusProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   /// エピソードのダウンロード状態を監視するプロバイダー。
@@ -735,7 +735,7 @@ final class LastReadEpisodeProvider
   }) : super(
          retry: null,
          name: r'lastReadEpisodeProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -772,7 +772,7 @@ final class LastReadEpisodeProvider
   }
 }
 
-String _$lastReadEpisodeHash() => r'c0fdd1391c9cb5bf26794651f50b7b7823c182f4';
+String _$lastReadEpisodeHash() => r'7af911f1a41e9fe29eb6db2205f8178a5fce803a';
 
 /// 最後に読んだエピソード番号を取得するプロバイダー
 
@@ -784,7 +784,7 @@ final class LastReadEpisodeFamily extends $Family
         name: r'lastReadEpisodeProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   /// 最後に読んだエピソード番号を取得するプロバイダー

@@ -164,10 +164,9 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
       error: (e, s) => const SizedBox.shrink(),
     );
 
-    final lastReadEpisodeAsync = ref.watch(
-      lastReadEpisodeProvider(widget.ncode),
-    );
-    final lastReadEpisode = lastReadEpisodeAsync.value;
+    final lastReadEpisode = ref
+        .watch(lastReadEpisodeProvider(widget.ncode))
+        .value;
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
@@ -597,9 +596,10 @@ Widget _buildDownloadButton(
   return _buildActionButton(
     context,
     icon: isDownloaded
-        ? Icons.download_done
+        ? Icons.check_circle
         : Icons.download_for_offline_outlined,
     label: isDownloaded ? 'ダウンロード済' : 'ダウンロード',
+    color: isDownloaded ? Theme.of(context).colorScheme.primary : null,
     onPressed: () {
       if (isDownloaded) {
         unawaited(_handleDelete(context, ref, novelInfo));
@@ -724,22 +724,28 @@ Widget _buildActionButton(
   VoidCallback? onPressed,
   Color? color,
 }) {
-  final effectiveColor = color ?? Theme.of(context).textTheme.bodySmall?.color;
-  return Column(
-    children: [
-      IconButton(
-        icon: Icon(icon, color: effectiveColor),
-        onPressed: onPressed,
-        iconSize: 28,
+  final effectiveColor =
+      color ?? Theme.of(context).colorScheme.onSurfaceVariant;
+  return InkWell(
+    onTap: onPressed,
+    borderRadius: BorderRadius.circular(8),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: effectiveColor, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: effectiveColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
-      const SizedBox(height: 4),
-      Text(
-        label,
-        style: Theme.of(
-          context,
-        ).textTheme.bodySmall?.copyWith(color: effectiveColor),
-      ),
-    ],
+    ),
   );
 }
 
@@ -795,96 +801,174 @@ class _EpisodeListTile extends ConsumerWidget {
     );
     final isOffline = ref.watch(isOfflineProvider);
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '第$episodeNumber話',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            episodeTitle,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              height: 1.4,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-      subtitle: episode.update != null
-          ? Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                '更新日: ${episode.update}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            )
-          : null,
-      trailing: isOffline
-          ? null
-          : downloadStatusAsync.when(
-              data: (status) {
-                if (status == 2) {
-                  return IconButton(
-                    icon: Icon(
-                      Icons.download_done,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    onPressed: null,
-                  );
-                } else if (status == 3) {
-                  return IconButton(
-                    icon: Icon(
-                      Icons.download,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    onPressed: () {
-                      unawaited(_handleDownload(context, ref, episodeNumber));
-                    },
-                  );
-                } else {
-                  return IconButton(
-                    icon: const Icon(Icons.download),
-                    onPressed: () {
-                      unawaited(_handleDownload(context, ref, episodeNumber));
-                    },
-                  );
-                }
-              },
-              loading: () => const SizedBox(
-                width: 48,
-                height: 48,
-                child: Center(
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
+    // Determine swipe background colors and icons
+    Widget buildSwipeBackground({
+      required Alignment alignment,
+      required Color color,
+      required Color onColor,
+      required IconData icon,
+      required String label,
+    }) {
+      return Container(
+        color: color,
+        alignment: alignment,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (alignment == Alignment.centerRight) ...[
+              Text(
+                label,
+                style: TextStyle(
+                  color: onColor,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              error: (e, s) => IconButton(
-                icon: const Icon(Icons.download),
-                onPressed: () {
-                  unawaited(_handleDownload(context, ref, episodeNumber));
-                },
+              const SizedBox(width: 8),
+            ],
+            Icon(icon, color: onColor),
+            if (alignment == Alignment.centerLeft) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: onColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    final isDownloaded =
+        downloadStatusAsync.asData?.value == 2; // 2 = Success, 3 = Fail
+
+    return Dismissible(
+      key: Key('episode_$ncode$episodeNumber'),
+      direction: isOffline
+          ? DismissDirection.none
+          : DismissDirection.horizontal,
+      background: buildSwipeBackground(
+        alignment: Alignment.centerLeft,
+        color: Theme.of(context).colorScheme.primary,
+        onColor: Theme.of(context).colorScheme.onPrimary,
+        icon: Icons.download,
+        label: 'ダウンロード',
+      ),
+      secondaryBackground: buildSwipeBackground(
+        alignment: Alignment.centerRight,
+        color: Theme.of(context).colorScheme.error,
+        onColor: Theme.of(context).colorScheme.onError,
+        icon: Icons.delete,
+        label: '削除',
+      ),
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd) {
+          // Swipe Right -> Download
+          if (isDownloaded) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('既にダウンロード済みです')),
+            );
+            return false;
+          }
+          await _handleDownload(context, ref, episodeNumber);
+          return false; // Don't dismiss
+        } else if (direction == DismissDirection.endToStart) {
+          // Swipe Left -> Delete
+          // We attempt delete even if UI thinks it's not downloaded, just in case state is out of sync.
+          // DB update is safe to run on non-downloaded items (no-op).
+          await _handleDelete(context, ref, episodeNumber);
+          return false; // Don't dismiss
+        }
+        return false;
+      },
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '第$episodeNumber話',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
               ),
             ),
-      onTap: () {
-        final uri = Uri(
-          path: '/novel/$ncode/$episodeNumber',
-          queryParameters: episode.revised != null
-              ? {'revised': episode.revised}
-              : null,
-        );
-        unawaited(context.push(uri.toString()));
-      },
+            const SizedBox(height: 2),
+            Text(
+              episodeTitle,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        subtitle: episode.update != null
+            ? Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '更新日: ${episode.update}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              )
+            : null,
+        trailing: downloadStatusAsync.when(
+          data: (status) {
+            if (status == 2) {
+              return Icon(
+                Icons.check_circle,
+                color: Theme.of(context).colorScheme.primary,
+              );
+            }
+            return null;
+          },
+          loading: () => const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          error: (_, _) => Icon(
+            Icons.error_outline,
+            size: 16,
+            color: Theme.of(context).colorScheme.error,
+          ),
+        ),
+        onTap: () {
+          final uri = Uri(
+            path: '/novel/$ncode/$episodeNumber',
+            queryParameters: episode.revised != null
+                ? {'revised': episode.revised}
+                : null,
+          );
+          unawaited(context.push(uri.toString()));
+        },
+      ),
     );
+  }
+
+  Future<void> _handleDelete(
+    BuildContext context,
+    WidgetRef ref,
+    int episodeNumber,
+  ) async {
+    final repo = ref.read(novelRepositoryProvider);
+    try {
+      await repo.deleteDownloadedEpisode(ncode, episodeNumber);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('削除しました')),
+        );
+      }
+    } on Exception catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('削除に失敗しました: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _handleDownload(

@@ -821,23 +821,7 @@ class AppDatabase extends _$AppDatabase {
       episode.episodeId.value,
     );
 
-    await customStatement(
-      '''
-      INSERT INTO episodes (ncode, episode_id, content, fetched_at, subtitle, url)
-      VALUES (?, ?, ?, ?, ?, ?)
-      ON CONFLICT(ncode, episode_id) DO UPDATE SET
-        content = excluded.content,
-        fetched_at = excluded.fetched_at;
-    ''',
-      [
-        episode.ncode.value,
-        episode.episodeId.value,
-        const ContentConverter().toSql(episode.content.value!),
-        episode.fetchedAt.value,
-        episode.subtitle.value,
-        episode.url.value,
-      ],
-    );
+    await into(episodeEntities).insertOnConflictUpdate(episode);
 
     // Update Search Index
     // コンテンツが変更された場合のみインデックスを更新
