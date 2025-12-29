@@ -8,7 +8,6 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/connectivity_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// 小説の詳細ページ
@@ -592,30 +591,7 @@ Future<void> _handleDownload(
         );
       }
     },
-    permissionDenied: () {
-      unawaited(
-        showDialog<void>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('権限が必要です'),
-            content: const Text('小説をダウンロードするには、ファイルへのアクセス権限を許可してください。'),
-            actions: [
-              TextButton(
-                child: const Text('キャンセル'),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              TextButton(
-                child: const Text('設定を開く'),
-                onPressed: () {
-                  unawaited(openAppSettings());
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-        ),
-      );
-    },
+
     cancelled: () {},
     error: (message) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -658,7 +634,7 @@ Future<void> _handleDelete(
 
   result.when(
     success: (_) {},
-    permissionDenied: () {},
+
     cancelled: () {},
     error: (message) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:archive/archive.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
-import 'package:http/http.dart' as http;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
@@ -28,12 +28,17 @@ ApiService apiService(Ref ref) => ApiService();
 
 /// APIサービスクラス。
 class ApiService {
-  Future<http.Response> _fetchWithCache(String url) async {
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {
-        'User-Agent': userAgent,
-      },
+  final Dio _dio = Dio();
+
+  Future<Response<String>> _fetchWithCache(String url) async {
+    final response = await _dio.get<String>(
+      url,
+      options: Options(
+        headers: {
+          'User-Agent': userAgent,
+        },
+        responseType: ResponseType.plain,
+      ),
     );
     return response;
   }
@@ -202,11 +207,11 @@ class ApiService {
 
     if (response.statusCode != 200) {
       throw Exception(
-        'Failed to fetch episodes page $page: ${response.statusCode} ${response.reasonPhrase}',
+        'Failed to fetch episodes page $page: ${response.statusCode} ${response.statusMessage}',
       );
     }
 
-    final html = response.body;
+    final html = response.data!;
     final document = parser.parse(html);
     return _parseEpisodes(document);
   }
@@ -245,11 +250,11 @@ class ApiService {
 
     if (firstPageResponse.statusCode != 200) {
       throw Exception(
-        'Failed to fetch URL: ${firstPageResponse.statusCode} ${firstPageResponse.reasonPhrase}',
+        'Failed to fetch URL: ${firstPageResponse.statusCode} ${firstPageResponse.statusMessage}',
       );
     }
 
-    final firstPageHtml = firstPageResponse.body;
+    final firstPageHtml = firstPageResponse.data!;
     var document = parser.parse(firstPageHtml);
 
     final allEpisodes = _parseEpisodes(document);
@@ -265,7 +270,7 @@ class ApiService {
         break;
       }
 
-      final html = response.body;
+      final html = response.data!;
       document = parser.parse(html);
       final episodesOnPage = _parseEpisodes(document);
 
@@ -320,11 +325,11 @@ class ApiService {
 
     if (response.statusCode != 200) {
       throw Exception(
-        'Failed to fetch URL: ${response.statusCode} ${response.reasonPhrase}',
+        'Failed to fetch URL: ${response.statusCode} ${response.statusMessage}',
       );
     }
 
-    final html = response.body;
+    final html = response.data!;
     final document = parser.parse(html);
 
     final episodeTitle = isShortStory
@@ -367,21 +372,24 @@ class ApiService {
   }
 
   Future<List<dynamic>> _fetchData(String url) async {
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {
-        'User-Agent': userAgent,
-      },
+    final response = await _dio.get<List<int>>(
+      url,
+      options: Options(
+        headers: {
+          'User-Agent': userAgent,
+        },
+        responseType: ResponseType.bytes,
+      ),
     );
 
     if (response.statusCode != 200) {
       throw Exception(
-        'Failed to fetch data: ${response.statusCode} ${response.reasonPhrase}',
+        'Failed to fetch data: ${response.statusCode} ${response.statusMessage}',
       );
     }
 
-    final bytes = response.bodyBytes;
-    return compute(_parseJson, bytes.toList());
+    final bytes = response.data!;
+    return compute(_parseJson, bytes);
   }
 
   /// 小説を検索するメソッド。
