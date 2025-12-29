@@ -9,7 +9,7 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/connectivity_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 
 /// 小説の詳細ページ
 class NovelDetailPage extends ConsumerStatefulWidget {
@@ -231,20 +231,16 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                 child: progressBar,
               ),
               actions: [
-                // Library (Heart)
+                // Share
                 IconButton(
-                  tooltip: isInLibrary ? 'ライブラリから削除' : 'ライブラリに追加',
-                  icon: Icon(
-                    isInLibrary ? Icons.favorite : Icons.favorite_border,
-                    color: isInLibrary
-                        ? Theme.of(context).colorScheme.primary
-                        : null,
-                  ),
+                  tooltip: '共有',
+                  icon: const Icon(Icons.share),
                   onPressed: () {
+                    final url = 'https://ncode.syosetu.com/${novelInfo.ncode}/';
                     unawaited(
-                      ref
-                          .read(libraryStatusProvider(widget.ncode).notifier)
-                          .toggle(novelInfo),
+                      SharePlus.instance.share(
+                        ShareParams(text: '${novelInfo.title}\n$url'),
+                      ),
                     );
                   },
                 ),
@@ -273,15 +269,6 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                     }
                   },
                 ),
-                // WebView
-                IconButton(
-                  tooltip: 'ブラウザで開く',
-                  icon: const Icon(Icons.public),
-                  onPressed: () {
-                    final url = 'https://ncode.syosetu.com/${novelInfo.ncode}/';
-                    unawaited(launchUrl(Uri.parse(url)));
-                  },
-                ),
               ],
             ),
             SliverToBoxAdapter(
@@ -304,6 +291,42 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Library Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: isInLibrary
+                          ? OutlinedButton.icon(
+                              onPressed: () {
+                                unawaited(
+                                  ref
+                                      .read(
+                                        libraryStatusProvider(
+                                          widget.ncode,
+                                        ).notifier,
+                                      )
+                                      .toggle(novelInfo),
+                                );
+                              },
+                              icon: const Icon(Icons.favorite),
+                              label: const Text('ライブラリから削除'),
+                            )
+                          : FilledButton.icon(
+                              onPressed: () {
+                                unawaited(
+                                  ref
+                                      .read(
+                                        libraryStatusProvider(
+                                          widget.ncode,
+                                        ).notifier,
+                                      )
+                                      .toggle(novelInfo),
+                                );
+                              },
+                              icon: const Icon(Icons.favorite_border),
+                              label: const Text('ライブラリに追加'),
+                            ),
                     ),
                     const SizedBox(height: 8),
                     // Keywords (Tags)
