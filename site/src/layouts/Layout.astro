@@ -40,6 +40,8 @@ const {
 
 		<!-- Twitter -->
 		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:site" content="@R0u9h" />
+		<meta property="twitter:creator" content="@R0u9h" />
 		<meta property="twitter:url" content="https://novelty.l4ph.moe" />
 		<meta property="twitter:title" content={title} />
 		<meta property="twitter:description" content={description} />
@@ -47,23 +49,43 @@ const {
 
 		<!-- Structured Data (JSON-LD) -->
 		<script type="application/ld+json">
-			{
-				"@context": "https://schema.org",
-				"@type": "SoftwareApplication",
-				"name": "Novelty",
-				"operatingSystem": "iOS, Android, Windows, macOS, Linux",
-				"applicationCategory": "ReadingApplication",
-				"description": "「小説家になろう」を快適に読むための、モダンでシンプルな小説ビューアー。",
-				"offers": {
-					"@type": "Offer",
-					"price": "0",
-					"priceCurrency": "JPY"
+			[
+				{
+					"@context": "https://schema.org",
+					"@type": "WebSite",
+					"name": "Novelty",
+					"url": "https://novelty.l4ph.moe",
+					"description": "モダンでシンプルな「小説家になろう」ビューアー",
+					"publisher": {
+						"@type": "Organization",
+						"name": "Novelty Project",
+						"logo": {
+							"@type": "ImageObject",
+							"url": "https://novelty.l4ph.moe/favicon.svg"
+						}
+					}
 				},
-				"author": {
-					"@type": "Organization",
-					"name": "Novelty Project"
+				{
+					"@context": "https://schema.org",
+					"@type": "SoftwareApplication",
+					"name": "Novelty",
+					"operatingSystem": "iOS, Android, Windows, macOS, Linux",
+					"applicationCategory": "ReadingApplication",
+					"description": "「小説家になろう」を快適に読むための、モダンでシンプルな小説ビューアー。広告なし、オフライン対応、縦書き表示など多彩な機能を搭載。",
+					"offers": {
+						"@type": "Offer",
+						"price": "0",
+						"priceCurrency": "JPY"
+					},
+					"author": {
+						"@type": "Organization",
+						"name": "Novelty Project",
+						"url": "https://github.com/L4Ph/Novelty"
+					},
+					"screenshot": "https://novelty.l4ph.moe/hero.png",
+					"featureList": "縦書き表示, オフライン読書, 広告ブロック, クロスプラットフォーム, ダークモード"
 				}
-			}
+			]
 		</script>
 
 	</head>
