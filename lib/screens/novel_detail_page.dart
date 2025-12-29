@@ -165,6 +165,15 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     );
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          // Both short story and series currently go to episode 1.
+          // Future: For series, check history and go to last read or next episode.
+          await context.push('/novel/${widget.ncode}/1');
+        },
+        icon: const Icon(Icons.menu_book),
+        label: Text(isShortStory ? '読む' : '第1話を読む'),
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           // 詳細情報と読み込み済みの全エピソードページを再検証
@@ -213,7 +222,10 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                       widget.ncode,
                     ),
                     const SizedBox(height: 24),
-                    _StorySection(story: novelInfo.story ?? ''),
+                    _StorySection(
+                      story: novelInfo.story ?? '',
+                      isShortStory: isShortStory,
+                    ),
                     const SizedBox(height: 16),
                     _buildGenreTags(context, novelInfo),
                   ],
@@ -221,25 +233,9 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
               ),
             ),
             if (isShortStory)
-              SliverFillRemaining(
+              const SliverFillRemaining(
                 hasScrollBody: false,
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.menu_book),
-                      label: const Text('この小説を読む'),
-                      onPressed: () => context.push('/novel/${widget.ncode}/1'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        textStyle: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                  ),
-                ),
+                child: SizedBox(height: 100), // Add some bottom padding
               )
             else
               _EpisodeListSliver(
@@ -253,6 +249,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                         episodes.length < novelInfo.generalAllNo!),
                 onLoadMoreRequested: _loadMoreEpisodes,
               ),
+            // Add extra padding at the bottom for FAB
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],
         ),
       ),
@@ -293,9 +291,13 @@ Widget _buildHeader(BuildContext context, NovelInfo novelInfo) {
 }
 
 class _StorySection extends StatefulWidget {
-  const _StorySection({required this.story});
+  const _StorySection({
+    required this.story,
+    this.isShortStory = false,
+  });
 
   final String story;
+  final bool isShortStory;
 
   @override
   _StorySectionState createState() => _StorySectionState();
@@ -311,6 +313,25 @@ class _StorySectionState extends State<_StorySection> {
     }
 
     final textTheme = Theme.of(context).textTheme;
+
+    // Short stories show full abstract by default (or always).
+    if (widget.isShortStory) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'あらすじ',
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.story,
+            style: textTheme.bodyMedium,
+          ),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
