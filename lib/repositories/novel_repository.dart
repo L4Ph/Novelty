@@ -291,9 +291,6 @@ class NovelRepository {
           ? parseNovelContent(ep.body!)
           : <NovelContentElement>[];
 
-      // ignore: avoid_print
-      print('DEBUG: Saving content for Ep $episode. Size: ${content.length}');
-
       await _db.updateEpisodeContent(
         EpisodeEntitiesCompanion(
           ncode: Value(ncode.toNormalizedNcode()),
@@ -790,12 +787,8 @@ Stream<int?> episodeDownloadStatus(
   return db.watchEpisodeEntity(normalizedNcode, episode).map((cached) {
     if (cached == null) return null;
     if (cached.content != null && cached.content!.isNotEmpty) {
-      // ignore: avoid_print
-      print('DEBUG: Status 2 (Done) for Ep $episode');
       return 2; // Success
     } else if (cached.content != null && cached.content!.isEmpty) {
-      // ignore: avoid_print
-      print('DEBUG: Status 3 (Empty) for Ep $episode');
       return 3; // Failure (assuming empty content means failure as per logic)
     }
     return null;
