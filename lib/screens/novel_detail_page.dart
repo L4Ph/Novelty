@@ -1,16 +1,15 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/connectivity_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 
 /// 小説の詳細ページ
 class NovelDetailPage extends ConsumerStatefulWidget {
@@ -27,9 +26,29 @@ class NovelDetailPage extends ConsumerStatefulWidget {
 class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
   int _currentPage = 1;
 
+  final ScrollController _scrollController = ScrollController();
+  bool _showTitle = false;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // Threshold can be adjusted. 40.0 is roughly where the big title might start disappearing.
+    final show = _scrollController.offset > 40.0;
+    if (show != _showTitle) {
+      setState(() {
+        _showTitle = show;
+      });
+    }
   }
 
   void _loadMoreEpisodes() {
@@ -67,7 +86,6 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     var listHasError = false;
 
     // 読み込み済みのページまで全てwatchする
-    // これにより、SWRの再検証やフェッチが自動的にトリガーされる
     for (var i = 1; i <= _currentPage; i++) {
       final pageState = ref.watch(episodeListProvider('${widget.ncode}_$i'));
 
@@ -90,7 +108,6 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     }
 
     // Graceful Degradation: キャッシュがあれば表示優先
-    // novelInfo が取得できていれば画面を構築
     final novelInfo = novelInfoAsync.asData?.value;
 
     if (novelInfo != null) {
@@ -129,6 +146,10 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     final downloadProgressAsync = ref.watch(
       downloadProgressProvider(widget.ncode),
     );
+    final isFavoriteAsync = ref.watch(libraryStatusProvider(widget.ncode));
+    final isInLibrary = isFavoriteAsync.value ?? false;
+    final downloadStatusAsync = ref.watch(downloadStatusProvider(novelInfo));
+    final isDownloaded = downloadStatusAsync.value ?? false;
 
     final progressBar = downloadProgressAsync.when(
       data: (progress) {
@@ -144,77 +165,225 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
       error: (e, s) => const SizedBox.shrink(),
     );
 
+    final lastReadEpisode = ref
+        .watch(lastReadEpisodeProvider(widget.ncode))
+        .value;
+
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          // Short story: always go to episode 1.
+          if (isShortStory) {
+            await context.push('/novel/${widget.ncode}/1');
+            return;
+          }
+
+          // Series: go to last read episode or episode 1.
+          final targetEpisode = lastReadEpisode ?? 1;
+          await context.push('/novel/${widget.ncode}/$targetEpisode');
+        },
+        icon: const Icon(Icons.menu_book),
+        label: Text(
+          isShortStory
+              ? '読む'
+              : (lastReadEpisode != null ? '第$lastReadEpisode話から読む' : '第1話を読む'),
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
-          // 詳細情報と読み込み済みの全エピソードページを再検証
           ref.invalidate(novelInfoWithCacheProvider(widget.ncode));
           for (var i = 1; i <= _currentPage; i++) {
             ref.invalidate(episodeListProvider('${widget.ncode}_$i'));
           }
-          // SWRなのでinvalidateしてもキャッシュがあれば即表示されるが、
-          // fetch完了を待ちたい場合はここでは難しい。
-          // RefreshIndicatorはFuture完了で閉じるため、簡単なウェイトを入れるか、
-          // 厳密にはLoading状態の変化を監視する必要がある。
-          // ここではUX向上のため、少し待機してから閉じる
           await Future<void>.delayed(const Duration(milliseconds: 800));
         },
         child: CustomScrollView(
+          controller: _scrollController,
           slivers: [
             SliverAppBar(
+              floating: true,
               pinned: true,
-              title: Text(
-                novelInfo.title ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              surfaceTintColor: Theme.of(context).colorScheme.surface,
+              title: AnimatedOpacity(
+                opacity: _showTitle ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: Text(
+                  novelInfo.title ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(2),
                 child: progressBar,
               ),
+              actions: [
+                IconButton(
+                  tooltip: '共有',
+                  icon: const Icon(Icons.share),
+                  onPressed: () {
+                    final url = 'https://ncode.syosetu.com/${novelInfo.ncode}/';
+                    unawaited(
+                      SharePlus.instance.share(
+                        ShareParams(text: '${novelInfo.title}\n$url'),
+                      ),
+                    );
+                  },
+                ),
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'download') {
+                      if (isDownloaded) {
+                        unawaited(_handleDelete(context, ref, novelInfo));
+                      } else {
+                        unawaited(_handleDownload(context, ref, novelInfo));
+                      }
+                    }
+                  },
+                  itemBuilder: (BuildContext context) {
+                    return [
+                      PopupMenuItem(
+                        value: 'download',
+                        child: Row(
+                          children: [
+                            Icon(
+                              isDownloaded ? Icons.delete : Icons.download,
+                              color: isDownloaded
+                                  ? Theme.of(context).colorScheme.error
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(isDownloaded ? 'ダウンロード削除' : '一括ダウンロード'),
+                          ],
+                        ),
+                      ),
+                    ];
+                  },
+                ),
+              ],
             ),
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: SliverToBoxAdapter(
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(context, novelInfo),
-                    const SizedBox(height: 24),
-                    _buildActionButtons(
-                      context,
-                      ref,
-                      novelInfo,
-                      widget.ncode,
+                    const SizedBox(height: 16),
+                    // Title
+                    Text(
+                      novelInfo.title ?? '',
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                          ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Writer
+                    Text(
+                      novelInfo.writer ?? '',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    // Library Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: isInLibrary
+                          ? FilledButton.tonalIcon(
+                              onPressed: () {
+                                unawaited(
+                                  ref
+                                      .read(
+                                        libraryStatusProvider(
+                                          widget.ncode,
+                                        ).notifier,
+                                      )
+                                      .toggle(novelInfo),
+                                );
+                              },
+                              icon: const Icon(Icons.favorite),
+                              label: const Text('ライブラリ登録済み'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.secondaryContainer,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onSecondaryContainer,
+                              ),
+                            )
+                          : FilledButton.icon(
+                              onPressed: () {
+                                unawaited(
+                                  ref
+                                      .read(
+                                        libraryStatusProvider(
+                                          widget.ncode,
+                                        ).notifier,
+                                      )
+                                      .toggle(novelInfo),
+                                );
+                              },
+                              icon: const Icon(Icons.favorite_border),
+                              label: const Text('ライブラリに追加'),
+                            ),
+                    ),
+                    const SizedBox(height: 32),
+                    // Keywords (Tags)
+                    if (novelInfo.keyword != null) ...[
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: novelInfo.keyword!
+                              .split(' ')
+                              .where((k) => k.isNotEmpty)
+                              .map((keyword) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Chip(
+                                    label: Text(keyword),
+                                    visualDensity: VisualDensity.compact,
+                                    side: BorderSide.none,
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHigh,
+                                    padding: EdgeInsets.zero,
+                                    labelStyle: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                );
+                              })
+                              .toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                    // Story
+                    _StorySection(
+                      story: novelInfo.story ?? '',
+                      isShortStory: isShortStory,
                     ),
                     const SizedBox(height: 24),
-                    _StorySection(story: novelInfo.story ?? ''),
-                    const SizedBox(height: 16),
-                    _buildGenreTags(context, novelInfo),
                   ],
                 ),
               ),
             ),
             if (isShortStory)
-              SliverFillRemaining(
+              const SliverFillRemaining(
                 hasScrollBody: false,
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.menu_book),
-                      label: const Text('この小説を読む'),
-                      onPressed: () => context.push('/novel/${widget.ncode}/1'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                        textStyle: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                  ),
-                ),
+                child: SizedBox(height: 100),
               )
             else
               _EpisodeListSliver(
@@ -228,6 +397,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                         episodes.length < novelInfo.generalAllNo!),
                 onLoadMoreRequested: _loadMoreEpisodes,
               ),
+            // Add extra padding at the bottom for FAB
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),
       ),
@@ -235,49 +406,21 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
   }
 }
 
-Widget _buildHeader(BuildContext context, NovelInfo novelInfo) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        novelInfo.title ?? 'No Title',
-        style: Theme.of(
-          context,
-        ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-      ),
-      const SizedBox(height: 8),
-      Row(
-        children: [
-          const Icon(Icons.person_outline, size: 16),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(
-              novelInfo.writer ?? 'Unknown',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Icon(Icons.star_outline, size: 16),
-          const SizedBox(width: 4),
-          Text('${novelInfo.allPoint ?? 0} pt'),
-        ],
-      ),
-    ],
-  );
-}
-
 class _StorySection extends StatefulWidget {
-  const _StorySection({required this.story});
+  const _StorySection({
+    required this.story,
+    this.isShortStory = false,
+  });
 
   final String story;
+  final bool isShortStory;
 
   @override
   _StorySectionState createState() => _StorySectionState();
 }
 
 class _StorySectionState extends State<_StorySection> {
-  var _isExpanded = false;
+  bool isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -286,37 +429,44 @@ class _StorySectionState extends State<_StorySection> {
     }
 
     final textTheme = Theme.of(context).textTheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'あらすじ',
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
+        if (!widget.isShortStory) ...[
+          Text(
+            'あらすじ',
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+        ],
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 300),
           firstChild: Text(
             widget.story,
             maxLines: 5,
             overflow: TextOverflow.ellipsis,
-            style: textTheme.bodyMedium,
+            style: textTheme.bodyMedium?.copyWith(height: 1.6),
           ),
           secondChild: Text(
             widget.story,
-            style: textTheme.bodyMedium,
+            style: textTheme.bodyMedium?.copyWith(height: 1.6),
           ),
-          crossFadeState: _isExpanded
+          crossFadeState: isExpanded || widget.isShortStory
               ? CrossFadeState.showSecond
               : CrossFadeState.showFirst,
         ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            child: Text(_isExpanded ? '閉じる' : 'もっと読む'),
-            onPressed: () => setState(() => _isExpanded = !_isExpanded),
+        if (!widget.isShortStory)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+              ),
+              child: Text(isExpanded ? '閉じる' : 'もっと読む'),
+              onPressed: () => setState(() => isExpanded = !isExpanded),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -370,11 +520,12 @@ class _EpisodeListSliver extends StatelessWidget {
         (context, index) {
           if (index == 0) {
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
               child: Text(
-                '$totalEpisodes 話',
+                '全$totalEpisodes話',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             );
@@ -408,144 +559,6 @@ class _EpisodeListSliver extends StatelessWidget {
       ),
     );
   }
-}
-
-Widget _buildGenreTags(BuildContext context, NovelInfo novelInfo) {
-  final keywords =
-      novelInfo.keyword?.split(' ').where((k) => k.isNotEmpty).toList() ?? [];
-  if (keywords.isEmpty) {
-    return const SizedBox.shrink();
-  }
-
-  return Wrap(
-    spacing: 8,
-    runSpacing: 4,
-    children: keywords.map((keyword) => Chip(label: Text(keyword))).toList(),
-  );
-}
-
-Widget _buildActionButtons(
-  BuildContext context,
-  WidgetRef ref,
-  NovelInfo novelInfo,
-  String ncode,
-) {
-  final isFavoriteAsync = ref.watch(libraryStatusProvider(ncode));
-  final downloadStatusAsync = ref.watch(downloadStatusProvider(novelInfo));
-  final isOffline = ref.watch(isOfflineProvider);
-
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceAround,
-    children: [
-      isFavoriteAsync.when(
-        data: (isFavorite) => _buildActionButton(
-          context,
-          icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-          label: isFavorite ? '追加済' : '追加',
-          color: isFavorite ? Theme.of(context).colorScheme.primary : null,
-          onPressed: () =>
-              ref.read(libraryStatusProvider(ncode).notifier).toggle(novelInfo),
-        ),
-        loading: () => _buildActionButton(
-          context,
-          icon: Icons.favorite_border,
-          label: '追加',
-        ),
-        error: (e, s) =>
-            _buildActionButton(context, icon: Icons.error, label: 'Error'),
-      ),
-      if (!isOffline) ...[
-        downloadStatusAsync.when(
-          data: (isDownloaded) {
-            final downloadProgressAsync = ref.watch(
-              downloadProgressProvider(ncode),
-            );
-            return downloadProgressAsync.when(
-              data: (progress) => _buildDownloadButton(
-                context,
-                ref,
-                novelInfo,
-                isDownloaded,
-                progress,
-              ),
-              loading: () => _buildDownloadButton(
-                context,
-                ref,
-                novelInfo,
-                isDownloaded,
-                null,
-              ),
-              error: (e, s) => _buildActionButton(
-                context,
-                icon: Icons.error,
-                label: 'Error',
-              ),
-            );
-          },
-          loading: () => _buildActionButton(
-            context,
-            icon: Icons.downloading,
-            label: 'ダウンロード中...',
-          ),
-          error: (e, s) =>
-              _buildActionButton(context, icon: Icons.error, label: 'Error'),
-        ),
-        _buildActionButton(
-          context,
-          icon: Icons.public,
-          label: 'WebView',
-          onPressed: () {
-            unawaited(
-              launchUrl(
-                Uri.parse('https://ncode.syosetu.com/$ncode/'),
-              ),
-            );
-          },
-        ),
-      ],
-    ],
-  );
-}
-
-Widget _buildDownloadButton(
-  BuildContext context,
-  WidgetRef ref,
-  NovelInfo novelInfo,
-  bool isDownloaded,
-  DownloadProgress? progress,
-) {
-  if (progress != null && progress.isDownloading) {
-    return _buildActionButton(
-      context,
-      icon: Icons.downloading,
-      label: 'ダウンロード中',
-    );
-  }
-
-  if (progress != null && progress.hasError) {
-    return _buildActionButton(
-      context,
-      icon: Icons.error,
-      label: 'エラー',
-      color: Theme.of(context).colorScheme.error,
-      onPressed: () => _handleDownload(context, ref, novelInfo),
-    );
-  }
-
-  return _buildActionButton(
-    context,
-    icon: isDownloaded
-        ? Icons.download_done
-        : Icons.download_for_offline_outlined,
-    label: isDownloaded ? 'ダウンロード済' : 'ダウンロード',
-    onPressed: () {
-      if (isDownloaded) {
-        unawaited(_handleDelete(context, ref, novelInfo));
-      } else {
-        unawaited(_handleDownload(context, ref, novelInfo));
-      }
-    },
-  );
 }
 
 Future<void> _handleDownload(
@@ -655,32 +668,6 @@ Future<void> _handleDelete(
   );
 }
 
-Widget _buildActionButton(
-  BuildContext context, {
-  required IconData icon,
-  required String label,
-  VoidCallback? onPressed,
-  Color? color,
-}) {
-  final effectiveColor = color ?? Theme.of(context).textTheme.bodySmall?.color;
-  return Column(
-    children: [
-      IconButton(
-        icon: Icon(icon, color: effectiveColor),
-        onPressed: onPressed,
-        iconSize: 28,
-      ),
-      const SizedBox(height: 4),
-      Text(
-        label,
-        style: Theme.of(
-          context,
-        ).textTheme.bodySmall?.copyWith(color: effectiveColor),
-      ),
-    ],
-  );
-}
-
 class _EpisodeListTile extends ConsumerWidget {
   const _EpisodeListTile({
     required this.episode,
@@ -690,7 +677,7 @@ class _EpisodeListTile extends ConsumerWidget {
   final Episode episode;
   final String ncode;
 
-  int? _extractEpisodeNumber(String? url) {
+  int? extractEpisodeNumber(String? url) {
     if (url == null) return null;
     final match = RegExp(r'/(\d+)/').firstMatch(url);
     if (match != null) {
@@ -704,15 +691,26 @@ class _EpisodeListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final episodeNumber = _extractEpisodeNumber(episode.url);
+    final episodeNumber = extractEpisodeNumber(episode.url);
     final episodeTitle = episode.subtitle ?? 'No Title';
 
     if (episodeNumber == null) {
       return ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-        title: Text(episodeTitle),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        title: Text(
+          episodeTitle,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         subtitle: episode.update != null
-            ? Text('更新日: ${episode.update}')
+            ? Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '更新日: ${episode.update}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              )
             : null,
       );
     }
@@ -722,72 +720,177 @@ class _EpisodeListTile extends ConsumerWidget {
     );
     final isOffline = ref.watch(isOfflineProvider);
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      title: Text(episodeTitle),
-      subtitle: episode.update != null ? Text('更新日: ${episode.update}') : null,
-      trailing: isOffline
-          ? null
-          : downloadStatusAsync.when(
-              data: (status) {
-                if (status == 2) {
-                  return IconButton(
-                    icon: Icon(
-                      Icons.download_done,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    onPressed: null,
-                  );
-                } else if (status == 3) {
-                  return IconButton(
-                    icon: Icon(
-                      Icons.download,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    onPressed: () {
-                      unawaited(_handleDownload(context, ref, episodeNumber));
-                    },
-                  );
-                } else {
-                  return IconButton(
-                    icon: const Icon(Icons.download),
-                    onPressed: () {
-                      unawaited(_handleDownload(context, ref, episodeNumber));
-                    },
-                  );
-                }
-              },
-              loading: () => const SizedBox(
-                width: 48,
-                height: 48,
-                child: Center(
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
+    // Determine swipe background colors and icons
+    Widget buildSwipeBackground({
+      required Alignment alignment,
+      required Color color,
+      required Color onColor,
+      required IconData icon,
+      required String label,
+    }) {
+      return Container(
+        color: color,
+        alignment: alignment,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (alignment == Alignment.centerRight) ...[
+              Text(
+                label,
+                style: TextStyle(
+                  color: onColor,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              error: (e, s) => IconButton(
-                icon: const Icon(Icons.download),
-                onPressed: () {
-                  unawaited(_handleDownload(context, ref, episodeNumber));
-                },
+              const SizedBox(width: 8),
+            ],
+            Icon(icon, color: onColor),
+            if (alignment == Alignment.centerLeft) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: onColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    final isDownloaded =
+        downloadStatusAsync.asData?.value == 2; // 2 = Success, 3 = Fail
+
+    return Dismissible(
+      key: Key('episode_$ncode$episodeNumber'),
+      direction: isOffline
+          ? DismissDirection.none
+          : DismissDirection.horizontal,
+      background: buildSwipeBackground(
+        alignment: Alignment.centerLeft,
+        color: Theme.of(context).colorScheme.primary,
+        onColor: Theme.of(context).colorScheme.onPrimary,
+        icon: Icons.download,
+        label: 'ダウンロード',
+      ),
+      secondaryBackground: buildSwipeBackground(
+        alignment: Alignment.centerRight,
+        color: Theme.of(context).colorScheme.error,
+        onColor: Theme.of(context).colorScheme.onError,
+        icon: Icons.delete,
+        label: '削除',
+      ),
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd) {
+          // Swipe Right -> Download
+          if (isDownloaded) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('既にダウンロード済みです')),
+            );
+            return false;
+          }
+          await handleDownload(context, ref, episodeNumber);
+          return false; // Don't dismiss
+        } else if (direction == DismissDirection.endToStart) {
+          // Swipe Left -> Delete
+          // We attempt delete even if UI thinks it's not downloaded, just in case state is out of sync.
+          // DB update is safe to run on non-downloaded items (no-op).
+          await handleDelete(context, ref, episodeNumber);
+          return false; // Don't dismiss
+        }
+        return false;
+      },
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '第$episodeNumber話',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
               ),
             ),
-      onTap: () {
-        final uri = Uri(
-          path: '/novel/$ncode/$episodeNumber',
-          queryParameters: episode.revised != null
-              ? {'revised': episode.revised}
-              : null,
-        );
-        unawaited(context.push(uri.toString()));
-      },
+            const SizedBox(height: 2),
+            Text(
+              episodeTitle,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        subtitle: episode.update != null
+            ? Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '更新日: ${episode.update}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              )
+            : null,
+        trailing: downloadStatusAsync.when(
+          data: (status) {
+            if (status == 2) {
+              return Icon(
+                Icons.check_circle,
+                color: Theme.of(context).colorScheme.primary,
+              );
+            }
+            return null;
+          },
+          loading: () => const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          error: (_, _) => Icon(
+            Icons.error_outline,
+            size: 16,
+            color: Theme.of(context).colorScheme.error,
+          ),
+        ),
+        onTap: () {
+          final uri = Uri(
+            path: '/novel/$ncode/$episodeNumber',
+            queryParameters: episode.revised != null
+                ? {'revised': episode.revised}
+                : null,
+          );
+          unawaited(context.push(uri.toString()));
+        },
+      ),
     );
   }
 
-  Future<void> _handleDownload(
+  Future<void> handleDelete(
+    BuildContext context,
+    WidgetRef ref,
+    int episodeNumber,
+  ) async {
+    final repo = ref.read(novelRepositoryProvider);
+    try {
+      await repo.deleteDownloadedEpisode(ncode, episodeNumber);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('削除しました')),
+        );
+      }
+    } on Exception catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('削除に失敗しました: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> handleDownload(
     BuildContext context,
     WidgetRef ref,
     int episodeNumber,

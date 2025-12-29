@@ -558,7 +558,7 @@ final class EpisodeDownloadStatusProvider
   }) : super(
          retry: null,
          name: r'episodeDownloadStatusProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -600,7 +600,7 @@ final class EpisodeDownloadStatusProvider
 }
 
 String _$episodeDownloadStatusHash() =>
-    r'd35b31e59af860b089466eb79f5808081d5ebf90';
+    r'b8ec3c7cd84ceb7ec443eb99ac69b891b9350d38';
 
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
@@ -615,7 +615,7 @@ final class EpisodeDownloadStatusFamily extends $Family
         name: r'episodeDownloadStatusProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   /// エピソードのダウンロード状態を監視するプロバイダー。
@@ -716,4 +716,82 @@ final class EpisodeListFamily extends $Family
 
   @override
   String toString() => r'episodeListProvider';
+}
+
+/// 最後に読んだエピソード番号を取得するプロバイダー
+
+@ProviderFor(lastReadEpisode)
+const lastReadEpisodeProvider = LastReadEpisodeFamily._();
+
+/// 最後に読んだエピソード番号を取得するプロバイダー
+
+final class LastReadEpisodeProvider
+    extends $FunctionalProvider<AsyncValue<int?>, int?, Stream<int?>>
+    with $FutureModifier<int?>, $StreamProvider<int?> {
+  /// 最後に読んだエピソード番号を取得するプロバイダー
+  const LastReadEpisodeProvider._({
+    required LastReadEpisodeFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'lastReadEpisodeProvider',
+         isAutoDispose: false,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$lastReadEpisodeHash();
+
+  @override
+  String toString() {
+    return r'lastReadEpisodeProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<int?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<int?> create(Ref ref) {
+    final argument = this.argument as String;
+    return lastReadEpisode(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is LastReadEpisodeProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$lastReadEpisodeHash() => r'7af911f1a41e9fe29eb6db2205f8178a5fce803a';
+
+/// 最後に読んだエピソード番号を取得するプロバイダー
+
+final class LastReadEpisodeFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<int?>, String> {
+  const LastReadEpisodeFamily._()
+    : super(
+        retry: null,
+        name: r'lastReadEpisodeProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: false,
+      );
+
+  /// 最後に読んだエピソード番号を取得するプロバイダー
+
+  LastReadEpisodeProvider call(String ncode) =>
+      LastReadEpisodeProvider._(argument: ncode, from: this);
+
+  @override
+  String toString() => r'lastReadEpisodeProvider';
 }

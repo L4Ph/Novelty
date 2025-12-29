@@ -209,9 +209,13 @@ class NovelRepository {
           content: Value(content),
           fetchedAt: Value(now),
           revisedAt: Value(revised),
-          subtitle: Value(ep.subtitle ?? ''),
-          url: Value(ep.url ?? ''),
-          publishedAt: Value(ep.update ?? ''),
+          subtitle: ep.subtitle != null
+              ? Value(ep.subtitle)
+              : const Value.absent(),
+          url: ep.url != null ? Value(ep.url) : const Value.absent(),
+          publishedAt: ep.update != null
+              ? Value(ep.update)
+              : const Value.absent(),
         ),
       );
 
@@ -294,9 +298,13 @@ class NovelRepository {
           content: Value(content),
           fetchedAt: Value(DateTime.now().millisecondsSinceEpoch),
           revisedAt: Value(revised),
-          subtitle: Value(ep.subtitle ?? ''),
-          url: Value(ep.url ?? ''),
-          publishedAt: Value(ep.update ?? ''),
+          subtitle: ep.subtitle != null
+              ? Value(ep.subtitle)
+              : const Value.absent(),
+          url: ep.url != null ? Value(ep.url) : const Value.absent(),
+          publishedAt: ep.update != null
+              ? Value(ep.update)
+              : const Value.absent(),
         ),
       );
       return content;
@@ -435,7 +443,11 @@ class NovelRepository {
               e.ncode.equals(ncode.toNormalizedNcode()) &
               e.episodeId.equals(episode),
         ))
-        .write(const EpisodeEntitiesCompanion(content: Value(null)));
+        .write(
+          const EpisodeEntitiesCompanion(
+            content: Value<List<NovelContentElement>?>(null),
+          ),
+        );
   }
 
   /// ダウンロード済み小説を削除するメソッド。
@@ -443,9 +455,13 @@ class NovelRepository {
   /// 該当ncodeのすべてのダウンロード済みエピソードを一括削除する。
   Future<void> deleteDownloadedNovel(String ncode) async {
     // コンテンツをNULLに更新する。
-    await (_db.update(_db.episodeEntities)
-          ..where((e) => e.ncode.equals(ncode.toNormalizedNcode())))
-        .write(const EpisodeEntitiesCompanion(content: Value(null)));
+    await (_db.update(
+      _db.episodeEntities,
+    )..where((e) => e.ncode.equals(ncode.toNormalizedNcode()))).write(
+      const EpisodeEntitiesCompanion(
+        content: Value<List<NovelContentElement>?>(null),
+      ),
+    );
   }
 
   /// ダウンロードパスを取得するメソッド。
@@ -607,6 +623,15 @@ class NovelRepository {
       },
     );
   }
+
+  /// 最後に読んだエピソード番号を監視する
+  Stream<int?> watchLastReadEpisode(String ncode) {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    return (_db.select(_db.readingHistory)
+          ..where((t) => t.ncode.equals(normalizedNcode)))
+        .watchSingleOrNull()
+        .map((history) => history?.lastEpisodeId);
+  }
 }
 
 // ==================== Providers ====================
@@ -747,7 +772,7 @@ class DownloadStatus extends _$DownloadStatus {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
 /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
@@ -783,4 +808,11 @@ Stream<List<Episode>> episodeList(
   final repository = ref.watch(novelRepositoryProvider);
 
   return repository.watchEpisodeList(ncode, page);
+}
+
+@Riverpod(keepAlive: true)
+/// 最後に読んだエピソード番号を取得するプロバイダー
+Stream<int?> lastReadEpisode(Ref ref, String ncode) {
+  final repository = ref.watch(novelRepositoryProvider);
+  return repository.watchLastReadEpisode(ncode);
 }

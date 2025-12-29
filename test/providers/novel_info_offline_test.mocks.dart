@@ -1378,4 +1378,12 @@ class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
             returnValue: _i5.Stream<List<_i7.Episode>>.empty(),
           )
           as _i5.Stream<List<_i7.Episode>>);
+
+  @override
+  _i5.Stream<int?> watchLastReadEpisode(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#watchLastReadEpisode, [ncode]),
+            returnValue: _i5.Stream<int?>.empty(),
+          )
+          as _i5.Stream<int?>);
 }
