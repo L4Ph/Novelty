@@ -55,11 +55,14 @@ class NovelListTile extends HookWidget {
     );
 
     // ステータスの計算をメモ化
-    final status = useMemoized(
-      () => item.end == null || item.end == -1 || item.novelType == null
-          ? '情報取得失敗'
-          : (item.novelType == 2 ? '短編' : (item.end == 0 ? '完結済' : '連載中')),
-      [item.end, item.novelType],
+    // 0: 完結, 1: 連載中, 2: 短編
+    final statusType = useMemoized(
+      () {
+        if (item.novelType == 2) return 2; // 短編
+        if (item.end == 1) return 1; // 連載中
+        return 0; // 完結
+      },
+      [item.novelType, item.end],
     );
 
     // デフォルトのonTapハンドラーをメモ化
@@ -72,24 +75,120 @@ class NovelListTile extends HookWidget {
       [item.ncode],
     );
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(
-        vertical: 4,
-        horizontal: 8,
+    // ステータスに応じた色とラベル定義
+    // 短編: Tertiary (アクセント) - Filled
+    // 連載: Secondary (アクティブ) - Filled
+    // 完結: Outline (境界線のみ) - Outlined
+    // 文字色は統一して視認性を確保 (onSurfaceVariant)
+    final (statusLabel, statusStyle, statusDecoration) = switch (statusType) {
+      2 => (
+        // 短編
+        '短編',
+        TextStyle(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.bold,
+          fontSize: 10,
+        ),
+        BoxDecoration(
+          color: Theme.of(context).colorScheme.tertiaryContainer,
+          borderRadius: BorderRadius.circular(4),
+        ),
       ),
-      child: ListTile(
-        leading: rank != null ? Text('$rank') : null,
-        title: Row(
+      1 => (
+        // 連載
+        '連載',
+        TextStyle(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.bold,
+          fontSize: 10,
+        ),
+        BoxDecoration(
+          color: Theme.of(context).colorScheme.secondaryContainer,
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+      _ => (
+        // 完結
+        '完結',
+        TextStyle(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.bold,
+          fontSize: 10,
+        ),
+        BoxDecoration(
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ),
+    };
+
+    return InkWell(
+      onTap: onTap ?? defaultOnTap,
+      onLongPress: onLongPress,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: Text(title)),
+            if (rank != null) ...[
+              Text(
+                '$rank',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 16),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Status Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: statusDecoration,
+                        child: Text(
+                          statusLabel,
+                          style: statusStyle,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${item.writer} • $genreName${item.allPoint != null ? ' • ${(item.allPoint! / 1000).toStringAsFixed(1)}k pt' : ''}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
-        subtitle: Text(
-          'Nコード: ${item.ncode} - ${item.allPoint ?? 0}pt\nジャンル: $genreName - $status',
-        ),
-        onTap: onTap ?? defaultOnTap,
-        onLongPress: onLongPress,
       ),
     );
   }

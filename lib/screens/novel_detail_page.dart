@@ -86,7 +86,6 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     var listHasError = false;
 
     // 読み込み済みのページまで全てwatchする
-    // これにより、SWRの再検証やフェッチが自動的にトリガーされる
     for (var i = 1; i <= _currentPage; i++) {
       final pageState = ref.watch(episodeListProvider('${widget.ncode}_$i'));
 
@@ -109,7 +108,6 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     }
 
     // Graceful Degradation: キャッシュがあれば表示優先
-    // novelInfo が取得できていれば画面を構築
     final novelInfo = novelInfoAsync.asData?.value;
 
     if (novelInfo != null) {
@@ -181,7 +179,6 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
           }
 
           // Series: go to last read episode or episode 1.
-          // Future: Ideally go to next episode if last episode is finished.
           final targetEpisode = lastReadEpisode ?? 1;
           await context.push('/novel/${widget.ncode}/$targetEpisode');
         },
@@ -194,25 +191,20 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          // 詳細情報と読み込み済みの全エピソードページを再検証
           ref.invalidate(novelInfoWithCacheProvider(widget.ncode));
           for (var i = 1; i <= _currentPage; i++) {
             ref.invalidate(episodeListProvider('${widget.ncode}_$i'));
           }
-          // SWRなのでinvalidateしてもキャッシュがあれば即表示されるが、
-          // fetch完了を待ちたい場合はここでは難しい。
-          // RefreshIndicatorはFuture完了で閉じるため、簡単なウェイトを入れるか、
-          // 厳密にはLoading状態の変化を監視する必要がある。
-          // ここではUX向上のため、少し待機してから閉じる
           await Future<void>.delayed(const Duration(milliseconds: 800));
         },
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
             SliverAppBar(
-              // Just adding actions.
               floating: true,
               pinned: true,
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              surfaceTintColor: Theme.of(context).colorScheme.surface,
               title: AnimatedOpacity(
                 opacity: _showTitle ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 200),
@@ -221,7 +213,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -231,7 +223,6 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                 child: progressBar,
               ),
               actions: [
-                // Share
                 IconButton(
                   tooltip: '共有',
                   icon: const Icon(Icons.share),
@@ -244,63 +235,72 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                     );
                   },
                 ),
-                // Batch Download
-                IconButton(
-                  tooltip: isDownloaded ? 'ダウンロード削除' : '一括ダウンロード',
-                  icon: downloadStatusAsync.when(
-                    data: (downloaded) => Icon(
-                      downloaded ? Icons.check_circle : Icons.download,
-                      color: downloaded
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
-                    ),
-                    loading: () => const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    error: (_, _) => const Icon(Icons.error_outline),
-                  ),
-                  onPressed: () {
-                    if (isDownloaded) {
-                      unawaited(_handleDelete(context, ref, novelInfo));
-                    } else {
-                      unawaited(_handleDownload(context, ref, novelInfo));
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'download') {
+                      if (isDownloaded) {
+                        unawaited(_handleDelete(context, ref, novelInfo));
+                      } else {
+                        unawaited(_handleDownload(context, ref, novelInfo));
+                      }
                     }
+                  },
+                  itemBuilder: (BuildContext context) {
+                    return [
+                      PopupMenuItem(
+                        value: 'download',
+                        child: Row(
+                          children: [
+                            Icon(
+                              isDownloaded ? Icons.delete : Icons.download,
+                              color: isDownloaded
+                                  ? Theme.of(context).colorScheme.error
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(isDownloaded ? 'ダウンロード削除' : '一括ダウンロード'),
+                          ],
+                        ),
+                      ),
+                    ];
                   },
                 ),
               ],
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 16),
                     // Title
                     Text(
                       novelInfo.title ?? '',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                          ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     // Writer
                     Text(
                       novelInfo.writer ?? '',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 32),
                     // Library Button
                     SizedBox(
                       width: double.infinity,
+                      height: 48,
                       child: isInLibrary
-                          ? OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(40),
-                              ),
+                          ? FilledButton.tonalIcon(
                               onPressed: () {
                                 unawaited(
                                   ref
@@ -313,12 +313,17 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                                 );
                               },
                               icon: const Icon(Icons.favorite),
-                              label: const Text('ライブラリから削除'),
+                              label: const Text('ライブラリ登録済み'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.secondaryContainer,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onSecondaryContainer,
+                              ),
                             )
                           : FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size.fromHeight(40),
-                              ),
                               onPressed: () {
                                 unawaited(
                                   ref
@@ -334,34 +339,43 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                               label: const Text('ライブラリに追加'),
                             ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 32),
                     // Keywords (Tags)
                     if (novelInfo.keyword != null) ...[
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: novelInfo.keyword!
-                            .split(' ')
-                            .where((k) => k.isNotEmpty)
-                            .map((keyword) {
-                              return Chip(
-                                label: Text(keyword),
-                                visualDensity: VisualDensity.compact,
-                                padding: EdgeInsets.zero,
-                                labelStyle: Theme.of(
-                                  context,
-                                ).textTheme.bodySmall,
-                              );
-                            })
-                            .toList(),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: novelInfo.keyword!
+                              .split(' ')
+                              .where((k) => k.isNotEmpty)
+                              .map((keyword) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Chip(
+                                    label: Text(keyword),
+                                    visualDensity: VisualDensity.compact,
+                                    side: BorderSide.none,
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHigh,
+                                    padding: EdgeInsets.zero,
+                                    labelStyle: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                );
+                              })
+                              .toList(),
+                        ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
                     ],
-                    // Story (Abstract)
+                    // Story
                     _StorySection(
                       story: novelInfo.story ?? '',
                       isShortStory: isShortStory,
                     ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -369,7 +383,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
             if (isShortStory)
               const SliverFillRemaining(
                 hasScrollBody: false,
-                child: SizedBox(height: 100), // Add some bottom padding
+                child: SizedBox(height: 100),
               )
             else
               _EpisodeListSliver(
@@ -384,7 +398,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                 onLoadMoreRequested: _loadMoreEpisodes,
               ),
             // Add extra padding at the bottom for FAB
-            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),
       ),
@@ -416,55 +430,43 @@ class _StorySectionState extends State<_StorySection> {
 
     final textTheme = Theme.of(context).textTheme;
 
-    // Short stories show full abstract by default (or always).
-    if (widget.isShortStory) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!widget.isShortStory) ...[
           Text(
             'あらすじ',
             style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
-          Text(
-            widget.story,
-            style: textTheme.bodyMedium,
-          ),
+          const SizedBox(height: 12),
         ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'あらすじ',
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 300),
           firstChild: Text(
             widget.story,
             maxLines: 5,
             overflow: TextOverflow.ellipsis,
-            style: textTheme.bodyMedium,
+            style: textTheme.bodyMedium?.copyWith(height: 1.6),
           ),
           secondChild: Text(
             widget.story,
-            style: textTheme.bodyMedium,
+            style: textTheme.bodyMedium?.copyWith(height: 1.6),
           ),
-          crossFadeState: isExpanded
+          crossFadeState: isExpanded || widget.isShortStory
               ? CrossFadeState.showSecond
               : CrossFadeState.showFirst,
         ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            child: Text(isExpanded ? '閉じる' : 'もっと読む'),
-            onPressed: () => setState(() => isExpanded = !isExpanded),
+        if (!widget.isShortStory)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+              ),
+              child: Text(isExpanded ? '閉じる' : 'もっと読む'),
+              onPressed: () => setState(() => isExpanded = !isExpanded),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -518,11 +520,12 @@ class _EpisodeListSliver extends StatelessWidget {
         (context, index) {
           if (index == 0) {
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
               child: Text(
-                '$totalEpisodes 話',
+                '全$totalEpisodes話',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             );
