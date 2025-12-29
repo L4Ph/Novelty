@@ -164,15 +164,31 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
       error: (e, s) => const SizedBox.shrink(),
     );
 
+    final lastReadEpisodeAsync = ref.watch(
+      lastReadEpisodeProvider(widget.ncode),
+    );
+    final lastReadEpisode = lastReadEpisodeAsync.value;
+
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // Both short story and series currently go to episode 1.
-          // Future: For series, check history and go to last read or next episode.
-          await context.push('/novel/${widget.ncode}/1');
+          // Short story: always go to episode 1.
+          if (isShortStory) {
+            await context.push('/novel/${widget.ncode}/1');
+            return;
+          }
+
+          // Series: go to last read episode or episode 1.
+          // Future: Ideally go to next episode if last episode is finished.
+          final targetEpisode = lastReadEpisode ?? 1;
+          await context.push('/novel/${widget.ncode}/$targetEpisode');
         },
         icon: const Icon(Icons.menu_book),
-        label: Text(isShortStory ? '読む' : '第1話を読む'),
+        label: Text(
+          isShortStory
+              ? '読む'
+              : (lastReadEpisode != null ? '第$lastReadEpisode話から読む' : '第1話を読む'),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -759,8 +775,8 @@ class _EpisodeListTile extends ConsumerWidget {
         title: Text(
           episodeTitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+            fontWeight: FontWeight.bold,
+          ),
         ),
         subtitle: episode.update != null
             ? Padding(
@@ -787,17 +803,17 @@ class _EpisodeListTile extends ConsumerWidget {
           Text(
             '第$episodeNumber話',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             episodeTitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  height: 1.4,
-                  fontWeight: FontWeight.w500,
-                ),
+              height: 1.4,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),

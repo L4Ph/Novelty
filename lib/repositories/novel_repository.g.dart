@@ -717,3 +717,81 @@ final class EpisodeListFamily extends $Family
   @override
   String toString() => r'episodeListProvider';
 }
+
+/// 最後に読んだエピソード番号を取得するプロバイダー
+
+@ProviderFor(lastReadEpisode)
+const lastReadEpisodeProvider = LastReadEpisodeFamily._();
+
+/// 最後に読んだエピソード番号を取得するプロバイダー
+
+final class LastReadEpisodeProvider
+    extends $FunctionalProvider<AsyncValue<int?>, int?, Stream<int?>>
+    with $FutureModifier<int?>, $StreamProvider<int?> {
+  /// 最後に読んだエピソード番号を取得するプロバイダー
+  const LastReadEpisodeProvider._({
+    required LastReadEpisodeFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'lastReadEpisodeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$lastReadEpisodeHash();
+
+  @override
+  String toString() {
+    return r'lastReadEpisodeProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<int?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<int?> create(Ref ref) {
+    final argument = this.argument as String;
+    return lastReadEpisode(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is LastReadEpisodeProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$lastReadEpisodeHash() => r'c0fdd1391c9cb5bf26794651f50b7b7823c182f4';
+
+/// 最後に読んだエピソード番号を取得するプロバイダー
+
+final class LastReadEpisodeFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<int?>, String> {
+  const LastReadEpisodeFamily._()
+    : super(
+        retry: null,
+        name: r'lastReadEpisodeProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// 最後に読んだエピソード番号を取得するプロバイダー
+
+  LastReadEpisodeProvider call(String ncode) =>
+      LastReadEpisodeProvider._(argument: ncode, from: this);
+
+  @override
+  String toString() => r'lastReadEpisodeProvider';
+}

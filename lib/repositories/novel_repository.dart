@@ -607,6 +607,15 @@ class NovelRepository {
       },
     );
   }
+
+  /// 最後に読んだエピソード番号を監視する
+  Stream<int?> watchLastReadEpisode(String ncode) {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    return (_db.select(_db.readingHistory)
+          ..where((t) => t.ncode.equals(normalizedNcode)))
+        .watchSingleOrNull()
+        .map((history) => history?.lastEpisodeId);
+  }
 }
 
 // ==================== Providers ====================
@@ -783,4 +792,11 @@ Stream<List<Episode>> episodeList(
   final repository = ref.watch(novelRepositoryProvider);
 
   return repository.watchEpisodeList(ncode, page);
+}
+
+@riverpod
+/// 最後に読んだエピソード番号を取得するプロバイダー
+Stream<int?> lastReadEpisode(Ref ref, String ncode) {
+  final repository = ref.watch(novelRepositoryProvider);
+  return repository.watchLastReadEpisode(ncode);
 }
