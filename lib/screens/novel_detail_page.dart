@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,9 +27,29 @@ class NovelDetailPage extends ConsumerStatefulWidget {
 class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
   int _currentPage = 1;
 
+  final ScrollController _scrollController = ScrollController();
+  bool _showTitle = false;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // Threshold can be adjusted. 40.0 is roughly where the big title might start disappearing.
+    final show = _scrollController.offset > 40.0;
+    if (show != _showTitle) {
+      setState(() {
+        _showTitle = show;
+      });
+    }
   }
 
   void _loadMoreEpisodes() {
@@ -160,13 +180,18 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
           await Future<void>.delayed(const Duration(milliseconds: 800));
         },
         child: CustomScrollView(
+          controller: _scrollController,
           slivers: [
             SliverAppBar(
               pinned: true,
-              title: Text(
-                novelInfo.title ?? '',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              title: AnimatedOpacity(
+                opacity: _showTitle ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: Text(
+                  novelInfo.title ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(2),
@@ -709,10 +734,21 @@ class _EpisodeListTile extends ConsumerWidget {
 
     if (episodeNumber == null) {
       return ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-        title: Text(episodeTitle),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        title: Text(
+          episodeTitle,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
         subtitle: episode.update != null
-            ? Text('更新日: ${episode.update}')
+            ? Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '更新日: ${episode.update}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              )
             : null,
       );
     }
@@ -723,9 +759,36 @@ class _EpisodeListTile extends ConsumerWidget {
     final isOffline = ref.watch(isOfflineProvider);
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      title: Text(episodeTitle),
-      subtitle: episode.update != null ? Text('更新日: ${episode.update}') : null,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '第$episodeNumber話',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            episodeTitle,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  height: 1.4,
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
+        ],
+      ),
+      subtitle: episode.update != null
+          ? Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '更新日: ${episode.update}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            )
+          : null,
       trailing: isOffline
           ? null
           : downloadStatusAsync.when(
