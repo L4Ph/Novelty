@@ -1334,19 +1334,16 @@ class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
           as _i5.Stream<bool>);
 
   @override
-  _i5.Future<_i10.DownloadResult> downloadNovelWithPermission(
+  _i5.Future<_i10.DownloadResult> downloadNovelWithResult(
     String? ncode,
     int? totalEpisodes,
   ) =>
       (super.noSuchMethod(
-            Invocation.method(#downloadNovelWithPermission, [
-              ncode,
-              totalEpisodes,
-            ]),
+            Invocation.method(#downloadNovelWithResult, [ncode, totalEpisodes]),
             returnValue: _i5.Future<_i10.DownloadResult>.value(
               _FakeDownloadResult_27(
                 this,
-                Invocation.method(#downloadNovelWithPermission, [
+                Invocation.method(#downloadNovelWithResult, [
                   ncode,
                   totalEpisodes,
                 ]),

@@ -11,9 +11,6 @@ class DownloadResult with _$DownloadResult {
     @Default(false) bool needsLibraryAddition,
   }) = _Success;
 
-  /// パーミッションが拒否された時の結果を作成する。
-  const factory DownloadResult.permissionDenied() = _PermissionDenied;
-
   /// ユーザーによる操作のキャンセル時の結果を作成する。
   const factory DownloadResult.cancelled() = _Cancelled;
 

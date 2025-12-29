@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:narou_parser/narou_parser.dart';
@@ -13,7 +12,6 @@ import 'package:novelty/providers/connectivity_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:riverpod_swr/riverpod_swr.dart';
 
@@ -480,37 +478,13 @@ class NovelRepository {
     yield summary != null && summary.downloadStatus == 2;
   }
 
-  /// Permission処理を含む小説のダウンロードを行うメソッド。
+  /// 小説のダウンロードを行うメソッド。
   ///
   /// 戻り値の[DownloadResult]によって、UIでの処理を判断する。
-  Future<DownloadResult> downloadNovelWithPermission(
+  Future<DownloadResult> downloadNovelWithResult(
     String ncode,
     int totalEpisodes,
   ) async {
-    // Permissionチェック
-    var hasPermission = false;
-    if (Platform.isAndroid) {
-      final status = await Permission.manageExternalStorage.status;
-      if (status.isGranted) {
-        hasPermission = true;
-      } else {
-        final result = await Permission.manageExternalStorage.request();
-        hasPermission = result.isGranted;
-      }
-    } else {
-      final status = await Permission.storage.status;
-      if (status.isGranted) {
-        hasPermission = true;
-      } else {
-        final result = await Permission.storage.request();
-        hasPermission = result.isGranted;
-      }
-    }
-
-    if (!hasPermission) {
-      return const DownloadResult.permissionDenied();
-    }
-
     try {
       await downloadNovel(ncode, totalEpisodes);
 
@@ -740,7 +714,7 @@ class DownloadStatus extends _$DownloadStatus {
     state = const AsyncValue.loading();
 
     try {
-      final result = await repo.downloadNovelWithPermission(
+      final result = await repo.downloadNovelWithResult(
         novelInfo.ncode!,
         novelInfo.generalAllNo!,
       );

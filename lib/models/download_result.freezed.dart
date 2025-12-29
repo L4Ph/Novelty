@@ -55,12 +55,11 @@ extension DownloadResultPatterns on DownloadResult {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Success value)?  success,TResult Function( _PermissionDenied value)?  permissionDenied,TResult Function( _Cancelled value)?  cancelled,TResult Function( _Error value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( _Success value)?  success,TResult Function( _Cancelled value)?  cancelled,TResult Function( _Error value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case _Success() when success != null:
-return success(_that);case _PermissionDenied() when permissionDenied != null:
-return permissionDenied(_that);case _Cancelled() when cancelled != null:
+return success(_that);case _Cancelled() when cancelled != null:
 return cancelled(_that);case _Error() when error != null:
 return error(_that);case _:
   return orElse();
@@ -80,12 +79,11 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Success value)  success,required TResult Function( _PermissionDenied value)  permissionDenied,required TResult Function( _Cancelled value)  cancelled,required TResult Function( _Error value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( _Success value)  success,required TResult Function( _Cancelled value)  cancelled,required TResult Function( _Error value)  error,}){
 final _that = this;
 switch (_that) {
 case _Success():
-return success(_that);case _PermissionDenied():
-return permissionDenied(_that);case _Cancelled():
+return success(_that);case _Cancelled():
 return cancelled(_that);case _Error():
 return error(_that);case _:
   throw StateError('Unexpected subclass');
@@ -104,12 +102,11 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Success value)?  success,TResult? Function( _PermissionDenied value)?  permissionDenied,TResult? Function( _Cancelled value)?  cancelled,TResult? Function( _Error value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( _Success value)?  success,TResult? Function( _Cancelled value)?  cancelled,TResult? Function( _Error value)?  error,}){
 final _that = this;
 switch (_that) {
 case _Success() when success != null:
-return success(_that);case _PermissionDenied() when permissionDenied != null:
-return permissionDenied(_that);case _Cancelled() when cancelled != null:
+return success(_that);case _Cancelled() when cancelled != null:
 return cancelled(_that);case _Error() when error != null:
 return error(_that);case _:
   return null;
@@ -128,11 +125,10 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( bool needsLibraryAddition)?  success,TResult Function()?  permissionDenied,TResult Function()?  cancelled,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( bool needsLibraryAddition)?  success,TResult Function()?  cancelled,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Success() when success != null:
-return success(_that.needsLibraryAddition);case _PermissionDenied() when permissionDenied != null:
-return permissionDenied();case _Cancelled() when cancelled != null:
+return success(_that.needsLibraryAddition);case _Cancelled() when cancelled != null:
 return cancelled();case _Error() when error != null:
 return error(_that.message);case _:
   return orElse();
@@ -152,11 +148,10 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( bool needsLibraryAddition)  success,required TResult Function()  permissionDenied,required TResult Function()  cancelled,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( bool needsLibraryAddition)  success,required TResult Function()  cancelled,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case _Success():
-return success(_that.needsLibraryAddition);case _PermissionDenied():
-return permissionDenied();case _Cancelled():
+return success(_that.needsLibraryAddition);case _Cancelled():
 return cancelled();case _Error():
 return error(_that.message);case _:
   throw StateError('Unexpected subclass');
@@ -175,11 +170,10 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( bool needsLibraryAddition)?  success,TResult? Function()?  permissionDenied,TResult? Function()?  cancelled,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( bool needsLibraryAddition)?  success,TResult? Function()?  cancelled,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case _Success() when success != null:
-return success(_that.needsLibraryAddition);case _PermissionDenied() when permissionDenied != null:
-return permissionDenied();case _Cancelled() when cancelled != null:
+return success(_that.needsLibraryAddition);case _Cancelled() when cancelled != null:
 return cancelled();case _Error() when error != null:
 return error(_that.message);case _:
   return null;
@@ -255,38 +249,6 @@ as bool,
 
 
 }
-
-/// @nodoc
-
-
-class _PermissionDenied implements DownloadResult {
-  const _PermissionDenied();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PermissionDenied);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-@override
-String toString() {
-  return 'DownloadResult.permissionDenied()';
-}
-
-
-}
-
-
-
 
 /// @nodoc
 

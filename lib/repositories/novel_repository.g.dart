@@ -474,7 +474,7 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'5f53b64ce5cd55b3a45506cd9ad3843dcf7887f7';
+String _$downloadStatusHash() => r'5c16dbf6c69b2718412c5bace98f0849c6143073';
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
@@ -600,7 +600,7 @@ final class EpisodeDownloadStatusProvider
 }
 
 String _$episodeDownloadStatusHash() =>
-    r'b8ec3c7cd84ceb7ec443eb99ac69b891b9350d38';
+    r'dc9568ad9b04806ab21c03fa62f96426892c97f7';
 
 /// エピソードのダウンロード状態を監視するプロバイダー。
 ///
