@@ -41,9 +41,26 @@ const qas = [
     answer: "インストールやその後のアップデート管理には、オープンソースのアプリストア「<a href='https://obtainium.imranr.dev/' target='_blank' rel='noopener noreferrer'>Obtainium</a>」の利用を推奨しています。\nGitHub Releases から直接、最新版の検知とインストールを自動化できます。"
   }
 ];
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": qas.map(qa => ({
+    "@type": "Question",
+    "name": qa.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": qa.answer
+    }
+  }))
+};
 ---
 
-<Layout title="よくある質問 - Novelty">
+<Layout 
+  title="よくある質問 - Novelty"
+  description="Noveltyに関するよくある質問（FAQ）と回答をまとめています。推奨環境、インストール方法、機能についてなど。"
+>
+  <script type="application/ld+json" slot="head" set:html={JSON.stringify(schema)} />
   <Navbar />
   <main class="main-container">
     <h1 class="page-title">よくある質問</h1>
