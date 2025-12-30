@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// "このアプリについて"ページのウィジェット。
+/// "アプリについて"ページのウィジェット。
 class AboutPage extends StatefulWidget {
   /// コンストラクタ。
   const AboutPage({super.key});
@@ -37,7 +38,11 @@ class _AboutPageState extends State<AboutPage> {
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
     if (!await launchUrl(uri)) {
-      throw Exception('Could not launch $url');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch $url')),
+        );
+      }
     }
   }
 
@@ -45,36 +50,41 @@ class _AboutPageState extends State<AboutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('このアプリについて'),
+        title: const Text('アプリについて'),
       ),
       body: ListView(
         children: [
-          ListTile(
-            title: Text(_packageInfo.appName),
-            subtitle: Text(
-              'Version ${_packageInfo.version}+${_packageInfo.buildNumber}',
+          const SizedBox(height: 32),
+          Center(
+            child: SvgPicture.asset(
+              'assets/app_icon/base.svg',
+              width: 100,
+              height: 100,
+              colorFilter: ColorFilter.mode(
+                Theme.of(context).colorScheme.primary,
+                BlendMode.srcIn,
+              ),
             ),
           ),
-          const Divider(),
+          const SizedBox(height: 32),
           ListTile(
-            title: const Text('ライセンス'),
-            onTap: () =>
-                _launchUrl('https://github.com/L4Ph/Novelty/blob/main/LICENSE'),
+            title: const Text('バージョン'),
+            subtitle: Text(
+              '${_packageInfo.version} (${_packageInfo.buildNumber})',
+            ),
+          ),
+          ListTile(
+            title: const Text('更新情報'),
+            onTap: () => _launchUrl('https://github.com/L4Ph/Novelty/releases'),
           ),
           ListTile(
             title: const Text('ソースコード'),
             onTap: () => _launchUrl('https://github.com/L4Ph/Novelty'),
           ),
           ListTile(
-            title: const Text('更新情報'),
+            title: const Text('ライセンス'),
             onTap: () =>
-                _launchUrl('https://github.com/L4Ph/Novelty/releases/latest'),
-          ),
-          ListTile(
-            title: const Text('プライバシーポリシー'),
-            onTap: () => _launchUrl(
-              'https://github.com/L4Ph/Novelty/blob/main/PRIVACY_POLICY.md',
-            ),
+                _launchUrl('https://github.com/L4Ph/Novelty/blob/main/LICENSE'),
           ),
           ListTile(
             title: const Text('オープンソースライセンス'),
@@ -86,6 +96,12 @@ class _AboutPageState extends State<AboutPage> {
                 applicationLegalese: '© ${DateTime.now().year} L4Ph',
               );
             },
+          ),
+          ListTile(
+            title: const Text('プライバシーポリシー'),
+            onTap: () => _launchUrl(
+              'https://github.com/L4Ph/Novelty/blob/main/PRIVACY_POLICY.md',
+            ),
           ),
         ],
       ),

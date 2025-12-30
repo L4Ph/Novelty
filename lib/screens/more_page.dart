@@ -16,7 +16,7 @@ class MorePage extends ConsumerStatefulWidget {
 
 class _MorePageState extends ConsumerState<MorePage> {
   // TODO(L4Ph): Connect to actual library filter provider
-  bool _isDownloadedOnly = false;
+  final bool _isDownloadedOnly = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +37,10 @@ class _MorePageState extends ConsumerState<MorePage> {
                     'assets/app_icon/base.svg',
                     width: 120,
                     height: 120,
+                    colorFilter: ColorFilter.mode(
+                      Theme.of(context).colorScheme.primary,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
               ),
@@ -67,12 +71,9 @@ class _MorePageState extends ConsumerState<MorePage> {
           title: const Text('ダウンロード済みのみ'),
           subtitle: const Text('ライブラリにある項目はフィルターされます'),
           value: _isDownloadedOnly,
-          onChanged: (value) {
-            setState(() {
-              _isDownloadedOnly = value;
-            });
-            // TODO(L4Ph): Implement filter logic
-          },
+          onChanged: null,
+
+          // TODO(L4Ph): Implement filter logic
         ),
         settingsAsync.when(
           data: (settings) => SwitchListTile(
