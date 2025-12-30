@@ -1,0 +1,80 @@
+/* Global Styles & Variables */
+
+:root {
+  /* Color Palette (Extracted from previous DaisyUI theme) */
+  --color-base-100: oklch(100% 0 0);           /* #ffffff */
+  --color-base-200: oklch(98% 0 0);            /* #f9f9f9 */
+  --color-base-300: oklch(95% 0 0);            /* #f2f2f2 */
+  --color-base-content: oklch(21% 0.006 285.885); /* #2a2a2a - Main Text */
+  
+  --color-primary: oklch(45% 0.24 277.023);    /* #570df8 - Primary Brand */
+  --color-primary-content: oklch(93% 0.034 272.788); /* Text on Primary */
+  
+  --color-secondary: oklch(65% 0.241 354.308); /* #f000b8 */
+  --color-secondary-content: oklch(94% 0.028 342.258);
+
+  --color-accent: oklch(77% 0.152 181.912);    /* #37cdbe */
+  --color-accent-content: oklch(38% 0.063 188.416);
+
+  --color-neutral: oklch(14% 0.005 285.823);   /* #1d232a */
+  --color-neutral-content: oklch(92% 0.004 286.32);
+
+  /* Functional Colors */
+  --color-bg-body: var(--color-base-100);
+  --color-text-main: var(--color-base-content);
+  --color-text-muted: oklch(55% 0 0); /* Grayish */
+
+  /* Spacing & Layout */
+  --container-width: 1200px;
+  --spacing-section: 4rem;
+
+  /* Typography */
+  --font-sans: "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+}
+
+/* Minimal Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-body);
+  color: var(--color-text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* Utilities */
+.container {
+  width: 100%;
+  max-width: var(--container-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.scroll-smooth {
+  scroll-behavior: smooth;
+}

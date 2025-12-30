@@ -11,9 +11,7 @@
   "dependencies": {
     "@astrojs/sitemap": "^3.6.0",
     "@lucide/astro": "^0.562.0",
-    "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.16.6",
-    "daisyui": "^5.5.14",
-    "tailwindcss": "^4.1.18"
+    "lightningcss": "^1.30.2"
   }
 }

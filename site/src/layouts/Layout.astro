@@ -1,5 +1,7 @@
 ---
-import "../styles/app.css";
+import "../styles/global.css";
+
+import { ClientRouter } from 'astro:transitions';
 
 interface Props {
 	title?: string;
@@ -23,6 +25,7 @@ const {
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
+		<ClientRouter />
 		
 		<!-- Primary Meta Tags -->
 		<title>{title}</title>
@@ -87,9 +90,15 @@ const {
 				}
 			]
 		</script>
-
+		<slot name="head" />
 	</head>
-	<body class="min-h-screen bg-base-100 text-base-content selection:bg-primary/30">
+	<body>
 		<slot />
 	</body>
 </html>
+
+<style is:global>
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  }
+</style>

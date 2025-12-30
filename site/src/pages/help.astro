@@ -35,25 +35,46 @@ const qas = [
   {
     question: "推奨環境や対応プラットフォームを教えてください。",
     answer: "現在はAndroidを主対象として開発および動作確認を行っています。\nWindows、macOS、Linuxでもビルド・動作可能ですが、レイアウトの最適化はAndroidが優先されています。"
+  },
+  {
+    question: "アプリのインストール・アップデート方法は？",
+    answer: "インストールやその後のアップデート管理には、オープンソースのアプリストア「<a href='https://obtainium.imranr.dev/' target='_blank' rel='noopener noreferrer'>Obtainium</a>」の利用を推奨しています。\nGitHub Releases から直接、最新版の検知とインストールを自動化できます。"
   }
 ];
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": qas.map(qa => ({
+    "@type": "Question",
+    "name": qa.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": qa.answer
+    }
+  }))
+};
 ---
 
-<Layout title="よくある質問 - Novelty">
+<Layout 
+  title="よくある質問 - Novelty"
+  description="Noveltyに関するよくある質問（FAQ）と回答をまとめています。推奨環境、インストール方法、機能についてなど。"
+>
+  <script type="application/ld+json" slot="head" set:html={JSON.stringify(schema)} />
   <Navbar />
-  <main class="container mx-auto px-4 py-16 max-w-4xl">
-    <h1 class="text-3xl md:text-4xl font-bold mb-12 text-center">よくある質問</h1>
+  <main class="main-container">
+    <h1 class="page-title">よくある質問</h1>
     
-    <div class="space-y-8">
+    <div class="qa-list">
       {qas.map((qa) => (
-        <div class="bg-base-200 p-6 rounded-2xl">
-          <h3 class="text-xl font-bold mb-4 flex items-start gap-3">
-            <span class="text-primary text-2xl font-black">Q.</span>
-            <span class="pt-1">{qa.question}</span>
+        <div class="qa-item">
+          <h3 class="question">
+            <span class="q-mark">Q.</span>
+            <span class="q-text">{qa.question}</span>
           </h3>
-          <div class="flex items-start gap-3 text-base-content/80 leading-relaxed whitespace-pre-line">
-            <span class="text-secondary text-2xl font-black">A.</span>
-            <div class="pt-1">{qa.answer}</div>
+          <div class="answer">
+            <span class="a-mark">A.</span>
+            <div class="a-text" set:html={qa.answer} />
           </div>
         </div>
       ))}
@@ -61,3 +82,95 @@ const qas = [
   </main>
   <Footer />
 </Layout>
+
+<style>
+  .main-container {
+    width: 100%;
+    max-width: 56rem; /* 4xl */
+    margin: 0 auto;
+    padding: 4rem 1rem; /* px-4 py-16 */
+    min-height: 80vh;
+  }
+
+  .page-title {
+    font-size: 1.875rem; /* 3xl */
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 3rem; /* mb-12 */
+    color: var(--color-base-content);
+  }
+
+  /* QA List */
+  .qa-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem; /* space-y-8 */
+  }
+
+  .qa-item {
+    background-color: var(--color-base-200);
+    padding: 1.5rem; /* p-6 */
+    border-radius: 1rem; /* rounded-2xl */
+  }
+
+  /* Question */
+  .question {
+    font-size: 1.25rem; /* xl */
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .q-mark {
+    color: var(--color-primary);
+    font-size: 1.5rem; /* 2xl */
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .q-text {
+    padding-top: 0.125rem;
+  }
+
+  /* Answer */
+  .answer {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    color: color-mix(in srgb, var(--color-base-content) 80%, transparent);
+    line-height: 1.625; /* relaxed */
+    white-space: pre-line;
+  }
+
+  .a-mark {
+    color: var(--color-secondary);
+    font-size: 1.5rem; /* 2xl */
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .a-text {
+    padding-top: 0.125rem;
+  }
+
+  /* Link styles within Answer */
+  .a-text :global(a) {
+    color: var(--color-primary) !important;
+    text-decoration: underline !important;
+    font-weight: 600;
+  }
+  
+  .a-text :global(a:hover) {
+    text-decoration: none !important;
+  }
+
+  /* Responsive */
+  @media (min-width: 768px) { /* md */
+    .page-title {
+      font-size: 2.25rem; /* 4xl */
+    }
+  }
+</style>

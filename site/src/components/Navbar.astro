@@ -1,53 +1,239 @@
 ---
-import { Menu } from '@lucide/astro';
+import { Menu, Github } from '@lucide/astro';
 ---
 
-<header class="sticky top-0 z-50 w-full px-4 sm:px-6 lg:px-8 pt-4 pb-0 pointer-events-none">
-  <div class="max-w-7xl mx-auto pointer-events-auto">
-    <nav class="navbar bg-base-100/80 backdrop-blur-xl border border-base-content/5 shadow-2xl rounded-3xl min-h-[4rem] px-4">
+<header class="header">
+  <div class="container">
+    <nav class="navbar">
       <!-- Navbar Start: Mobile Menu & Logo -->
       <div class="navbar-start">
         <div class="dropdown">
-          <div tabindex="0" role="button" class="btn btn-ghost lg:hidden" aria-label="Menu">
-            <Menu class="w-5 h-5" />
+          <div tabindex="0" role="button" class="btn btn-ghost hide-lg" aria-label="Menu">
+            <Menu class="icon" />
           </div>
-          <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-50 p-2 shadow-2xl bg-base-200/95 backdrop-blur-md rounded-2xl w-52 border border-base-content/5">
-            <li><a href="#features" class="font-medium">機能</a></li>
-            <li><a href="#tech" class="font-medium">技術</a></li>
+          <ul tabindex="0" class="menu-dropdown">
+            <li><a href="/#features">機能</a></li>
+            <li><a href="/#tech">技術</a></li>
+            <li><a href="/help">よくある質問</a></li>
           </ul>
         </div>
         
-        <a href="/" class="flex items-center gap-2 shrink-0">
-          <img src="/favicon.svg" alt="Novelty - アプリロゴ" class="w-9 h-9" />
-          <span class="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#66B9D2] tracking-tighter">
-            Novelty
-          </span>
+        <a href="/" class="logo-link">
+          <img src="/favicon.svg" alt="Novelty - アプリロゴ" class="logo-img" />
+          <span class="logo-text">Novelty</span>
         </a>
       </div>
 
       <!-- Navbar Center: Desktop Links -->
-      <div class="navbar-center hidden lg:flex">
-        <ul class="menu menu-horizontal px-1 gap-2">
-          <li>
-            <a href="#features" class="px-5 py-2 font-bold hover:text-primary transition-colors">機能</a>
-          </li>
-          <li>
-            <a href="#tech" class="px-5 py-2 font-bold hover:text-primary transition-colors">技術</a>
-          </li>
+      <div class="navbar-center show-lg">
+        <ul class="menu-horizontal">
+          <li><a href="/#features">機能</a></li>
+          <li><a href="/#tech">技術</a></li>
+          <li><a href="/help">よくある質問</a></li>
         </ul>
       </div>
 
       <!-- Navbar End: Call to Action -->
       <div class="navbar-end">
-        <a 
+        <a
           href="https://github.com/L4Ph/Novelty" 
           target="_blank" 
           rel="noopener noreferrer" 
-          class="btn btn-primary btn-sm sm:btn-md rounded-2xl px-6 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all border-none"
+          class="btn btn-primary"
         >
-          GitHub
+          <Github /> GitHub
         </a>
       </div>
-    </div>
+    </nav>
   </div>
-</nav>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+    padding: 1rem 1rem 0;
+    pointer-events: none; /* Let clicks pass through outside navbar */
+  }
+
+  .container {
+    max-width: 80rem; /* max-w-7xl */
+    margin: 0 auto;
+    pointer-events: auto;
+  }
+
+  .navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 4rem;
+    padding: 0 1rem;
+    
+    background-color: color-mix(in srgb, var(--color-base-100) 80%, transparent);
+    backdrop-filter: blur(24px);
+    border: 1px solid color-mix(in srgb, var(--color-base-content) 5%, transparent);
+    border-radius: 1.5rem; /* rounded-3xl */
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  }
+
+  .navbar-start, .navbar-end {
+    display: flex;
+    align-items: center;
+    width: 50%;
+  }
+
+  .navbar-end {
+    justify-content: flex-end;
+  }
+
+  .navbar-center {
+    flex: 0 0 auto;
+  }
+
+  /* Logo */
+  .logo-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+  }
+
+  .logo-img {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .logo-text {
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    
+    background: linear-gradient(to right, var(--color-primary), #66B9D2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    text-decoration: none;
+    line-height: 1;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: inherit;
+    padding: 0.5rem;
+  }
+  .btn-ghost:hover {
+    background-color: color-mix(in srgb, var(--color-base-content) 10%, transparent);
+  }
+
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
+    border-radius: 1rem; /* rounded-2xl */
+    padding: 0.5rem 1.5rem;
+    font-weight: 700;
+    box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--color-primary) 20%, transparent);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--color-primary) 40%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  /* Menus */
+  .menu-horizontal {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+  .menu-horizontal a {
+    display: block;
+    padding: 0.5rem 1.25rem;
+    font-weight: 700;
+    border-radius: 0.5rem;
+    transition: color 0.2s;
+  }
+  .menu-horizontal a:hover {
+    color: var(--color-primary);
+    background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  }
+
+  /* Dropdown (Mobile) */
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .menu-dropdown {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 50;
+    min-width: 13rem; /* w-52 */
+    margin-top: 0.75rem;
+    padding: 0.5rem;
+    list-style: none;
+    
+    background-color: color-mix(in srgb, var(--color-base-200) 95%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in srgb, var(--color-base-content) 5%, transparent);
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    
+    transform: translateY(10px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dropdown:focus-within .menu-dropdown,
+  .dropdown:hover .menu-dropdown {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .menu-dropdown li a {
+    display: block;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+  }
+  .menu-dropdown li a:hover,
+  .menu-dropdown li a:focus {
+    background-color: color-mix(in srgb, var(--color-base-content) 10%, transparent);
+    outline: none;
+  }
+
+  /* Responsive Utilities */
+  .hide-lg { display: inline-flex; }
+  .show-lg { display: none; }
+
+  @media (min-width: 1024px) { /* lg breakpoint */
+    .hide-lg { display: none; }
+    .show-lg { display: flex; }
+    .navbar-start { width: auto; }
+    .navbar-end { width: auto; }
+    .navbar-center { flex: 1; justify-content: center; }
+  }
+</style>
