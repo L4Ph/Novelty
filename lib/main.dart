@@ -40,13 +40,14 @@ class MyApp extends ConsumerWidget {
 
           return MaterialApp.router(
             title: 'Novelty',
+            themeMode: settings.themeMode,
             theme: ThemeData(
               colorScheme: colorScheme,
-              fontFamily: 'NotoSansJP',
+              fontFamily: settings.fontFamily,
             ),
             darkTheme: ThemeData(
               colorScheme: darkColorSchema,
-              fontFamily: 'NotoSansJP',
+              fontFamily: settings.fontFamily,
             ),
             routerConfig: router,
           );

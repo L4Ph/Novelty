@@ -66,7 +66,7 @@ class _AboutPageState extends State<AboutPage> {
             onTap: () => _launchUrl('https://github.com/L4Ph/Novelty'),
           ),
           ListTile(
-            title: const Text('リリースノート'),
+            title: const Text('更新情報'),
             onTap: () =>
                 _launchUrl('https://github.com/L4Ph/Novelty/releases/latest'),
           ),

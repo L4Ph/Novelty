@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,34 +6,51 @@ part 'settings_provider.g.dart';
 
 @immutable
 /// アプリケーションの設定を管理するクラス。
-/// フォントサイズ、縦書き設定、ダウンロードパスの設定を含む。
 class AppSettings {
   /// コンストラクタ。
   const AppSettings({
+    required this.themeMode,
     required this.fontSize,
+    required this.lineHeight,
+    required this.fontFamily,
     required this.isVertical,
-    required this.novelDownloadPath,
+    required this.isIncognito,
   });
+
+  /// テーマモード (system, light, dark)。
+  final ThemeMode themeMode;
 
   /// フォントサイズ。
   final double fontSize;
 
+  /// 行間。
+  final double lineHeight;
+
+  /// フォントファミリー。
+  final String fontFamily;
+
   /// 縦書き設定。
   final bool isVertical;
 
-  /// 小説のダウンロードパス。
-  final String novelDownloadPath;
+  /// シークレットモード (履歴を残さない)。
+  final bool isIncognito;
 
   /// 設定をコピーするメソッド。
   AppSettings copyWith({
+    ThemeMode? themeMode,
     double? fontSize,
+    double? lineHeight,
+    String? fontFamily,
     bool? isVertical,
-    String? novelDownloadPath,
+    bool? isIncognito,
   }) {
     return AppSettings(
+      themeMode: themeMode ?? this.themeMode,
       fontSize: fontSize ?? this.fontSize,
+      lineHeight: lineHeight ?? this.lineHeight,
+      fontFamily: fontFamily ?? this.fontFamily,
       isVertical: isVertical ?? this.isVertical,
-      novelDownloadPath: novelDownloadPath ?? this.novelDownloadPath,
+      isIncognito: isIncognito ?? this.isIncognito,
     );
   }
 }
@@ -42,49 +58,81 @@ class AppSettings {
 @Riverpod(keepAlive: true)
 /// アプリケーションの設定を提供するプロバイダー。
 class Settings extends _$Settings {
-  static const _fontSizePreferenceKey = 'font_size';
-  static const _isVerticalPreferenceKey = 'is_vertical';
-  static const _novelDownloadPathPreferenceKey = 'novel_download_path';
+  static const _themeModeKey = 'theme_mode';
+  static const _fontSizeKey = 'font_size';
+  static const _lineHeightKey = 'line_height';
+  static const _fontFamilyKey = 'font_family';
+  static const _isVerticalKey = 'is_vertical';
+  static const _isIncognitoKey = 'is_incognito';
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
   @override
   Future<AppSettings> build() async {
     final prefs = await _prefs;
-    final fontSize = prefs.getDouble(_fontSizePreferenceKey) ?? 16.0;
-    final isVertical = prefs.getBool(_isVerticalPreferenceKey) ?? false;
-    final novelDownloadPath =
-        prefs.getString(_novelDownloadPathPreferenceKey) ??
-        (await getApplicationDocumentsDirectory()).path;
+    final themeModeIndex =
+        prefs.getInt(_themeModeKey) ?? ThemeMode.system.index;
+    final fontSize = prefs.getDouble(_fontSizeKey) ?? 16.0;
+    final lineHeight = prefs.getDouble(_lineHeightKey) ?? 1.5;
+    final fontFamily = prefs.getString(_fontFamilyKey) ?? 'NotoSansJP';
+    final isVertical = prefs.getBool(_isVerticalKey) ?? false;
+    final isIncognito = prefs.getBool(_isIncognitoKey) ?? false;
 
     return AppSettings(
+      themeMode: ThemeMode.values[themeModeIndex],
       fontSize: fontSize,
+      lineHeight: lineHeight,
+      fontFamily: fontFamily,
       isVertical: isVertical,
-      novelDownloadPath: novelDownloadPath,
+      isIncognito: isIncognito,
     );
+  }
+
+  /// テーマモードを設定するメソッド。
+  Future<void> setThemeMode(ThemeMode mode) async {
+    if (state.hasValue) {
+      await (await _prefs).setInt(_themeModeKey, mode.index);
+      state = AsyncData(state.value!.copyWith(themeMode: mode));
+    }
   }
 
   /// フォントサイズを設定するメソッド。
   Future<void> setFontSize(double size) async {
     if (state.hasValue) {
-      await (await _prefs).setDouble(_fontSizePreferenceKey, size);
+      await (await _prefs).setDouble(_fontSizeKey, size);
       state = AsyncData(state.value!.copyWith(fontSize: size));
+    }
+  }
+
+  /// 行間を設定するメソッド。
+  Future<void> setLineHeight(double height) async {
+    if (state.hasValue) {
+      await (await _prefs).setDouble(_lineHeightKey, height);
+      state = AsyncData(state.value!.copyWith(lineHeight: height));
+    }
+  }
+
+  /// フォントファミリーを設定するメソッド。
+  Future<void> setFontFamily(String family) async {
+    if (state.hasValue) {
+      await (await _prefs).setString(_fontFamilyKey, family);
+      state = AsyncData(state.value!.copyWith(fontFamily: family));
     }
   }
 
   /// 縦書き設定を更新するメソッド。
   Future<void> setIsVertical({required bool isVertical}) async {
     if (state.hasValue) {
-      await (await _prefs).setBool(_isVerticalPreferenceKey, isVertical);
+      await (await _prefs).setBool(_isVerticalKey, isVertical);
       state = AsyncData(state.value!.copyWith(isVertical: isVertical));
     }
   }
 
-  /// 小説のダウンロードパスを設定するメソッド。
-  Future<void> setNovelDownloadPath(String path) async {
+  /// シークレットモードを設定するメソッド。
+  Future<void> setIsIncognito({required bool isIncognito}) async {
     if (state.hasValue) {
-      await (await _prefs).setString(_novelDownloadPathPreferenceKey, path);
-      state = AsyncData(state.value!.copyWith(novelDownloadPath: path));
+      await (await _prefs).setBool(_isIncognitoKey, isIncognito);
+      state = AsyncData(state.value!.copyWith(isIncognito: isIncognito));
     }
   }
 }

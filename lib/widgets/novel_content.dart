@@ -85,7 +85,8 @@ class NovelContentBody extends HookWidget {
             final textStyle = TextStyle(
               fontSize: settingsData.fontSize,
               color: textColor,
-              fontFamily: 'NotoSansJP',
+              fontFamily: settingsData.fontFamily,
+              height: settingsData.lineHeight,
             );
 
             if (settingsData.isVertical) {
@@ -95,7 +96,9 @@ class NovelContentBody extends HookWidget {
               return Directionality(
                 textDirection: TextDirection.rtl,
                 child: SingleChildScrollView(
-                  key: PageStorageKey<String>('novel_vertical_${ncode}_$episode'),
+                  key: PageStorageKey<String>(
+                    'novel_vertical_${ncode}_$episode',
+                  ),
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.all(16),
                   child: LayoutBuilder(
