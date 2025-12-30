@@ -145,7 +145,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
           leading: const Icon(Icons.delete_sweep),
           title: const Text('キャッシュを削除'),
           subtitle: const Text('一時ファイルとキャッシュを削除します'),
-          enabled: !_isProcessing,
+          enabled: false, // TODO: Implement cache clearing logic
           onTap: _clearCache,
         ),
       ],
