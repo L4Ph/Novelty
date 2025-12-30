@@ -1,15 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-@GenerateMocks([SharedPreferences])
-// Mockitoによって生成されたモックファイルのimportを無視
-// ignore: unused_import mocked_shared_preferences_used_internally
-import 'settings_provider_test.mocks.dart';
 
 /// path_providerのモック実装
 class FakePathProviderPlatform extends Fake
@@ -95,7 +90,10 @@ void main() {
       const settings = AppSettings(
         fontSize: 16,
         isVertical: false,
-        novelDownloadPath: '',
+        themeMode: ThemeMode.system,
+        lineHeight: 1.5,
+        fontFamily: 'NotoSansJP',
+        isIncognito: false,
       );
 
       expect(settings.fontSize, equals(16.0));
@@ -106,7 +104,10 @@ void main() {
       const originalSettings = AppSettings(
         fontSize: 16,
         isVertical: false,
-        novelDownloadPath: '',
+        themeMode: ThemeMode.system,
+        lineHeight: 1.5,
+        fontFamily: 'NotoSansJP',
+        isIncognito: false,
       );
 
       final updatedSettings = originalSettings.copyWith(

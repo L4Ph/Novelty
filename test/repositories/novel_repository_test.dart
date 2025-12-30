@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
@@ -128,7 +129,10 @@ class FakeSettings extends Settings {
     return const AppSettings(
       fontSize: 16,
       isVertical: false,
-      novelDownloadPath: '/tmp',
+      themeMode: ThemeMode.system,
+      lineHeight: 1.5,
+      fontFamily: 'NotoSansJP',
+      isIncognito: false,
     );
   }
 }

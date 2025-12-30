@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -18,7 +19,10 @@ class MockSettings extends Settings {
   Future<AppSettings> build() async => const AppSettings(
     fontSize: 16,
     isVertical: false,
-    novelDownloadPath: '',
+    themeMode: ThemeMode.system,
+    lineHeight: 1.5,
+    fontFamily: 'NotoSansJP',
+    isIncognito: false,
   );
 }
 

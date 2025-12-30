@@ -11,7 +11,10 @@ import 'package:tategaki/tategaki.dart';
 AppSettings get defaultTestSettings => const AppSettings(
   isVertical: false,
   fontSize: 16,
-  novelDownloadPath: '/fake/path',
+  themeMode: ThemeMode.system,
+  lineHeight: 1.5,
+  fontFamily: 'NotoSansJP',
+  isIncognito: false,
 );
 
 void main() {

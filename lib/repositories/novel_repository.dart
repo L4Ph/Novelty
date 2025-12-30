@@ -132,6 +132,12 @@ class NovelRepository {
     required int lastEpisode,
   }) async {
     final normalizedNcode = ncode.toNormalizedNcode();
+
+    // シークレットモードの場合は履歴を保存しない
+    if (settings.value?.isIncognito ?? false) {
+      return;
+    }
+
     final validEpisode = lastEpisode > 0 ? lastEpisode : 1;
 
     // Note: addToHistory now expects ReadingHistoryCompanion

@@ -15,7 +15,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.12.0+98
+version: 0.12.0+99
 environment:
   sdk: ^3.9.2
 workspace:
@@ -39,6 +39,7 @@ dependencies:
     sdk: flutter
   flutter_hooks: ^0.21.2
   flutter_riverpod: ^3.0.3
+  flutter_svg: ^2.2.3
   freezed_annotation: ^3.1.0
   go_router: ^17.0.0
   hooks_riverpod: ^3.0.3
@@ -79,6 +80,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  assets:
+    - assets/app_icon/base.svg
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

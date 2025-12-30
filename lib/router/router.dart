@@ -10,7 +10,8 @@ import 'package:novelty/screens/more_page.dart';
 import 'package:novelty/screens/novel_detail_page.dart';
 import 'package:novelty/screens/novel_page.dart';
 import 'package:novelty/screens/scaffold_page.dart';
-import 'package:novelty/screens/settings_page.dart';
+import 'package:novelty/screens/settings/appearance_settings_page.dart';
+import 'package:novelty/screens/settings/reader_settings_page.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -59,9 +60,15 @@ final router = GoRouter(
               builder: (context, state) => const MorePage(),
               routes: [
                 GoRoute(
-                  path: 'settings',
+                  path: 'appearance',
                   builder: (BuildContext context, GoRouterState state) {
-                    return const SettingsPage();
+                    return const AppearanceSettingsPage();
+                  },
+                ),
+                GoRoute(
+                  path: 'reader',
+                  builder: (BuildContext context, GoRouterState state) {
+                    return const ReaderSettingsPage();
                   },
                 ),
                 GoRoute(

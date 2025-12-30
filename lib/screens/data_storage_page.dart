@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/services/backup_service.dart';
+import 'package:novelty/utils/settings_provider.dart';
 
 /// データとストレージページ
 /// データベース全体のバックアップ・復元機能を提供
@@ -38,6 +39,8 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
       body: ListView(
         children: [
           _buildDatabaseBackupSection(),
+          const Divider(),
+          _buildStorageSection(),
         ],
       ),
     );
@@ -104,6 +107,88 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
     } on Exception catch (e) {
       if (mounted) {
         _showErrorDialog('エクスポートに失敗しました', e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
+  /// ストレージ設定セクションを構築
+  Widget _buildStorageSection() {
+    final settingsAsync = ref.watch(settingsProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            'ストレージ設定',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        settingsAsync.when(
+          data: (settings) => const SizedBox.shrink(),
+          loading: () => const ListTile(
+            title: Text('読み込み中...'),
+            leading: CircularProgressIndicator(),
+          ),
+          error: (err, stack) => ListTile(title: Text('エラー: $err')),
+        ),
+        ListTile(
+          leading: const Icon(Icons.delete_sweep),
+          title: const Text('キャッシュを削除'),
+          subtitle: const Text('一時ファイルとキャッシュを削除します'),
+          enabled: false, // TODO(L4Ph): Implement cache clearing logic
+          onTap: _clearCache,
+        ),
+      ],
+    );
+  }
+
+  /// キャッシュを削除
+  Future<void> _clearCache() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('キャッシュの削除'),
+        content: const Text('一時ファイルを削除しますか？\nダウンロードした小説は削除されません。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      // TODO(L4Ph): Implement actual cache clearing logic here
+      // For now, we simulate a delay
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      if (mounted) {
+        _showSuccessDialog('完了', 'キャッシュを削除しました');
+      }
+    } on Exception catch (e) {
+      if (mounted) {
+        _showErrorDialog('エラー', 'キャッシュの削除に失敗しました: $e');
       }
     } finally {
       if (mounted) {
