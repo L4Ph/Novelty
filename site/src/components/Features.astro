@@ -25,25 +25,25 @@ const features = [
 ];
 ---
 
-<section id="features" class="py-24 lg:py-32 bg-base-200/50">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-16 lg:mb-24">
-      <h2 class="text-sm font-bold text-primary tracking-widest uppercase mb-3">Core Features</h2>
-      <p class="text-4xl lg:text-5xl font-black tracking-tight">際立つ読書体験</p>
+<section id="features" class="section">
+  <div class="container">
+    <div class="header">
+      <h2 class="sub-title">Core Features</h2>
+      <p class="title">際立つ読書体験</p>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-8">
+    <div class="grid">
       {features.map(feature => (
-        <div class="card bg-base-100 border border-base-content/5 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 group">
-          <div class="card-body p-8 lg:p-10 flex flex-row items-start gap-6">
-            <div class="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-content transition-all duration-300">
-              <feature.icon class="w-7 h-7" />
+        <div class="card group">
+          <div class="card-body">
+            <div class="icon-box">
+              <feature.icon class="icon" />
             </div>
-            <div>
-              <h3 class="card-title text-2xl font-black mb-3 group-hover:text-primary transition-colors">
+            <div class="content">
+              <h3 class="card-title">
                 {feature.title}
               </h3>
-              <p class="text-base-content/60 leading-relaxed font-medium">
+              <p class="card-description">
                 {feature.description}
               </p>
             </div>
@@ -53,3 +53,127 @@ const features = [
     </div>
   </div>
 </section>
+
+<style>
+  .section {
+    padding: 6rem 0; /* py-24 */
+    background-color: color-mix(in srgb, var(--color-base-200) 50%, transparent);
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 4rem; /* mb-16 */
+  }
+
+  .sub-title {
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: 0.1em; /* tracking-widest */
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .title {
+    font-size: 2.25rem; /* 4xl */
+    font-weight: 900;
+    letter-spacing: -0.05em; /* tight */
+    margin: 0;
+  }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    gap: 2rem;
+  }
+
+  /* Card */
+  .card {
+    background-color: var(--color-base-100);
+    border: 1px solid color-mix(in srgb, var(--color-base-content) 5%, transparent);
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); /* shadow-sm */
+    transition: all 0.5s;
+  }
+
+  .card:hover {
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); /* shadow-xl */
+    border-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+    transform: translateY(-2px);
+  }
+
+  .card-body {
+    padding: 2rem; /* p-8 */
+    display: flex;
+    flex-direction: column; /* Mobile first stack */
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  /* Icon Box */
+  .icon-box {
+    width: 3.5rem; /* w-14 */
+    height: 3.5rem;
+    border-radius: 1rem; /* rounded-2xl */
+    background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+
+  .card:hover .icon-box {
+    transform: scale(1.1);
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
+  }
+
+  .icon {
+    width: 1.75rem; /* w-7 */
+    height: 1.75rem;
+  }
+
+  /* Content */
+  .card-title {
+    font-size: 1.5rem; /* 2xl */
+    font-weight: 900;
+    margin-bottom: 0.75rem;
+    transition: color 0.2s;
+  }
+
+  .card:hover .card-title {
+    color: var(--color-primary);
+  }
+
+  .card-description {
+    color: color-mix(in srgb, var(--color-base-content) 60%, transparent);
+    line-height: 1.625;
+    font-weight: 500;
+  }
+
+  /* Responsive */
+  @media (min-width: 768px) { /* md */
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) { /* lg */
+    .section {
+      padding: 8rem 0; /* py-32 */
+    }
+    .header {
+      margin-bottom: 6rem; /* mb-24 */
+    }
+    .title {
+      font-size: 3rem; /* 5xl */
+    }
+    .card-body {
+      padding: 2.5rem; /* p-10 */
+      flex-direction: row;
+    }
+  }
+</style>

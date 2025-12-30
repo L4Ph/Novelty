@@ -1,5 +1,5 @@
 ---
-import "../styles/app.css";
+import "../styles/global.css";
 
 interface Props {
 	title?: string;
@@ -89,7 +89,13 @@ const {
 		</script>
 
 	</head>
-	<body class="min-h-screen bg-base-100 text-base-content selection:bg-primary/30">
+	<body>
 		<slot />
 	</body>
 </html>
+
+<style is:global>
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  }
+</style>
