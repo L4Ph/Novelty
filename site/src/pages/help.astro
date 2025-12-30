@@ -1,0 +1,63 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+
+const qas = [
+  {
+    question: "「小説家になろう」のアカウントでログインできますか？（ブックマーク連携はできますか？）",
+    answer: "現在、Novelty はプライバシー保護とセキュリティの観点から、公式サイトへのログイン機能やブックマークの直接同期機能は提供していません。\nその代わり、強力な検索機能やローカルでのライブラリ管理、バックアップ機能を提供しています。"
+  },
+  {
+    question: "iOS(iPhone/iPad)版はありますか？",
+    answer: "技術的には対応しており、ソースコードからビルドすることで基本的な動作は可能なはずですが、動作確認が取れていません。\nApp Store での公開も現在未定です。\n将来的には対応を検討しています。"
+  },
+  {
+    question: "「カクヨム」や「ハーメルン」など、他の小説サイトには対応していますか？",
+    answer: "現時点では「小説家になろう」専用のクライアントとして、最高の体験を提供することに集中しています。\n他のサイトへの対応は将来的な検討事項です。"
+  },
+  {
+    question: "アプリ内に広告は表示されますか？",
+    answer: "一切表示されません。(作者本人が表示されてほしくありません。)\n読書への没入感を最優先し、余計なネットワーク通信をすべて排除しているため、今後も広告を導入する予定はありません。"
+  },
+  {
+    question: "オフラインで読むことはできますか？",
+    answer: "はい、可能です。\n小説をダウンロードすることで、インターネット接続がない環境でも快適に読むことができます。"
+  },
+  {
+    question: "縦書き表示には対応していますか？",
+    answer: "はい、対応しています。\n設定から「縦書き」モードに切り替えることで、文庫本のような縦書きスタイルで閲覧できます。\nフォントや文字サイズの変更も可能です。"
+  },
+  {
+    question: "データのバックアップは可能ですか？",
+    answer: "はい、設定の「データとストレージ」から、ライブラリや閲覧履歴を含むすべてのデータをファイルとして書き出し（エクスポート）、復元（インポート）することができます。"
+  },
+  {
+    question: "推奨環境や対応プラットフォームを教えてください。",
+    answer: "現在はAndroidを主対象として開発および動作確認を行っています。\nWindows、macOS、Linuxでもビルド・動作可能ですが、レイアウトの最適化はAndroidが優先されています。"
+  }
+];
+---
+
+<Layout title="よくある質問 - Novelty">
+  <Navbar />
+  <main class="container mx-auto px-4 py-16 max-w-4xl">
+    <h1 class="text-3xl md:text-4xl font-bold mb-12 text-center">よくある質問</h1>
+    
+    <div class="space-y-8">
+      {qas.map((qa) => (
+        <div class="bg-base-200 p-6 rounded-2xl">
+          <h3 class="text-xl font-bold mb-4 flex items-start gap-3">
+            <span class="text-primary text-2xl font-black">Q.</span>
+            <span class="pt-1">{qa.question}</span>
+          </h3>
+          <div class="flex items-start gap-3 text-base-content/80 leading-relaxed whitespace-pre-line">
+            <span class="text-secondary text-2xl font-black">A.</span>
+            <div class="pt-1">{qa.answer}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </main>
+  <Footer />
+</Layout>
