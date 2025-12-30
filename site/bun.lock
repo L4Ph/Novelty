@@ -10,6 +10,7 @@
         "@tailwindcss/vite": "^4.1.18",
         "astro": "^5.16.6",
         "daisyui": "^5.5.14",
+        "lightningcss": "^1.30.2",
         "tailwindcss": "^4.1.18",
       },
     },
