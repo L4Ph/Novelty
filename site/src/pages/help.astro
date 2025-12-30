@@ -35,6 +35,10 @@ const qas = [
   {
     question: "推奨環境や対応プラットフォームを教えてください。",
     answer: "現在はAndroidを主対象として開発および動作確認を行っています。\nWindows、macOS、Linuxでもビルド・動作可能ですが、レイアウトの最適化はAndroidが優先されています。"
+  },
+  {
+    question: "アプリのインストール・アップデート方法は？",
+    answer: "インストールやその後のアップデート管理には、オープンソースのアプリストア「<a href='https://obtainium.imranr.dev/' target='_blank' rel='noopener noreferrer'>Obtainium</a>」の利用を推奨しています。\nGitHub Releases から直接、最新版の検知とインストールを自動化できます。"
   }
 ];
 ---
@@ -53,7 +57,7 @@ const qas = [
           </h3>
           <div class="answer">
             <span class="a-mark">A.</span>
-            <div class="a-text">{qa.answer}</div>
+            <div class="a-text" set:html={qa.answer} />
           </div>
         </div>
       ))}
@@ -133,6 +137,17 @@ const qas = [
 
   .a-text {
     padding-top: 0.125rem;
+  }
+
+  /* Link styles within Answer */
+  .a-text :global(a) {
+    color: var(--color-primary) !important;
+    text-decoration: underline !important;
+    font-weight: 600;
+  }
+  
+  .a-text :global(a:hover) {
+    text-decoration: none !important;
   }
 
   /* Responsive */

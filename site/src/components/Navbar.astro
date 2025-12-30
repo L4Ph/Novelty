@@ -1,5 +1,5 @@
 ---
-import { Menu } from '@lucide/astro';
+import { Menu, Github } from '@lucide/astro';
 ---
 
 <header class="header">
@@ -12,8 +12,8 @@ import { Menu } from '@lucide/astro';
             <Menu class="icon" />
           </div>
           <ul tabindex="0" class="menu-dropdown">
-            <li><a href="#features">機能</a></li>
-            <li><a href="#tech">技術</a></li>
+            <li><a href="/#features">機能</a></li>
+            <li><a href="/#tech">技術</a></li>
             <li><a href="/help">よくある質問</a></li>
           </ul>
         </div>
@@ -27,21 +27,21 @@ import { Menu } from '@lucide/astro';
       <!-- Navbar Center: Desktop Links -->
       <div class="navbar-center show-lg">
         <ul class="menu-horizontal">
-          <li><a href="#features">機能</a></li>
-          <li><a href="#tech">技術</a></li>
+          <li><a href="/#features">機能</a></li>
+          <li><a href="/#tech">技術</a></li>
           <li><a href="/help">よくある質問</a></li>
         </ul>
       </div>
 
       <!-- Navbar End: Call to Action -->
       <div class="navbar-end">
-        <a 
+        <a
           href="https://github.com/L4Ph/Novelty" 
           target="_blank" 
           rel="noopener noreferrer" 
           class="btn btn-primary"
         >
-          GitHub
+          <Github /> GitHub
         </a>
       </div>
     </nav>
