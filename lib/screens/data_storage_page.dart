@@ -186,7 +186,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
       if (mounted) {
         _showSuccessDialog('完了', 'キャッシュを削除しました');
       }
-    } catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         _showErrorDialog('エラー', 'キャッシュの削除に失敗しました: $e');
       }

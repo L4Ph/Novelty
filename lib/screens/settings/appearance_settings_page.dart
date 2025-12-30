@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
+/// 表示設定ページ
 class AppearanceSettingsPage extends ConsumerWidget {
+  /// コンストラクタ
   const AppearanceSettingsPage({super.key});
 
   @override
@@ -43,35 +45,29 @@ class AppearanceSettingsPage extends ConsumerWidget {
             ),
           ),
         ),
-        RadioListTile<ThemeMode>(
-          title: const Text('システム設定に従う'),
-          value: ThemeMode.system,
+        RadioGroup<ThemeMode>(
           groupValue: settings.themeMode,
-          onChanged: (value) {
+          onChanged: (value) async {
             if (value != null) {
-              ref.read(settingsProvider.notifier).setThemeMode(value);
+              await ref.read(settingsProvider.notifier).setThemeMode(value);
             }
           },
-        ),
-        RadioListTile<ThemeMode>(
-          title: const Text('ライト'),
-          value: ThemeMode.light,
-          groupValue: settings.themeMode,
-          onChanged: (value) {
-            if (value != null) {
-              ref.read(settingsProvider.notifier).setThemeMode(value);
-            }
-          },
-        ),
-        RadioListTile<ThemeMode>(
-          title: const Text('ダーク'),
-          value: ThemeMode.dark,
-          groupValue: settings.themeMode,
-          onChanged: (value) {
-            if (value != null) {
-              ref.read(settingsProvider.notifier).setThemeMode(value);
-            }
-          },
+          child: const Column(
+            children: [
+              RadioListTile<ThemeMode>(
+                title: Text('システム設定に従う'),
+                value: ThemeMode.system,
+              ),
+              RadioListTile<ThemeMode>(
+                title: Text('ライト'),
+                value: ThemeMode.light,
+              ),
+              RadioListTile<ThemeMode>(
+                title: Text('ダーク'),
+                value: ThemeMode.dark,
+              ),
+            ],
+          ),
         ),
       ],
     );

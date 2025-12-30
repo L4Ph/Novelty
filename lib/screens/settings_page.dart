@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// 設定ページ（非推奨）
 class SettingsPage extends StatelessWidget {
+  /// コンストラクタ
   const SettingsPage({super.key});
 
   @override

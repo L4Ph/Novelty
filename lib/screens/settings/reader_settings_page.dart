@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
+/// 閲覧設定ページ
 class ReaderSettingsPage extends ConsumerWidget {
+  /// コンストラクタ
   const ReaderSettingsPage({super.key});
 
   @override
@@ -53,8 +55,8 @@ class ReaderSettingsPage extends ConsumerWidget {
             max: 30,
             divisions: 40,
             label: settings.fontSize.toStringAsFixed(1),
-            onChanged: (value) {
-              ref.read(settingsProvider.notifier).setFontSize(value);
+            onChanged: (value) async {
+              await ref.read(settingsProvider.notifier).setFontSize(value);
             },
           ),
         ),
@@ -74,9 +76,9 @@ class ReaderSettingsPage extends ConsumerWidget {
                 child: Text('Noto Serif JP (明朝)'),
               ),
             ],
-            onChanged: (value) {
+            onChanged: (value) async {
               if (value != null) {
-                ref.read(settingsProvider.notifier).setFontFamily(value);
+                await ref.read(settingsProvider.notifier).setFontFamily(value);
               }
             },
           ),
@@ -111,16 +113,16 @@ class ReaderSettingsPage extends ConsumerWidget {
             max: 3,
             divisions: 20,
             label: settings.lineHeight.toStringAsFixed(1),
-            onChanged: (value) {
-              ref.read(settingsProvider.notifier).setLineHeight(value);
+            onChanged: (value) async {
+              await ref.read(settingsProvider.notifier).setLineHeight(value);
             },
           ),
         ),
         SwitchListTile(
           title: const Text('縦書き'),
           value: settings.isVertical,
-          onChanged: (value) {
-            ref
+          onChanged: (value) async {
+            await ref
                 .read(settingsProvider.notifier)
                 .setIsVertical(isVertical: value);
           },
