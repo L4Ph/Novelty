@@ -59,9 +59,7 @@ class HistoryPage extends ConsumerWidget {
                         title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                       subtitle: Text(
                         '第$lastEpisode章 - ${updatedAt != null ? DateFormat('HH:mm').format(updatedAt) : ''}',
@@ -71,7 +69,9 @@ class HistoryPage extends ConsumerWidget {
                         icon: const Icon(Icons.delete_outline),
                         onPressed: () {
                           unawaited(
-                            ref.read(novelRepositoryProvider).deleteHistory(ncode),
+                            ref
+                                .read(novelRepositoryProvider)
+                                .deleteHistory(ncode),
                           );
                         },
                       ),
