@@ -354,6 +354,8 @@ class NovelRepository {
   ) async {
     final ncodeLower = ncode.toNormalizedNcode();
     final progressController = _progressControllers[ncodeLower];
+    var successCount = 0;
+    var failureCount = 0;
 
     try {
       // 初期進捗を通知
@@ -380,9 +382,6 @@ class NovelRepository {
         // 目次取得失敗時はrevised情報なしで進める（全件チェックになるが、キャッシュがあればスキップされる）
         // ただし、キャッシュが古くてもスキップされてしまう可能性がある
       }
-
-      var successCount = 0;
-      var failureCount = 0;
 
       // 各エピソードをダウンロード
       for (var i = 1; i <= totalEpisodes; i++) {
@@ -422,11 +421,10 @@ class NovelRepository {
       );
     } on Exception catch (e) {
       // 予期しないエラーが発生した場合
-      final summary = await _db.getNovelDownloadSummary(ncodeLower);
       progressController?.add(
         DownloadProgress(
-          currentEpisode: summary?.successCount ?? 0,
-          totalEpisodes: summary?.totalEpisodes ?? totalEpisodes,
+          currentEpisode: successCount,
+          totalEpisodes: totalEpisodes,
           isDownloading: false,
           errorMessage: e.toString(),
         ),
@@ -474,14 +472,6 @@ class NovelRepository {
     yield cached != null &&
         cached.content != null &&
         cached.content!.isNotEmpty;
-  }
-
-  /// 小説がダウンロードされているかを確認するメソッド。
-  ///
-  /// DownloadedEpisodesから集計した状態を確認する。
-  Stream<bool> isNovelDownloaded(String ncode) async* {
-    final summary = await _db.getNovelDownloadSummary(ncode);
-    yield summary != null && summary.downloadStatus == 2;
   }
 
   /// 小説のダウンロードを行うメソッド。
@@ -693,21 +683,8 @@ Stream<DownloadProgress?> downloadProgress(
 class DownloadStatus extends _$DownloadStatus {
   @override
   Stream<bool> build(NovelInfo novelInfo) {
-    final repo = ref.watch(novelRepositoryProvider);
-
-    // downloadProgressProviderを監視
-    ref.listen<AsyncValue<DownloadProgress?>>(
-      downloadProgressProvider(novelInfo.ncode!),
-      (previous, next) {
-        final progress = next.value;
-        if (progress != null && !progress.isDownloading) {
-          // ダウンロードが完了または失敗したら、自身の状態を再評価
-          ref.invalidateSelf();
-        }
-      },
-    );
-
-    return repo.isNovelDownloaded(novelInfo.ncode!);
+    // ダウンロード状態の監視は不要になったため、ダミーを返す
+    return Stream.value(false);
   }
 
   /// 小説のダウンロードを実行するメソッド。

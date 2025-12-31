@@ -147,8 +147,6 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     );
     final isFavoriteAsync = ref.watch(libraryStatusProvider(widget.ncode));
     final isInLibrary = isFavoriteAsync.value ?? false;
-    final downloadStatusAsync = ref.watch(downloadStatusProvider(novelInfo));
-    final isDownloaded = downloadStatusAsync.value ?? false;
 
     final progressBar = downloadProgressAsync.when(
       data: (progress) {
@@ -237,27 +235,18 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == 'download') {
-                      if (isDownloaded) {
-                        unawaited(_handleDelete(context, ref, novelInfo));
-                      } else {
-                        unawaited(_handleDownload(context, ref, novelInfo));
-                      }
+                      unawaited(_handleDownload(context, ref, novelInfo));
                     }
                   },
                   itemBuilder: (BuildContext context) {
                     return [
-                      PopupMenuItem(
+                      const PopupMenuItem(
                         value: 'download',
                         child: Row(
                           children: [
-                            Icon(
-                              isDownloaded ? Icons.delete : Icons.download,
-                              color: isDownloaded
-                                  ? Theme.of(context).colorScheme.error
-                                  : null,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(isDownloaded ? 'ダウンロード削除' : '一括ダウンロード'),
+                            Icon(Icons.download),
+                            SizedBox(width: 8),
+                            Text('一括ダウンロード'),
                           ],
                         ),
                       ),
@@ -596,49 +585,6 @@ Future<void> _handleDownload(
     error: (message) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('ダウンロードに失敗しました: $message')),
-      );
-    },
-  );
-}
-
-Future<void> _handleDelete(
-  BuildContext context,
-  WidgetRef ref,
-  NovelInfo novelInfo,
-) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('削除の確認'),
-      content: Text('「${novelInfo.title}」を端末から削除しますか？'),
-      actions: [
-        TextButton(
-          child: const Text('キャンセル'),
-          onPressed: () => Navigator.of(context).pop(false),
-        ),
-        TextButton(
-          child: const Text('削除'),
-          onPressed: () => Navigator.of(context).pop(true),
-        ),
-      ],
-    ),
-  );
-
-  if (confirmed != true || !context.mounted) return;
-
-  final result = await ref
-      .read(downloadStatusProvider(novelInfo).notifier)
-      .executeDelete(novelInfo);
-
-  if (!context.mounted) return;
-
-  result.when(
-    success: (_) {},
-
-    cancelled: () {},
-    error: (message) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('削除に失敗しました: $message')),
       );
     },
   );

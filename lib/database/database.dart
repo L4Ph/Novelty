@@ -950,93 +950,36 @@ class AppDatabase extends _$AppDatabase {
         .watchSingleOrNull();
   }
 
-  /// 小説のダウンロード状態の集計情報を取得
-  Future<NovelDownloadSummary?> getNovelDownloadSummary(String ncode) async {
-    final normalizedNcode = ncode.toNormalizedNcode();
-    final novel = await getNovel(normalizedNcode);
-    if (novel?.generalAllNo == null) {
-      return null;
-    }
-    final totalEpisodes = novel!.generalAllNo!;
-
-    final savedEpisodes =
-        await (select(episodeEntities)..where(
-              (e) => e.ncode.equals(normalizedNcode) & e.content.isNotNull(),
-            ))
-            .get();
-
-    final successCount = savedEpisodes.length;
-    final failureCount = savedEpisodes.where((e) => e.content!.isEmpty).length;
-    final realSuccessCount = successCount - failureCount;
-
-    return NovelDownloadSummary(
-      ncode: normalizedNcode,
-      successCount: realSuccessCount,
-      failureCount: failureCount,
-      totalEpisodes: totalEpisodes,
-    );
-  }
-
-  /// 小説のダウンロード状態の集計情報を監視
-  Stream<NovelDownloadSummary?> watchNovelDownloadSummary(String ncode) {
-    final normalizedNcode = ncode.toNormalizedNcode();
-
-    return (select(episodeEntities)
-          ..where((e) => e.ncode.equals(normalizedNcode)))
-        .watch()
-        .asyncMap((allEpisodes) async {
-          final novel = await getNovel(normalizedNcode);
-          if (novel?.generalAllNo == null) {
-            return null;
-          }
-          final totalEpisodes = novel!.generalAllNo!;
-
-          final savedEpisodes = allEpisodes
-              .where((e) => e.content != null)
-              .toList();
-          final successCount = savedEpisodes.length;
-          final failureCount = savedEpisodes
-              .where((e) => e.content!.isEmpty)
-              .length;
-          final realSuccessCount = successCount - failureCount;
-
-          return NovelDownloadSummary(
-            ncode: normalizedNcode,
-            successCount: realSuccessCount,
-            failureCount: failureCount,
-            totalEpisodes: totalEpisodes,
-          );
-        });
-  }
-
   /// ダウンロード中の小説を監視
   Stream<List<NovelDownloadSummary>> watchDownloadingNovels() {
-    return select(episodeEntities).watch().asyncMap((allEpisodes) async {
-      final ncodeMap = <String, List<EpisodeRow>>{};
-      for (final episode in allEpisodes) {
-        if (episode.content != null) {
-          ncodeMap.putIfAbsent(episode.ncode, () => []).add(episode);
-        }
-      }
+    // 全エピソードの集計（GROUP BY）と、全ノベル情報を結合してストリーム化
+    // GROUP BY ncode
+    final query = customSelect(
+      'SELECT '
+      'e.ncode, '
+      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content != '[]' THEN 1 END) as success_count, "
+      "COUNT(CASE WHEN e.content = '[]' THEN 1 END) as failure_count, "
+      'n.general_all_no '
+      'FROM episodes e '
+      'JOIN novels n ON e.ncode = n.ncode '
+      'WHERE e.content IS NOT NULL '
+      'GROUP BY e.ncode',
+      readsFrom: {episodeEntities, novels},
+    ).watch();
 
+    return query.map((rows) {
       final summaries = <NovelDownloadSummary>[];
-      for (final entry in ncodeMap.entries) {
-        final ncode = entry.key;
-        final savedEpisodes = entry.value;
+      for (final row in rows) {
+        final ncode = row.read<String>('ncode');
+        final successCount = row.read<int>('success_count');
+        final failureCount = row.read<int>('failure_count');
+        final totalEpisodes = row.read<int?>('general_all_no');
 
-        final novel = await getNovel(ncode);
-        if (novel?.generalAllNo == null) continue;
-
-        final totalEpisodes = novel!.generalAllNo!;
-        final successCount = savedEpisodes.length;
-        final failureCount = savedEpisodes
-            .where((e) => e.content!.isEmpty)
-            .length;
-        final realSuccessCount = successCount - failureCount;
+        if (totalEpisodes == null) continue;
 
         final summary = NovelDownloadSummary(
           ncode: ncode,
-          successCount: realSuccessCount,
+          successCount: successCount,
           failureCount: failureCount,
           totalEpisodes: totalEpisodes,
         );
@@ -1051,32 +994,34 @@ class AppDatabase extends _$AppDatabase {
 
   /// 完了済みダウンロード小説を監視
   Stream<List<NovelDownloadSummary>> watchCompletedDownloads() {
-    return select(episodeEntities).watch().asyncMap((allEpisodes) async {
-      final ncodeMap = <String, List<EpisodeRow>>{};
-      for (final episode in allEpisodes) {
-        if (episode.content != null) {
-          ncodeMap.putIfAbsent(episode.ncode, () => []).add(episode);
-        }
-      }
+    // 全エピソードの集計（GROUP BY）と、全ノベル情報を結合してストリーム化
+    // Logic is same as watchDownloadingNovels but filter differs
+    final query = customSelect(
+      'SELECT '
+      'e.ncode, '
+      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content != '[]' THEN 1 END) as success_count, "
+      "COUNT(CASE WHEN e.content = '[]' THEN 1 END) as failure_count, "
+      'n.general_all_no '
+      'FROM episodes e '
+      'JOIN novels n ON e.ncode = n.ncode '
+      'WHERE e.content IS NOT NULL '
+      'GROUP BY e.ncode',
+      readsFrom: {episodeEntities, novels},
+    ).watch();
 
+    return query.map((rows) {
       final summaries = <NovelDownloadSummary>[];
-      for (final entry in ncodeMap.entries) {
-        final ncode = entry.key;
-        final savedEpisodes = entry.value;
+      for (final row in rows) {
+        final ncode = row.read<String>('ncode');
+        final successCount = row.read<int>('success_count');
+        final failureCount = row.read<int>('failure_count');
+        final totalEpisodes = row.read<int?>('general_all_no');
 
-        final novel = await getNovel(ncode);
-        if (novel?.generalAllNo == null) continue;
-
-        final totalEpisodes = novel!.generalAllNo!;
-        final successCount = savedEpisodes.length;
-        final failureCount = savedEpisodes
-            .where((e) => e.content!.isEmpty)
-            .length;
-        final realSuccessCount = successCount - failureCount;
+        if (totalEpisodes == null) continue;
 
         final summary = NovelDownloadSummary(
           ncode: ncode,
-          successCount: realSuccessCount,
+          successCount: successCount,
           failureCount: failureCount,
           totalEpisodes: totalEpisodes,
         );
