@@ -44,11 +44,15 @@ abstract class Episode with _$Episode {
     ///
     /// `YYYY-MM-DD HH:MM:SS` の形式。
     String? novelUpdatedAt,
+
+    /// ダウンロード済みかどうか
+    @Default(false) bool isDownloaded,
   }) = _Episode;
 
   /// JSONから[Episode]を生成するファクトリコンストラクタ
   factory Episode.fromJson(Map<String, dynamic> json) => _$EpisodeFromJson({
-        ...json,
-        if (json['ncode'] is String) 'ncode': (json['ncode'] as String).toNormalizedNcode(),
-      });
+    ...json,
+    if (json['ncode'] is String)
+      'ncode': (json['ncode'] as String).toNormalizedNcode(),
+  });
 }

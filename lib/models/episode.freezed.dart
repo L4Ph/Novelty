@@ -33,7 +33,8 @@ mixin _$Episode {
  String? get body;/// 小説の更新日時。
 ///
 /// `YYYY-MM-DD HH:MM:SS` の形式。
- String? get novelUpdatedAt;
+ String? get novelUpdatedAt;/// ダウンロード済みかどうか
+ bool get isDownloaded;
 /// Create a copy of Episode
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -46,16 +47,16 @@ $EpisodeCopyWith<Episode> get copyWith => _$EpisodeCopyWithImpl<Episode>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Episode&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.url, url) || other.url == url)&&(identical(other.update, update) || other.update == update)&&(identical(other.revised, revised) || other.revised == revised)&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.index, index) || other.index == index)&&(identical(other.body, body) || other.body == body)&&(identical(other.novelUpdatedAt, novelUpdatedAt) || other.novelUpdatedAt == novelUpdatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Episode&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.url, url) || other.url == url)&&(identical(other.update, update) || other.update == update)&&(identical(other.revised, revised) || other.revised == revised)&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.index, index) || other.index == index)&&(identical(other.body, body) || other.body == body)&&(identical(other.novelUpdatedAt, novelUpdatedAt) || other.novelUpdatedAt == novelUpdatedAt)&&(identical(other.isDownloaded, isDownloaded) || other.isDownloaded == isDownloaded));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,subtitle,url,update,revised,ncode,index,body,novelUpdatedAt);
+int get hashCode => Object.hash(runtimeType,subtitle,url,update,revised,ncode,index,body,novelUpdatedAt,isDownloaded);
 
 @override
 String toString() {
-  return 'Episode(subtitle: $subtitle, url: $url, update: $update, revised: $revised, ncode: $ncode, index: $index, body: $body, novelUpdatedAt: $novelUpdatedAt)';
+  return 'Episode(subtitle: $subtitle, url: $url, update: $update, revised: $revised, ncode: $ncode, index: $index, body: $body, novelUpdatedAt: $novelUpdatedAt, isDownloaded: $isDownloaded)';
 }
 
 
@@ -66,7 +67,7 @@ abstract mixin class $EpisodeCopyWith<$Res>  {
   factory $EpisodeCopyWith(Episode value, $Res Function(Episode) _then) = _$EpisodeCopyWithImpl;
 @useResult
 $Res call({
- String? subtitle, String? url, String? update, String? revised, String? ncode, int? index, String? body, String? novelUpdatedAt
+ String? subtitle, String? url, String? update, String? revised, String? ncode, int? index, String? body, String? novelUpdatedAt, bool isDownloaded
 });
 
 
@@ -83,7 +84,7 @@ class _$EpisodeCopyWithImpl<$Res>
 
 /// Create a copy of Episode
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? subtitle = freezed,Object? url = freezed,Object? update = freezed,Object? revised = freezed,Object? ncode = freezed,Object? index = freezed,Object? body = freezed,Object? novelUpdatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? subtitle = freezed,Object? url = freezed,Object? update = freezed,Object? revised = freezed,Object? ncode = freezed,Object? index = freezed,Object? body = freezed,Object? novelUpdatedAt = freezed,Object? isDownloaded = null,}) {
   return _then(_self.copyWith(
 subtitle: freezed == subtitle ? _self.subtitle : subtitle // ignore: cast_nullable_to_non_nullable
 as String?,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
@@ -93,7 +94,8 @@ as String?,ncode: freezed == ncode ? _self.ncode : ncode // ignore: cast_nullabl
 as String?,index: freezed == index ? _self.index : index // ignore: cast_nullable_to_non_nullable
 as int?,body: freezed == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
 as String?,novelUpdatedAt: freezed == novelUpdatedAt ? _self.novelUpdatedAt : novelUpdatedAt // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isDownloaded: null == isDownloaded ? _self.isDownloaded : isDownloaded // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -178,10 +180,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? subtitle,  String? url,  String? update,  String? revised,  String? ncode,  int? index,  String? body,  String? novelUpdatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? subtitle,  String? url,  String? update,  String? revised,  String? ncode,  int? index,  String? body,  String? novelUpdatedAt,  bool isDownloaded)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Episode() when $default != null:
-return $default(_that.subtitle,_that.url,_that.update,_that.revised,_that.ncode,_that.index,_that.body,_that.novelUpdatedAt);case _:
+return $default(_that.subtitle,_that.url,_that.update,_that.revised,_that.ncode,_that.index,_that.body,_that.novelUpdatedAt,_that.isDownloaded);case _:
   return orElse();
 
 }
@@ -199,10 +201,10 @@ return $default(_that.subtitle,_that.url,_that.update,_that.revised,_that.ncode,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? subtitle,  String? url,  String? update,  String? revised,  String? ncode,  int? index,  String? body,  String? novelUpdatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? subtitle,  String? url,  String? update,  String? revised,  String? ncode,  int? index,  String? body,  String? novelUpdatedAt,  bool isDownloaded)  $default,) {final _that = this;
 switch (_that) {
 case _Episode():
-return $default(_that.subtitle,_that.url,_that.update,_that.revised,_that.ncode,_that.index,_that.body,_that.novelUpdatedAt);case _:
+return $default(_that.subtitle,_that.url,_that.update,_that.revised,_that.ncode,_that.index,_that.body,_that.novelUpdatedAt,_that.isDownloaded);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -219,10 +221,10 @@ return $default(_that.subtitle,_that.url,_that.update,_that.revised,_that.ncode,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? subtitle,  String? url,  String? update,  String? revised,  String? ncode,  int? index,  String? body,  String? novelUpdatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? subtitle,  String? url,  String? update,  String? revised,  String? ncode,  int? index,  String? body,  String? novelUpdatedAt,  bool isDownloaded)?  $default,) {final _that = this;
 switch (_that) {
 case _Episode() when $default != null:
-return $default(_that.subtitle,_that.url,_that.update,_that.revised,_that.ncode,_that.index,_that.body,_that.novelUpdatedAt);case _:
+return $default(_that.subtitle,_that.url,_that.update,_that.revised,_that.ncode,_that.index,_that.body,_that.novelUpdatedAt,_that.isDownloaded);case _:
   return null;
 
 }
@@ -234,7 +236,7 @@ return $default(_that.subtitle,_that.url,_that.update,_that.revised,_that.ncode,
 @JsonSerializable()
 
 class _Episode implements Episode {
-  const _Episode({this.subtitle, this.url, this.update, this.revised, this.ncode, this.index, this.body, this.novelUpdatedAt});
+  const _Episode({this.subtitle, this.url, this.update, this.revised, this.ncode, this.index, this.body, this.novelUpdatedAt, this.isDownloaded = false});
   factory _Episode.fromJson(Map<String, dynamic> json) => _$EpisodeFromJson(json);
 
 /// サブタイトル。
@@ -263,6 +265,8 @@ class _Episode implements Episode {
 ///
 /// `YYYY-MM-DD HH:MM:SS` の形式。
 @override final  String? novelUpdatedAt;
+/// ダウンロード済みかどうか
+@override@JsonKey() final  bool isDownloaded;
 
 /// Create a copy of Episode
 /// with the given fields replaced by the non-null parameter values.
@@ -277,16 +281,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Episode&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.url, url) || other.url == url)&&(identical(other.update, update) || other.update == update)&&(identical(other.revised, revised) || other.revised == revised)&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.index, index) || other.index == index)&&(identical(other.body, body) || other.body == body)&&(identical(other.novelUpdatedAt, novelUpdatedAt) || other.novelUpdatedAt == novelUpdatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Episode&&(identical(other.subtitle, subtitle) || other.subtitle == subtitle)&&(identical(other.url, url) || other.url == url)&&(identical(other.update, update) || other.update == update)&&(identical(other.revised, revised) || other.revised == revised)&&(identical(other.ncode, ncode) || other.ncode == ncode)&&(identical(other.index, index) || other.index == index)&&(identical(other.body, body) || other.body == body)&&(identical(other.novelUpdatedAt, novelUpdatedAt) || other.novelUpdatedAt == novelUpdatedAt)&&(identical(other.isDownloaded, isDownloaded) || other.isDownloaded == isDownloaded));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,subtitle,url,update,revised,ncode,index,body,novelUpdatedAt);
+int get hashCode => Object.hash(runtimeType,subtitle,url,update,revised,ncode,index,body,novelUpdatedAt,isDownloaded);
 
 @override
 String toString() {
-  return 'Episode(subtitle: $subtitle, url: $url, update: $update, revised: $revised, ncode: $ncode, index: $index, body: $body, novelUpdatedAt: $novelUpdatedAt)';
+  return 'Episode(subtitle: $subtitle, url: $url, update: $update, revised: $revised, ncode: $ncode, index: $index, body: $body, novelUpdatedAt: $novelUpdatedAt, isDownloaded: $isDownloaded)';
 }
 
 
@@ -297,7 +301,7 @@ abstract mixin class _$EpisodeCopyWith<$Res> implements $EpisodeCopyWith<$Res> {
   factory _$EpisodeCopyWith(_Episode value, $Res Function(_Episode) _then) = __$EpisodeCopyWithImpl;
 @override @useResult
 $Res call({
- String? subtitle, String? url, String? update, String? revised, String? ncode, int? index, String? body, String? novelUpdatedAt
+ String? subtitle, String? url, String? update, String? revised, String? ncode, int? index, String? body, String? novelUpdatedAt, bool isDownloaded
 });
 
 
@@ -314,7 +318,7 @@ class __$EpisodeCopyWithImpl<$Res>
 
 /// Create a copy of Episode
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? subtitle = freezed,Object? url = freezed,Object? update = freezed,Object? revised = freezed,Object? ncode = freezed,Object? index = freezed,Object? body = freezed,Object? novelUpdatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? subtitle = freezed,Object? url = freezed,Object? update = freezed,Object? revised = freezed,Object? ncode = freezed,Object? index = freezed,Object? body = freezed,Object? novelUpdatedAt = freezed,Object? isDownloaded = null,}) {
   return _then(_Episode(
 subtitle: freezed == subtitle ? _self.subtitle : subtitle // ignore: cast_nullable_to_non_nullable
 as String?,url: freezed == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
@@ -324,7 +328,8 @@ as String?,ncode: freezed == ncode ? _self.ncode : ncode // ignore: cast_nullabl
 as String?,index: freezed == index ? _self.index : index // ignore: cast_nullable_to_non_nullable
 as int?,body: freezed == body ? _self.body : body // ignore: cast_nullable_to_non_nullable
 as String?,novelUpdatedAt: freezed == novelUpdatedAt ? _self.novelUpdatedAt : novelUpdatedAt // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,isDownloaded: null == isDownloaded ? _self.isDownloaded : isDownloaded // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

@@ -875,69 +875,80 @@ class AppDatabase extends _$AppDatabase {
             url: row.url,
             update: row.publishedAt,
             revised: row.revisedAt,
+            isDownloaded: row.content != null && row.content!.isNotEmpty,
           ),
         )
         .toList();
   }
 
-  /// 指定範囲のエピソード一覧を取得
+  /// 指定範囲のエピソード一覧を取得 (Optimized)
   Future<List<Episode>> getEpisodesRange(
     String ncode,
     int start,
     int end,
   ) async {
-    final rows =
-        await (select(episodeEntities)
-              ..where(
-                (t) =>
-                    t.ncode.equals(ncode.toNormalizedNcode()) &
-                    t.episodeId.isBetweenValues(start, end),
-              )
-              ..orderBy([(t) => OrderingTerm(expression: t.episodeId)]))
-            .get();
+    final normalizedNcode = ncode.toNormalizedNcode();
+    final rows = await customSelect(
+      'SELECT '
+      'ncode, episode_id, subtitle, url, published_at, revised_at, '
+      "CASE WHEN content IS NOT NULL AND content != '[]' THEN 1 ELSE 0 END as is_downloaded "
+      'FROM episodes '
+      'WHERE ncode = ? AND episode_id BETWEEN ? AND ? '
+      'ORDER BY episode_id',
+      variables: [
+        Variable.withString(normalizedNcode),
+        Variable.withInt(start),
+        Variable.withInt(end),
+      ],
+      readsFrom: {episodeEntities},
+    ).get();
 
-    return rows
-        .map(
-          (row) => Episode(
-            ncode: row.ncode,
-            index: row.episodeId,
-            subtitle: row.subtitle,
-            url: row.url,
-            update: row.publishedAt,
-            revised: row.revisedAt,
-          ),
-        )
-        .toList();
+    return rows.map((row) {
+      return Episode(
+        ncode: row.read<String>('ncode'),
+        index: row.read<int>('episode_id'),
+        subtitle: row.read<String?>('subtitle'),
+        url: row.read<String?>('url'),
+        update: row.read<String?>('published_at'),
+        revised: row.read<String?>('revised_at'),
+        isDownloaded: row.read<int>('is_downloaded') == 1,
+      );
+    }).toList();
   }
 
-  /// 指定範囲のエピソード一覧を監視
+  /// 指定範囲のエピソード一覧を監視 (Optimized)
   Stream<List<Episode>> watchEpisodesRange(
     String ncode,
     int start,
     int end,
   ) {
-    return (select(episodeEntities)
-          ..where(
-            (t) =>
-                t.ncode.equals(ncode.toNormalizedNcode()) &
-                t.episodeId.isBetweenValues(start, end),
-          )
-          ..orderBy([(t) => OrderingTerm(expression: t.episodeId)]))
-        .watch()
-        .map(
-          (rows) => rows
-              .map(
-                (row) => Episode(
-                  ncode: row.ncode,
-                  index: row.episodeId,
-                  subtitle: row.subtitle,
-                  url: row.url,
-                  update: row.publishedAt,
-                  revised: row.revisedAt,
-                ),
-              )
-              .toList(),
+    final normalizedNcode = ncode.toNormalizedNcode();
+    return customSelect(
+      'SELECT '
+      'ncode, episode_id, subtitle, url, published_at, revised_at, '
+      "CASE WHEN content IS NOT NULL AND content != '[]' THEN 1 ELSE 0 END as is_downloaded "
+      'FROM episodes '
+      'WHERE ncode = ? AND episode_id BETWEEN ? AND ? '
+      'ORDER BY episode_id',
+      variables: [
+        Variable.withString(normalizedNcode),
+        Variable.withInt(start),
+        Variable.withInt(end),
+      ],
+      readsFrom: {episodeEntities},
+    ).watch().map((rows) {
+      return rows.map((row) {
+        return Episode(
+          ncode: row.read<String>('ncode'),
+          index: row.read<int>('episode_id'),
+          subtitle: row.read<String?>('subtitle'),
+          url: row.read<String?>('url'),
+          update: row.read<String?>('published_at'),
+          revised: row.read<String?>('revised_at'),
+          isDownloaded: row.read<int>('is_downloaded') == 1,
         );
+      }).toList();
+    });
   }
 
   /// 特定エピソードのEntityを監視

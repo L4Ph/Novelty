@@ -474,7 +474,7 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'5c16dbf6c69b2718412c5bace98f0849c6143073';
+String _$downloadStatusHash() => r'5bdc30ed540eeb4c0a14400e350a22604ac23c82';
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
@@ -533,105 +533,6 @@ abstract class _$DownloadStatus extends $StreamNotifier<bool> {
             >;
     element.handleValue(ref, created);
   }
-}
-
-/// エピソードのダウンロード状態を監視するプロバイダー。
-///
-/// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
-
-@ProviderFor(episodeDownloadStatus)
-const episodeDownloadStatusProvider = EpisodeDownloadStatusFamily._();
-
-/// エピソードのダウンロード状態を監視するプロバイダー。
-///
-/// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
-
-final class EpisodeDownloadStatusProvider
-    extends $FunctionalProvider<AsyncValue<int?>, int?, Stream<int?>>
-    with $FutureModifier<int?>, $StreamProvider<int?> {
-  /// エピソードのダウンロード状態を監視するプロバイダー。
-  ///
-  /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
-  const EpisodeDownloadStatusProvider._({
-    required EpisodeDownloadStatusFamily super.from,
-    required ({String ncode, int episode}) super.argument,
-  }) : super(
-         retry: null,
-         name: r'episodeDownloadStatusProvider',
-         isAutoDispose: false,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
-
-  @override
-  String debugGetCreateSourceHash() => _$episodeDownloadStatusHash();
-
-  @override
-  String toString() {
-    return r'episodeDownloadStatusProvider'
-        ''
-        '$argument';
-  }
-
-  @$internal
-  @override
-  $StreamProviderElement<int?> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
-
-  @override
-  Stream<int?> create(Ref ref) {
-    final argument = this.argument as ({String ncode, int episode});
-    return episodeDownloadStatus(
-      ref,
-      ncode: argument.ncode,
-      episode: argument.episode,
-    );
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is EpisodeDownloadStatusProvider && other.argument == argument;
-  }
-
-  @override
-  int get hashCode {
-    return argument.hashCode;
-  }
-}
-
-String _$episodeDownloadStatusHash() =>
-    r'dc9568ad9b04806ab21c03fa62f96426892c97f7';
-
-/// エピソードのダウンロード状態を監視するプロバイダー。
-///
-/// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
-
-final class EpisodeDownloadStatusFamily extends $Family
-    with
-        $FunctionalFamilyOverride<Stream<int?>, ({String ncode, int episode})> {
-  const EpisodeDownloadStatusFamily._()
-    : super(
-        retry: null,
-        name: r'episodeDownloadStatusProvider',
-        dependencies: null,
-        $allTransitiveDependencies: null,
-        isAutoDispose: false,
-      );
-
-  /// エピソードのダウンロード状態を監視するプロバイダー。
-  ///
-  /// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
-
-  EpisodeDownloadStatusProvider call({
-    required String ncode,
-    required int episode,
-  }) => EpisodeDownloadStatusProvider._(
-    argument: (ncode: ncode, episode: episode),
-    from: this,
-  );
-
-  @override
-  String toString() => r'episodeDownloadStatusProvider';
 }
 
 /// エピソードリストをページ単位で取得するプロバイダー（SWR）

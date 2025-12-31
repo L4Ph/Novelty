@@ -729,29 +729,6 @@ class DownloadStatus extends _$DownloadStatus {
   }
 }
 
-@Riverpod(keepAlive: true)
-/// エピソードのダウンロード状態を監視するプロバイダー。
-///
-/// 戻り値: ダウンロード状態を表すint値（2=成功、3=失敗、null=未ダウンロード）
-Stream<int?> episodeDownloadStatus(
-  Ref ref, {
-  required String ncode,
-  required int episode,
-}) {
-  final normalizedNcode = ncode.toNormalizedNcode();
-  final db = ref.watch(appDatabaseProvider);
-
-  return db.watchEpisodeEntity(normalizedNcode, episode).map((cached) {
-    if (cached == null) return null;
-    if (cached.content != null && cached.content!.isNotEmpty) {
-      return 2; // Success
-    } else if (cached.content != null && cached.content!.isEmpty) {
-      return 3; // Failure (assuming empty content means failure as per logic)
-    }
-    return null;
-  });
-}
-
 @riverpod
 /// エピソードリストをページ単位で取得するプロバイダー（SWR）
 Stream<List<Episode>> episodeList(

@@ -637,9 +637,6 @@ class _EpisodeListTile extends ConsumerWidget {
       );
     }
 
-    final downloadStatusAsync = ref.watch(
-      episodeDownloadStatusProvider(ncode: ncode, episode: episodeNumber),
-    );
     final isOffline = ref.watch(isOfflineProvider);
 
     // Determine swipe background colors and icons
@@ -683,8 +680,7 @@ class _EpisodeListTile extends ConsumerWidget {
       );
     }
 
-    final isDownloaded =
-        downloadStatusAsync.asData?.value == 2; // 2 = Success, 3 = Fail
+    final isDownloaded = episode.isDownloaded;
 
     return Dismissible(
       key: Key('episode_$ncode$episodeNumber'),
@@ -756,27 +752,12 @@ class _EpisodeListTile extends ConsumerWidget {
                 ),
               )
             : null,
-        trailing: downloadStatusAsync.when(
-          data: (status) {
-            if (status == 2) {
-              return Icon(
+        trailing: isDownloaded
+            ? Icon(
                 Icons.check_circle,
                 color: Theme.of(context).colorScheme.primary,
-              );
-            }
-            return null;
-          },
-          loading: () => const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          error: (_, _) => Icon(
-            Icons.error_outline,
-            size: 16,
-            color: Theme.of(context).colorScheme.error,
-          ),
-        ),
+              )
+            : null,
         onTap: () {
           final uri = Uri(
             path: '/novel/$ncode/$episodeNumber',
