@@ -585,26 +585,6 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Stream<_i3.EpisodeRow?>);
 
   @override
-  _i5.Future<_i12.NovelDownloadSummary?> getNovelDownloadSummary(
-    String? ncode,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#getNovelDownloadSummary, [ncode]),
-            returnValue: _i5.Future<_i12.NovelDownloadSummary?>.value(),
-          )
-          as _i5.Future<_i12.NovelDownloadSummary?>);
-
-  @override
-  _i5.Stream<_i12.NovelDownloadSummary?> watchNovelDownloadSummary(
-    String? ncode,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#watchNovelDownloadSummary, [ncode]),
-            returnValue: _i5.Stream<_i12.NovelDownloadSummary?>.empty(),
-          )
-          as _i5.Stream<_i12.NovelDownloadSummary?>);
-
-  @override
   _i5.Stream<List<_i12.NovelDownloadSummary>> watchDownloadingNovels() =>
       (super.noSuchMethod(
             Invocation.method(#watchDownloadingNovels, []),
@@ -1321,14 +1301,6 @@ class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
   _i5.Stream<bool> isEpisodeDownloaded(String? ncode, int? episode) =>
       (super.noSuchMethod(
             Invocation.method(#isEpisodeDownloaded, [ncode, episode]),
-            returnValue: _i5.Stream<bool>.empty(),
-          )
-          as _i5.Stream<bool>);
-
-  @override
-  _i5.Stream<bool> isNovelDownloaded(String? ncode) =>
-      (super.noSuchMethod(
-            Invocation.method(#isNovelDownloaded, [ncode]),
             returnValue: _i5.Stream<bool>.empty(),
           )
           as _i5.Stream<bool>);

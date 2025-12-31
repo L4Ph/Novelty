@@ -255,9 +255,13 @@ class ApiService {
     }
 
     final firstPageHtml = firstPageResponse.data!;
-    var document = parser.parse(firstPageHtml);
+    final document = parser.parse(firstPageHtml);
 
     final allEpisodes = _parseEpisodes(document);
+    // 全エピソードの取得は非常に重いため（特に話数が多い場合）、
+    // 初回は1ページ目（最新100話など）のみを取得する仕様に変更。
+    // 必要であれば別メソッドで全件取得する。
+    /*
     final episodeUrls = allEpisodes.map((e) => e.url).toSet();
 
     var currentPage = 2;
@@ -292,6 +296,7 @@ class ApiService {
 
       currentPage++;
     }
+    */
     return info.copyWith(episodes: allEpisodes);
   }
 

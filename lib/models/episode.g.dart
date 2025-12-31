@@ -15,6 +15,7 @@ _Episode _$EpisodeFromJson(Map<String, dynamic> json) => _Episode(
   index: (json['index'] as num?)?.toInt(),
   body: json['body'] as String?,
   novelUpdatedAt: json['novelUpdatedAt'] as String?,
+  isDownloaded: json['isDownloaded'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$EpisodeToJson(_Episode instance) => <String, dynamic>{
@@ -26,4 +27,5 @@ Map<String, dynamic> _$EpisodeToJson(_Episode instance) => <String, dynamic>{
   'index': instance.index,
   'body': instance.body,
   'novelUpdatedAt': instance.novelUpdatedAt,
+  'isDownloaded': instance.isDownloaded,
 };
