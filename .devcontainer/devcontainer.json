@@ -1,0 +1,24 @@
+{
+  "name": "Novelty-FVM-Env",
+  "image": "ghcr.io/cirruslabs/flutter:stable",
+  "runArgs": [
+    "--network=host",
+    "--device=/dev/dri:/dev/dri"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Dart-Code.flutter",
+        "Dart-Code.dart"
+      ],
+      "settings": {
+        "dart.flutterSdkPath": ".fvm/flutter_sdk"
+      }
+    }
+  },
+  "postCreateCommand": "dart pub global activate fvm && fvm install && adb connect 127.0.0.1:5555",
+  "remoteUser": "root",
+  "containerEnv": {
+    "PATH": "${containerEnv:PATH}:/root/.pub-cache/bin"
+  }
+}
