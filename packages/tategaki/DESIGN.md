@@ -395,8 +395,8 @@ final elements = TategakiParser.parse(
 cd packages/tategaki
 
 # テスト
-fvm flutter test
+flutter test
 
 # 静的解析
-fvm dart analyze
+dart analyze
 ```

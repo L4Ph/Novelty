@@ -16,10 +16,10 @@
 
 ```bash
 # 通常パーサーのベンチマーク
-fvm dart run benchmark/stable_parser_benchmark.dart
+dart run benchmark/stable_parser_benchmark.dart
 
 # 全パーサーの比較ベンチマーク
-fvm dart run benchmark/all_parsers_benchmark.dart
+dart run benchmark/all_parsers_benchmark.dart
 ```
 
 ### ベンチマーク結果

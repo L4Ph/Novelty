@@ -68,15 +68,16 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Set up Flutter
-        run: |
-          curl -fsSL https://fvm.app/install.sh | bash
-          fvm install
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
 
       - name: Get Flutter packages
-        run: fvm flutter pub get
+        run: flutter pub get
 
       - name: Run code generation
-        run: fvm dart run build_runner build -d
+        run: dart run build_runner build -d
 
       - name: Decode Keystore
         run: |
@@ -85,7 +86,7 @@ jobs:
 
       - name: Build Android AAB
         run: |
-          fvm flutter build appbundle --release \
+          flutter build appbundle --release \
             --build-name=${{ inputs.version }} \
             --build-number=${{ steps.calculate_version.outputs.build_number }}
         env:
@@ -95,7 +96,7 @@ jobs:
 
       - name: Build Android APK (split per ABI)
         run: |
-          fvm flutter build apk --release --split-per-abi \
+          flutter build apk --release --split-per-abi \
             --build-name=${{ inputs.version }} \
             --build-number=${{ steps.calculate_version.outputs.build_number }}
         env:

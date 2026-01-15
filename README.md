@@ -47,7 +47,6 @@ Noveltyは、最高の読書体験を提供するために開発された「小�
 
 ### 前提条件
 *   Flutter (stable channel)
-*   FVM (Flutter Version Management)
 
 ### インストール手順
 
@@ -57,25 +56,21 @@ Noveltyは、最高の読書体験を提供するために開発された「小�
     cd Novelty
     ```
 
-2.  **Flutter SDKのインストール (FVM使用)**
+
+2.  **依存関係のインストール**
     ```bash
-    fvm install
+    flutter pub get
     ```
 
-3.  **依存関係のインストール**
+3.  **コード生成の実行**
     ```bash
-    fvm flutter pub get
-    ```
-
-4.  **コード生成の実行**
-    ```bash
-    fvm dart run build_runner build -d
+    dart run build_runner build -d
     ```
 
 ### アプリケーションの実行
 
 ```bash
-fvm flutter run
+flutter run
 ```
 
 ## APIとドキュメント

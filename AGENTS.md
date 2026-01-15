@@ -16,7 +16,6 @@ To set up the development environment and run the project, follow these steps:
 
 ### Prerequisites
 - Flutter (stable channel)
-- FVM (Flutter Version Management)
 
 ### Setup
 1. **Clone the repository:**
@@ -24,22 +23,18 @@ To set up the development environment and run the project, follow these steps:
    git clone https://github.com/L4Ph/Novelty.git
    cd Novelty
    ```
-2. **Install the Flutter SDK using FVM:**
+2. **Install dependencies:**
    ```bash
-   fvm install
+   flutter pub get
    ```
-3. **Install dependencies:**
+3. **Run code generation:**
    ```bash
-   fvm flutter pub get
-   ```
-4. **Run code generation:**
-   ```bash
-   fvm dart run build_runner build -d
+   dart run build_runner build -d
    ```
 
 ### Running the Application
 ```bash
-fvm flutter run
+flutter run
 ```
 
 ## Development Conventions
