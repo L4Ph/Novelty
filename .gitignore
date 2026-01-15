@@ -1,7 +1,6 @@
 # Created by https://www.toptal.com/developers/gitignore/api/flutter
 # Edit at https://www.toptal.com/developers/gitignore?templates=flutter
 
-.fvm/
 custom_lint.log
 .env
 
@@ -11,7 +10,6 @@ custom_lint.log
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
-.fvm/flutter_sdk
 .packages
 .pub-cache/
 .pub/
