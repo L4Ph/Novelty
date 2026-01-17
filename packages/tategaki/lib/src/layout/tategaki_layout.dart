@@ -3,7 +3,7 @@ import 'package:flutter/painting.dart';
 import 'package:tategaki/src/element/tategaki_element.dart';
 import 'package:tategaki/src/layout/column.dart';
 import 'package:tategaki/src/painting/paintable.dart';
-import 'package:tategaki/src/painting/paintable_char.dart';
+import 'package:tategaki/src/painting/paintable_column_text.dart';
 import 'package:tategaki/src/painting/paintable_ruby.dart';
 import 'package:tategaki/src/painting/paintable_tcy.dart';
 import 'package:tategaki/src/utils/glyph_mapper.dart';
@@ -42,7 +42,29 @@ class TategakiLayout {
     var currentColumnHeight = 0.0;
     var currentColumnBaseWidth = 0.0;
 
+    // バッファリング用の変数
+    var bufferedChars = <String>[];
+    var bufferedHeight = 0.0;
+
+    final measurementPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+
+    void flushBuffer() {
+      if (bufferedChars.isNotEmpty) {
+        final text = bufferedChars.join('\n');
+        final painter = TextPainter(
+          text: TextSpan(text: text, style: textStyle),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        currentColumnItems.add(PaintableColumnText(painter));
+        bufferedChars = [];
+        bufferedHeight = 0.0;
+      }
+    }
+
     void endColumn() {
+      flushBuffer();
       if (currentColumnItems.isNotEmpty) {
         var requiredWidth = currentColumnBaseWidth;
         for (final item in currentColumnItems) {
@@ -67,6 +89,7 @@ class TategakiLayout {
     }
 
     void addToColumn(Paintable item) {
+      flushBuffer();
       if (currentColumnHeight + item.height > maxHeight &&
           currentColumnItems.isNotEmpty) {
         endColumn();
@@ -78,21 +101,37 @@ class TategakiLayout {
       }
     }
 
+    void addCharToColumn(String char) {
+      measurementPainter
+        ..text = TextSpan(text: char, style: textStyle)
+        ..layout();
+      final charHeight = measurementPainter.height;
+      final charWidth = measurementPainter.width;
+
+      if (currentColumnHeight + bufferedHeight + charHeight > maxHeight &&
+          (currentColumnItems.isNotEmpty || bufferedChars.isNotEmpty)) {
+        endColumn();
+      }
+
+      bufferedChars.add(char);
+      bufferedHeight += charHeight;
+      if (charWidth > currentColumnBaseWidth) {
+        currentColumnBaseWidth = charWidth;
+      }
+    }
+
     for (final element in elements) {
       switch (element) {
         case TategakiChar(:final char):
-          final painter = TextPainter(
-            text: TextSpan(text: char, style: textStyle),
-            textDirection: TextDirection.ltr,
-          )..layout();
-          addToColumn(PaintableChar(painter));
+          addCharToColumn(char);
 
         case TategakiTcy(:final text):
-          final painter = TextPainter(
-            text: TextSpan(text: text, style: textStyle),
-            textDirection: TextDirection.ltr,
-          )..layout();
-          addToColumn(PaintableTcy(painter));
+          currentColumnItems.add(PaintableTcy(
+            TextPainter(
+              text: TextSpan(text: text, style: textStyle),
+              textDirection: TextDirection.ltr,
+            )..layout(),
+          ));
 
         case TategakiRuby(:final base, :final ruby):
           final item = _createRubyItem(base, ruby, textStyle, rubyStyle);
@@ -105,7 +144,7 @@ class TategakiLayout {
       }
     }
 
-    if (currentColumnItems.isNotEmpty) {
+    if (currentColumnItems.isNotEmpty || bufferedChars.isNotEmpty) {
       endColumn();
     }
 
