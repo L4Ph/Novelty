@@ -1,22 +1,25 @@
 {
-  "name": "Novelty-Env",
-  "image": "ghcr.io/cirruslabs/flutter:stable",
-  "runArgs": [
-    "--network=host",
-    "--device=/dev/dri:/dev/dri"
-  ],
+  "name": "mise",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers-extra/features/mise:1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
   "customizations": {
     "vscode": {
       "extensions": [
+        "hverlin.mise-vscode",
         "Dart-Code.flutter",
-        "Dart-Code.dart"
-      ],
-      "settings": {}
+        "Dart-Code.dart",
+        "robert-brunhage.flutter-riverpod-snippets"
+      ]
     }
   },
-  "postCreateCommand": "flutter pub get && adb connect 127.0.0.1:5555",
-  "remoteUser": "root",
+  "mounts": [],
   "containerEnv": {
-    "PATH": "${containerEnv:PATH}:/root/.pub-cache/bin"
+    "ADB_SERVER_SOCKET": "tcp:host.docker.internal:5037"
+  },
+  "remoteEnv": {
+    "MISE_AUTO_INSTALL": "true"
   }
 }

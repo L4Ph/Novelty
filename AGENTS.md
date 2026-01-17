@@ -16,6 +16,7 @@ To set up the development environment and run the project, follow these steps:
 
 ### Prerequisites
 - Flutter (stable channel)
+- mise (task runner and environment manager)
 
 ### Setup
 1. **Clone the repository:**
@@ -25,16 +26,16 @@ To set up the development environment and run the project, follow these steps:
    ```
 2. **Install dependencies:**
    ```bash
-   flutter pub get
+   mise run get
    ```
 3. **Run code generation:**
    ```bash
-   dart run build_runner build -d
+   mise run codegen
    ```
 
 ### Running the Application
 ```bash
-flutter run
+mise run run
 ```
 
 ## Development Conventions
@@ -44,7 +45,10 @@ Then, follow t_wada's TDD cycle to create tests and continuously verify the plan
 Once each phase is completed, confirm that there are always zero Lint issues (including those classified as `info`).
 After that, you will be asked whether you want to commit.
 If approved, write a commit message in Japanese and commit.
+When interacting with the user, please provide final responses, implementation plans, and walkthroughs in Japanese to ensure clear communication.
 
 ## Language
-Please comment on the code and any final communication with me in Japanese.
-Please keep things that don't require an intermediary, such as your own thoughts and planning, in English.
+
+- **User Interaction:** Please use Japanese for all final communication, including plans, progress updates, and final answers. Ensure the Japanese is natural, polite, and easy to understand.
+- **Code Comments:** Please write code comments in Japanese.
+- **Internal Reasoning:** You may keep things that don't require user visibility, such as your own thoughts, planning drafts, and internal logs, in English to optimize token usage.
