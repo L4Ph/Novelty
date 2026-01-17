@@ -14,6 +14,10 @@ run = "flutter pub get"
 description = "アプリケーションを実行します"
 run = "flutter run"
 
+[tasks.check]
+description = "コードの静的解析とフォーマットをチェックします"
+run = "dart analyze && dart format --dry-run ."
+
 [tasks.build]
 description = "リリース用APK (分割) と App Bundleをビルドします"
 run = """
