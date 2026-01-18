@@ -97,6 +97,7 @@ class NovelContentBody extends HookWidget {
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     return TategakiTextPaged(
+                      key: PageStorageKey('novel_paged_${ncode}_$episode'),
                       tategakiElements,
                       width: constraints.maxWidth,
                       height: constraints.maxHeight,
