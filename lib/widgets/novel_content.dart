@@ -93,6 +93,19 @@ class NovelContentBody extends HookWidget {
               // NovelContentElementをTategakiElementに変換
               final tategakiElements = TategakiConverter.convert(contentData);
 
+              if (settingsData.isPageFlip) {
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    return TategakiTextPaged(
+                      tategakiElements,
+                      width: constraints.maxWidth,
+                      height: constraints.maxHeight,
+                      padding: const EdgeInsets.all(16),
+                    );
+                  },
+                );
+              }
+
               return Directionality(
                 textDirection: TextDirection.rtl,
                 child: SingleChildScrollView(
