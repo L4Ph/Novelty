@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
+
 import 'package:tategaki/src/element/tategaki_element.dart';
-import 'package:tategaki/src/layout/column.dart';
 import 'package:tategaki/src/layout/tategaki_layout.dart';
 import 'package:tategaki/src/painting/tategaki_painter.dart';
 
@@ -58,6 +58,7 @@ class TategakiTextPaged extends StatelessWidget {
     final pages = TategakiLayout.partition(
       columns: metrics.columns,
       maxWidth: availableWidth,
+      height: availableHeight,
     );
 
     if (pages.isEmpty) {
@@ -72,15 +73,7 @@ class TategakiTextPaged extends StatelessWidget {
         onPageChanged: onPageChanged,
         itemCount: pages.length,
         itemBuilder: (context, index) {
-          final pageColumns = pages[index];
-
-          // ページごとのメトリクスを作成
-          final pageMetrics = TategakiMetrics(
-            columns: pageColumns,
-            // Painterは size.width を基準に右端から描画を開始するため、
-            // コンテンツ領域の幅を渡す
-            size: Size(availableWidth, availableHeight),
-          );
+          final pageMetrics = pages[index];
 
           return Padding(
             padding: padding,

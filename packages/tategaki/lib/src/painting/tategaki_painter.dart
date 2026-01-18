@@ -19,8 +19,17 @@ class TategakiPainter extends CustomPainter {
     // 親ウィジェット（SingleChildScrollViewなど）がクリップしていない場合は
     // Rect.largestなどが返るため、常に描画される（安全）
     final clipRect = canvas.getLocalClipBounds();
-    
-    var nextColumnX = size.width;
+
+    // コンテンツ幅がキャンバス幅より小さい場合、中央揃えにする
+    final contentWidth = metrics.size.width;
+    final horizontalPadding = (size.width - contentWidth) / 2;
+
+    // 右端の開始位置
+    // 通常は size.width だが、中央揃えの場合は右側に padding 分の余白ができる
+    // つまり size.width - horizontalPadding
+    // コンテンツ幅の方が大きい場合（スクロール時など）は通常通り size.width から開始
+    var nextColumnX =
+        size.width - (horizontalPadding > 0 ? horizontalPadding : 0);
 
     for (final column in metrics.columns) {
       final columnTotalWidth = column.width + TategakiLayout.columnSpacing;
@@ -46,7 +55,8 @@ class TategakiPainter extends CustomPainter {
         var dy = 0.0;
         for (final item in column.items) {
           // ベース文字が column.baseWidth の中で中央に来るように dx を計算
-          final dx = currentColumnX +
+          final dx =
+              currentColumnX +
               TategakiLayout.columnSpacing +
               (column.baseWidth - item.baseWidth) / 2;
           item.paint(canvas, Offset(dx, dy));

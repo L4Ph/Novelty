@@ -157,13 +157,25 @@ class TategakiLayout {
   }
 
   /// 列リストを指定された幅に収まるようにページ分割する
-  static List<List<TategakiColumn>> partition({
+  static List<TategakiMetrics> partition({
     required List<TategakiColumn> columns,
     required double maxWidth,
+    required double height,
   }) {
-    final pages = <List<TategakiColumn>>[];
+    final pages = <TategakiMetrics>[];
     var currentPageColumns = <TategakiColumn>[];
     var currentWidth = 0.0;
+
+    void flushPage() {
+      if (currentPageColumns.isNotEmpty) {
+        pages.add(
+          TategakiMetrics(
+            columns: currentPageColumns,
+            size: Size(currentWidth, height),
+          ),
+        );
+      }
+    }
 
     for (final column in columns) {
       // この列を追加した場合の幅を計算
@@ -179,15 +191,13 @@ class TategakiLayout {
         currentWidth += spacing + columnWidth;
       } else {
         // 次のページへ
-        pages.add(currentPageColumns);
+        flushPage();
         currentPageColumns = [column];
         currentWidth = columnWidth; // 新しいページの最初の列なのでスペースなし
       }
     }
 
-    if (currentPageColumns.isNotEmpty) {
-      pages.add(currentPageColumns);
-    }
+    flushPage();
 
     return pages;
   }
