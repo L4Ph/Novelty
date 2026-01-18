@@ -15,6 +15,7 @@ AppSettings get defaultTestSettings => const AppSettings(
   lineHeight: 1.5,
   fontFamily: 'NotoSansJP',
   isIncognito: false,
+  isPageFlip: false,
 );
 
 void main() {

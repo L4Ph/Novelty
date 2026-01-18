@@ -19,11 +19,23 @@ class TategakiPainter extends CustomPainter {
     // 親ウィジェット（SingleChildScrollViewなど）がクリップしていない場合は
     // Rect.largestなどが返るため、常に描画される（安全）
     final clipRect = canvas.getLocalClipBounds();
-    
-    var nextColumnX = size.width;
 
-    for (final column in metrics.columns) {
-      final columnTotalWidth = column.width + TategakiLayout.columnSpacing;
+    // コンテンツ幅がキャンバス幅より小さい場合、中央揃えにする
+    final contentWidth = metrics.size.width;
+    final horizontalPadding = (size.width - contentWidth) / 2;
+
+    // 右端の開始位置
+    // 通常は size.width だが、中央揃えの場合は右側に padding 分の余白ができる
+    // つまり size.width - horizontalPadding
+    // コンテンツ幅の方が大きい場合（スクロール時など）は通常通り size.width から開始
+    var nextColumnX =
+        size.width - (horizontalPadding > 0 ? horizontalPadding : 0);
+
+    for (var i = 0; i < metrics.columns.length; i++) {
+      final column = metrics.columns[i];
+      // 最初の列はスペースなし、2列目以降はスペースあり
+      final spacing = i == 0 ? 0.0 : TategakiLayout.columnSpacing;
+      final columnTotalWidth = spacing + column.width;
       final currentColumnX = nextColumnX - columnTotalWidth;
 
       // 描画最適化: 列が可視領域に含まれているか判定
@@ -46,9 +58,8 @@ class TategakiPainter extends CustomPainter {
         var dy = 0.0;
         for (final item in column.items) {
           // ベース文字が column.baseWidth の中で中央に来るように dx を計算
-          final dx = currentColumnX +
-              TategakiLayout.columnSpacing +
-              (column.baseWidth - item.baseWidth) / 2;
+          // 列は currentColumnX から始まり、その右側にスペースがある
+          final dx = currentColumnX + (column.baseWidth - item.baseWidth) / 2;
           item.paint(canvas, Offset(dx, dy));
           dy += item.height;
         }

@@ -94,6 +94,7 @@ void main() {
         lineHeight: 1.5,
         fontFamily: 'NotoSansJP',
         isIncognito: false,
+        isPageFlip: false,
       );
 
       expect(settings.fontSize, equals(16.0));
@@ -108,6 +109,7 @@ void main() {
         lineHeight: 1.5,
         fontFamily: 'NotoSansJP',
         isIncognito: false,
+        isPageFlip: false,
       );
 
       final updatedSettings = originalSettings.copyWith(
