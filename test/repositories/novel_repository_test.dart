@@ -133,6 +133,7 @@ class FakeSettings extends Settings {
       lineHeight: 1.5,
       fontFamily: 'NotoSansJP',
       isIncognito: false,
+      isPageFlip: false,
     );
   }
 }

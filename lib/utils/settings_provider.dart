@@ -15,6 +15,7 @@ class AppSettings {
     required this.fontFamily,
     required this.isVertical,
     required this.isIncognito,
+    required this.isPageFlip,
   });
 
   /// テーマモード (system, light, dark)。
@@ -35,6 +36,9 @@ class AppSettings {
   /// シークレットモード (履歴を残さない)。
   final bool isIncognito;
 
+  /// ページ送り設定 (true: ページ送り, false: スクロール)。
+  final bool isPageFlip;
+
   /// 設定をコピーするメソッド。
   AppSettings copyWith({
     ThemeMode? themeMode,
@@ -43,6 +47,7 @@ class AppSettings {
     String? fontFamily,
     bool? isVertical,
     bool? isIncognito,
+    bool? isPageFlip,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -51,6 +56,7 @@ class AppSettings {
       fontFamily: fontFamily ?? this.fontFamily,
       isVertical: isVertical ?? this.isVertical,
       isIncognito: isIncognito ?? this.isIncognito,
+      isPageFlip: isPageFlip ?? this.isPageFlip,
     );
   }
 }
@@ -64,6 +70,7 @@ class Settings extends _$Settings {
   static const _fontFamilyKey = 'font_family';
   static const _isVerticalKey = 'is_vertical';
   static const _isIncognitoKey = 'is_incognito';
+  static const _isPageFlipKey = 'is_page_flip';
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
@@ -77,6 +84,7 @@ class Settings extends _$Settings {
     final fontFamily = prefs.getString(_fontFamilyKey) ?? 'NotoSansJP';
     final isVertical = prefs.getBool(_isVerticalKey) ?? false;
     final isIncognito = prefs.getBool(_isIncognitoKey) ?? false;
+    final isPageFlip = prefs.getBool(_isPageFlipKey) ?? false;
 
     return AppSettings(
       themeMode: ThemeMode.values[themeModeIndex],
@@ -85,6 +93,7 @@ class Settings extends _$Settings {
       fontFamily: fontFamily,
       isVertical: isVertical,
       isIncognito: isIncognito,
+      isPageFlip: isPageFlip,
     );
   }
 
@@ -133,6 +142,14 @@ class Settings extends _$Settings {
     if (state.hasValue) {
       await (await _prefs).setBool(_isIncognitoKey, isIncognito);
       state = AsyncData(state.value!.copyWith(isIncognito: isIncognito));
+    }
+  }
+
+  /// ページ送り設定を更新するメソッド。
+  Future<void> setIsPageFlip({required bool isPageFlip}) async {
+    if (state.hasValue) {
+      await (await _prefs).setBool(_isPageFlipKey, isPageFlip);
+      state = AsyncData(state.value!.copyWith(isPageFlip: isPageFlip));
     }
   }
 }

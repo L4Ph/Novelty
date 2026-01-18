@@ -127,6 +127,16 @@ class ReaderSettingsPage extends ConsumerWidget {
                 .setIsVertical(isVertical: value);
           },
         ),
+        if (settings.isVertical)
+          SwitchListTile(
+            title: const Text('ページ送り'),
+            value: settings.isPageFlip,
+            onChanged: (value) async {
+              await ref
+                  .read(settingsProvider.notifier)
+                  .setIsPageFlip(isPageFlip: value);
+            },
+          ),
       ],
     );
   }
