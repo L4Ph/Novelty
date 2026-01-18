@@ -31,8 +31,11 @@ class TategakiPainter extends CustomPainter {
     var nextColumnX =
         size.width - (horizontalPadding > 0 ? horizontalPadding : 0);
 
-    for (final column in metrics.columns) {
-      final columnTotalWidth = column.width + TategakiLayout.columnSpacing;
+    for (var i = 0; i < metrics.columns.length; i++) {
+      final column = metrics.columns[i];
+      // 最初の列はスペースなし、2列目以降はスペースあり
+      final spacing = i == 0 ? 0.0 : TategakiLayout.columnSpacing;
+      final columnTotalWidth = spacing + column.width;
       final currentColumnX = nextColumnX - columnTotalWidth;
 
       // 描画最適化: 列が可視領域に含まれているか判定
@@ -55,10 +58,8 @@ class TategakiPainter extends CustomPainter {
         var dy = 0.0;
         for (final item in column.items) {
           // ベース文字が column.baseWidth の中で中央に来るように dx を計算
-          final dx =
-              currentColumnX +
-              TategakiLayout.columnSpacing +
-              (column.baseWidth - item.baseWidth) / 2;
+          // 列は currentColumnX から始まり、その右側にスペースがある
+          final dx = currentColumnX + (column.baseWidth - item.baseWidth) / 2;
           item.paint(canvas, Offset(dx, dy));
           dy += item.height;
         }
