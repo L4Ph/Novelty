@@ -3,10 +3,10 @@ bun = "latest"
 flutter = "3.38.7-stable"
 java = "temurin-21"
 node = "latest"
+"aqua:evilmartians/lefthook" = "latest"
 
 [env]
 MISE_EXPERIMENTAL = "true"
-ADB_SERVER_SOCKET = "tcp:127.0.0.1:5037"
 ANDROID_HOME = "/opt/android-sdk"
 ANDROID_SDK_ROOT = "/opt/android-sdk"
 FLUTTER_SDK = "{{ exec(command=mise_bin ~ ' where flutter') | trim }}"
