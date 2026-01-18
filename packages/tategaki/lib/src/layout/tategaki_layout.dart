@@ -126,12 +126,14 @@ class TategakiLayout {
           addCharToColumn(char);
 
         case TategakiTcy(:final text):
-          currentColumnItems.add(PaintableTcy(
-            TextPainter(
-              text: TextSpan(text: text, style: textStyle),
-              textDirection: TextDirection.ltr,
-            )..layout(),
-          ));
+          currentColumnItems.add(
+            PaintableTcy(
+              TextPainter(
+                text: TextSpan(text: text, style: textStyle),
+                textDirection: TextDirection.ltr,
+              )..layout(),
+            ),
+          );
 
         case TategakiRuby(:final base, :final ruby):
           final item = _createRubyItem(base, ruby, textStyle, rubyStyle);
@@ -152,6 +154,42 @@ class TategakiLayout {
       columns: columns,
       size: Size(totalWidth, maxHeight),
     );
+  }
+
+  /// 列リストを指定された幅に収まるようにページ分割する
+  static List<List<TategakiColumn>> partition({
+    required List<TategakiColumn> columns,
+    required double maxWidth,
+  }) {
+    final pages = <List<TategakiColumn>>[];
+    var currentPageColumns = <TategakiColumn>[];
+    var currentWidth = 0.0;
+
+    for (final column in columns) {
+      // この列を追加した場合の幅を計算
+      // 最初の列ならスペースなし、それ以降はスペースあり
+      final spacing = currentPageColumns.isEmpty ? 0.0 : columnSpacing;
+      final columnWidth = column.width;
+
+      // 1列だけで幅を超えている場合は強制的に追加（無限ループ防止）
+      // または、現在のページに収まるなら追加
+      if (currentPageColumns.isEmpty ||
+          (currentWidth + spacing + columnWidth <= maxWidth)) {
+        currentPageColumns.add(column);
+        currentWidth += spacing + columnWidth;
+      } else {
+        // 次のページへ
+        pages.add(currentPageColumns);
+        currentPageColumns = [column];
+        currentWidth = columnWidth; // 新しいページの最初の列なのでスペースなし
+      }
+    }
+
+    if (currentPageColumns.isNotEmpty) {
+      pages.add(currentPageColumns);
+    }
+
+    return pages;
   }
 
   /// ルビ付きテキストの描画要素を作成する
