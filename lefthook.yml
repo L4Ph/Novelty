@@ -1,0 +1,7 @@
+pre-commit:
+  commands:
+    format:
+      glob: "*.dart"
+      run: dart format {staged_files} && git add {staged_files}
+    analyze:
+      run: flutter analyze

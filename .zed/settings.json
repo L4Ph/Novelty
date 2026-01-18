@@ -1,0 +1,10 @@
+{
+  "lsp": {
+    "dart": {
+      "binary": {
+        "path": "/home/l4ph/.local/share/mise/installs/flutter/3.38.7-stable/bin/dart",
+        "arguments": ["language-server", "--protocol=lsp"],
+      },
+    },
+  },
+}
