@@ -7,7 +7,7 @@ import 'package:novelty/widgets/novel_content.dart';
 import 'package:tategaki/tategaki.dart';
 
 // Helper to create settings
-AppSettings get pagedSettings => const AppSettings(
+const pagedSettings = AppSettings(
   isVertical: true,
   fontSize: 16,
   themeMode: ThemeMode.system,
