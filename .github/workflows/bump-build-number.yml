@@ -1,13 +1,13 @@
 name: Bump build number
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
 
 jobs:
   update-version:
     runs-on: ubuntu-latest
-    if: ${{ !startsWith(github.head_ref, 'release/') }}
     permissions:
       contents: write
 
@@ -15,35 +15,54 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
           fetch-tags: true
 
-      - name: Calculate new version
-        id: calculate_version
+      - name: Calculate and update version
+        id: version
         run: |
-          CURRENT_VERSION=$(yq '.version' pubspec.yaml)
-          BASE_VERSION=$(echo "$CURRENT_VERSION" | cut -d'+' -f1)
-          if [[ "$CURRENT_VERSION" == *"+"* ]]; then
-            BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
-          else
-            BUILD_NUMBER=0
-          fi
-          NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
-          NEW_VERSION="${BASE_VERSION}+${NEW_BUILD_NUMBER}"
-          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-          echo "Generated new version: $NEW_VERSION"
+          # 現在のバージョンを取得
+          current_version=$(yq '.version' pubspec.yaml)
+          echo "Current version: $current_version"
 
-      - name: Update pubspec.yaml version
-        run: |
-          yq -i '.version = "${{ steps.calculate_version.outputs.new_version }}"' pubspec.yaml
-          echo "Updated pubspec.yaml with version: ${{ steps.calculate_version.outputs.new_version }}"
+          # proud version形式を解析: major.minor.patch+buildNumber
+          base_version="${current_version%+*}"
+          build_number="${current_version#*+}"
+
+          # build numberが存在しない場合は0とする
+          if [[ "$build_number" == "$current_version" ]]; then
+            build_number=0
+          fi
+
+          # major.minor.patchを分解
+          major=$(echo "$base_version" | cut -d. -f1)
+          minor=$(echo "$base_version" | cut -d. -f2)
+          patch=$(echo "$base_version" | cut -d. -f3)
+
+          # patch番号とbuild番号をインクリメント
+          new_patch=$((patch + 1))
+          new_build_number=$((build_number + 1))
+
+          # 新しいバージョンを生成
+          new_version="${major}.${minor}.${new_patch}+${new_build_number}"
+          echo "New version: $new_version"
+
+          # pubspec.yamlを更新
+          yq -i ".version = \"$new_version\"" pubspec.yaml
+
+          # 後続のステップで使用するために環境変数に保存
+          echo "NEW_VERSION=$new_version" >> "$GITHUB_ENV"
 
       - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add pubspec.yaml
-          git diff --staged --quiet || git commit -m "chore: Update pubspec.yaml version to ${{ steps.calculate_version.outputs.new_version }} [skip ci]"
-          git push origin ${{ github.head_ref }}
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: Update pubspec.yaml version to $NEW_VERSION [skip ci]"
+            git push origin main
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
