@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/utils/settings_provider.dart';
@@ -72,6 +73,18 @@ class NovelPage extends HookConsumerWidget {
           };
         }, [novelInfo]);
 
+        // エピソードマップを作成（タイトル表示用）
+        final episodeDataMap = useMemoized(() {
+          // エピソードリストがnullの場合は空のMapを返す
+          if (novelInfo.episodes == null) {
+            return <int, Episode>{};
+          }
+          return {
+            for (final e in novelInfo.episodes!)
+              if (e.index != null) e.index!: e,
+          };
+        }, [novelInfo]);
+
         // PageControllerをメモ化（itemCountが変わったときのみ再作成）
         final pageController = useMemoized(
           () => PageController(initialPage: initialPageIndex),
@@ -100,9 +113,7 @@ class NovelPage extends HookConsumerWidget {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 title: Text(
-                  novelInfo.novelType == 2
-                      ? novelInfo.title ?? ''
-                      : '${novelInfo.title} - 第${currentEpisode.value}話',
+                  buildTitle(novelInfo, currentEpisode.value, episodeDataMap),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -279,6 +290,36 @@ class NovelPage extends HookConsumerWidget {
           }
         });
       }
+    }
+  }
+
+  /// AppBarに表示するタイトルを生成する。
+  ///
+  /// - 短編の場合: 小説タイトルのみ
+  /// - 連載の場合: 「第X話 サブタイトル」または「第X話」
+  @visibleForTesting
+  static String buildTitle(
+    NovelInfo novelInfo,
+    int currentEpisodeNum,
+    Map<int, Episode> episodeDataMap,
+  ) {
+    // 短編の場合はタイトルのみ
+    if (novelInfo.novelType == 2) {
+      return novelInfo.title ?? '';
+    }
+
+    // 連載の場合
+    // エピソードマップから現在のエピソード番号に対応するエピソードを取得
+    final currentEpisodeData = episodeDataMap[currentEpisodeNum];
+
+    final subtitle = currentEpisodeData?.subtitle;
+
+    // サブタイトルがある場合は「第X話 サブタイトル」
+    // ない場合は「第X話」のみ
+    if (subtitle != null && subtitle.isNotEmpty) {
+      return '第$currentEpisodeNum話 $subtitle';
+    } else {
+      return '第$currentEpisodeNum話';
     }
   }
 }
