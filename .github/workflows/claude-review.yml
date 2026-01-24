@@ -1,0 +1,408 @@
+name: Claude PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "**"
+      - "!**.md"
+      - "!**.txt"
+      - "!**.rst"
+      - "!docs/**"
+      - "!LICENSE"
+      - "!.gitignore"
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  claude-review:
+    runs-on: ubuntu-latest
+    # Skip draft PRs
+    if: github.event.pull_request.draft == false
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Checkout PR branch
+        run: |
+          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr-${{ github.event.pull_request.number }}
+          git checkout pr-${{ github.event.pull_request.number }}
+
+      - name: Check review cache
+        id: review-cache
+        uses: actions/cache@v5
+        with:
+          path: .claude-reviews/
+          key: claude-review-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+          restore-keys: |
+            claude-review-${{ github.event.pull_request.number }}-
+
+      - name: Skip if same SHA already reviewed
+        if: steps.review-cache.outputs.cache-hit == 'true'
+        run: |
+          echo "::notice::This commit has already been reviewed by Claude. Skipping."
+          cat .claude-reviews/pr-${{ github.event.pull_request.number }}.json 2>/dev/null || true
+          exit 0
+
+      - name: Analyze PR diff
+        id: pr-diff
+        run: |
+          # Fetch diff once and reuse
+          gh pr diff ${{ github.event.pull_request.number }} > pr_diff.txt
+          gh pr diff ${{ github.event.pull_request.number }} --name-only > changed_files.txt
+
+          # Output changed files
+          echo "files<<FILES_END_8d4e2f1a" >> $GITHUB_OUTPUT
+          cat changed_files.txt >> $GITHUB_OUTPUT
+          echo "FILES_END_8d4e2f1a" >> $GITHUB_OUTPUT
+
+          # Calculate diff size
+          LINES=$(wc -l < pr_diff.txt)
+          FILE_COUNT=$(wc -l < changed_files.txt)
+          echo "lines=$LINES" >> $GITHUB_OUTPUT
+          echo "file_count=$FILE_COUNT" >> $GITHUB_OUTPUT
+
+          # Determine model based on size
+          if [ "$LINES" -gt 1000 ] || [ "$FILE_COUNT" -gt 15 ]; then
+            echo "use_opus=true" >> $GITHUB_OUTPUT
+          else
+            echo "use_opus=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check if too large to review
+          if [ "$LINES" -gt 5000 ]; then
+            echo "skip_review=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip_review=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check for previous Claude review (simple existence check)
+          HAS_REVIEW=$(gh pr view ${{ github.event.pull_request.number }} --json comments,reviews --jq '
+            [.comments[]?, .reviews[]?] | any(.body | contains("Reviewed by Claude"))
+          ')
+          echo "has_previous_review=$HAS_REVIEW" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Skip very large PRs
+        if: steps.pr-diff.outputs.skip_review == 'true'
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "## ⏭️ 自動レビュースキップ
+
+          このPRは **${{ steps.pr-diff.outputs.lines }}行** の変更があり、自動レビューの上限（5000行）を超えています。
+
+          **対応オプション:**
+          - PRを小さな単位に分割する
+          - \`skip-claude-review\` ラベルを付けて手動レビューを依頼する
+
+          ---
+          *Automated message*"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Sanitize PR description
+        if: steps.pr-diff.outputs.skip_review != 'true'
+        id: sanitize
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          EXPR_PATTERN: '\$\{\{[^}]*\}\}'
+        run: |
+          # Sanitize PR description to prevent prompt injection
+          # Remove potentially dangerous patterns
+          SANITIZED=$(echo "$PR_BODY" | \
+            sed 's/<[^>]*>//g' | \
+            sed "s/${EXPR_PATTERN}//g" | \
+            sed 's/```.*claude.*```//gi' | \
+            sed 's/ignore previous instructions//gi' | \
+            sed 's/disregard.*instructions//gi' | \
+            head -c 2000)
+
+          # Use delimiter to safely pass multiline content
+          echo "description<<SANITIZED_EOF" >> $GITHUB_OUTPUT
+          echo "$SANITIZED" >> $GITHUB_OUTPUT
+          echo "SANITIZED_EOF" >> $GITHUB_OUTPUT
+
+      - name: Run Claude PR Review
+        if: steps.pr-diff.outputs.skip_review != 'true'
+        id: claude-review
+        uses: anthropics/claude-code-action@v1
+        continue-on-error: true
+        with:
+          claude_args: |
+            --model claude-sonnet-4-5-20250929
+            --allowedTools Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh pr view:*),Bash(git log:*),Bash(git show:*),Read,Grep,Glob,WebSearch,WebFetch
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          show_full_output: true
+          plugin_marketplaces: |
+            https://github.com/anthropics/claude-code.git
+          plugins: |
+            pr-review-toolkit@claude-code-plugins
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            BASE BRANCH: ${{ github.event.pull_request.base.ref }}
+            HEAD BRANCH: ${{ github.event.pull_request.head.ref }}
+            PR TITLE: ${{ github.event.pull_request.title }}
+            DIFF SIZE: ${{ steps.pr-diff.outputs.lines }} lines (${{ steps.pr-diff.outputs.file_count }} files)
+            HAS PREVIOUS REVIEW: ${{ steps.pr-diff.outputs.has_previous_review }}
+
+            PR DESCRIPTION (sanitized):
+            ${{ steps.sanitize.outputs.description }}
+
+            CHANGED FILES:
+            ${{ steps.pr-diff.outputs.files }}
+
+            ## Project Context
+            First, read CLAUDE.md using the Read tool to understand project conventions and guidelines.
+
+            ## Review Instructions
+
+            ### Step 0: Check for previous review context
+
+            **If HAS PREVIOUS REVIEW is true:**
+            This PR has been reviewed before. First, retrieve your previous review:
+            ```bash
+            # Get previous Claude review content
+            gh pr view ${{ github.event.pull_request.number }} --json comments,reviews --jq '
+              [
+                (.comments[]? | select(.body | contains("Reviewed by Claude")) | {body: .body, at: .createdAt}),
+                (.reviews[]? | select(.body | contains("Reviewed by Claude")) | {body: .body, at: .createdAt})
+              ] | sort_by(.at) | last | .body
+            '
+            ```
+
+            Then check what commits were added since that review:
+            ```bash
+            # Check recent commits
+            gh pr view ${{ github.event.pull_request.number }} --json commits --jq '.commits[-10:][] | .oid[:7] + " " + .messageHeadline'
+            ```
+
+            **Use this context to:**
+            - Check if previously raised issues have been addressed
+            - Avoid repeating the same feedback
+            - Focus ONLY on new changes since the last review
+            - Reference your previous feedback when relevant (e.g., "Previously I noted X, this has been fixed")
+
+            ### Step 1: Understand the PR context and filter files
+
+            Use the Glob tool to categorize changed files by priority:
+
+            **File categories:**
+            - **HIGH PRIORITY (Source code)**: `*.py`, `*.ts`, `*.tsx`, `*.js`, `*.jsx`, `*.go`, `*.java`, `*.rb`, `*.rs`, `*.cpp`, `*.c`, `*.h`
+            - **MEDIUM PRIORITY (Tests)**: `*test*.py`, `*_test.go`, `*.test.ts`, `*.spec.ts`
+            - **MEDIUM PRIORITY (Config)**: `*.yaml`, `*.yml`, `*.json`, `*.toml`
+            - **LOW PRIORITY (Lock files)**: `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, `uv.lock`, `go.sum`, `Cargo.lock`
+
+            **For lock files:** Only verify they exist and mention them briefly. DO NOT review their contents in detail.
+
+            ### Step 2: Incremental Review Strategy
+
+            **CRITICAL: Do NOT fetch the entire PR diff at once if it's large (>300 lines)**
+
+            **If diff is >300 lines or >10 files changed:**
+            Review files **ONE BY ONE** using the Read tool, in this priority order:
+
+            1. **Source code files first**: Use `gh pr diff` for each file individually
+               ```bash
+               gh pr diff ${{ github.event.pull_request.number }} -- path/to/file
+               ```
+
+            2. **Test files second**: Review each test file individually and verify tests match the code changes
+
+            3. **Config files third**: Review each config file individually and check for breaking changes
+
+            4. **Lock files last**: Simply acknowledge their presence. DO NOT review line-by-line
+
+            **If diff is <300 lines:**
+            You can review the full diff at once:
+            ```bash
+            gh pr diff ${{ github.event.pull_request.number }}
+            ```
+
+            ### Step 3: Focus your review on
+
+            Based on the PR's stated purpose, review ONLY:
+            - Whether the changes correctly implement the stated goal
+            - Bugs or logic errors in the NEW/MODIFIED code
+            - Missing edge cases relevant to the change
+            - Breaking changes or regressions
+
+            DO NOT comment on:
+            - Code style in unchanged lines
+            - Unrelated improvements or refactoring suggestions
+            - General best practices not directly relevant to this PR
+            - Pre-existing issues in untouched code
+            - Line-by-line changes in lock files
+
+            ### Step 4: Security check with Grep
+
+            Use the Grep tool to scan for security issues in changed files:
+            ```
+            # Check for hardcoded secrets (run on each changed source file)
+            Grep pattern: (api_key|apikey|secret_key|password|token|credential)\s*[=:]\s*["'][^"']{8,}
+            Grep pattern: (AWS|AZURE|GCP|GITHUB|SLACK)_[A-Z_]*\s*=\s*["'][^"']+
+
+            # Check for sensitive file patterns in CHANGED FILES list
+            Look for: .env, .pem, .key, credentials, password, secret in filenames
+            ```
+
+            **If security issues found**: Flag as Critical and require changes.
+
+            ### Step 5: Use review skills and tools selectively
+
+            Only use skills relevant to the actual changes:
+            - code-reviewer: Check code quality and style
+            - pr-test-analyzer: Analyze test coverage (only if tests were added/modified)
+            - silent-failure-hunter: Check error handling (only if error handling code was changed)
+            - type-design-analyzer: Analyze type design (only if types/interfaces were modified)
+            - comment-analyzer: Verify comment accuracy
+
+            **Use Grep tool for pattern-based issue detection:**
+            Use the built-in Grep tool to search for common issues in changed files:
+
+            Example patterns:
+            - Python: `except:` (bare except), `print(` (debug prints), `TODO`, `FIXME`, `Any` (typing.Any disables type checking), `dict` without generics, `from typing import List, Dict` (use built-in `list`, `dict` instead)
+            - TypeScript/JavaScript: `console.log`, `// TODO`, `any` type usage, `unknown`
+            - General: hardcoded credentials, debug statements, incomplete implementations
+
+            ### Step 6: Determine merge readiness
+
+            After completing the review, evaluate if the PR is MERGE READY based on these criteria:
+
+            **MERGE READY (LGTM) if ALL of the following are true:**
+            - No Critical or High severity bugs found
+            - Implementation correctly addresses the PR's stated goal
+            - No breaking changes without proper documentation
+            - No security vulnerabilities introduced
+            - No obvious logic errors in the changed code
+
+            **NOT MERGE READY if ANY of the following are true:**
+            - Critical or High severity bugs found
+            - Implementation does not match the PR's stated goal
+            - Breaking changes without documentation
+            - Security vulnerabilities introduced
+            - Obvious logic errors that could cause runtime failures
+
+            ### Step 7: Post review result
+
+            **If MERGE READY:**
+            Approve the PR with LGTM:
+            ```bash
+            gh pr review ${{ github.event.pull_request.number }} --approve --body "## ✅ LGTM
+
+            **Summary**: [One sentence describing what this PR does]
+
+            **Assessment**: The implementation correctly addresses the PR's goal.
+
+            **Files reviewed**: [Briefly list file categories, e.g., "3 source files, 2 test files, lock files updated"]
+
+            [Optional: Highlights or minor suggestions that don't block merge]
+
+            ---
+            *Reviewed by Claude*"
+            ```
+
+            **If NOT MERGE READY:**
+            Request changes:
+            ```bash
+            gh pr review ${{ github.event.pull_request.number }} --request-changes --body "## ⚠️ Changes Requested
+
+            **Summary**: [One sentence describing what this PR does]
+
+            **Assessment**: [Why this is not ready to merge]
+
+            ### Issues Found
+            [List of Critical/High severity issues with file:line references]
+
+            ### Required Actions
+            [Specific changes needed before merge]
+
+            ---
+            *Reviewed by Claude*"
+            ```
+
+            **If only minor issues (Medium/Low severity):**
+            Comment without blocking:
+            ```bash
+            gh pr review ${{ github.event.pull_request.number }} --comment --body "## 💬 Review Complete
+
+            **Summary**: [One sentence describing what this PR does]
+
+            **Assessment**: The implementation is acceptable with minor suggestions.
+
+            ### Suggestions (non-blocking)
+            [List of Medium/Low severity suggestions]
+
+            ---
+            *Reviewed by Claude*"
+            ```
+
+            Then approve if no blocking issues:
+            ```bash
+            gh pr review ${{ github.event.pull_request.number }} --approve --body "✅ LGTM - Minor suggestions provided above but not blocking."
+            ```
+
+            ## Anti-Hallucination Rules
+
+            - ❌ NEVER fetch entire PR diff if >300 lines
+            - ❌ NEVER review lock files line-by-line
+            - ❌ NEVER make assumptions about code you haven't seen
+            - ✅ ALWAYS review files incrementally, one at a time
+            - ✅ ALWAYS understand each file before moving to the next
+            - ✅ ALWAYS acknowledge lock file changes briefly without detail
+            - ✅ If unsure about something, check the specific file again
+
+            Keep feedback concise and actionable. Avoid nitpicks.
+
+      - name: Save review metadata
+        if: always()
+        run: |
+          mkdir -p .claude-reviews
+          cat > .claude-reviews/pr-${{ github.event.pull_request.number }}.json << EOF
+          {
+            "pr_number": ${{ github.event.pull_request.number }},
+            "reviewed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "head_sha": "${{ github.event.pull_request.head.sha }}",
+            "diff_lines": ${{ steps.pr-diff.outputs.lines }},
+            "file_count": ${{ steps.pr-diff.outputs.file_count }},
+            "model_used": "${{ steps.pr-diff.outputs.use_opus == 'true' && 'opus' || 'sonnet' }}",
+            "review_outcome": "${{ steps.claude-review.outcome }}"
+          }
+          EOF
+
+      - name: Upload review metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-review-pr-${{ github.event.pull_request.number }}
+          path: .claude-reviews/
+          retention-days: 90
+
+      - name: Handle review failure
+        if: steps.claude-review.outcome == 'failure' && steps.pr-diff.outputs.skip_review != 'true'
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "## ⚠️ Automated Review Failed
+
+          The Claude PR review encountered an error and could not complete.
+
+          **Possible reasons:**
+          - API timeout or rate limiting
+          - Large diff size exceeding processing limits
+          - Network connectivity issues
+
+          Please request a manual review or retry the workflow.
+
+          ---
+          *Automated message*"
+        env:
+          GH_TOKEN: ${{ github.token }}
