@@ -42,7 +42,12 @@ void main() {
         ],
       );
 
-      final result = NovelPage.buildTitle(novelInfo, 1);
+      final episodeDataMap = {
+        for (final e in novelInfo.episodes!)
+          if (e.index != null) e.index!: e,
+      };
+
+      final result = NovelPage.buildTitle(novelInfo, 1, episodeDataMap);
 
       expect(result, '短編小説のタイトル');
     });
@@ -59,7 +64,12 @@ void main() {
         ],
       );
 
-      final result = NovelPage.buildTitle(novelInfo, 2);
+      final episodeDataMap = {
+        for (final e in novelInfo.episodes!)
+          if (e.index != null) e.index!: e,
+      };
+
+      final result = NovelPage.buildTitle(novelInfo, 2, episodeDataMap);
 
       expect(result, '第2話 始まりの物語');
     });
@@ -75,7 +85,12 @@ void main() {
         ],
       );
 
-      final result = NovelPage.buildTitle(novelInfo, 1);
+      final episodeDataMap = {
+        for (final e in novelInfo.episodes!)
+          if (e.index != null) e.index!: e,
+      };
+
+      final result = NovelPage.buildTitle(novelInfo, 1, episodeDataMap);
 
       expect(result, '第1話');
     });
@@ -90,7 +105,12 @@ void main() {
         ],
       );
 
-      final result = NovelPage.buildTitle(novelInfo, 1);
+      final episodeDataMap = {
+        for (final e in novelInfo.episodes!)
+          if (e.index != null) e.index!: e,
+      };
+
+      final result = NovelPage.buildTitle(novelInfo, 1, episodeDataMap);
 
       expect(result, '第1話');
     });
@@ -102,7 +122,9 @@ void main() {
         novelType: 1,
       );
 
-      final result = NovelPage.buildTitle(novelInfo, 1);
+      const episodeDataMap = <int, Episode>{};
+
+      final result = NovelPage.buildTitle(novelInfo, 1, episodeDataMap);
 
       expect(result, '第1話');
     });
@@ -118,7 +140,12 @@ void main() {
         ],
       );
 
-      final result = NovelPage.buildTitle(novelInfo, 5);
+      final episodeDataMap = {
+        for (final e in novelInfo.episodes!)
+          if (e.index != null) e.index!: e,
+      };
+
+      final result = NovelPage.buildTitle(novelInfo, 5, episodeDataMap);
 
       expect(result, '第5話');
     });
@@ -129,7 +156,9 @@ void main() {
         novelType: 2,
       );
 
-      final result = NovelPage.buildTitle(novelInfo, 1);
+      const episodeDataMap = <int, Episode>{};
+
+      final result = NovelPage.buildTitle(novelInfo, 1, episodeDataMap);
 
       expect(result, '');
     });

@@ -73,6 +73,18 @@ class NovelPage extends HookConsumerWidget {
           };
         }, [novelInfo]);
 
+        // エピソードマップを作成（タイトル表示用）
+        final episodeDataMap = useMemoized(() {
+          // エピソードリストがnullの場合は空のMapを返す
+          if (novelInfo.episodes == null) {
+            return <int, Episode>{};
+          }
+          return {
+            for (final e in novelInfo.episodes!)
+              if (e.index != null) e.index!: e,
+          };
+        }, [novelInfo]);
+
         // PageControllerをメモ化（itemCountが変わったときのみ再作成）
         final pageController = useMemoized(
           () => PageController(initialPage: initialPageIndex),
@@ -101,7 +113,7 @@ class NovelPage extends HookConsumerWidget {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 title: Text(
-                  buildTitle(novelInfo, currentEpisode.value),
+                  buildTitle(novelInfo, currentEpisode.value, episodeDataMap),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -286,18 +298,19 @@ class NovelPage extends HookConsumerWidget {
   /// - 短編の場合: 小説タイトルのみ
   /// - 連載の場合: 「第X話 サブタイトル」または「第X話」
   @visibleForTesting
-  static String buildTitle(NovelInfo novelInfo, int currentEpisodeNum) {
+  static String buildTitle(
+    NovelInfo novelInfo,
+    int currentEpisodeNum,
+    Map<int, Episode> episodeDataMap,
+  ) {
     // 短編の場合はタイトルのみ
     if (novelInfo.novelType == 2) {
       return novelInfo.title ?? '';
     }
 
     // 連載の場合
-    // エピソードリストから現在のエピソード番号に対応するエピソードを検索
-    final currentEpisodeData = novelInfo.episodes?.firstWhere(
-      (ep) => ep.index == currentEpisodeNum,
-      orElse: () => const Episode(),
-    );
+    // エピソードマップから現在のエピソード番号に対応するエピソードを取得
+    final currentEpisodeData = episodeDataMap[currentEpisodeNum];
 
     final subtitle = currentEpisodeData?.subtitle;
 
