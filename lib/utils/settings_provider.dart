@@ -247,20 +247,33 @@ class Settings extends _$Settings {
   }
 
   /// ルビ表示設定を更新するメソッド。
+  ///
+  /// ルビを有効にする場合、行間が1.3未満であれば自動的に1.3に調整します。
+  /// これはルビが重なることを防ぐためです。
   Future<void> setIsRubyEnabled({required bool isRubyEnabled}) async {
     if (!state.hasValue) {
       throw StateError('Settings are not loaded');
     }
 
     try {
-      final success = await (await _prefs).setBool(
-        _isRubyEnabledKey,
-        isRubyEnabled,
-      );
+      final prefs = await _prefs;
+      final success = await prefs.setBool(_isRubyEnabledKey, isRubyEnabled);
       if (!success) {
         throw Exception('Failed to save ruby enabled setting');
       }
-      state = AsyncData(state.value!.copyWith(isRubyEnabled: isRubyEnabled));
+
+      var newSettings = state.value!.copyWith(isRubyEnabled: isRubyEnabled);
+
+      // ルビを有効にする場合、行間が1.3未満なら自動調整
+      if (isRubyEnabled && newSettings.lineHeight < 1.3) {
+        final lineHeightSuccess = await prefs.setDouble(_lineHeightKey, 1.3);
+        if (!lineHeightSuccess) {
+          throw Exception('Failed to save line height setting');
+        }
+        newSettings = newSettings.copyWith(lineHeight: 1.3);
+      }
+
+      state = AsyncData(newSettings);
     } catch (e, stackTrace) {
       debugPrint('Error saving ruby enabled setting: $e');
       state = AsyncError(e, stackTrace);

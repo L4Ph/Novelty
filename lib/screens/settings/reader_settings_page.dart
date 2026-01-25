@@ -131,26 +131,46 @@ class ReaderSettingsPage extends ConsumerWidget {
         ),
         ListTile(
           title: Text('行間: ${settings.lineHeight.toStringAsFixed(1)}'),
-          subtitle: Slider(
-            value: settings.lineHeight,
-            min: 1,
-            max: 3,
-            divisions: 20,
-            label: settings.lineHeight.toStringAsFixed(1),
-            onChanged: (value) async {
-              try {
-                await ref.read(settingsProvider.notifier).setLineHeight(value);
-              } on Exception {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('設定の保存に失敗しました'),
-                      backgroundColor: Colors.red,
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 警告メッセージ（スライダーの上）
+              if (settings.isRubyEnabled && settings.lineHeight < 1.3)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    'ルビが重なる可能性があります',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontSize: 12,
                     ),
-                  );
-                }
-              }
-            },
+                  ),
+                ),
+              // スライダー
+              Slider(
+                value: settings.lineHeight,
+                min: settings.isRubyEnabled ? 1.3 : 0.8,
+                max: 3,
+                divisions: settings.isRubyEnabled ? 17 : 22,
+                label: settings.lineHeight.toStringAsFixed(1),
+                onChanged: (value) async {
+                  try {
+                    await ref
+                        .read(settingsProvider.notifier)
+                        .setLineHeight(value);
+                  } on Exception {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('設定の保存に失敗しました'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+            ],
           ),
         ),
         SwitchListTile(
