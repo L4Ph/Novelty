@@ -55,7 +55,9 @@ void main() {
       );
 
       // ウィジェットがHookWidgetであることを確認
-      final widget = tester.widget<NovelContentView>(find.byType(NovelContentView));
+      final widget = tester.widget<NovelContentView>(
+        find.byType(NovelContentView),
+      );
       expect(widget, isA<HookWidget>());
 
       // RichTextが正しく表示されていることを確認
@@ -108,6 +110,79 @@ void main() {
       final richText2 = tester.widget<RichText>(find.byType(RichText));
       final textSpan2 = richText2.text as TextSpan;
       expect(textSpan2.toPlainText(), '更新されたテキスト');
+    });
+  });
+
+  group('NovelContentView with ruby control', () {
+    test('buildSpansはisRubyEnabledがtrueのときルビを含む', () {
+      final elements = <NovelContentElement>[
+        PlainText('これは'),
+        RubyText('テスト', 'てすと'),
+        PlainText('です。'),
+      ];
+
+      const style = TextStyle(fontSize: 16);
+      final spans = NovelContentView.buildSpans(elements, style);
+
+      expect(spans, hasLength(3));
+
+      // RubyTextはWidgetSpanとして描画される
+      final widgetSpan = spans[1];
+      expect(widgetSpan, isA<WidgetSpan>());
+      expect(
+        (widgetSpan as WidgetSpan).child,
+        isA<RubySpan>()
+            .having((w) => w.base, 'base', 'テスト')
+            .having((w) => w.ruby, 'ruby', 'てすと'),
+      );
+    });
+
+    test('buildSpansはisRubyEnabledがfalseのときルビを除外', () {
+      final elements = <NovelContentElement>[
+        PlainText('これは'),
+        RubyText('テスト', 'てすと'),
+        PlainText('です。'),
+      ];
+
+      const style = TextStyle(fontSize: 16);
+      final spans = NovelContentView.buildSpans(
+        elements,
+        style,
+        isRubyEnabled: false,
+      );
+
+      expect(spans, hasLength(3));
+
+      // RubyTextはplain TextSpan（ベーステキストのみ）として描画される
+      final textSpan = spans[1];
+      expect(textSpan, isA<TextSpan>());
+      expect((textSpan as TextSpan).text, equals('テスト'));
+    });
+
+    test('buildSpansは複数のルビ要素を正しく処理する', () {
+      final elements = <NovelContentElement>[
+        RubyText('漢字', 'かんじ'),
+        PlainText('と'),
+        RubyText('平仮名', 'ひらがな'),
+      ];
+
+      const style = TextStyle(fontSize: 16);
+
+      // ルビ有効
+      final spansWithRuby = NovelContentView.buildSpans(elements, style);
+      final widgetSpansWithRuby = spansWithRuby.whereType<WidgetSpan>();
+      expect(widgetSpansWithRuby, hasLength(2));
+
+      // ルビ無効
+      final spansWithoutRuby = NovelContentView.buildSpans(
+        elements,
+        style,
+        isRubyEnabled: false,
+      );
+      final widgetSpansWithoutRuby = spansWithoutRuby.whereType<WidgetSpan>();
+      expect(widgetSpansWithoutRuby, hasLength(0));
+      final textSpansWithoutRuby = spansWithoutRuby.whereType<TextSpan>();
+      expect(textSpansWithoutRuby, hasLength(3));
     });
   });
 }

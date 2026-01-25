@@ -6,7 +6,10 @@ class TategakiConverter {
   TategakiConverter._();
 
   /// NovelContentElementのリストをTategakiElementのリストに変換する
-  static List<TategakiElement> convert(List<NovelContentElement> elements) {
+  static List<TategakiElement> convert(
+    List<NovelContentElement> elements, {
+    bool isRubyEnabled = true,
+  }) {
     final result = <TategakiElement>[];
 
     for (final element in elements) {
@@ -15,7 +18,13 @@ class TategakiConverter {
           // PlainTextはTategakiParserでパースして縦中横などを適用
           result.addAll(TategakiParser.parse(text));
         case RubyText(:final base, :final ruby):
-          result.add(TategakiElement.ruby(base: base, ruby: ruby));
+          if (isRubyEnabled) {
+            // ルビ有効時: TategakiElement.rubyとして変換
+            result.add(TategakiElement.ruby(base: base, ruby: ruby));
+          } else {
+            // ルビ無効時: ベーステキストのみをパース
+            result.addAll(TategakiParser.parse(base));
+          }
         case NewLine():
           result.add(const TategakiElement.newLine());
       }

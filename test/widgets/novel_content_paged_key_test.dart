@@ -15,6 +15,7 @@ const pagedSettings = AppSettings(
   fontFamily: 'NotoSansJP',
   isIncognito: false,
   isPageFlip: true,
+  isRubyEnabled: true,
 );
 
 void main() {
@@ -33,7 +34,7 @@ void main() {
               ncode: 'n1234',
               episode: 1,
               content: AsyncData(testContent),
-              settings: AsyncData(pagedSettings),
+              settings: const AsyncData(pagedSettings),
             ),
           ),
         ),
@@ -53,7 +54,7 @@ void main() {
               ncode: 'n1234',
               episode: 2,
               content: AsyncData(testContent),
-              settings: AsyncData(pagedSettings),
+              settings: const AsyncData(pagedSettings),
             ),
           ),
         ),

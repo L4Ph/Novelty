@@ -16,6 +16,7 @@ AppSettings get defaultTestSettings => const AppSettings(
   fontFamily: 'NotoSansJP',
   isIncognito: false,
   isPageFlip: false,
+  isRubyEnabled: true,
 );
 
 void main() {

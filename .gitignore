@@ -3,6 +3,7 @@
 
 custom_lint.log
 .env
+.claude/*.local.*
 
 ### Flutter ###
 # Flutter/Dart/Pub related

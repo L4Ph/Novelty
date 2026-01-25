@@ -56,7 +56,18 @@ class ReaderSettingsPage extends ConsumerWidget {
             divisions: 40,
             label: settings.fontSize.toStringAsFixed(1),
             onChanged: (value) async {
-              await ref.read(settingsProvider.notifier).setFontSize(value);
+              try {
+                await ref.read(settingsProvider.notifier).setFontSize(value);
+              } on Exception {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('設定の保存に失敗しました'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
           ),
         ),
@@ -78,7 +89,20 @@ class ReaderSettingsPage extends ConsumerWidget {
             ],
             onChanged: (value) async {
               if (value != null) {
-                await ref.read(settingsProvider.notifier).setFontFamily(value);
+                try {
+                  await ref
+                      .read(settingsProvider.notifier)
+                      .setFontFamily(value);
+                } on Exception {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('設定の保存に失敗しました'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               }
             },
           ),
@@ -114,7 +138,18 @@ class ReaderSettingsPage extends ConsumerWidget {
             divisions: 20,
             label: settings.lineHeight.toStringAsFixed(1),
             onChanged: (value) async {
-              await ref.read(settingsProvider.notifier).setLineHeight(value);
+              try {
+                await ref.read(settingsProvider.notifier).setLineHeight(value);
+              } on Exception {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('設定の保存に失敗しました'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
           ),
         ),
@@ -122,9 +157,20 @@ class ReaderSettingsPage extends ConsumerWidget {
           title: const Text('縦書き'),
           value: settings.isVertical,
           onChanged: (value) async {
-            await ref
-                .read(settingsProvider.notifier)
-                .setIsVertical(isVertical: value);
+            try {
+              await ref
+                  .read(settingsProvider.notifier)
+                  .setIsVertical(isVertical: value);
+            } on Exception {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('設定の保存に失敗しました'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
           },
         ),
         if (settings.isVertical)
@@ -132,11 +178,43 @@ class ReaderSettingsPage extends ConsumerWidget {
             title: const Text('ページ送り'),
             value: settings.isPageFlip,
             onChanged: (value) async {
-              await ref
-                  .read(settingsProvider.notifier)
-                  .setIsPageFlip(isPageFlip: value);
+              try {
+                await ref
+                    .read(settingsProvider.notifier)
+                    .setIsPageFlip(isPageFlip: value);
+              } on Exception {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('設定の保存に失敗しました'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
           ),
+        SwitchListTile(
+          title: const Text('ルビを表示'),
+          subtitle: const Text('オフにすると行間をより小さく設定できます'),
+          value: settings.isRubyEnabled,
+          onChanged: (value) async {
+            try {
+              await ref
+                  .read(settingsProvider.notifier)
+                  .setIsRubyEnabled(isRubyEnabled: value);
+            } on Exception {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('設定の保存に失敗しました'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
       ],
     );
   }
