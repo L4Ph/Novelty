@@ -112,65 +112,159 @@ class Settings extends _$Settings {
 
   /// テーマモードを設定するメソッド。
   Future<void> setThemeMode(ThemeMode mode) async {
-    if (state.hasValue) {
-      await (await _prefs).setInt(_themeModeKey, mode.index);
+    if (!state.hasValue) {
+      throw StateError('Settings are not loaded');
+    }
+
+    try {
+      final success = await (await _prefs).setInt(_themeModeKey, mode.index);
+      if (!success) {
+        throw Exception('Failed to save theme mode setting');
+      }
       state = AsyncData(state.value!.copyWith(themeMode: mode));
+    } catch (e, stackTrace) {
+      debugPrint('Error saving theme mode setting: $e');
+      state = AsyncError(e, stackTrace);
+      rethrow;
     }
   }
 
   /// フォントサイズを設定するメソッド。
   Future<void> setFontSize(double size) async {
-    if (state.hasValue) {
-      await (await _prefs).setDouble(_fontSizeKey, size);
+    if (!state.hasValue) {
+      throw StateError('Settings are not loaded');
+    }
+
+    try {
+      final success = await (await _prefs).setDouble(_fontSizeKey, size);
+      if (!success) {
+        throw Exception('Failed to save font size setting');
+      }
       state = AsyncData(state.value!.copyWith(fontSize: size));
+    } catch (e, stackTrace) {
+      debugPrint('Error saving font size setting: $e');
+      state = AsyncError(e, stackTrace);
+      rethrow;
     }
   }
 
   /// 行間を設定するメソッド。
   Future<void> setLineHeight(double height) async {
-    if (state.hasValue) {
-      await (await _prefs).setDouble(_lineHeightKey, height);
+    if (!state.hasValue) {
+      throw StateError('Settings are not loaded');
+    }
+
+    try {
+      final success = await (await _prefs).setDouble(_lineHeightKey, height);
+      if (!success) {
+        throw Exception('Failed to save line height setting');
+      }
       state = AsyncData(state.value!.copyWith(lineHeight: height));
+    } catch (e, stackTrace) {
+      debugPrint('Error saving line height setting: $e');
+      state = AsyncError(e, stackTrace);
+      rethrow;
     }
   }
 
   /// フォントファミリーを設定するメソッド。
   Future<void> setFontFamily(String family) async {
-    if (state.hasValue) {
-      await (await _prefs).setString(_fontFamilyKey, family);
+    if (!state.hasValue) {
+      throw StateError('Settings are not loaded');
+    }
+
+    try {
+      final success = await (await _prefs).setString(_fontFamilyKey, family);
+      if (!success) {
+        throw Exception('Failed to save font family setting');
+      }
       state = AsyncData(state.value!.copyWith(fontFamily: family));
+    } catch (e, stackTrace) {
+      debugPrint('Error saving font family setting: $e');
+      state = AsyncError(e, stackTrace);
+      rethrow;
     }
   }
 
   /// 縦書き設定を更新するメソッド。
   Future<void> setIsVertical({required bool isVertical}) async {
-    if (state.hasValue) {
-      await (await _prefs).setBool(_isVerticalKey, isVertical);
+    if (!state.hasValue) {
+      throw StateError('Settings are not loaded');
+    }
+
+    try {
+      final success = await (await _prefs).setBool(_isVerticalKey, isVertical);
+      if (!success) {
+        throw Exception('Failed to save vertical setting');
+      }
       state = AsyncData(state.value!.copyWith(isVertical: isVertical));
+    } catch (e, stackTrace) {
+      debugPrint('Error saving vertical setting: $e');
+      state = AsyncError(e, stackTrace);
+      rethrow;
     }
   }
 
   /// シークレットモードを設定するメソッド。
   Future<void> setIsIncognito({required bool isIncognito}) async {
-    if (state.hasValue) {
-      await (await _prefs).setBool(_isIncognitoKey, isIncognito);
+    if (!state.hasValue) {
+      throw StateError('Settings are not loaded');
+    }
+
+    try {
+      final success = await (await _prefs).setBool(
+        _isIncognitoKey,
+        isIncognito,
+      );
+      if (!success) {
+        throw Exception('Failed to save incognito setting');
+      }
       state = AsyncData(state.value!.copyWith(isIncognito: isIncognito));
+    } catch (e, stackTrace) {
+      debugPrint('Error saving incognito setting: $e');
+      state = AsyncError(e, stackTrace);
+      rethrow;
     }
   }
 
   /// ページ送り設定を更新するメソッド。
   Future<void> setIsPageFlip({required bool isPageFlip}) async {
-    if (state.hasValue) {
-      await (await _prefs).setBool(_isPageFlipKey, isPageFlip);
+    if (!state.hasValue) {
+      throw StateError('Settings are not loaded');
+    }
+
+    try {
+      final success = await (await _prefs).setBool(_isPageFlipKey, isPageFlip);
+      if (!success) {
+        throw Exception('Failed to save page flip setting');
+      }
       state = AsyncData(state.value!.copyWith(isPageFlip: isPageFlip));
+    } catch (e, stackTrace) {
+      debugPrint('Error saving page flip setting: $e');
+      state = AsyncError(e, stackTrace);
+      rethrow;
     }
   }
 
   /// ルビ表示設定を更新するメソッド。
   Future<void> setIsRubyEnabled({required bool isRubyEnabled}) async {
-    if (state.hasValue) {
-      await (await _prefs).setBool(_isRubyEnabledKey, isRubyEnabled);
+    if (!state.hasValue) {
+      throw StateError('Settings are not loaded');
+    }
+
+    try {
+      final success = await (await _prefs).setBool(
+        _isRubyEnabledKey,
+        isRubyEnabled,
+      );
+      if (!success) {
+        throw Exception('Failed to save ruby enabled setting');
+      }
       state = AsyncData(state.value!.copyWith(isRubyEnabled: isRubyEnabled));
+    } catch (e, stackTrace) {
+      debugPrint('Error saving ruby enabled setting: $e');
+      state = AsyncError(e, stackTrace);
+      rethrow;
     }
   }
 }
