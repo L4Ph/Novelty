@@ -16,6 +16,7 @@ class AppSettings {
     required this.isVertical,
     required this.isIncognito,
     required this.isPageFlip,
+    required this.isRubyEnabled,
   });
 
   /// テーマモード (system, light, dark)。
@@ -39,6 +40,13 @@ class AppSettings {
   /// ページ送り設定 (true: ページ送り, false: スクロール)。
   final bool isPageFlip;
 
+  /// ルビ（ふりがな）の表示設定。
+  ///
+  /// `true` の場合、ルビが表示されます（デフォルト）。
+  /// `false` の場合、ルビは非表示になりベーステキストのみが表示されます。
+  /// これにより、行間をより小さく設定することができます。
+  final bool isRubyEnabled;
+
   /// 設定をコピーするメソッド。
   AppSettings copyWith({
     ThemeMode? themeMode,
@@ -48,6 +56,7 @@ class AppSettings {
     bool? isVertical,
     bool? isIncognito,
     bool? isPageFlip,
+    bool? isRubyEnabled,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -57,6 +66,7 @@ class AppSettings {
       isVertical: isVertical ?? this.isVertical,
       isIncognito: isIncognito ?? this.isIncognito,
       isPageFlip: isPageFlip ?? this.isPageFlip,
+      isRubyEnabled: isRubyEnabled ?? this.isRubyEnabled,
     );
   }
 }
@@ -71,6 +81,7 @@ class Settings extends _$Settings {
   static const _isVerticalKey = 'is_vertical';
   static const _isIncognitoKey = 'is_incognito';
   static const _isPageFlipKey = 'is_page_flip';
+  static const _isRubyEnabledKey = 'is_ruby_enabled';
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
@@ -85,6 +96,7 @@ class Settings extends _$Settings {
     final isVertical = prefs.getBool(_isVerticalKey) ?? false;
     final isIncognito = prefs.getBool(_isIncognitoKey) ?? false;
     final isPageFlip = prefs.getBool(_isPageFlipKey) ?? false;
+    final isRubyEnabled = prefs.getBool(_isRubyEnabledKey) ?? true;
 
     return AppSettings(
       themeMode: ThemeMode.values[themeModeIndex],
@@ -94,6 +106,7 @@ class Settings extends _$Settings {
       isVertical: isVertical,
       isIncognito: isIncognito,
       isPageFlip: isPageFlip,
+      isRubyEnabled: isRubyEnabled,
     );
   }
 
@@ -150,6 +163,14 @@ class Settings extends _$Settings {
     if (state.hasValue) {
       await (await _prefs).setBool(_isPageFlipKey, isPageFlip);
       state = AsyncData(state.value!.copyWith(isPageFlip: isPageFlip));
+    }
+  }
+
+  /// ルビ表示設定を更新するメソッド。
+  Future<void> setIsRubyEnabled({required bool isRubyEnabled}) async {
+    if (state.hasValue) {
+      await (await _prefs).setBool(_isRubyEnabledKey, isRubyEnabled);
+      state = AsyncData(state.value!.copyWith(isRubyEnabled: isRubyEnabled));
     }
   }
 }

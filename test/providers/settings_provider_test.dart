@@ -83,6 +83,53 @@ void main() {
       final settings = asyncValue.value!;
       expect(settings.isVertical, isTrue);
     });
+
+    test(
+      'should default to true for isRubyEnabled when no preferences exist',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+
+        final settings = await container.read(settingsProvider.future);
+
+        expect(settings.isRubyEnabled, equals(true));
+      },
+    );
+
+    test('should load saved isRubyEnabled preference', () async {
+      SharedPreferences.setMockInitialValues({
+        'is_ruby_enabled': false,
+      });
+
+      final settings = await container.read(settingsProvider.future);
+
+      expect(settings.isRubyEnabled, equals(false));
+    });
+
+    test('should update isRubyEnabled setting', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      await container.read(settingsProvider.future);
+
+      final settingsNotifier = container.read(settingsProvider.notifier);
+      await settingsNotifier.setIsRubyEnabled(isRubyEnabled: false);
+
+      final asyncValue = container.read(settingsProvider);
+      expect(asyncValue.hasValue, isTrue);
+      final settings = asyncValue.value!;
+      expect(settings.isRubyEnabled, isFalse);
+    });
+
+    test('should persist isRubyEnabled to SharedPreferences', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      await container.read(settingsProvider.future);
+
+      final settingsNotifier = container.read(settingsProvider.notifier);
+      await settingsNotifier.setIsRubyEnabled(isRubyEnabled: false);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('is_ruby_enabled'), equals(false));
+    });
   });
 
   group('AppSettings', () {
@@ -95,10 +142,12 @@ void main() {
         fontFamily: 'NotoSansJP',
         isIncognito: false,
         isPageFlip: false,
+        isRubyEnabled: true,
       );
 
       expect(settings.fontSize, equals(16.0));
       expect(settings.isVertical, isFalse);
+      expect(settings.isRubyEnabled, isTrue);
     });
 
     test('should create copy with updated values', () {
@@ -110,6 +159,7 @@ void main() {
         fontFamily: 'NotoSansJP',
         isIncognito: false,
         isPageFlip: false,
+        isRubyEnabled: true,
       );
 
       final updatedSettings = originalSettings.copyWith(
@@ -119,6 +169,44 @@ void main() {
 
       expect(updatedSettings.fontSize, equals(18.0));
       expect(updatedSettings.isVertical, isTrue);
+      expect(updatedSettings.isRubyEnabled, isTrue);
+    });
+
+    test('should create instance with isRubyEnabled parameter', () {
+      const settings = AppSettings(
+        fontSize: 16,
+        isVertical: false,
+        themeMode: ThemeMode.system,
+        lineHeight: 1.5,
+        fontFamily: 'NotoSansJP',
+        isIncognito: false,
+        isPageFlip: false,
+        isRubyEnabled: false,
+      );
+
+      expect(settings.isRubyEnabled, isFalse);
+    });
+
+    test('should copy with updated isRubyEnabled value', () {
+      const originalSettings = AppSettings(
+        fontSize: 16,
+        isVertical: false,
+        themeMode: ThemeMode.system,
+        lineHeight: 1.5,
+        fontFamily: 'NotoSansJP',
+        isIncognito: false,
+        isPageFlip: false,
+        isRubyEnabled: true,
+      );
+
+      final updatedSettings = originalSettings.copyWith(
+        isRubyEnabled: false,
+      );
+
+      expect(updatedSettings.isRubyEnabled, isFalse);
+      // 他のフィールドは変更されないことを確認
+      expect(updatedSettings.fontSize, equals(16.0));
+      expect(updatedSettings.isVertical, isFalse);
     });
   });
 }

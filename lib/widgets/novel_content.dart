@@ -91,13 +91,18 @@ class NovelContentBody extends HookWidget {
 
             if (settingsData.isVertical) {
               // NovelContentElementをTategakiElementに変換
-              final tategakiElements = TategakiConverter.convert(contentData);
+              final tategakiElements = TategakiConverter.convert(
+                contentData,
+                isRubyEnabled: settingsData.isRubyEnabled,
+              );
 
               if (settingsData.isPageFlip) {
                 return LayoutBuilder(
                   builder: (context, constraints) {
                     return TategakiTextPaged(
-                      key: PageStorageKey<String>('novel_paged_${ncode}_$episode'),
+                      key: PageStorageKey<String>(
+                        'novel_paged_${ncode}_$episode',
+                      ),
                       tategakiElements,
                       width: constraints.maxWidth,
                       height: constraints.maxHeight,
@@ -138,7 +143,10 @@ class NovelContentBody extends HookWidget {
               child: RepaintBoundary(
                 child: DefaultTextStyle(
                   style: textStyle,
-                  child: NovelContentView(elements: contentData),
+                  child: NovelContentView(
+                    elements: contentData,
+                    isRubyEnabled: settingsData.isRubyEnabled,
+                  ),
                 ),
               ),
             );

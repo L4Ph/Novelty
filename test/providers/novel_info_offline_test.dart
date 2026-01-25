@@ -24,6 +24,7 @@ class MockSettings extends Settings {
     fontFamily: 'NotoSansJP',
     isIncognito: false,
     isPageFlip: false,
+    isRubyEnabled: true,
   );
 }
 

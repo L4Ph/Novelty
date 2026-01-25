@@ -137,6 +137,16 @@ class ReaderSettingsPage extends ConsumerWidget {
                   .setIsPageFlip(isPageFlip: value);
             },
           ),
+        SwitchListTile(
+          title: const Text('ルビを表示'),
+          subtitle: const Text('オフにすると行間をより小さく設定できます'),
+          value: settings.isRubyEnabled,
+          onChanged: (value) async {
+            await ref
+                .read(settingsProvider.notifier)
+                .setIsRubyEnabled(isRubyEnabled: value);
+          },
+        ),
       ],
     );
   }
