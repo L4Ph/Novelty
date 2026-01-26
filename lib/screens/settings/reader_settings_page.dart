@@ -58,11 +58,12 @@ class ReaderSettingsPage extends ConsumerWidget {
             onChanged: (value) async {
               try {
                 await ref.read(settingsProvider.notifier).setFontSize(value);
-              } on Exception {
+              } on Exception catch (e) {
+                debugPrint('Failed to save font size: $e');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('設定の保存に失敗しました'),
+                      content: Text('フォントサイズ設定の保存に失敗しました'),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -93,11 +94,12 @@ class ReaderSettingsPage extends ConsumerWidget {
                   await ref
                       .read(settingsProvider.notifier)
                       .setFontFamily(value);
-                } on Exception {
+                } on Exception catch (e) {
+                  debugPrint('Failed to save font family: $e');
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('設定の保存に失敗しました'),
+                        content: Text('フォントファミリー設定の保存に失敗しました'),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -135,7 +137,10 @@ class ReaderSettingsPage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 警告メッセージ（スライダーの上）
-              if (settings.isRubyEnabled && settings.lineHeight < 1.3)
+              // 注: 通常のUI操作では発生しないが、古いバージョンからのアップデート時や
+              // 設定データの移行時など、過渡的な状態で表示される可能性がある
+              if (settings.isRubyEnabled &&
+                  settings.lineHeight < Settings.minLineHeightWithRuby)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
@@ -149,7 +154,9 @@ class ReaderSettingsPage extends ConsumerWidget {
               // スライダー
               Slider(
                 value: settings.lineHeight,
-                min: settings.isRubyEnabled ? 1.3 : 0.8,
+                min: settings.isRubyEnabled
+                    ? Settings.minLineHeightWithRuby
+                    : Settings.minLineHeightWithoutRuby,
                 max: 3,
                 divisions: settings.isRubyEnabled ? 17 : 22,
                 label: settings.lineHeight.toStringAsFixed(1),
@@ -158,11 +165,12 @@ class ReaderSettingsPage extends ConsumerWidget {
                     await ref
                         .read(settingsProvider.notifier)
                         .setLineHeight(value);
-                  } on Exception {
+                  } on Exception catch (e) {
+                    debugPrint('Failed to save line height: $e');
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('設定の保存に失敗しました'),
+                          content: Text('行間設定の保存に失敗しました'),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -181,11 +189,12 @@ class ReaderSettingsPage extends ConsumerWidget {
               await ref
                   .read(settingsProvider.notifier)
                   .setIsVertical(isVertical: value);
-            } on Exception {
+            } on Exception catch (e) {
+              debugPrint('Failed to save is vertical: $e');
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('設定の保存に失敗しました'),
+                    content: Text('縦書き設定の保存に失敗しました'),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -202,11 +211,12 @@ class ReaderSettingsPage extends ConsumerWidget {
                 await ref
                     .read(settingsProvider.notifier)
                     .setIsPageFlip(isPageFlip: value);
-              } on Exception {
+              } on Exception catch (e) {
+                debugPrint('Failed to save is page flip: $e');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('設定の保存に失敗しました'),
+                      content: Text('ページ送り設定の保存に失敗しました'),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -223,11 +233,12 @@ class ReaderSettingsPage extends ConsumerWidget {
               await ref
                   .read(settingsProvider.notifier)
                   .setIsRubyEnabled(isRubyEnabled: value);
-            } on Exception {
+            } on Exception catch (e) {
+              debugPrint('Failed to save is ruby enabled: $e');
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('設定の保存に失敗しました'),
+                    content: Text('ルビ表示設定の保存に失敗しました'),
                     backgroundColor: Colors.red,
                   ),
                 );

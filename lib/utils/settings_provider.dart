@@ -83,6 +83,17 @@ class Settings extends _$Settings {
   static const _isPageFlipKey = 'is_page_flip';
   static const _isRubyEnabledKey = 'is_ruby_enabled';
 
+  /// ルビ表示時の最小行間。
+  ///
+  /// ルビが重なることを防ぐための最小値。
+  /// 理論値1.25に安全マージンを加えた値。
+  static const double minLineHeightWithRuby = 1.3;
+
+  /// ルビ非表示時の最小行間。
+  ///
+  /// ルビが非表示の場合、より詰まった表示が可能。
+  static const double minLineHeightWithoutRuby = 0.8;
+
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
   @override
@@ -248,8 +259,12 @@ class Settings extends _$Settings {
 
   /// ルビ表示設定を更新するメソッド。
   ///
-  /// ルビを有効にする場合、行間が1.3未満であれば自動的に1.3に調整します。
+  /// ルビを有効にする場合、行間が [minLineHeightWithRuby] 未満であれば
+  /// 自動的に [minLineHeightWithRuby] に調整します。
   /// これはルビが重なることを防ぐためです。
+  ///
+  /// 永続化処理は2段階で行われるため、2段階目が失敗した場合は
+  /// 1段階目の変更をロールバックしてデータ整合性を保証します。
   Future<void> setIsRubyEnabled({required bool isRubyEnabled}) async {
     if (!state.hasValue) {
       throw StateError('Settings are not loaded');
@@ -257,6 +272,9 @@ class Settings extends _$Settings {
 
     try {
       final prefs = await _prefs;
+      final originalIsRubyEnabled = state.value!.isRubyEnabled;
+
+      // Phase 1: isRubyEnabled設定を保存
       final success = await prefs.setBool(_isRubyEnabledKey, isRubyEnabled);
       if (!success) {
         throw Exception('Failed to save ruby enabled setting');
@@ -264,18 +282,27 @@ class Settings extends _$Settings {
 
       var newSettings = state.value!.copyWith(isRubyEnabled: isRubyEnabled);
 
-      // ルビを有効にする場合、行間が1.3未満なら自動調整
-      if (isRubyEnabled && newSettings.lineHeight < 1.3) {
-        final lineHeightSuccess = await prefs.setDouble(_lineHeightKey, 1.3);
+      // Phase 2: 必要に応じて行間を調整（失敗時はロールバック）
+      if (isRubyEnabled && newSettings.lineHeight < minLineHeightWithRuby) {
+        final lineHeightSuccess = await prefs.setDouble(
+          _lineHeightKey,
+          minLineHeightWithRuby,
+        );
         if (!lineHeightSuccess) {
-          throw Exception('Failed to save line height setting');
+          // ロールバック: isRubyEnabledを元に戻す
+          await prefs.setBool(_isRubyEnabledKey, originalIsRubyEnabled);
+          throw Exception(
+            'Failed to save line height setting. Ruby setting has been rolled back.',
+          );
         }
-        newSettings = newSettings.copyWith(lineHeight: 1.3);
+        newSettings = newSettings.copyWith(lineHeight: minLineHeightWithRuby);
       }
 
       state = AsyncData(newSettings);
     } catch (e, stackTrace) {
-      debugPrint('Error saving ruby enabled setting: $e');
+      debugPrint(
+        'Error saving ruby enabled setting: $e\nStack trace: $stackTrace',
+      );
       state = AsyncError(e, stackTrace);
       rethrow;
     }

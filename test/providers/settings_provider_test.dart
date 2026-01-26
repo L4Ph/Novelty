@@ -196,6 +196,40 @@ void main() {
       expect(prefs.getDouble('line_height'), equals(1.3));
       expect(prefs.getBool('is_ruby_enabled'), equals(true));
     });
+
+    test('setIsRubyEnabled(true)でlineHeight=1.3の場合、値を保持する', () async {
+      SharedPreferences.setMockInitialValues({
+        'line_height': 1.3,
+      });
+
+      await container.read(settingsProvider.future);
+
+      final settingsNotifier = container.read(settingsProvider.notifier);
+      await settingsNotifier.setIsRubyEnabled(isRubyEnabled: true);
+
+      final asyncValue = container.read(settingsProvider);
+      expect(asyncValue.hasValue, isTrue);
+      final settings = asyncValue.value!;
+      expect(settings.isRubyEnabled, isTrue);
+      expect(settings.lineHeight, equals(1.3));
+    });
+
+    test('setIsRubyEnabled(true)でlineHeight<0.8の極端な値でも1.3に調整される', () async {
+      SharedPreferences.setMockInitialValues({
+        'line_height': 0.5,
+      });
+
+      await container.read(settingsProvider.future);
+
+      final settingsNotifier = container.read(settingsProvider.notifier);
+      await settingsNotifier.setIsRubyEnabled(isRubyEnabled: true);
+
+      final asyncValue = container.read(settingsProvider);
+      expect(asyncValue.hasValue, isTrue);
+      final settings = asyncValue.value!;
+      expect(settings.isRubyEnabled, isTrue);
+      expect(settings.lineHeight, equals(1.3));
+    });
   });
 
   group('AppSettings', () {
