@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:novelty/repositories/preferences_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 part 'settings_provider.g.dart';
 
@@ -94,20 +94,25 @@ class Settings extends _$Settings {
   /// ルビが非表示の場合、より詰まった表示が可能。
   static const double minLineHeightWithoutRuby = 0.8;
 
-  Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
+  PreferencesRepository? _repository;
+
+  Future<PreferencesRepository> get _repo async {
+    _repository ??= ref.read(preferencesRepositoryProvider);
+    return _repository!;
+  }
 
   @override
   Future<AppSettings> build() async {
-    final prefs = await _prefs;
+    final repo = await _repo;
     final themeModeIndex =
-        prefs.getInt(_themeModeKey) ?? ThemeMode.system.index;
-    final fontSize = prefs.getDouble(_fontSizeKey) ?? 16.0;
-    final lineHeight = prefs.getDouble(_lineHeightKey) ?? 1.5;
-    final fontFamily = prefs.getString(_fontFamilyKey) ?? 'NotoSansJP';
-    final isVertical = prefs.getBool(_isVerticalKey) ?? false;
-    final isIncognito = prefs.getBool(_isIncognitoKey) ?? false;
-    final isPageFlip = prefs.getBool(_isPageFlipKey) ?? false;
-    final isRubyEnabled = prefs.getBool(_isRubyEnabledKey) ?? true;
+        await repo.getInt(_themeModeKey) ?? ThemeMode.system.index;
+    final fontSize = await repo.getDouble(_fontSizeKey) ?? 16.0;
+    final lineHeight = await repo.getDouble(_lineHeightKey) ?? 1.5;
+    final fontFamily = await repo.getString(_fontFamilyKey) ?? 'NotoSansJP';
+    final isVertical = await repo.getBool(_isVerticalKey) ?? false;
+    final isIncognito = await repo.getBool(_isIncognitoKey) ?? false;
+    final isPageFlip = await repo.getBool(_isPageFlipKey) ?? false;
+    final isRubyEnabled = await repo.getBool(_isRubyEnabledKey) ?? true;
 
     return AppSettings(
       themeMode: ThemeMode.values[themeModeIndex],
@@ -128,7 +133,8 @@ class Settings extends _$Settings {
     }
 
     try {
-      final success = await (await _prefs).setInt(_themeModeKey, mode.index);
+      final repo = await _repo;
+      final success = await repo.setInt(_themeModeKey, mode.index);
       if (!success) {
         throw Exception('Failed to save theme mode setting');
       }
@@ -149,7 +155,8 @@ class Settings extends _$Settings {
     }
 
     try {
-      final success = await (await _prefs).setDouble(_fontSizeKey, size);
+      final repo = await _repo;
+      final success = await repo.setDouble(_fontSizeKey, size);
       if (!success) {
         throw Exception('Failed to save font size setting');
       }
@@ -170,7 +177,8 @@ class Settings extends _$Settings {
     }
 
     try {
-      final success = await (await _prefs).setDouble(_lineHeightKey, height);
+      final repo = await _repo;
+      final success = await repo.setDouble(_lineHeightKey, height);
       if (!success) {
         throw Exception('Failed to save line height setting');
       }
@@ -191,7 +199,8 @@ class Settings extends _$Settings {
     }
 
     try {
-      final success = await (await _prefs).setString(_fontFamilyKey, family);
+      final repo = await _repo;
+      final success = await repo.setString(_fontFamilyKey, family);
       if (!success) {
         throw Exception('Failed to save font family setting');
       }
@@ -212,7 +221,8 @@ class Settings extends _$Settings {
     }
 
     try {
-      final success = await (await _prefs).setBool(_isVerticalKey, isVertical);
+      final repo = await _repo;
+      final success = await repo.setBool(_isVerticalKey, isVertical);
       if (!success) {
         throw Exception('Failed to save vertical setting');
       }
@@ -231,7 +241,8 @@ class Settings extends _$Settings {
     }
 
     try {
-      final success = await (await _prefs).setBool(
+      final repo = await _repo;
+      final success = await repo.setBool(
         _isIncognitoKey,
         isIncognito,
       );
@@ -255,7 +266,8 @@ class Settings extends _$Settings {
     }
 
     try {
-      final success = await (await _prefs).setBool(_isPageFlipKey, isPageFlip);
+      final repo = await _repo;
+      final success = await repo.setBool(_isPageFlipKey, isPageFlip);
       if (!success) {
         throw Exception('Failed to save page flip setting');
       }
@@ -283,11 +295,11 @@ class Settings extends _$Settings {
     }
 
     try {
-      final prefs = await _prefs;
+      final repo = await _repo;
       final originalIsRubyEnabled = state.value!.isRubyEnabled;
 
       // Phase 1: isRubyEnabled設定を保存
-      final success = await prefs.setBool(_isRubyEnabledKey, isRubyEnabled);
+      final success = await repo.setBool(_isRubyEnabledKey, isRubyEnabled);
       if (!success) {
         throw Exception('Failed to save ruby enabled setting');
       }
@@ -301,19 +313,19 @@ class Settings extends _$Settings {
           'Failed to create new settings: $e\nStack trace: $stackTrace',
         );
         // Phase 1をロールバック
-        await _rollbackIsRubyEnabled(prefs, originalIsRubyEnabled);
+        await _rollbackIsRubyEnabled(repo, originalIsRubyEnabled);
         rethrow;
       }
 
       // Phase 2: 必要に応じて行間を調整（失敗時はロールバック）
       if (isRubyEnabled && newSettings.lineHeight < minLineHeightWithRuby) {
-        final lineHeightSuccess = await prefs.setDouble(
+        final lineHeightSuccess = await repo.setDouble(
           _lineHeightKey,
           minLineHeightWithRuby,
         );
         if (!lineHeightSuccess) {
           // ロールバック: isRubyEnabledを元に戻す
-          await _rollbackIsRubyEnabled(prefs, originalIsRubyEnabled);
+          await _rollbackIsRubyEnabled(repo, originalIsRubyEnabled);
           throw Exception(
             'Failed to save line height setting. Ruby setting has been rolled back.',
           );
@@ -335,11 +347,11 @@ class Settings extends _$Settings {
   ///
   /// ロールバック処理自体が失敗した場合は、クリティカルエラーとして扱う。
   Future<void> _rollbackIsRubyEnabled(
-    SharedPreferences prefs,
+    PreferencesRepository repo,
     bool originalValue,
   ) async {
     try {
-      final rollbackSuccess = await prefs.setBool(
+      final rollbackSuccess = await repo.setBool(
         _isRubyEnabledKey,
         originalValue,
       );

@@ -230,26 +230,6 @@ void main() {
       expect(settings.isRubyEnabled, isTrue);
       expect(settings.lineHeight, equals(1.3));
     });
-
-    // ロールバック機構のテストについて:
-    //
-    // 注: SharedPreferencesのモック実装(setMockInitialValues)では、
-    // 永続化処理の成功・失敗を制御できないため、以下のテストケースを
-    // 実装することができません:
-    //
-    // 1. Phase 2失敗時のロールバック検証
-    //    - lineHeight永続化失敗時にisRubyEnabledが元に戻ることを検証
-    // 2. ロールバック失敗時の挙動検証
-    //    - ロールバック自体が失敗した場合のエラーメッセージを検証
-    // 3. Phase 1失敗時の挙動検証
-    //    - isRubyEnabled永続化失敗時の処理を検証
-    //
-    // これらのテストを実装するには、以下のいずれかの対応が必要です:
-    // - SharedPreferencesをラップするrepositoryパターンの導入
-    // - カスタムモックの実装
-    // - 統合テスト環境での検証
-    //
-    // 現時点では、ロールバック機構の実装は手動テストで検証する必要があります。
   });
 
   group('AppSettings', () {
