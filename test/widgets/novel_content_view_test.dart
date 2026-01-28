@@ -114,6 +114,47 @@ void main() {
   });
 
   group('NovelContentView with ruby control', () {
+    testWidgets('isRubyEnabled=trueのときstrutStyleが設定される', (tester) async {
+      final elements = <NovelContentElement>[
+        PlainText('テストテキスト'),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NovelContentView(
+              elements: elements,
+            ),
+          ),
+        ),
+      );
+
+      final richText = tester.widget<RichText>(find.byType(RichText));
+      expect(richText.strutStyle, isNotNull);
+      expect(richText.strutStyle?.height, equals(1.8));
+      expect(richText.strutStyle?.forceStrutHeight, isTrue);
+    });
+
+    testWidgets('isRubyEnabled=falseのときstrutStyleがnull', (tester) async {
+      final elements = <NovelContentElement>[
+        PlainText('テストテキスト'),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NovelContentView(
+              elements: elements,
+              isRubyEnabled: false,
+            ),
+          ),
+        ),
+      );
+
+      final richText = tester.widget<RichText>(find.byType(RichText));
+      expect(richText.strutStyle, isNull);
+    });
+
     test('buildSpansはisRubyEnabledがtrueのときルビを含む', () {
       final elements = <NovelContentElement>[
         PlainText('これは'),

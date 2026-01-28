@@ -23,14 +23,17 @@ class NovelContentView extends HookWidget {
     final defaultStyle = DefaultTextStyle.of(context).style;
 
     // ルビの高さを考慮して、行の高さを少し多めに確保する
+    // ルビ無効時は StrutStyle を使わず、lineHeight をそのまま反映
     // スタイル計算をメモ化してパフォーマンスを向上
     final strutStyle = useMemoized(
-      () => StrutStyle(
-        fontSize: defaultStyle.fontSize,
-        height: 1.8, // 行間の倍率
-        forceStrutHeight: true,
-      ),
-      [defaultStyle.fontSize],
+      () => isRubyEnabled
+          ? StrutStyle(
+              fontSize: defaultStyle.fontSize,
+              height: 1.8, // 行間の倍率
+              forceStrutHeight: true,
+            )
+          : null,
+      [defaultStyle.fontSize, isRubyEnabled],
     );
 
     // span生成処理をメモ化してelementsが変更された時のみ再計算
