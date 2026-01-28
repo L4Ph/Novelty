@@ -134,7 +134,9 @@ class Settings extends _$Settings {
       }
       state = AsyncData(state.value!.copyWith(themeMode: mode));
     } catch (e, stackTrace) {
-      debugPrint('Error saving theme mode setting: $e');
+      debugPrint(
+        'Error saving theme mode setting: $e\nStack trace: $stackTrace',
+      );
       state = AsyncError(e, stackTrace);
       rethrow;
     }
@@ -153,7 +155,9 @@ class Settings extends _$Settings {
       }
       state = AsyncData(state.value!.copyWith(fontSize: size));
     } catch (e, stackTrace) {
-      debugPrint('Error saving font size setting: $e');
+      debugPrint(
+        'Error saving font size setting: $e\nStack trace: $stackTrace',
+      );
       state = AsyncError(e, stackTrace);
       rethrow;
     }
@@ -172,7 +176,9 @@ class Settings extends _$Settings {
       }
       state = AsyncData(state.value!.copyWith(lineHeight: height));
     } catch (e, stackTrace) {
-      debugPrint('Error saving line height setting: $e');
+      debugPrint(
+        'Error saving line height setting: $e\nStack trace: $stackTrace',
+      );
       state = AsyncError(e, stackTrace);
       rethrow;
     }
@@ -191,7 +197,9 @@ class Settings extends _$Settings {
       }
       state = AsyncData(state.value!.copyWith(fontFamily: family));
     } catch (e, stackTrace) {
-      debugPrint('Error saving font family setting: $e');
+      debugPrint(
+        'Error saving font family setting: $e\nStack trace: $stackTrace',
+      );
       state = AsyncError(e, stackTrace);
       rethrow;
     }
@@ -210,7 +218,7 @@ class Settings extends _$Settings {
       }
       state = AsyncData(state.value!.copyWith(isVertical: isVertical));
     } catch (e, stackTrace) {
-      debugPrint('Error saving vertical setting: $e');
+      debugPrint('Error saving vertical setting: $e\nStack trace: $stackTrace');
       state = AsyncError(e, stackTrace);
       rethrow;
     }
@@ -232,7 +240,9 @@ class Settings extends _$Settings {
       }
       state = AsyncData(state.value!.copyWith(isIncognito: isIncognito));
     } catch (e, stackTrace) {
-      debugPrint('Error saving incognito setting: $e');
+      debugPrint(
+        'Error saving incognito setting: $e\nStack trace: $stackTrace',
+      );
       state = AsyncError(e, stackTrace);
       rethrow;
     }
@@ -251,7 +261,9 @@ class Settings extends _$Settings {
       }
       state = AsyncData(state.value!.copyWith(isPageFlip: isPageFlip));
     } catch (e, stackTrace) {
-      debugPrint('Error saving page flip setting: $e');
+      debugPrint(
+        'Error saving page flip setting: $e\nStack trace: $stackTrace',
+      );
       state = AsyncError(e, stackTrace);
       rethrow;
     }
@@ -280,7 +292,18 @@ class Settings extends _$Settings {
         throw Exception('Failed to save ruby enabled setting');
       }
 
-      var newSettings = state.value!.copyWith(isRubyEnabled: isRubyEnabled);
+      // Phase 1成功後の例外もロールバック対象
+      AppSettings newSettings;
+      try {
+        newSettings = state.value!.copyWith(isRubyEnabled: isRubyEnabled);
+      } catch (e, stackTrace) {
+        debugPrint(
+          'Failed to create new settings: $e\nStack trace: $stackTrace',
+        );
+        // Phase 1をロールバック
+        await _rollbackIsRubyEnabled(prefs, originalIsRubyEnabled);
+        rethrow;
+      }
 
       // Phase 2: 必要に応じて行間を調整（失敗時はロールバック）
       if (isRubyEnabled && newSettings.lineHeight < minLineHeightWithRuby) {
@@ -290,7 +313,7 @@ class Settings extends _$Settings {
         );
         if (!lineHeightSuccess) {
           // ロールバック: isRubyEnabledを元に戻す
-          await prefs.setBool(_isRubyEnabledKey, originalIsRubyEnabled);
+          await _rollbackIsRubyEnabled(prefs, originalIsRubyEnabled);
           throw Exception(
             'Failed to save line height setting. Ruby setting has been rolled back.',
           );
@@ -305,6 +328,39 @@ class Settings extends _$Settings {
       );
       state = AsyncError(e, stackTrace);
       rethrow;
+    }
+  }
+
+  /// isRubyEnabledのロールバック処理。
+  ///
+  /// ロールバック処理自体が失敗した場合は、クリティカルエラーとして扱う。
+  Future<void> _rollbackIsRubyEnabled(
+    SharedPreferences prefs,
+    bool originalValue,
+  ) async {
+    try {
+      final rollbackSuccess = await prefs.setBool(
+        _isRubyEnabledKey,
+        originalValue,
+      );
+      if (!rollbackSuccess) {
+        debugPrint(
+          'CRITICAL: Rollback failed - data may be in inconsistent state.',
+        );
+        throw Exception(
+          'Failed to save line height and rollback failed. '
+          'Settings may be inconsistent. Please restart the app.',
+        );
+      }
+    } on Exception catch (rollbackError, rollbackStackTrace) {
+      // Exceptionの場合はそのまま再スロー
+      debugPrint(
+        'CRITICAL: Rollback threw exception: $rollbackError\n$rollbackStackTrace',
+      );
+      throw Exception(
+        'Failed to save line height and rollback threw exception. '
+        'Settings are inconsistent. Please restart the app.',
+      );
     }
   }
 }

@@ -58,8 +58,8 @@ class ReaderSettingsPage extends ConsumerWidget {
             onChanged: (value) async {
               try {
                 await ref.read(settingsProvider.notifier).setFontSize(value);
-              } on Exception catch (e) {
-                debugPrint('Failed to save font size: $e');
+              } on Exception catch (e, stackTrace) {
+                debugPrint('Failed to save font size: $e\n$stackTrace');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -94,8 +94,8 @@ class ReaderSettingsPage extends ConsumerWidget {
                   await ref
                       .read(settingsProvider.notifier)
                       .setFontFamily(value);
-                } on Exception catch (e) {
-                  debugPrint('Failed to save font family: $e');
+                } on Exception catch (e, stackTrace) {
+                  debugPrint('Failed to save font family: $e\n$stackTrace');
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -165,8 +165,8 @@ class ReaderSettingsPage extends ConsumerWidget {
                     await ref
                         .read(settingsProvider.notifier)
                         .setLineHeight(value);
-                  } on Exception catch (e) {
-                    debugPrint('Failed to save line height: $e');
+                  } on Exception catch (e, stackTrace) {
+                    debugPrint('Failed to save line height: $e\n$stackTrace');
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -189,8 +189,8 @@ class ReaderSettingsPage extends ConsumerWidget {
               await ref
                   .read(settingsProvider.notifier)
                   .setIsVertical(isVertical: value);
-            } on Exception catch (e) {
-              debugPrint('Failed to save is vertical: $e');
+            } on Exception catch (e, stackTrace) {
+              debugPrint('Failed to save is vertical: $e\n$stackTrace');
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -211,8 +211,8 @@ class ReaderSettingsPage extends ConsumerWidget {
                 await ref
                     .read(settingsProvider.notifier)
                     .setIsPageFlip(isPageFlip: value);
-              } on Exception catch (e) {
-                debugPrint('Failed to save is page flip: $e');
+              } on Exception catch (e, stackTrace) {
+                debugPrint('Failed to save is page flip: $e\n$stackTrace');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -233,8 +233,8 @@ class ReaderSettingsPage extends ConsumerWidget {
               await ref
                   .read(settingsProvider.notifier)
                   .setIsRubyEnabled(isRubyEnabled: value);
-            } on Exception catch (e) {
-              debugPrint('Failed to save is ruby enabled: $e');
+            } on Exception catch (e, stackTrace) {
+              debugPrint('Failed to save is ruby enabled: $e\n$stackTrace');
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
