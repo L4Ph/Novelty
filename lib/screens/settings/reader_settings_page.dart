@@ -158,7 +158,7 @@ class ReaderSettingsPage extends ConsumerWidget {
                     ? Settings.minLineHeightWithRuby
                     : Settings.minLineHeightWithoutRuby,
                 max: 3,
-                divisions: settings.isRubyEnabled ? 17 : 22,
+                divisions: settings.isRubyEnabled ? 17 : 20,
                 label: settings.lineHeight.toStringAsFixed(1),
                 onChanged: (value) async {
                   try {

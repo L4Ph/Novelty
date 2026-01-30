@@ -92,7 +92,7 @@ class Settings extends _$Settings {
   /// ルビ非表示時の最小行間。
   ///
   /// ルビが非表示の場合、より詰まった表示が可能。
-  static const double minLineHeightWithoutRuby = 0.8;
+  static const double minLineHeightWithoutRuby = 1;
 
   PreferencesRepository? _repository;
 

@@ -214,7 +214,7 @@ void main() {
       expect(settings.lineHeight, equals(1.3));
     });
 
-    test('setIsRubyEnabled(true)でlineHeight<0.8の極端な値でも1.3に調整される', () async {
+    test('setIsRubyEnabled(true)でlineHeight<1.0の極端な値でも1.3に調整される', () async {
       SharedPreferences.setMockInitialValues({
         'line_height': 0.5,
       });
