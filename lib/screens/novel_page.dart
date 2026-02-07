@@ -73,17 +73,24 @@ class NovelPage extends HookConsumerWidget {
           };
         }, [novelInfo]);
 
-        // エピソードマップを作成（タイトル表示用）
-        final episodeDataMap = useMemoized(() {
-          // エピソードリストがnullの場合は空のMapを返す
-          if (novelInfo.episodes == null) {
-            return <int, Episode>{};
-          }
-          return {
-            for (final e in novelInfo.episodes!)
-              if (e.index != null) e.index!: e,
-          };
-        }, [novelInfo]);
+        // 現在のエピソード番号が含まれるページを計算
+        final currentPage = ((currentEpisode.value - 1) ~/ 100) + 1;
+
+        // エピソードリストを監視
+        final episodeListAsync = ref.watch(
+          episodeListProvider('${ncode}_$currentPage'),
+        );
+
+        // 現在のエピソードを取得
+        final currentEpisodeData = episodeListAsync.maybeWhen(
+          data: (episodes) {
+            return episodes.firstWhere(
+              (e) => e.index == currentEpisode.value,
+              orElse: () => const Episode(),
+            );
+          },
+          orElse: () => null,
+        );
 
         // PageControllerをメモ化（itemCountが変わったときのみ再作成）
         final pageController = useMemoized(
@@ -113,7 +120,11 @@ class NovelPage extends HookConsumerWidget {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
                 title: Text(
-                  buildTitle(novelInfo, currentEpisode.value, episodeDataMap),
+                  buildTitle(
+                    novelInfo,
+                    currentEpisode.value,
+                    currentEpisodeData,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -301,7 +312,7 @@ class NovelPage extends HookConsumerWidget {
   static String buildTitle(
     NovelInfo novelInfo,
     int currentEpisodeNum,
-    Map<int, Episode> episodeDataMap,
+    Episode? currentEpisode,
   ) {
     // 短編の場合はタイトルのみ
     if (novelInfo.novelType == 2) {
@@ -309,10 +320,7 @@ class NovelPage extends HookConsumerWidget {
     }
 
     // 連載の場合
-    // エピソードマップから現在のエピソード番号に対応するエピソードを取得
-    final currentEpisodeData = episodeDataMap[currentEpisodeNum];
-
-    final subtitle = currentEpisodeData?.subtitle;
+    final subtitle = currentEpisode?.subtitle;
 
     // サブタイトルがある場合は「第X話 サブタイトル」
     // ない場合は「第X話」のみ

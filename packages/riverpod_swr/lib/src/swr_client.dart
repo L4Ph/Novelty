@@ -185,7 +185,12 @@ class _SwrSubscription<T> {
       final newData =
           await client._executeFetch(key, fetcher, onPersist, options);
       if (_isDisposed) return;
-      emitData(newData);
+
+      // watcherが存在する場合は、fetcherのデータを送出しない
+      // watcherがDBの正確な状態を監視しているため
+      if (watcher == null) {
+        emitData(newData);
+      }
     } on Object catch (e, st) {
       if (_isDisposed) return;
       emitError(e, st);
