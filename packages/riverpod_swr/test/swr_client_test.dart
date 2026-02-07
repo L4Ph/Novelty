@@ -173,5 +173,85 @@ void main() {
       await sub.cancel();
       await watcherController.close();
     });
+
+    test('revalidate中にfetcherがエラーを投げた場合、watcherの有無に関わらずエラーを送出', () async {
+      const key = 'test';
+      final watcherController = StreamController<String>.broadcast();
+      var fetcherCallCount = 0;
+
+      final stream = client.watch<String>(
+        key: key,
+        fetcher: () async {
+          fetcherCallCount++;
+          if (fetcherCallCount > 1) {
+            throw Exception('Network error');
+          }
+          return 'initial-data';
+        },
+        watcher: () => watcherController.stream,
+      );
+
+      final errors = <Object>[];
+      final sub = stream.listen(
+        (_) {},
+        onError: errors.add,
+      );
+
+      // 初回のfetcher呼び出しを待つ
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // revalidateを実行（エラーが発生するはず）
+      await client.mutate<String>(key);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      // エラーが送出されることを確認
+      expect(errors, isNotEmpty);
+      expect(errors.first.toString(), contains('Network error'));
+
+      await sub.cancel();
+      await watcherController.close();
+    });
+
+    test('onPersistが失敗してもwatcherは正常にデータを送出できる', () async {
+      const key = 'test';
+      final watcherController = StreamController<String>.broadcast();
+
+      final stream = client.watch<String>(
+        key: key,
+        fetcher: () async => 'fetcher-data',
+        watcher: () => watcherController.stream,
+        onPersist: (data) async {
+          // DB保存に失敗する
+          throw Exception('Database write failed');
+        },
+      );
+
+      final history = <String>[];
+      final sub = stream.listen(history.add);
+
+      // 初回のfetcher呼び出しを待つ（onPersistは失敗するがエラーは無視される）
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // watcherから正しいデータを送出
+      watcherController.add('watcher-data');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // watcherのデータは正常に送出される
+      expect(history, contains('watcher-data'));
+
+      await sub.cancel();
+      await watcherController.close();
+    });
+
+    test('watcherがない場合、fetcherのエラーは正しく送出される', () async {
+      const key = 'test';
+
+      final stream = client.watch<String>(
+        key: key,
+        fetcher: () async => throw Exception('Fetch failed'),
+      );
+
+      expect(stream, emitsError(isA<Exception>()));
+    });
   });
 }

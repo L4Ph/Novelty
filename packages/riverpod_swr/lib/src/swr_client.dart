@@ -87,7 +87,12 @@ class SwrClient {
     _cache[key] = data;
 
     if (onPersist != null) {
-      await onPersist(data);
+      try {
+        await onPersist(data);
+      } on Object catch (_) {
+        // onPersistのエラーは無視する
+        // データの取得には成功しているため、永続化の失敗は致命的ではない
+      }
     }
 
     return data;
