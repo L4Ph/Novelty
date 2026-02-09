@@ -90,22 +90,23 @@ class NovelContentBody extends HookWidget {
             );
 
             // システムジェスチャーエリアを考慮したパディング計算
+            // SafeAreaが既にpaddingを適用しているので、systemGestureInsetsのみを追加
             final systemGestureInsets = MediaQuery.of(context).systemGestureInsets;
 
-            // 縦書きモード用（横スクロール）: 左右端のバックジェスチャーと競合するので左右にパディング追加
+            // 縦書きモード用（横スクロール）: 左右端のバックジェスチャー領域を確保
             final verticalModePadding = EdgeInsets.only(
-              left: 16 + systemGestureInsets.left,
-              right: 16 + systemGestureInsets.right,
-              top: 16,
-              bottom: 16,
+              left: systemGestureInsets.left,
+              right: systemGestureInsets.right,
+              top: 0,
+              bottom: 0,
             );
 
-            // 横書きモード用（縦スクロール）: 下端のホームジェスチャーと競合するので下にパディング追加
+            // 横書きモード用（縦スクロール）: 下端のホームジェスチャー領域を確保
             final horizontalModePadding = EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 16,
-              bottom: 16 + systemGestureInsets.bottom,
+              left: 0,
+              right: 0,
+              top: 0,
+              bottom: systemGestureInsets.bottom,
             );
 
             if (settingsData.isVertical) {
