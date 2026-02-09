@@ -89,6 +89,25 @@ class NovelContentBody extends HookWidget {
               height: settingsData.lineHeight,
             );
 
+            // システムジェスチャーエリアを考慮したパディング計算
+            final systemGestureInsets = MediaQuery.of(context).systemGestureInsets;
+
+            // 縦書きモード用（横スクロール）: 左右端のバックジェスチャーと競合するので左右にパディング追加
+            final verticalModePadding = EdgeInsets.only(
+              left: 16 + systemGestureInsets.left,
+              right: 16 + systemGestureInsets.right,
+              top: 16,
+              bottom: 16,
+            );
+
+            // 横書きモード用（縦スクロール）: 下端のホームジェスチャーと競合するので下にパディング追加
+            final horizontalModePadding = EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: 16 + systemGestureInsets.bottom,
+            );
+
             if (settingsData.isVertical) {
               // NovelContentElementをTategakiElementに変換
               final tategakiElements = TategakiConverter.convert(
@@ -106,7 +125,7 @@ class NovelContentBody extends HookWidget {
                       tategakiElements,
                       width: constraints.maxWidth,
                       height: constraints.maxHeight,
-                      padding: const EdgeInsets.all(16),
+                      padding: verticalModePadding,
                     );
                   },
                 );
@@ -119,7 +138,7 @@ class NovelContentBody extends HookWidget {
                     'novel_vertical_${ncode}_$episode',
                   ),
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.all(16),
+                  padding: verticalModePadding,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return RepaintBoundary(
@@ -139,7 +158,7 @@ class NovelContentBody extends HookWidget {
 
             return SingleChildScrollView(
               key: PageStorageKey<String>('novel_horizontal_${ncode}_$episode'),
-              padding: const EdgeInsets.all(16),
+              padding: horizontalModePadding,
               child: RepaintBoundary(
                 child: DefaultTextStyle(
                   style: textStyle,
