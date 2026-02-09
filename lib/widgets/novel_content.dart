@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -90,23 +92,24 @@ class NovelContentBody extends HookWidget {
             );
 
             // システムジェスチャーエリアを考慮したパディング計算
-            // SafeAreaが既にpaddingを適用しているので、systemGestureInsetsのみを追加
+            // SafeAreaが既にpaddingを適用し、その上にsystemGestureInsetsを追加
+            // デスクトップ環境ではsystemGestureInsetsが0なので、最低16pxを確保
             final systemGestureInsets = MediaQuery.of(context).systemGestureInsets;
 
             // 縦書きモード用（横スクロール）: 左右端のバックジェスチャー領域を確保
             final verticalModePadding = EdgeInsets.only(
-              left: systemGestureInsets.left,
-              right: systemGestureInsets.right,
-              top: 0,
-              bottom: 0,
+              left: math.max(16.0, systemGestureInsets.left),
+              right: math.max(16.0, systemGestureInsets.right),
+              top: 16,
+              bottom: 16,
             );
 
             // 横書きモード用（縦スクロール）: 下端のホームジェスチャー領域を確保
             final horizontalModePadding = EdgeInsets.only(
-              left: 0,
-              right: 0,
-              top: 0,
-              bottom: systemGestureInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: math.max(16.0, systemGestureInsets.bottom),
             );
 
             if (settingsData.isVertical) {

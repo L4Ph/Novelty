@@ -699,43 +699,72 @@ class _EpisodeListTile extends ConsumerWidget {
     int episodeNumber,
     bool isDownloaded,
   ) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      useSafeArea: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!isDownloaded)
-              ListTile(
-                leading: const Icon(Icons.download),
-                title: const Text('ダウンロード'),
-                onTap: () {
-                  Navigator.pop(context);
-                  unawaited(handleDownload(context, ref, episodeNumber));
-                },
-              ),
-            if (isDownloaded)
-              ListTile(
-                leading: Icon(
-                  Icons.delete,
-                  color: Theme.of(context).colorScheme.error,
+    if (!context.mounted) return;
+
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        useSafeArea: true,
+        builder: (bottomSheetContext) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isDownloaded)
+                ListTile(
+                  leading: const Icon(Icons.download),
+                  title: const Text('ダウンロード'),
+                  onTap: () async {
+                    Navigator.pop(bottomSheetContext);
+                    try {
+                      await handleDownload(context, ref, episodeNumber);
+                    } catch (e, stackTrace) {
+                      debugPrint('予期しないエラー: $e\n$stackTrace');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('予期しないエラーが発生しました')),
+                        );
+                      }
+                    }
+                  },
                 ),
-                title: Text(
-                  '削除',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
+              if (isDownloaded)
+                ListTile(
+                  leading: Icon(
+                    Icons.delete,
+                    color: Theme.of(bottomSheetContext).colorScheme.error,
                   ),
+                  title: Text(
+                    '削除',
+                    style: TextStyle(
+                      color: Theme.of(bottomSheetContext).colorScheme.error,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(bottomSheetContext);
+                    try {
+                      await handleDelete(context, ref, episodeNumber);
+                    } catch (e, stackTrace) {
+                      debugPrint('予期しないエラー: $e\n$stackTrace');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('予期しないエラーが発生しました')),
+                        );
+                      }
+                    }
+                  },
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                  unawaited(handleDelete(context, ref, episodeNumber));
-                },
-              ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    } on Exception catch (e) {
+      debugPrint('メニュー表示エラー: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('メニューを表示できませんでした')),
+        );
+      }
+    }
   }
 
   Future<void> handleDelete(
@@ -751,10 +780,11 @@ class _EpisodeListTile extends ConsumerWidget {
           const SnackBar(content: Text('削除しました')),
         );
       }
-    } on Exception catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('削除エラー: $e\n$stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('削除に失敗しました: $e')),
+          const SnackBar(content: Text('削除に失敗しました')),
         );
       }
     }
@@ -785,10 +815,11 @@ class _EpisodeListTile extends ConsumerWidget {
           const SnackBar(content: Text('ダウンロードに失敗しました')),
         );
       }
-    } on Exception catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('ダウンロードエラー: $e\n$stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラーが発生しました: $e')),
+          const SnackBar(content: Text('ダウンロードに失敗しました')),
         );
       }
     }
