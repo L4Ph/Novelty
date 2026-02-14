@@ -13,6 +13,20 @@ void main() {
       });
     });
 
+    group('欧文句読点', () {
+      test('.を﹒に変換する', () {
+        expect(GlyphMapper.map('.'), '﹒');
+      });
+
+      test('!を︕に変換する', () {
+        expect(GlyphMapper.map('!'), '︕');
+      });
+
+      test('?を︖に変換する', () {
+        expect(GlyphMapper.map('?'), '︖');
+      });
+    });
+
     group('長音・ダッシュ', () {
       test('ーを丨に変換する', () {
         expect(GlyphMapper.map('ー'), '丨');
@@ -20,6 +34,38 @@ void main() {
 
       test('—を丨に変換する', () {
         expect(GlyphMapper.map('—'), '丨');
+      });
+
+      test('―を丨に変換する', () {
+        expect(GlyphMapper.map('―'), '丨');
+      });
+
+      test('–を丨に変換する', () {
+        expect(GlyphMapper.map('–'), '丨');
+      });
+
+      test('‐を丨に変換する', () {
+        expect(GlyphMapper.map('‐'), '丨');
+      });
+    });
+
+    group('中点', () {
+      test('・を｜に変換する', () {
+        expect(GlyphMapper.map('・'), '｜');
+      });
+
+      test('･を｜に変換する', () {
+        expect(GlyphMapper.map('･'), '｜');
+      });
+    });
+
+    group('二重山括弧', () {
+      test('《を︽に変換する', () {
+        expect(GlyphMapper.map('《'), '︽');
+      });
+
+      test('》を︾に変換する', () {
+        expect(GlyphMapper.map('》'), '︾');
       });
     });
 
