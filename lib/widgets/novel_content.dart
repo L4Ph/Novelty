@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -89,6 +91,27 @@ class NovelContentBody extends HookWidget {
               height: settingsData.lineHeight,
             );
 
+            // システムジェスチャーエリアを考慮したパディング計算
+            // SafeAreaが既にpaddingを適用し、その上にsystemGestureInsetsを追加
+            // デスクトップ環境ではsystemGestureInsetsが0なので、最低16pxを確保
+            final systemGestureInsets = MediaQuery.of(context).systemGestureInsets;
+
+            // 縦書きモード用（横スクロール）: 左右端のバックジェスチャー領域を確保
+            final verticalModePadding = EdgeInsets.only(
+              left: math.max(16.0, systemGestureInsets.left),
+              right: math.max(16.0, systemGestureInsets.right),
+              top: 16,
+              bottom: 16,
+            );
+
+            // 横書きモード用（縦スクロール）: 下端のホームジェスチャー領域を確保
+            final horizontalModePadding = EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 16,
+              bottom: math.max(16.0, systemGestureInsets.bottom),
+            );
+
             if (settingsData.isVertical) {
               // NovelContentElementをTategakiElementに変換
               final tategakiElements = TategakiConverter.convert(
@@ -106,7 +129,7 @@ class NovelContentBody extends HookWidget {
                       tategakiElements,
                       width: constraints.maxWidth,
                       height: constraints.maxHeight,
-                      padding: const EdgeInsets.all(16),
+                      padding: verticalModePadding,
                     );
                   },
                 );
@@ -119,7 +142,7 @@ class NovelContentBody extends HookWidget {
                     'novel_vertical_${ncode}_$episode',
                   ),
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.all(16),
+                  padding: verticalModePadding,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return RepaintBoundary(
@@ -139,7 +162,7 @@ class NovelContentBody extends HookWidget {
 
             return SingleChildScrollView(
               key: PageStorageKey<String>('novel_horizontal_${ncode}_$episode'),
-              padding: const EdgeInsets.all(16),
+              padding: horizontalModePadding,
               child: RepaintBoundary(
                 child: DefaultTextStyle(
                   style: textStyle,

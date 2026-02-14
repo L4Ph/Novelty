@@ -638,137 +638,133 @@ class _EpisodeListTile extends ConsumerWidget {
     }
 
     final isOffline = ref.watch(isOfflineProvider);
-
-    // Determine swipe background colors and icons
-    Widget buildSwipeBackground({
-      required Alignment alignment,
-      required Color color,
-      required Color onColor,
-      required IconData icon,
-      required String label,
-    }) {
-      return Container(
-        color: color,
-        alignment: alignment,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (alignment == Alignment.centerRight) ...[
-              Text(
-                label,
-                style: TextStyle(
-                  color: onColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            Icon(icon, color: onColor),
-            if (alignment == Alignment.centerLeft) ...[
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: onColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-
     final isDownloaded = episode.isDownloaded;
 
-    return Dismissible(
-      key: Key('episode_$ncode$episodeNumber'),
-      direction: isOffline
-          ? DismissDirection.none
-          : DismissDirection.horizontal,
-      background: buildSwipeBackground(
-        alignment: Alignment.centerLeft,
-        color: Theme.of(context).colorScheme.primary,
-        onColor: Theme.of(context).colorScheme.onPrimary,
-        icon: Icons.download,
-        label: 'ダウンロード',
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '第$episodeNumber話',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            episodeTitle,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              height: 1.4,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
-      secondaryBackground: buildSwipeBackground(
-        alignment: Alignment.centerRight,
-        color: Theme.of(context).colorScheme.error,
-        onColor: Theme.of(context).colorScheme.onError,
-        icon: Icons.delete,
-        label: '削除',
-      ),
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.startToEnd) {
-          // Swipe Right -> Download
-          if (isDownloaded) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('既にダウンロード済みです')),
-            );
-            return false;
-          }
-          await handleDownload(context, ref, episodeNumber);
-          return false; // Don't dismiss
-        } else if (direction == DismissDirection.endToStart) {
-          // Swipe Left -> Delete
-          // We attempt delete even if UI thinks it's not downloaded, just in case state is out of sync.
-          // DB update is safe to run on non-downloaded items (no-op).
-          await handleDelete(context, ref, episodeNumber);
-          return false; // Don't dismiss
-        }
-        return false;
+      subtitle: episode.update != null
+          ? Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '更新日: ${episode.update}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            )
+          : null,
+      trailing: isDownloaded
+          ? Icon(
+              Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary,
+            )
+          : null,
+      onTap: () {
+        final uri = Uri(
+          path: '/novel/$ncode/$episodeNumber',
+          queryParameters: episode.revised != null
+              ? {'revised': episode.revised}
+              : null,
+        );
+        unawaited(context.push(uri.toString()));
       },
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '第$episodeNumber話',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              episodeTitle,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                height: 1.4,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        subtitle: episode.update != null
-            ? Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '更新日: ${episode.update}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              )
-            : null,
-        trailing: isDownloaded
-            ? Icon(
-                Icons.check_circle,
-                color: Theme.of(context).colorScheme.primary,
-              )
-            : null,
-        onTap: () {
-          final uri = Uri(
-            path: '/novel/$ncode/$episodeNumber',
-            queryParameters: episode.revised != null
-                ? {'revised': episode.revised}
-                : null,
-          );
-          unawaited(context.push(uri.toString()));
-        },
-      ),
+      onLongPress: isOffline
+          ? null
+          : () => _showEpisodeMenu(context, ref, episodeNumber, isDownloaded),
     );
+  }
+
+  /// エピソードの長押しメニューを表示
+  Future<void> _showEpisodeMenu(
+    BuildContext context,
+    WidgetRef ref,
+    int episodeNumber,
+    bool isDownloaded,
+  ) async {
+    if (!context.mounted) return;
+
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        useSafeArea: true,
+        builder: (bottomSheetContext) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isDownloaded)
+                ListTile(
+                  leading: const Icon(Icons.download),
+                  title: const Text('ダウンロード'),
+                  onTap: () async {
+                    Navigator.pop(bottomSheetContext);
+                    try {
+                      await handleDownload(context, ref, episodeNumber);
+                    } catch (e, stackTrace) {
+                      debugPrint('予期しないエラー: $e\n$stackTrace');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('予期しないエラーが発生しました')),
+                        );
+                      }
+                    }
+                  },
+                ),
+              if (isDownloaded)
+                ListTile(
+                  leading: Icon(
+                    Icons.delete,
+                    color: Theme.of(bottomSheetContext).colorScheme.error,
+                  ),
+                  title: Text(
+                    '削除',
+                    style: TextStyle(
+                      color: Theme.of(bottomSheetContext).colorScheme.error,
+                    ),
+                  ),
+                  onTap: () async {
+                    Navigator.pop(bottomSheetContext);
+                    try {
+                      await handleDelete(context, ref, episodeNumber);
+                    } catch (e, stackTrace) {
+                      debugPrint('予期しないエラー: $e\n$stackTrace');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('予期しないエラーが発生しました')),
+                        );
+                      }
+                    }
+                  },
+                ),
+            ],
+          ),
+        ),
+      );
+    } on Exception catch (e) {
+      debugPrint('メニュー表示エラー: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('メニューを表示できませんでした')),
+        );
+      }
+    }
   }
 
   Future<void> handleDelete(
@@ -784,10 +780,11 @@ class _EpisodeListTile extends ConsumerWidget {
           const SnackBar(content: Text('削除しました')),
         );
       }
-    } on Exception catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('削除エラー: $e\n$stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('削除に失敗しました: $e')),
+          const SnackBar(content: Text('削除に失敗しました')),
         );
       }
     }
@@ -818,10 +815,11 @@ class _EpisodeListTile extends ConsumerWidget {
           const SnackBar(content: Text('ダウンロードに失敗しました')),
         );
       }
-    } on Exception catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('ダウンロードエラー: $e\n$stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラーが発生しました: $e')),
+          const SnackBar(content: Text('ダウンロードに失敗しました')),
         );
       }
     }
