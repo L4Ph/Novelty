@@ -71,6 +71,15 @@ class SwrClient {
     _cache.clear();
   }
 
+  /// 指定された [key] のキャッシュと購読を完全に破棄します。
+  ///
+  /// Providerが破棄される際に呼び出され、古いキャッシュが再利用されるのを防ぎます。
+  void invalidate(String key) {
+    _subscriptions[key]?._dispose();
+    _subscriptions.remove(key);
+    _cache.remove(key);
+  }
+
   bool _shouldFetch(String key, SwrOptions options) {
     // 簡易的な実装: 常に再検証するか、有効期限をチェックする
     // 現在は staleTime=0 と同等の挙動
@@ -132,7 +141,9 @@ class _SwrSubscription<T> {
     _gcTimer = null;
 
     scheduleMicrotask(() {
-      if (_isDisposed) return;
+      if (_isDisposed) {
+        return;
+      }
 
       // 1. キャッシュデータがあれば送出
       final cachedData = client._cache[key];
@@ -169,7 +180,9 @@ class _SwrSubscription<T> {
   }
 
   void _startWatcher() {
-    if (watcher == null || _watcherSubscription != null) return;
+    if (watcher == null || _watcherSubscription != null) {
+      return;
+    }
 
     _watcherSubscription = watcher!().listen(
       (data) {
@@ -183,7 +196,9 @@ class _SwrSubscription<T> {
   }
 
   Future<void> revalidate() async {
-    if (_isFetching || _isDisposed) return;
+    if (_isFetching || _isDisposed) {
+      return;
+    }
 
     _isFetching = true;
     try {

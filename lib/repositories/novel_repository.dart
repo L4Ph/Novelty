@@ -63,6 +63,11 @@ class NovelRepository {
 
   final SwrClient _swrClient;
 
+  /// 指定されたキーのSWRキャッシュを無効化する
+  void invalidateSwrCache(String key) {
+    _swrClient.invalidate(key);
+  }
+
   /// ダウンロード進捗のストリームコントローラー
   final Map<String, StreamController<DownloadProgress>> _progressControllers =
       {};
@@ -615,6 +620,12 @@ Stream<NovelInfo> novelInfoWithCache(
   ref.keepAlive();
   final normalizedNcode = ncode.toNormalizedNcode();
   final repository = ref.watch(novelRepositoryProvider);
+
+  ref.onDispose(() {
+    // SWRキャッシュをクリアして、Pull to Refresh時に古いデータが残らないようにする
+    repository.invalidateSwrCache('novel_info:$normalizedNcode');
+  });
+
   return repository.watchNovelInfo(normalizedNcode);
 }
 
@@ -740,6 +751,13 @@ Stream<List<Episode>> episodeList(
   final ncode = parts[0];
   final page = int.parse(parts[1]);
   final repository = ref.watch(novelRepositoryProvider);
+
+  ref.onDispose(() {
+    // SWRキャッシュをクリアして、Pull to Refresh時に古いデータが残らないようにする
+    repository.invalidateSwrCache(
+      'episode_list:${ncode.toNormalizedNcode()}:$page',
+    );
+  });
 
   return repository.watchEpisodeList(ncode, page);
 }
