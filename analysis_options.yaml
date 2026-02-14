@@ -13,12 +13,11 @@ analyzer:
   plugins:
     - custom_lint
   errors:
-    lines_longer_than_80_chars: ignore
     invalid_annotation_target: ignore
-  exclude: 
+  exclude:
     - lib/models/*.g.dart
     - lib/models/*.freezed.dart
-    - 'test/**.mocks.dart'
+    - "test/**.mocks.dart"
 
 linter:
   # The lint rules applied to this project can be customized in the
