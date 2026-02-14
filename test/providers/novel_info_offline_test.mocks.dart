@@ -1169,6 +1169,12 @@ class MockNovelRepository extends _i1.Mock implements _i14.NovelRepository {
           as _i15.AsyncValue<_i16.AppSettings>);
 
   @override
+  void invalidateSwrCache(String? key) => super.noSuchMethod(
+    Invocation.method(#invalidateSwrCache, [key]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
   void dispose() => super.noSuchMethod(
     Invocation.method(#dispose, []),
     returnValueForMissingStub: null,
