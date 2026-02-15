@@ -6,8 +6,8 @@ part of 'novel_search_query.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-NovelSearchQuery _$NovelSearchQueryFromJson(Map<String, dynamic> json) =>
-    NovelSearchQuery(
+_NovelSearchQuery _$NovelSearchQueryFromJson(Map<String, dynamic> json) =>
+    _NovelSearchQuery(
       word: json['word'] as String?,
       notword: json['notword'] as String?,
       title: json['title'] as bool? ?? false,
@@ -66,7 +66,7 @@ NovelSearchQuery _$NovelSearchQueryFromJson(Map<String, dynamic> json) =>
       st: (json['st'] as num?)?.toInt() ?? 1,
     );
 
-Map<String, dynamic> _$NovelSearchQueryToJson(NovelSearchQuery instance) =>
+Map<String, dynamic> _$NovelSearchQueryToJson(_NovelSearchQuery instance) =>
     <String, dynamic>{
       'word': instance.word,
       'notword': instance.notword,
