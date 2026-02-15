@@ -48,7 +48,7 @@ class RankingState {
     bool? isLoadingMore,
     bool? hasMore,
     int? page,
-    Object? error,
+    Value<Object?>? error,
   }) {
     return RankingState(
       novels: novels ?? this.novels,
@@ -56,7 +56,7 @@ class RankingState {
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasMore: hasMore ?? this.hasMore,
       page: page ?? this.page,
-      error: error ?? this.error,
+      error: error != null ? error.value : this.error,
     );
   }
 
@@ -169,7 +169,7 @@ class RankingNotifier extends _$RankingNotifier {
       state = currentState.copyWith(
         isLoading: false,
         isLoadingMore: false,
-        error: e,
+        error: Value<Object?>(e),
       );
     }
   }

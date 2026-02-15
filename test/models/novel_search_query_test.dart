@@ -17,6 +17,7 @@ void main() {
       expect(query.word, equals('fantasy'));
       expect(query.title, isTrue);
       expect(query.genre, equals([1, 2]));
+      expect(query.order, equals('popular'));
       expect(query.lim, equals(50));
     });
 

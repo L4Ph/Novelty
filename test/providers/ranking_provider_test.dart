@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/ranking_provider.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 
 void main() {
   group('RankingState', () {
@@ -49,7 +50,9 @@ void main() {
     test('copyWithでerrorを設定できる', () {
       const state = RankingState();
 
-      final withError = state.copyWith(error: Exception('error'));
+      final withError = state.copyWith(
+        error: Value<Object?>(Exception('error')),
+      );
       expect(withError.error, isNotNull);
     });
 

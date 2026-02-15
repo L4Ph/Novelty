@@ -8,12 +8,13 @@ import 'package:novelty/models/novel_info.dart';
 class NovelSearchResult {
   /// [NovelSearchResult]のコンストラクタ
   const NovelSearchResult({
-    required this.novels,
+    required List<NovelInfo> novels,
     required this.allCount,
-  });
+  }) : _novels = novels;
 
-  /// 検索結果の小説リスト
-  final List<NovelInfo> novels;
+  /// 検索結果の小説リスト（変更不可）
+  List<NovelInfo> get novels => List.unmodifiable(_novels);
+  final List<NovelInfo> _novels;
 
   /// 検索条件に一致する全件数
   final int allCount;
@@ -24,7 +25,7 @@ class NovelSearchResult {
     int? allCount,
   }) {
     return NovelSearchResult(
-      novels: novels ?? this.novels,
+      novels: novels ?? _novels,
       allCount: allCount ?? this.allCount,
     );
   }
@@ -34,11 +35,11 @@ class NovelSearchResult {
       identical(this, other) ||
       other is NovelSearchResult &&
           runtimeType == other.runtimeType &&
-          listEquals(novels, other.novels) &&
+          listEquals(_novels, other._novels) &&
           allCount == other.allCount;
 
   @override
-  int get hashCode => Object.hash(Object.hashAll(novels), allCount);
+  int get hashCode => Object.hash(Object.hashAll(_novels), allCount);
 
   @override
   String toString() =>
