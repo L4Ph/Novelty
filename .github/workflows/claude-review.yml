@@ -139,7 +139,7 @@ jobs:
         continue-on-error: true
         with:
           claude_args: |
-            --model claude-sonnet-4-5-20250929
+            --model ${{ steps.pr-diff.outputs.use_opus == 'true' && 'claude-opus-4-6' || 'claude-sonnet-4-5-20250929' }}
             --allowedTools Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh pr view:*),Bash(git log:*),Bash(git show:*),Read,Grep,Glob,WebSearch,WebFetch
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           show_full_output: true
