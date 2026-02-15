@@ -75,9 +75,19 @@ class SwrClient {
   ///
   /// Providerが破棄される際に呼び出され、古いキャッシュが再利用されるのを防ぎます。
   void invalidate(String key) {
-    _subscriptions[key]?._dispose();
-    _subscriptions.remove(key);
-    _cache.remove(key);
+    try {
+      final subscription = _subscriptions[key];
+      if (subscription != null) {
+        subscription._dispose();
+      }
+    } on Exception catch (e) {
+      // ignore: avoid_print
+      print('Failed to dispose subscription for "$key": $e');
+    } finally {
+      // _disposeが失敗しても、キャッシュとサブスクリプションは確実に削除
+      _subscriptions.remove(key);
+      _cache.remove(key);
+    }
   }
 
   bool _shouldFetch(String key, SwrOptions options) {
@@ -98,9 +108,11 @@ class SwrClient {
     if (onPersist != null) {
       try {
         await onPersist(data);
-      } on Object catch (_) {
+      } on Object catch (e) {
         // onPersistのエラーは無視する
         // データの取得には成功しているため、永続化の失敗は致命的ではない
+        // ignore: avoid_print
+        print('Failed to persist data for key "$key": $e');
       }
     }
 
