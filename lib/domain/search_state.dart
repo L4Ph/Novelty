@@ -1,32 +1,80 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'search_state.freezed.dart';
 part 'search_state.g.dart';
 
 /// 検索状態を表すクラス。
-@freezed
-abstract class SearchState with _$SearchState {
+@immutable
+class SearchState {
   /// [SearchState]のコンストラクタ
-  const factory SearchState({
-    /// 現在の検索クエリ
-    @Default(NovelSearchQuery()) NovelSearchQuery query,
+  const SearchState({
+    this.query = const NovelSearchQuery(),
+    this.results = const [],
+    this.allCount = 0,
+    this.isLoading = false,
+    this.isSearching = false,
+  });
 
-    /// 検索結果の小説リスト
-    @Default([]) List<NovelInfo> results,
+  /// 現在の検索クエリ
+  final NovelSearchQuery query;
 
-    /// 検索条件に一致する全件数
-    @Default(0) int allCount,
+  /// 検索結果の小説リスト
+  final List<NovelInfo> results;
 
-    /// ローディング中かどうか
-    @Default(false) bool isLoading,
+  /// 検索条件に一致する全件数
+  final int allCount;
 
-    /// 検索中かどうか（検索結果を表示中）
-    @Default(false) bool isSearching,
-  }) = _SearchState;
+  /// ローディング中かどうか
+  final bool isLoading;
+
+  /// 検索中かどうか（検索結果を表示中）
+  final bool isSearching;
+
+  /// フィールドを変更した新しいインスタンスを作成する
+  SearchState copyWith({
+    NovelSearchQuery? query,
+    List<NovelInfo>? results,
+    int? allCount,
+    bool? isLoading,
+    bool? isSearching,
+  }) {
+    return SearchState(
+      query: query ?? this.query,
+      results: results ?? this.results,
+      allCount: allCount ?? this.allCount,
+      isLoading: isLoading ?? this.isLoading,
+      isSearching: isSearching ?? this.isSearching,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SearchState &&
+          runtimeType == other.runtimeType &&
+          query == other.query &&
+          listEquals(results, other.results) &&
+          allCount == other.allCount &&
+          isLoading == other.isLoading &&
+          isSearching == other.isSearching;
+
+  @override
+  int get hashCode => Object.hash(
+    query,
+    Object.hashAll(results),
+    allCount,
+    isLoading,
+    isSearching,
+  );
+
+  @override
+  String toString() =>
+      'SearchState(query: $query, results: ${results.length} items, '
+      'allCount: $allCount, isLoading: $isLoading, '
+      'isSearching: $isSearching)';
 }
 
 /// [SearchState]の拡張メソッド。

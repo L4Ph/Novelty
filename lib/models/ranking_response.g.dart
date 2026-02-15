@@ -6,8 +6,8 @@ part of 'ranking_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_RankingResponse _$RankingResponseFromJson(Map<String, dynamic> json) =>
-    _RankingResponse(
+RankingResponse _$RankingResponseFromJson(Map<String, dynamic> json) =>
+    RankingResponse(
       ncode: json['ncode'] as String,
       rank: const StringToIntConverter().fromJson(json['rank']),
       pt: const StringToIntConverter().fromJson(json['pt']),
@@ -26,7 +26,7 @@ _RankingResponse _$RankingResponseFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$RankingResponseToJson(
-  _RankingResponse instance,
+  RankingResponse instance,
 ) => <String, dynamic>{
   'ncode': instance.ncode,
   'rank': const StringToIntConverter().toJson(instance.rank),

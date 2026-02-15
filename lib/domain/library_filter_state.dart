@@ -1,20 +1,52 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter/foundation.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'library_filter_state.freezed.dart';
 part 'library_filter_state.g.dart';
 
 /// ライブラリのフィルタ状態を表すモデル。
-@freezed
-abstract class LibraryFilterState with _$LibraryFilterState {
+@immutable
+class LibraryFilterState {
   /// コンストラクタ。
-  const factory LibraryFilterState({
-    /// 連載中の作品のみを表示するかどうか。
-    @Default(false) bool showOnlyOngoing,
+  const LibraryFilterState({
+    this.showOnlyOngoing = false,
+    this.selectedGenre,
+  });
 
-    /// 選択されたジャンル。
-    int? selectedGenre,
-  }) = _LibraryFilterState;
+  /// 連載中の作品のみを表示するかどうか。
+  final bool showOnlyOngoing;
+
+  /// 選択されたジャンル。
+  final int? selectedGenre;
+
+  /// フィールドを変更した新しいインスタンスを作成する
+  LibraryFilterState copyWith({
+    bool? showOnlyOngoing,
+    Value<int?>? selectedGenre,
+  }) {
+    return LibraryFilterState(
+      showOnlyOngoing: showOnlyOngoing ?? this.showOnlyOngoing,
+      selectedGenre: selectedGenre != null
+          ? selectedGenre.value
+          : this.selectedGenre,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LibraryFilterState &&
+          runtimeType == other.runtimeType &&
+          showOnlyOngoing == other.showOnlyOngoing &&
+          selectedGenre == other.selectedGenre;
+
+  @override
+  int get hashCode => Object.hash(showOnlyOngoing, selectedGenre);
+
+  @override
+  String toString() =>
+      'LibraryFilterState(showOnlyOngoing: $showOnlyOngoing, '
+      'selectedGenre: $selectedGenre)';
 }
 
 /// ライブラリのフィルタ状態を管理するNotifier。
@@ -32,7 +64,9 @@ class LibraryFilterStateNotifier extends _$LibraryFilterStateNotifier {
 
   /// ジャンルフィルタを設定する。
   void setSelectedGenre(int? genre) {
-    state = state.copyWith(selectedGenre: genre);
+    state = state.copyWith(
+      selectedGenre: genre != null ? Value(genre) : const Value(null),
+    );
   }
 
   /// フィルタ状態をリセットする。

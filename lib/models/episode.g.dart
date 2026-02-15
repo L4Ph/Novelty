@@ -6,7 +6,7 @@ part of 'episode.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_Episode _$EpisodeFromJson(Map<String, dynamic> json) => _Episode(
+Episode _$EpisodeFromJson(Map<String, dynamic> json) => Episode(
   subtitle: json['subtitle'] as String?,
   url: json['url'] as String?,
   update: json['update'] as String?,
@@ -18,7 +18,7 @@ _Episode _$EpisodeFromJson(Map<String, dynamic> json) => _Episode(
   isDownloaded: json['isDownloaded'] as bool? ?? false,
 );
 
-Map<String, dynamic> _$EpisodeToJson(_Episode instance) => <String, dynamic>{
+Map<String, dynamic> _$EpisodeToJson(Episode instance) => <String, dynamic>{
   'subtitle': instance.subtitle,
   'url': instance.url,
   'update': instance.update,

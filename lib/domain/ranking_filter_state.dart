@@ -1,20 +1,52 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter/foundation.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'ranking_filter_state.freezed.dart';
 part 'ranking_filter_state.g.dart';
 
 /// ランキングのフィルタ状態を表すモデル。
-@freezed
-abstract class RankingFilterState with _$RankingFilterState {
+@immutable
+class RankingFilterState {
   /// コンストラクタ。
-  const factory RankingFilterState({
-    /// 連載中の作品のみを表示するかどうか。
-    @Default(false) bool showOnlyOngoing,
+  const RankingFilterState({
+    this.showOnlyOngoing = false,
+    this.selectedGenre,
+  });
 
-    /// 選択されたジャンル。
-    int? selectedGenre,
-  }) = _RankingFilterState;
+  /// 連載中の作品のみを表示するかどうか。
+  final bool showOnlyOngoing;
+
+  /// 選択されたジャンル。
+  final int? selectedGenre;
+
+  /// フィールドを変更した新しいインスタンスを作成する
+  RankingFilterState copyWith({
+    bool? showOnlyOngoing,
+    Value<int?>? selectedGenre,
+  }) {
+    return RankingFilterState(
+      showOnlyOngoing: showOnlyOngoing ?? this.showOnlyOngoing,
+      selectedGenre: selectedGenre != null
+          ? selectedGenre.value
+          : this.selectedGenre,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RankingFilterState &&
+          runtimeType == other.runtimeType &&
+          showOnlyOngoing == other.showOnlyOngoing &&
+          selectedGenre == other.selectedGenre;
+
+  @override
+  int get hashCode => Object.hash(showOnlyOngoing, selectedGenre);
+
+  @override
+  String toString() =>
+      'RankingFilterState(showOnlyOngoing: $showOnlyOngoing, '
+      'selectedGenre: $selectedGenre)';
 }
 
 /// ランキングタイプごとのフィルタ状態を管理するNotifier。
@@ -33,7 +65,9 @@ class RankingFilterStateNotifier extends _$RankingFilterStateNotifier {
 
   /// ジャンルフィルタを設定する。
   void setSelectedGenre(int? genre) {
-    state = state.copyWith(selectedGenre: genre);
+    state = state.copyWith(
+      selectedGenre: genre != null ? Value(genre) : const Value(null),
+    );
   }
 
   /// フィルタ状態をリセットする。
