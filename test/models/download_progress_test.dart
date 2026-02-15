@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/models/download_progress.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 
 void main() {
   group('DownloadProgress', () {
@@ -121,8 +122,25 @@ void main() {
         );
 
         // errorMessageを設定
-        final withError = progress.copyWith(errorMessage: 'Network error');
+        final withError = progress.copyWith(
+          errorMessage: const Value('Network error'),
+        );
         expect(withError.errorMessage, equals('Network error'));
+      });
+
+      test('copyWithでerrorMessageをnullに設定できる', () {
+        const progress = DownloadProgress(
+          currentEpisode: 5,
+          totalEpisodes: 10,
+          isDownloading: false,
+          errorMessage: 'Network error',
+        );
+
+        final cleared = progress.copyWith(
+          errorMessage: const Value<String?>(null),
+        );
+        expect(cleared.errorMessage, isNull);
+        expect(cleared.currentEpisode, equals(5)); // 変更されていない
       });
 
       test('同じ値を持つインスタンスは等価', () {

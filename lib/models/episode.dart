@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:novelty/utils/ncode_utils.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 
 part 'episode.g.dart';
 
@@ -21,6 +22,13 @@ class Episode {
     this.body,
     this.novelUpdatedAt,
     this.isDownloaded = false,
+  });
+
+  /// JSONから[Episode]を生成するファクトリコンストラクタ
+  factory Episode.fromJson(Map<String, dynamic> json) => _$EpisodeFromJson({
+    ...json,
+    if (json['ncode'] is String)
+      'ncode': (json['ncode'] as String).toNormalizedNcode(),
   });
 
   /// サブタイトル。
@@ -61,37 +69,32 @@ class Episode {
   @JsonKey(defaultValue: false)
   final bool isDownloaded;
 
-  /// JSONから[Episode]を生成するファクトリコンストラクタ
-  factory Episode.fromJson(Map<String, dynamic> json) => _$EpisodeFromJson({
-    ...json,
-    if (json['ncode'] is String)
-      'ncode': (json['ncode'] as String).toNormalizedNcode(),
-  });
-
   /// JSONに変換する
   Map<String, dynamic> toJson() => _$EpisodeToJson(this);
 
   /// フィールドを変更した新しいインスタンスを作成する
   Episode copyWith({
-    String? subtitle,
-    String? url,
-    String? update,
-    String? revised,
-    String? ncode,
-    int? index,
-    String? body,
-    String? novelUpdatedAt,
+    Value<String?>? subtitle,
+    Value<String?>? url,
+    Value<String?>? update,
+    Value<String?>? revised,
+    Value<String?>? ncode,
+    Value<int?>? index,
+    Value<String?>? body,
+    Value<String?>? novelUpdatedAt,
     bool? isDownloaded,
   }) {
     return Episode(
-      subtitle: subtitle ?? this.subtitle,
-      url: url ?? this.url,
-      update: update ?? this.update,
-      revised: revised ?? this.revised,
-      ncode: ncode ?? this.ncode,
-      index: index ?? this.index,
-      body: body ?? this.body,
-      novelUpdatedAt: novelUpdatedAt ?? this.novelUpdatedAt,
+      subtitle: subtitle != null ? subtitle.value : this.subtitle,
+      url: url != null ? url.value : this.url,
+      update: update != null ? update.value : this.update,
+      revised: revised != null ? revised.value : this.revised,
+      ncode: ncode != null ? ncode.value : this.ncode,
+      index: index != null ? index.value : this.index,
+      body: body != null ? body.value : this.body,
+      novelUpdatedAt: novelUpdatedAt != null
+          ? novelUpdatedAt.value
+          : this.novelUpdatedAt,
       isDownloaded: isDownloaded ?? this.isDownloaded,
     );
   }

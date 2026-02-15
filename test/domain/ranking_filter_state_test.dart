@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 
 void main() {
   group('RankingFilterState', () {
@@ -27,9 +28,27 @@ void main() {
       expect(updated1.showOnlyOngoing, isTrue);
       expect(updated1.selectedGenre, isNull);
 
-      final updated2 = updated1.copyWith(selectedGenre: 2);
+      final updated2 = updated1.copyWith(selectedGenre: const Value(2));
       expect(updated2.showOnlyOngoing, isTrue);
       expect(updated2.selectedGenre, equals(2));
+    });
+
+    test('copyWithでnullを明示的に設定できる', () {
+      const state = RankingFilterState(selectedGenre: 1);
+
+      final updated = state.copyWith(selectedGenre: const Value<int?>(null));
+
+      expect(updated.selectedGenre, isNull);
+      expect(updated.showOnlyOngoing, equals(state.showOnlyOngoing));
+    });
+
+    test('copyWithでパラメータを省略すると元の値が保持される', () {
+      const state = RankingFilterState(selectedGenre: 1);
+
+      final updated = state.copyWith(showOnlyOngoing: true);
+
+      expect(updated.showOnlyOngoing, isTrue);
+      expect(updated.selectedGenre, equals(1)); // 変更されていない
     });
 
     test('同じ値を持つインスタンスは等価', () {

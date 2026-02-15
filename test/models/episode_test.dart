@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/models/episode.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 
 void main() {
   group('Episode', () {
@@ -38,11 +39,46 @@ void main() {
     test('copyWithでフィールドを変更できる', () {
       const episode = Episode(subtitle: 'Original');
 
-      final updated = episode.copyWith(subtitle: 'Updated', index: 2);
+      final updated = episode.copyWith(
+        subtitle: const Value('Updated'),
+        index: const Value(2),
+      );
 
       expect(updated.subtitle, equals('Updated'));
       expect(updated.index, equals(2));
       expect(updated.isDownloaded, isFalse); // 変更されていない
+    });
+
+    test('copyWithでnullを明示的に設定できる', () {
+      const episode = Episode(
+        subtitle: 'Original',
+        ncode: 'n1234',
+        index: 1,
+      );
+
+      final updated = episode.copyWith(
+        subtitle: const Value<String?>(null),
+        index: const Value<int?>(null),
+      );
+
+      expect(updated.subtitle, isNull);
+      expect(updated.ncode, equals('n1234')); // 変更されていない
+      expect(updated.index, isNull);
+    });
+
+    test('copyWithでパラメータを省略すると元の値が保持される', () {
+      const episode = Episode(
+        subtitle: 'Original',
+        ncode: 'n1234',
+        index: 1,
+      );
+
+      final updated = episode.copyWith(isDownloaded: true);
+
+      expect(updated.subtitle, equals('Original'));
+      expect(updated.ncode, equals('n1234'));
+      expect(updated.index, equals(1));
+      expect(updated.isDownloaded, isTrue);
     });
 
     test('fromJsonでJSONからインスタンスを生成できる', () {

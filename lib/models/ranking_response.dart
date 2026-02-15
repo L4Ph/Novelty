@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:novelty/models/string_to_int_converter.dart';
 import 'package:novelty/utils/ncode_utils.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 
 part 'ranking_response.g.dart';
 
@@ -28,6 +29,14 @@ class RankingResponse {
     this.generalAllNo,
     this.keyword,
   });
+
+  /// JSONから[RankingResponse]を生成するファクトリコンストラクタ
+  factory RankingResponse.fromJson(Map<String, dynamic> json) =>
+      _$RankingResponseFromJson({
+        ...json,
+        if (json['ncode'] is String)
+          'ncode': (json['ncode'] as String).toNormalizedNcode(),
+      });
 
   /// Nコード
   ///
@@ -100,47 +109,41 @@ class RankingResponse {
   /// キーワード。
   final String? keyword;
 
-  /// JSONから[RankingResponse]を生成するファクトリコンストラクタ
-  factory RankingResponse.fromJson(Map<String, dynamic> json) =>
-      _$RankingResponseFromJson({
-        ...json,
-        if (json['ncode'] is String)
-          'ncode': (json['ncode'] as String).toNormalizedNcode(),
-      });
-
   /// JSONに変換する
   Map<String, dynamic> toJson() => _$RankingResponseToJson(this);
 
   /// フィールドを変更した新しいインスタンスを作成する
   RankingResponse copyWith({
     String? ncode,
-    int? rank,
-    int? pt,
-    int? allPoint,
-    String? title,
-    int? novelType,
-    int? end,
-    int? genre,
-    String? writer,
-    String? story,
-    int? userId,
-    int? generalAllNo,
-    String? keyword,
+    Value<int?>? rank,
+    Value<int?>? pt,
+    Value<int?>? allPoint,
+    Value<String?>? title,
+    Value<int?>? novelType,
+    Value<int?>? end,
+    Value<int?>? genre,
+    Value<String?>? writer,
+    Value<String?>? story,
+    Value<int?>? userId,
+    Value<int?>? generalAllNo,
+    Value<String?>? keyword,
   }) {
     return RankingResponse(
       ncode: ncode ?? this.ncode,
-      rank: rank ?? this.rank,
-      pt: pt ?? this.pt,
-      allPoint: allPoint ?? this.allPoint,
-      title: title ?? this.title,
-      novelType: novelType ?? this.novelType,
-      end: end ?? this.end,
-      genre: genre ?? this.genre,
-      writer: writer ?? this.writer,
-      story: story ?? this.story,
-      userId: userId ?? this.userId,
-      generalAllNo: generalAllNo ?? this.generalAllNo,
-      keyword: keyword ?? this.keyword,
+      rank: rank != null ? rank.value : this.rank,
+      pt: pt != null ? pt.value : this.pt,
+      allPoint: allPoint != null ? allPoint.value : this.allPoint,
+      title: title != null ? title.value : this.title,
+      novelType: novelType != null ? novelType.value : this.novelType,
+      end: end != null ? end.value : this.end,
+      genre: genre != null ? genre.value : this.genre,
+      writer: writer != null ? writer.value : this.writer,
+      story: story != null ? story.value : this.story,
+      userId: userId != null ? userId.value : this.userId,
+      generalAllNo: generalAllNo != null
+          ? generalAllNo.value
+          : this.generalAllNo,
+      keyword: keyword != null ? keyword.value : this.keyword,
     );
   }
 

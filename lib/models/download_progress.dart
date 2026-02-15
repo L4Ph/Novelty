@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 
 /// ダウンロード進捗の状態を表すクラス。
 @immutable
@@ -40,13 +41,15 @@ class DownloadProgress {
     int? currentEpisode,
     int? totalEpisodes,
     bool? isDownloading,
-    String? errorMessage,
+    Value<String?>? errorMessage,
   }) {
     return DownloadProgress(
       currentEpisode: currentEpisode ?? this.currentEpisode,
       totalEpisodes: totalEpisodes ?? this.totalEpisodes,
       isDownloading: isDownloading ?? this.isDownloading,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: errorMessage != null
+          ? errorMessage.value
+          : this.errorMessage,
     );
   }
 

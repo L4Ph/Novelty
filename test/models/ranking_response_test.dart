@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/models/ranking_response.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 
 void main() {
   group('RankingResponse', () {
@@ -38,11 +39,48 @@ void main() {
     test('copyWithでフィールドを変更できる', () {
       const response = RankingResponse(ncode: 'n1234', rank: 1);
 
-      final updated = response.copyWith(rank: 2, pt: 2000);
+      final updated = response.copyWith(
+        rank: const Value(2),
+        pt: const Value(2000),
+      );
 
       expect(updated.ncode, equals('n1234'));
       expect(updated.rank, equals(2));
       expect(updated.pt, equals(2000));
+    });
+
+    test('copyWithでnullを明示的に設定できる', () {
+      const response = RankingResponse(
+        ncode: 'n1234',
+        rank: 1,
+        title: 'Original',
+        genre: 1,
+      );
+
+      final updated = response.copyWith(
+        rank: const Value<int?>(null),
+        title: const Value<String?>(null),
+      );
+
+      expect(updated.ncode, equals('n1234'));
+      expect(updated.rank, isNull);
+      expect(updated.title, isNull);
+      expect(updated.genre, equals(1)); // 変更されていない
+    });
+
+    test('copyWithでパラメータを省略すると元の値が保持される', () {
+      const response = RankingResponse(
+        ncode: 'n1234',
+        rank: 1,
+        title: 'Original',
+      );
+
+      final updated = response.copyWith(pt: const Value(100));
+
+      expect(updated.ncode, equals('n1234'));
+      expect(updated.rank, equals(1));
+      expect(updated.title, equals('Original'));
+      expect(updated.pt, equals(100));
     });
 
     test('fromJsonでJSONからインスタンスを生成できる', () {

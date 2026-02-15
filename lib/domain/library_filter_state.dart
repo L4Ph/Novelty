@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'library_filter_state.g.dart';
@@ -21,11 +22,13 @@ class LibraryFilterState {
   /// フィールドを変更した新しいインスタンスを作成する
   LibraryFilterState copyWith({
     bool? showOnlyOngoing,
-    int? selectedGenre,
+    Value<int?>? selectedGenre,
   }) {
     return LibraryFilterState(
       showOnlyOngoing: showOnlyOngoing ?? this.showOnlyOngoing,
-      selectedGenre: selectedGenre ?? this.selectedGenre,
+      selectedGenre: selectedGenre != null
+          ? selectedGenre.value
+          : this.selectedGenre,
     );
   }
 
@@ -61,7 +64,9 @@ class LibraryFilterStateNotifier extends _$LibraryFilterStateNotifier {
 
   /// ジャンルフィルタを設定する。
   void setSelectedGenre(int? genre) {
-    state = state.copyWith(selectedGenre: genre);
+    state = state.copyWith(
+      selectedGenre: genre != null ? Value(genre) : const Value(null),
+    );
   }
 
   /// フィルタ状態をリセットする。
