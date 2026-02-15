@@ -56,7 +56,7 @@ class SearchState {
       other is SearchState &&
           runtimeType == other.runtimeType &&
           query == other.query &&
-          results == other.results &&
+          listEquals(results, other.results) &&
           allCount == other.allCount &&
           isLoading == other.isLoading &&
           isSearching == other.isSearching;
@@ -64,7 +64,7 @@ class SearchState {
   @override
   int get hashCode => Object.hash(
     query,
-    results,
+    Object.hashAll(results),
     allCount,
     isLoading,
     isSearching,

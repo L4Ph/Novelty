@@ -34,11 +34,11 @@ class NovelSearchResult {
       identical(this, other) ||
       other is NovelSearchResult &&
           runtimeType == other.runtimeType &&
-          novels == other.novels &&
+          listEquals(novels, other.novels) &&
           allCount == other.allCount;
 
   @override
-  int get hashCode => Object.hash(novels, allCount);
+  int get hashCode => Object.hash(Object.hashAll(novels), allCount);
 
   @override
   String toString() =>

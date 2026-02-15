@@ -5,6 +5,7 @@ import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'ranking_provider.g.dart';
@@ -64,7 +65,7 @@ class RankingState {
       identical(this, other) ||
       other is RankingState &&
           runtimeType == other.runtimeType &&
-          novels == other.novels &&
+          listEquals(novels, other.novels) &&
           isLoading == other.isLoading &&
           isLoadingMore == other.isLoadingMore &&
           hasMore == other.hasMore &&
@@ -73,7 +74,7 @@ class RankingState {
 
   @override
   int get hashCode => Object.hash(
-    novels,
+    Object.hashAll(novels),
     isLoading,
     isLoadingMore,
     hasMore,
@@ -162,6 +163,7 @@ class RankingNotifier extends _$RankingNotifier {
         isLoadingMore: false,
         page: currentPageToFetch, // Update to the next page to fetch
         hasMore: hasMoreOnServer || newNovels.length >= 20,
+        error: const Value<Object?>(null),
       );
     } on Object catch (e) {
       state = currentState.copyWith(
