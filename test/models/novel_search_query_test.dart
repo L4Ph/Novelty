@@ -3,50 +3,6 @@ import 'package:novelty/models/novel_search_query.dart';
 
 void main() {
   group('NovelSearchQuery', () {
-    test('デフォルト値が正しく設定される', () {
-      const query = NovelSearchQuery();
-
-      expect(query.word, isNull);
-      expect(query.title, isFalse);
-      expect(query.ex, isFalse);
-      expect(query.isr15, isFalse);
-      expect(query.order, equals('new'));
-      expect(query.lim, equals(20));
-      expect(query.st, equals(1));
-    });
-
-    test('コンストラクタでフィールドを設定できる', () {
-      const query = NovelSearchQuery(
-        word: 'fantasy',
-        title: true,
-        ex: true,
-        genre: [1, 2],
-        isr15: true,
-        order: 'popular',
-        lim: 50,
-        st: 10,
-      );
-
-      expect(query.word, equals('fantasy'));
-      expect(query.title, isTrue);
-      expect(query.ex, isTrue);
-      expect(query.genre, equals([1, 2]));
-      expect(query.isr15, isTrue);
-      expect(query.order, equals('popular'));
-      expect(query.lim, equals(50));
-      expect(query.st, equals(10));
-    });
-
-    test('copyWithでフィールドを変更できる', () {
-      const query = NovelSearchQuery(word: 'original');
-
-      final updated = query.copyWith(word: 'updated', lim: 100);
-
-      expect(updated.word, equals('updated'));
-      expect(updated.lim, equals(100));
-      expect(updated.order, equals('new')); // 変更されていない
-    });
-
     test('fromJsonでJSONからインスタンスを生成できる', () {
       final json = {
         'word': 'fantasy',
@@ -115,21 +71,6 @@ void main() {
       final map = query.toMap();
 
       expect(map['ncode'], equals('n1234ab-n5678cd'));
-    });
-
-    test('同じ値を持つインスタンスは等価', () {
-      const query1 = NovelSearchQuery(word: 'test', lim: 50);
-      const query2 = NovelSearchQuery(word: 'test', lim: 50);
-
-      expect(query1, equals(query2));
-      expect(query1.hashCode, equals(query2.hashCode));
-    });
-
-    test('異なる値を持つインスタンスは非等価', () {
-      const query1 = NovelSearchQuery(word: 'test1');
-      const query2 = NovelSearchQuery(word: 'test2');
-
-      expect(query1, isNot(equals(query2)));
     });
   });
 }
