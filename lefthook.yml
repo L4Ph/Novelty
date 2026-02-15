@@ -2,8 +2,16 @@ pre-commit:
   commands:
     format:
       glob: "*.dart"
+      exclude:
+        - "*.g.dart"
+        - "*.mocks.dart"
+        - "*.freezed.dart"
       run: dart format {staged_files}
       stage_fixed: true
     analyze:
       glob: "*.dart"
+      exclude:
+        - "*.g.dart"
+        - "*.mocks.dart"
+        - "*.freezed.dart"
       run: dart analyze {staged_files}

@@ -98,7 +98,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
       });
 
       if (pageState.hasValue) {
-        allEpisodes.addAll(pageState.value!);
+        final episodes = pageState.value!;
+        allEpisodes.addAll(episodes);
       } else if (pageState.isLoading) {
         isListLoading = true;
       } else if (pageState.hasError) {

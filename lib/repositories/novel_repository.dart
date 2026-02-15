@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/download_progress.dart';
@@ -62,6 +63,9 @@ class NovelRepository {
   final AppDatabase _db;
 
   final SwrClient _swrClient;
+
+  /// SWRクライアントを取得する
+  SwrClient get swrClient => _swrClient;
 
   /// ダウンロード進捗のストリームコントローラー
   final Map<String, StreamController<DownloadProgress>> _progressControllers =
@@ -615,6 +619,18 @@ Stream<NovelInfo> novelInfoWithCache(
   ref.keepAlive();
   final normalizedNcode = ncode.toNormalizedNcode();
   final repository = ref.watch(novelRepositoryProvider);
+
+  // SWRクライアントを直接キャプチャして、Provider破棄時に確実にキャッシュをクリア
+  final swrClient = repository.swrClient;
+  ref.onDispose(() {
+    try {
+      swrClient.invalidate('novel_info:$normalizedNcode');
+    } on Exception catch (e) {
+      // キャッシュクリアの失敗は無視（アプリの動作に影響しない）
+      debugPrint('Failed to invalidate SWR cache: $e');
+    }
+  });
+
   return repository.watchNovelInfo(normalizedNcode);
 }
 
@@ -740,6 +756,19 @@ Stream<List<Episode>> episodeList(
   final ncode = parts[0];
   final page = int.parse(parts[1]);
   final repository = ref.watch(novelRepositoryProvider);
+
+  // SWRクライアントを直接キャプチャして、Provider破棄時に確実にキャッシュをクリア
+  final swrClient = repository.swrClient;
+  ref.onDispose(() {
+    try {
+      swrClient.invalidate(
+        'episode_list:${ncode.toNormalizedNcode()}:$page',
+      );
+    } on Exception catch (e) {
+      // キャッシュクリアの失敗は無視（アプリの動作に影響しない）
+      debugPrint('Failed to invalidate SWR cache: $e');
+    }
+  });
 
   return repository.watchEpisodeList(ncode, page);
 }
