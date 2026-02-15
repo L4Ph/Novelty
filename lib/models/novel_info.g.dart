@@ -6,7 +6,7 @@ part of 'novel_info.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => _NovelInfo(
+NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => NovelInfo(
   title: json['title'] as String?,
   ncode: json['ncode'] as String?,
   writer: json['writer'] as String?,
@@ -46,9 +46,7 @@ _NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => _NovelInfo(
   istenni: const StringToIntConverter().fromJson(json['istenni']),
 );
 
-Map<String, dynamic> _$NovelInfoToJson(
-  _NovelInfo instance,
-) => <String, dynamic>{
+Map<String, dynamic> _$NovelInfoToJson(NovelInfo instance) => <String, dynamic>{
   'title': instance.title,
   'ncode': instance.ncode,
   'writer': instance.writer,

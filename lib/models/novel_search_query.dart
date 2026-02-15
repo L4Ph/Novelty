@@ -1,207 +1,442 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter/foundation.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 
-part 'novel_search_query.freezed.dart';
 part 'novel_search_query.g.dart';
 
 /// なろう小説APIの検索クエリを表すクラス。
 ///
 /// [なろう小説API](https://dev.syosetu.com/man/api/) のGETパラメータを表現する。
-@freezed
-abstract class NovelSearchQuery with _$NovelSearchQuery {
+@immutable
+@JsonSerializable()
+class NovelSearchQuery {
   /// [NovelSearchQuery]のコンストラクタ
-  const factory NovelSearchQuery({
-    /// 検索単語。
-    ///
-    /// 半角または全角スペースで区切るとAND抽出になる。
-    String? word,
+  const NovelSearchQuery({
+    this.word,
+    this.notword,
+    this.title = false,
+    this.ex = false,
+    this.keyword = false,
+    this.wname = false,
+    this.biggenre,
+    this.notbiggenre,
+    this.genre,
+    this.notgenre,
+    this.userid,
+    this.isr15 = false,
+    this.isbl = false,
+    this.isgl = false,
+    this.iszankoku = false,
+    this.istensei = false,
+    this.istenni = false,
+    this.istt = false,
+    this.notr15 = false,
+    this.notbl = false,
+    this.notgl = false,
+    this.notzankoku = false,
+    this.nottensei = false,
+    this.nottenni = false,
+    this.minlen,
+    this.maxlen,
+    this.length,
+    this.kaiwaritu,
+    this.sasie,
+    this.mintime,
+    this.maxtime,
+    this.time,
+    this.ncode,
+    this.type,
+    this.buntai,
+    this.stop,
+    this.lastup,
+    this.lastupdate,
+    this.ispickup = false,
+    this.order = 'new',
+    this.lim = 20,
+    this.st = 1,
+  });
 
-    /// 除外単語。
-    ///
-    /// スペースで区切ることにより除外単語を増やせる。
-    String? notword,
+  /// 検索単語。
+  ///
+  /// 半角または全角スペースで区切るとAND抽出になる。
+  final String? word;
 
-    /// タイトルを検索対象にするか。
-    @Default(false) bool title,
+  /// 除外単語。
+  ///
+  /// スペースで区切ることにより除外単語を増やせる。
+  final String? notword;
 
-    /// あらすじを検索対象にするか。
-    @Default(false) bool ex,
+  /// タイトルを検索対象にするか。
+  @JsonKey(defaultValue: false)
+  final bool title;
 
-    /// キーワードを検索対象にするか。
-    @Default(false) bool keyword,
+  /// あらすじを検索対象にするか。
+  @JsonKey(defaultValue: false)
+  final bool ex;
 
-    /// 作者名を検索対象にするか。
-    @Default(false) bool wname,
+  /// キーワードを検索対象にするか。
+  @JsonKey(defaultValue: false)
+  final bool keyword;
 
-    /// 大ジャンル。
-    ///
-    /// [大ジャンル一覧](https://dev.syosetu.com/man/api/#biggenre)
-    List<int>? biggenre,
+  /// 作者名を検索対象にするか。
+  @JsonKey(defaultValue: false)
+  final bool wname;
 
-    /// 除外大ジャンル。
-    ///
-    /// [大ジャンル一覧](https://dev.syosetu.com/man/api/#biggenre)
-    List<int>? notbiggenre,
+  /// 大ジャンル。
+  ///
+  /// [大ジャンル一覧](https://dev.syosetu.com/man/api/#biggenre)
+  final List<int>? biggenre;
 
-    /// ジャンル。
-    ///
-    /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
-    List<int>? genre,
+  /// 除外大ジャンル。
+  ///
+  /// [大ジャンル一覧](https://dev.syosetu.com/man/api/#biggenre)
+  final List<int>? notbiggenre;
 
-    /// 除外ジャンル。
-    ///
-    /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
-    List<int>? notgenre,
+  /// ジャンル。
+  ///
+  /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
+  final List<int>? genre;
 
-    /// ユーザID。
-    List<int>? userid,
+  /// 除外ジャンル。
+  ///
+  /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
+  final List<int>? notgenre;
 
-    /// R15作品のみを対象とするか。
-    @Default(false) bool isr15,
+  /// ユーザID。
+  final List<int>? userid;
 
-    /// ボーイズラブ作品のみを対象とするか。
-    @Default(false) bool isbl,
+  /// R15作品のみを対象とするか。
+  @JsonKey(defaultValue: false)
+  final bool isr15;
 
-    /// ガールズラブ作品のみを対象とするか。
-    @Default(false) bool isgl,
+  /// ボーイズラブ作品のみを対象とするか。
+  @JsonKey(defaultValue: false)
+  final bool isbl;
 
-    /// 残酷な描写あり作品のみを対象とするか。
-    @Default(false) bool iszankoku,
+  /// ガールズラブ作品のみを対象とするか。
+  @JsonKey(defaultValue: false)
+  final bool isgl;
 
-    /// 異世界転生作品のみを対象とするか。
-    @Default(false) bool istensei,
+  /// 残酷な描写あり作品のみを対象とするか。
+  @JsonKey(defaultValue: false)
+  final bool iszankoku;
 
-    /// 異世界転移作品のみを対象とするか。
-    @Default(false) bool istenni,
+  /// 異世界転生作品のみを対象とするか。
+  @JsonKey(defaultValue: false)
+  final bool istensei;
 
-    /// 異世界転生・転移作品のみを対象とするか。
-    @Default(false) bool istt,
+  /// 異世界転移作品のみを対象とするか。
+  @JsonKey(defaultValue: false)
+  final bool istenni;
 
-    /// R15作品を除外するか。
-    @Default(false) bool notr15,
+  /// 異世界転生・転移作品のみを対象とするか。
+  @JsonKey(defaultValue: false)
+  final bool istt;
 
-    /// ボーイズラブ作品を除外するか。
-    @Default(false) bool notbl,
+  /// R15作品を除外するか。
+  @JsonKey(defaultValue: false)
+  final bool notr15;
 
-    /// ガールズラブ作品を除外するか。
-    @Default(false) bool notgl,
+  /// ボーイズラブ作品を除外するか。
+  @JsonKey(defaultValue: false)
+  final bool notbl;
 
-    /// 残酷な描写あり作品を除外するか。
-    @Default(false) bool notzankoku,
+  /// ガールズラブ作品を除外するか。
+  @JsonKey(defaultValue: false)
+  final bool notgl;
 
-    /// 異世界転生作品を除外するか。
-    @Default(false) bool nottensei,
+  /// 残酷な描写あり作品を除外するか。
+  @JsonKey(defaultValue: false)
+  final bool notzankoku;
 
-    /// 異世界転移作品を除外するか。
-    @Default(false) bool nottenni,
+  /// 異世界転生作品を除外するか。
+  @JsonKey(defaultValue: false)
+  final bool nottensei;
 
-    /// 最小文字数。
-    int? minlen,
+  /// 異世界転移作品を除外するか。
+  @JsonKey(defaultValue: false)
+  final bool nottenni;
 
-    /// 最大文字数。
-    int? maxlen,
+  /// 最小文字数。
+  final int? minlen;
 
-    /// 文字数範囲。
-    ///
-    /// `minlen` または `maxlen` と併用はできない。
-    /// 範囲指定する場合は、最小文字数と最大文字数をハイフン(-)記号で区切る。
-    String? length,
+  /// 最大文字数。
+  final int? maxlen;
 
-    /// 会話率範囲。
-    ///
-    /// 範囲指定する場合は、最低数と最大数をハイフン(-)記号で区切る。
-    String? kaiwaritu,
+  /// 文字数範囲。
+  ///
+  /// `minlen` または `maxlen` と併用はできない。
+  /// 範囲指定する場合は、最小文字数と最大文字数をハイフン(-)記号で区切る。
+  final String? length;
 
-    /// 挿絵数範囲。
-    ///
-    /// 範囲指定する場合は、最小数と最大数をハイフン(-)記号で区切る。
-    String? sasie,
+  /// 会話率範囲。
+  ///
+  /// 範囲指定する場合は、最低数と最大数をハイフン(-)記号で区切る。
+  final String? kaiwaritu;
 
-    /// 最小読了時間(分単位)。
-    int? mintime,
+  /// 挿絵数範囲。
+  ///
+  /// 範囲指定する場合は、最小数と最大数をハイフン(-)記号で区切る。
+  final String? sasie;
 
-    /// 最大読了時間(分単位)。
-    int? maxtime,
+  /// 最小読了時間(分単位)。
+  final int? mintime;
 
-    /// 読了時間範囲。
-    ///
-    /// `mintime` または `maxtime` と併用はできない。
-    /// 範囲指定する場合は、最小読了時間と最大読了時間をハイフン(-)記号で区切る。
-    String? time,
+  /// 最大読了時間(分単位)。
+  final int? maxtime;
 
-    /// Nコード。
-    ///
-    /// ハイフン(-)記号で区切ればOR検索ができる。
-    /// 常に小文字で扱う
-    List<String>? ncode,
+  /// 読了時間範囲。
+  ///
+  /// `mintime` または `maxtime` と併用はできない。
+  /// 範囲指定する場合は、最小読了時間と最大読了時間をハイフン(-)記号で区切る。
+  final String? time;
 
-    /// 作品タイプ。
-    ///
-    /// * `t` - 短編
-    /// * `r` - 連載中
-    /// * `er` - 完結済連載作品
-    /// * `re` - すべての連載作品(連載中および完結済)
-    /// * `ter` - 短編と完結済連載作品
-    String? type,
+  /// Nコード。
+  ///
+  /// ハイフン(-)記号で区切ればOR検索ができる。
+  /// 常に小文字で扱う
+  final List<String>? ncode;
 
-    /// 文体。
-    ///
-    /// ハイフン(-)記号で区切ればOR検索ができる。
-    /// * `1` - 字下げされておらず、連続改行が多い作品
-    /// * `2` - 字下げされていないが、改行数は平均な作品
-    /// * `4` - 字下げが適切だが、連続改行が多い作品
-    /// * `6` - 字下げが適切でかつ改行数も平均な作品
-    List<int>? buntai,
+  /// 作品タイプ。
+  ///
+  /// * `t` - 短編
+  /// * `r` - 連載中
+  /// * `er` - 完結済連載作品
+  /// * `re` - すべての連載作品(連載中および完結済)
+  /// * `ter` - 短編と完結済連載作品
+  final String? type;
 
-    /// 長期連載停止中作品に関する指定。
-    ///
-    /// * `1` - 長期連載停止中を除きます
-    /// * `2` - 長期連載停止中のみ取得します
-    int? stop,
+  /// 文体。
+  ///
+  /// ハイフン(-)記号で区切ればOR検索ができる。
+  /// * `1` - 字下げされておらず、連続改行が多い作品
+  /// * `2` - 字下げされていないが、改行数は平均な作品
+  /// * `4` - 字下げが適切だが、連続改行が多い作品
+  /// * `6` - 字下げが適切でかつ改行数も平均な作品
+  final List<int>? buntai;
 
-    /// 最終掲載日で抽出。
-    ///
-    /// * `thisweek` - 今週
-    /// * `lastweek` - 先週
-    /// * `sevenday` - 過去7日間
-    /// * `thismonth` - 今月
-    /// * `lastmonth` - 先月
-    /// * `unixtime-unixtime` - UNIXタイムスタンプで範囲指定
-    String? lastup,
+  /// 長期連載停止中作品に関する指定。
+  ///
+  /// * `1` - 長期連載停止中を除きます
+  /// * `2` - 長期連載停止中のみ取得します
+  final int? stop;
 
-    /// 最終更新日で抽出。
-    ///
-    /// * `thisweek` - 今週
-    /// * `lastweek` - 先週
-    /// * `sevenday` - 過去7日間
-    /// * `thismonth` - 今月
-    /// * `lastmonth` - 先月
-    /// * `unixtime-unixtime` - UNIXタイムスタンプで範囲指定
-    String? lastupdate,
+  /// 最終掲載日で抽出。
+  ///
+  /// * `thisweek` - 今週
+  /// * `lastweek` - 先週
+  /// * `sevenday` - 過去7日間
+  /// * `thismonth` - 今月
+  /// * `lastmonth` - 先月
+  /// * `unixtime-unixtime` - UNIXタイムスタンプで範囲指定
+  final String? lastup;
 
-    /// ピックアップ作品のみを対象とするか。
-    @Default(false) bool ispickup,
+  /// 最終更新日で抽出。
+  ///
+  /// * `thisweek` - 今週
+  /// * `lastweek` - 先週
+  /// * `sevenday` - 過去7日間
+  /// * `thismonth` - 今月
+  /// * `lastmonth` - 先月
+  /// * `unixtime-unixtime` - UNIXタイムスタンプで範囲指定
+  final String? lastupdate;
 
-    /// 出力順序。
-    ///
-    /// デフォルトは `new` (新着更新順)。
-    /// [出力順序一覧](https://dev.syosetu.com/man/api/#order)
-    @Default('new') String order,
+  /// ピックアップ作品のみを対象とするか。
+  @JsonKey(defaultValue: false)
+  final bool ispickup;
 
-    /// 最大出力数。
-    ///
-    /// 1～500。デフォルトは20。
-    @Default(20) int lim,
+  /// 出力順序。
+  ///
+  /// デフォルトは `new` (新着更新順)。
+  /// [出力順序一覧](https://dev.syosetu.com/man/api/#order)
+  @JsonKey(defaultValue: 'new')
+  final String order;
 
-    /// 表示開始位置。
-    ///
-    /// 1～2000。デフォルトは1。
-    @Default(1) int st,
-  }) = _NovelSearchQuery;
+  /// 最大出力数。
+  ///
+  /// 1～500。デフォルトは20。
+  @JsonKey(defaultValue: 20)
+  final int lim;
+
+  /// 表示開始位置。
+  ///
+  /// 1～2000。デフォルトは1。
+  @JsonKey(defaultValue: 1)
+  final int st;
 
   /// [NovelSearchQuery]を生成するためのファクトリコンストラクタ。
   factory NovelSearchQuery.fromJson(Map<String, dynamic> json) =>
       _$NovelSearchQueryFromJson(json);
+
+  /// JSONに変換する
+  Map<String, dynamic> toJson() => _$NovelSearchQueryToJson(this);
+
+  /// フィールドを変更した新しいインスタンスを作成する
+  NovelSearchQuery copyWith({
+    String? word,
+    String? notword,
+    bool? title,
+    bool? ex,
+    bool? keyword,
+    bool? wname,
+    List<int>? biggenre,
+    List<int>? notbiggenre,
+    List<int>? genre,
+    List<int>? notgenre,
+    List<int>? userid,
+    bool? isr15,
+    bool? isbl,
+    bool? isgl,
+    bool? iszankoku,
+    bool? istensei,
+    bool? istenni,
+    bool? istt,
+    bool? notr15,
+    bool? notbl,
+    bool? notgl,
+    bool? notzankoku,
+    bool? nottensei,
+    bool? nottenni,
+    int? minlen,
+    int? maxlen,
+    String? length,
+    String? kaiwaritu,
+    String? sasie,
+    int? mintime,
+    int? maxtime,
+    String? time,
+    List<String>? ncode,
+    String? type,
+    List<int>? buntai,
+    int? stop,
+    String? lastup,
+    String? lastupdate,
+    bool? ispickup,
+    String? order,
+    int? lim,
+    int? st,
+  }) {
+    return NovelSearchQuery(
+      word: word ?? this.word,
+      notword: notword ?? this.notword,
+      title: title ?? this.title,
+      ex: ex ?? this.ex,
+      keyword: keyword ?? this.keyword,
+      wname: wname ?? this.wname,
+      biggenre: biggenre ?? this.biggenre,
+      notbiggenre: notbiggenre ?? this.notbiggenre,
+      genre: genre ?? this.genre,
+      notgenre: notgenre ?? this.notgenre,
+      userid: userid ?? this.userid,
+      isr15: isr15 ?? this.isr15,
+      isbl: isbl ?? this.isbl,
+      isgl: isgl ?? this.isgl,
+      iszankoku: iszankoku ?? this.iszankoku,
+      istensei: istensei ?? this.istensei,
+      istenni: istenni ?? this.istenni,
+      istt: istt ?? this.istt,
+      notr15: notr15 ?? this.notr15,
+      notbl: notbl ?? this.notbl,
+      notgl: notgl ?? this.notgl,
+      notzankoku: notzankoku ?? this.notzankoku,
+      nottensei: nottensei ?? this.nottensei,
+      nottenni: nottenni ?? this.nottenni,
+      minlen: minlen ?? this.minlen,
+      maxlen: maxlen ?? this.maxlen,
+      length: length ?? this.length,
+      kaiwaritu: kaiwaritu ?? this.kaiwaritu,
+      sasie: sasie ?? this.sasie,
+      mintime: mintime ?? this.mintime,
+      maxtime: maxtime ?? this.maxtime,
+      time: time ?? this.time,
+      ncode: ncode ?? this.ncode,
+      type: type ?? this.type,
+      buntai: buntai ?? this.buntai,
+      stop: stop ?? this.stop,
+      lastup: lastup ?? this.lastup,
+      lastupdate: lastupdate ?? this.lastupdate,
+      ispickup: ispickup ?? this.ispickup,
+      order: order ?? this.order,
+      lim: lim ?? this.lim,
+      st: st ?? this.st,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NovelSearchQuery &&
+          runtimeType == other.runtimeType &&
+          word == other.word &&
+          notword == other.notword &&
+          title == other.title &&
+          ex == other.ex &&
+          keyword == other.keyword &&
+          wname == other.wname &&
+          biggenre == other.biggenre &&
+          notbiggenre == other.notbiggenre &&
+          genre == other.genre &&
+          notgenre == other.notgenre &&
+          userid == other.userid &&
+          isr15 == other.isr15 &&
+          isbl == other.isbl &&
+          isgl == other.isgl &&
+          iszankoku == other.iszankoku &&
+          istensei == other.istensei &&
+          istenni == other.istenni &&
+          istt == other.istt &&
+          notr15 == other.notr15 &&
+          notbl == other.notbl &&
+          notgl == other.notgl &&
+          notzankoku == other.notzankoku &&
+          nottensei == other.nottensei &&
+          nottenni == other.nottenni &&
+          minlen == other.minlen &&
+          maxlen == other.maxlen &&
+          length == other.length &&
+          kaiwaritu == other.kaiwaritu &&
+          sasie == other.sasie &&
+          mintime == other.mintime &&
+          maxtime == other.maxtime &&
+          time == other.time &&
+          ncode == other.ncode &&
+          type == other.type &&
+          buntai == other.buntai &&
+          stop == other.stop &&
+          lastup == other.lastup &&
+          lastupdate == other.lastupdate &&
+          ispickup == other.ispickup &&
+          order == other.order &&
+          lim == other.lim &&
+          st == other.st;
+
+  @override
+  int get hashCode => Object.hash(
+    word,
+    title,
+    ex,
+    keyword,
+    wname,
+    biggenre,
+    genre,
+    userid,
+    isr15,
+    isbl,
+    isgl,
+    iszankoku,
+    istensei,
+    istenni,
+    minlen,
+    maxlen,
+    ncode,
+    type,
+    order,
+    st,
+  );
+
+  @override
+  String toString() =>
+      'NovelSearchQuery(word: $word, order: $order, lim: $lim, st: $st)';
 }
 
 /// [NovelSearchQuery]をMapに変換する拡張メソッド。

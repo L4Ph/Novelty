@@ -1,27 +1,91 @@
 import 'dart:async';
 
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'ranking_provider.freezed.dart';
 part 'ranking_provider.g.dart';
 
-@freezed
 /// ランキングの状態を管理するクラス
-abstract class RankingState with _$RankingState {
+@immutable
+class RankingState {
   /// コンストラクタ
-  const factory RankingState({
-    @Default([]) List<NovelInfo> novels,
-    @Default(false) bool isLoading,
-    @Default(false) bool isLoadingMore,
-    @Default(true) bool hasMore,
-    @Default(1) int page,
+  const RankingState({
+    this.novels = const [],
+    this.isLoading = false,
+    this.isLoadingMore = false,
+    this.hasMore = true,
+    this.page = 1,
+    this.error,
+  });
+
+  /// 小説リスト
+  final List<NovelInfo> novels;
+
+  /// ローディング中かどうか
+  final bool isLoading;
+
+  /// 追加ローディング中かどうか
+  final bool isLoadingMore;
+
+  /// さらにデータがあるかどうか
+  final bool hasMore;
+
+  /// 現在のページ
+  final int page;
+
+  /// エラー（ある場合）
+  final Object? error;
+
+  /// フィールドを変更した新しいインスタンスを作成する
+  RankingState copyWith({
+    List<NovelInfo>? novels,
+    bool? isLoading,
+    bool? isLoadingMore,
+    bool? hasMore,
+    int? page,
     Object? error,
-  }) = _RankingState;
+  }) {
+    return RankingState(
+      novels: novels ?? this.novels,
+      isLoading: isLoading ?? this.isLoading,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      hasMore: hasMore ?? this.hasMore,
+      page: page ?? this.page,
+      error: error ?? this.error,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RankingState &&
+          runtimeType == other.runtimeType &&
+          novels == other.novels &&
+          isLoading == other.isLoading &&
+          isLoadingMore == other.isLoadingMore &&
+          hasMore == other.hasMore &&
+          page == other.page &&
+          error == other.error;
+
+  @override
+  int get hashCode => Object.hash(
+    novels,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    page,
+    error,
+  );
+
+  @override
+  String toString() =>
+      'RankingState(novels: ${novels.length} items, isLoading: $isLoading, '
+      'isLoadingMore: $isLoadingMore, hasMore: $hasMore, page: $page, '
+      'error: $error)';
 }
 
 @riverpod
@@ -50,7 +114,6 @@ class RankingNotifier extends _$RankingNotifier {
     state = currentState.copyWith(
       isLoading: isFirstPage,
       isLoadingMore: !isFirstPage,
-      error: null,
     );
 
     try {
@@ -63,7 +126,8 @@ class RankingNotifier extends _$RankingNotifier {
       var hasMoreOnServer = true;
 
       // Fetch loop to ensure we get enough items after filtering
-      // Limit to fetching at most 5 pages at a time to prevent excessive API calls
+      // Limit to fetching at most 5 pages at a time to prevent
+      // excessive API calls
       var pagesFetched = 0;
       const maxPagesToFetch = 5;
 
