@@ -1,26 +1,27 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'novel_download_summary.freezed.dart';
+import 'package:flutter/foundation.dart';
 
 /// 小説のダウンロード状態の集計情報を表すクラス。
-@freezed
-abstract class NovelDownloadSummary with _$NovelDownloadSummary {
+@immutable
+class NovelDownloadSummary {
   /// ファクトリーコンストラクタ
-  const factory NovelDownloadSummary({
-    /// 小説のncode
-    required String ncode,
+  const NovelDownloadSummary({
+    required this.ncode,
+    required this.successCount,
+    required this.failureCount,
+    required this.totalEpisodes,
+  });
 
-    /// ダウンロード成功したエピソード数
-    required int successCount,
+  /// 小説のncode
+  final String ncode;
 
-    /// ダウンロード失敗したエピソード数
-    required int failureCount,
+  /// ダウンロード成功したエピソード数
+  final int successCount;
 
-    /// ダウンロード対象の総エピソード数
-    required int totalEpisodes,
-  }) = _NovelDownloadSummary;
+  /// ダウンロード失敗したエピソード数
+  final int failureCount;
 
-  const NovelDownloadSummary._();
+  /// ダウンロード対象の総エピソード数
+  final int totalEpisodes;
 
   /// すべてのエピソードがダウンロード完了しているか
   bool get isComplete => successCount == totalEpisodes && totalEpisodes > 0;
@@ -46,4 +47,39 @@ abstract class NovelDownloadSummary with _$NovelDownloadSummary {
 
   /// ダウンロード済みエピソード数（成功したもののみ）
   int get downloadedEpisodes => successCount;
+
+  /// フィールドを変更した新しいインスタンスを作成する
+  NovelDownloadSummary copyWith({
+    String? ncode,
+    int? successCount,
+    int? failureCount,
+    int? totalEpisodes,
+  }) {
+    return NovelDownloadSummary(
+      ncode: ncode ?? this.ncode,
+      successCount: successCount ?? this.successCount,
+      failureCount: failureCount ?? this.failureCount,
+      totalEpisodes: totalEpisodes ?? this.totalEpisodes,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is NovelDownloadSummary &&
+          runtimeType == other.runtimeType &&
+          ncode == other.ncode &&
+          successCount == other.successCount &&
+          failureCount == other.failureCount &&
+          totalEpisodes == other.totalEpisodes;
+
+  @override
+  int get hashCode =>
+      Object.hash(ncode, successCount, failureCount, totalEpisodes);
+
+  @override
+  String toString() {
+    return 'NovelDownloadSummary(ncode: $ncode, successCount: $successCount, '
+        'failureCount: $failureCount, totalEpisodes: $totalEpisodes)';
+  }
 }

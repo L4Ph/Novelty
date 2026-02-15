@@ -93,5 +93,84 @@ void main() {
       expect(shortStoryProgress.progress, equals(1.0));
       expect(shortStoryProgress.isCompleted, isTrue);
     });
+
+    group('手書きクラス移行後のテスト', () {
+      test('copyWithでフィールドを変更できる', () {
+        const progress = DownloadProgress(
+          currentEpisode: 5,
+          totalEpisodes: 10,
+          isDownloading: true,
+        );
+
+        final updated = progress.copyWith(
+          currentEpisode: 8,
+          isDownloading: false,
+        );
+
+        expect(updated.currentEpisode, equals(8));
+        expect(updated.totalEpisodes, equals(10));
+        expect(updated.isDownloading, isFalse);
+        expect(updated.errorMessage, isNull);
+      });
+
+      test('copyWithでerrorMessageを設定できる', () {
+        const progress = DownloadProgress(
+          currentEpisode: 5,
+          totalEpisodes: 10,
+          isDownloading: true,
+        );
+
+        // errorMessageを設定
+        final withError = progress.copyWith(errorMessage: 'Network error');
+        expect(withError.errorMessage, equals('Network error'));
+      });
+
+      test('同じ値を持つインスタンスは等価', () {
+        const progress1 = DownloadProgress(
+          currentEpisode: 5,
+          totalEpisodes: 10,
+          isDownloading: true,
+          errorMessage: 'error',
+        );
+        const progress2 = DownloadProgress(
+          currentEpisode: 5,
+          totalEpisodes: 10,
+          isDownloading: true,
+          errorMessage: 'error',
+        );
+
+        expect(progress1, equals(progress2));
+        expect(progress1.hashCode, equals(progress2.hashCode));
+      });
+
+      test('異なる値を持つインスタンスは非等価', () {
+        const progress1 = DownloadProgress(
+          currentEpisode: 5,
+          totalEpisodes: 10,
+          isDownloading: true,
+        );
+        const progress2 = DownloadProgress(
+          currentEpisode: 6,
+          totalEpisodes: 10,
+          isDownloading: true,
+        );
+
+        expect(progress1, isNot(equals(progress2)));
+      });
+
+      test('toStringが正しい形式を返す', () {
+        const progress = DownloadProgress(
+          currentEpisode: 5,
+          totalEpisodes: 10,
+          isDownloading: true,
+          errorMessage: 'error',
+        );
+
+        expect(
+          progress.toString(),
+          'DownloadProgress(currentEpisode: 5, totalEpisodes: 10, isDownloading: true, errorMessage: error)',
+        );
+      });
+    });
   });
 }
