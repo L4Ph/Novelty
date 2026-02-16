@@ -31,10 +31,10 @@ workspace:
 dependencies:
   archive: ^4.0.7
   connectivity_plus: ^7.0.0
-  dio: ^5.9.0
+  dio: ^5.9.1
   drift: ^2.29.0
   dynamic_color: ^1.7.0
-  file_picker: ^10.3.7
+  file_picker: ^10.3.10
   flutter:
     sdk: flutter
   flutter_hooks: ^0.21.2
@@ -63,7 +63,7 @@ dependencies:
   url_launcher: ^6.3.2
 dev_dependencies:
   build_runner: ^2.5.4
-  custom_lint: 0.8.0
+  custom_lint: 0.8.1
   drift_dev: ^2.14.0
   flutter_test:
     sdk: flutter
