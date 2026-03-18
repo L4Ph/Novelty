@@ -144,14 +144,11 @@ class TategakiLayout {
           addCharToColumn(char);
 
         case TategakiTcy(:final text):
-          currentColumnItems.add(
-            PaintableTcy(
-              TextPainter(
-                text: TextSpan(text: text, style: textStyle),
-                textDirection: TextDirection.ltr,
-              )..layout(),
-            ),
-          );
+          final painter = TextPainter(
+            text: TextSpan(text: text, style: textStyle),
+            textDirection: TextDirection.ltr,
+          )..layout();
+          addToColumn(PaintableTcy(painter));
 
         case TategakiRuby(:final base, :final ruby):
           final item = _createRubyItem(base, ruby, textStyle, rubyStyle);

@@ -10,6 +10,9 @@ class PaintableTcy extends Paintable {
   /// テキストペインター（横書きでレイアウト済み）
   final TextPainter painter;
 
+  /// テキスト内容
+  String get text => painter.text?.toPlainText() ?? '';
+
   @override
   double get height => painter.width; // 横幅が縦の高さになる
 
