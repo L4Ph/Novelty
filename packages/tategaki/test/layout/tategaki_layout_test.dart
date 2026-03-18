@@ -280,13 +280,10 @@ void main() {
                 final afterTcy = column.items[2] as PaintableColumnText;
 
                 // 「あいう」がTCYの前に来ることを確認
-                expect(beforeTcy.text.contains('あ'), isTrue);
-                expect(beforeTcy.text.contains('い'), isTrue);
-                expect(beforeTcy.text.contains('う'), isTrue);
+                expect(beforeTcy.text, 'あ\nい\nう');
 
                 // 「えお」がTCYの後に来ることを確認
-                expect(afterTcy.text.contains('え'), isTrue);
-                expect(afterTcy.text.contains('お'), isTrue);
+                expect(afterTcy.text, 'え\nお');
 
                 // TCYの内容を検証
                 final tcy = column.items[1] as PaintableTcy;
