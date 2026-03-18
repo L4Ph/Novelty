@@ -6,12 +6,8 @@ node = "latest"
 "aqua:evilmartians/lefthook" = "latest"
 
 [env]
-MISE_EXPERIMENTAL = "true"
 ANDROID_HOME = "/opt/android-sdk"
 ANDROID_SDK_ROOT = "/opt/android-sdk"
-FLUTTER_SDK = "{{ exec(command=mise_bin ~ ' where flutter') | trim }}"
-FLUTTER_BIN = "{{ exec(command=mise_bin ~ ' where flutter') | trim }}/bin/flutter"
-FLUTTER_ROOT = "{{ exec(command=mise_bin ~ ' where flutter') | trim }}"
 
 [tasks.setup]
 description = "Android/Flutterの開発環境をセットアップします (local.propertiesの同期など)"
