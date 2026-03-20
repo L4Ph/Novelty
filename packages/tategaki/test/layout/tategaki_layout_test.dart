@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tategaki/src/layout/tategaki_layout.dart';
+import 'package:tategaki/src/painting/paintable_column_text.dart';
+import 'package:tategaki/src/painting/paintable_tcy.dart';
 import 'package:tategaki/tategaki.dart';
 
 void main() {
@@ -232,6 +234,307 @@ void main() {
                 expect(pages.length, 1);
                 // calculate() と partition() で同じ幅になるべき
                 expect(pages[0].size.width, metrics.size.width);
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+    });
+
+    group('TCY（縦中横数字）のレイアウト順序', () {
+      testWidgets('通常文字とTCYが混在する場合、正しい順序で配置される', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                // 「あいう123えお」のようなパターン
+                // バグ: TCYがバッファされた文字より先に追加されてしまう
+                final elements = [
+                  const TategakiChar('あ'),
+                  const TategakiChar('い'),
+                  const TategakiChar('う'),
+                  const TategakiTcy('123'),
+                  const TategakiChar('え'),
+                  const TategakiChar('お'),
+                ];
+
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 600,
+                  textStyle: textStyle,
+                );
+
+                expect(metrics.columns.length, 1);
+                final column = metrics.columns[0];
+
+                // 順序を検証: 「あいう」→「123」→「えお」
+                // 連続する文字はバッファリングされて1つのPaintableColumnTextにまとめられる
+                expect(column.items.length, 3);
+                expect(column.items[0], isA<PaintableColumnText>());
+                expect(column.items[1], isA<PaintableTcy>());
+                expect(column.items[2], isA<PaintableColumnText>());
+
+                // PaintableColumnTextの内容を検証
+                final beforeTcy = column.items[0] as PaintableColumnText;
+                final afterTcy = column.items[2] as PaintableColumnText;
+
+                // 「あいう」がTCYの前に来ることを確認
+                expect(beforeTcy.text, 'あ\nい\nう');
+
+                // 「えお」がTCYの後に来ることを確認
+                expect(afterTcy.text, 'え\nお');
+
+                // TCYの内容を検証
+                final tcy = column.items[1] as PaintableTcy;
+                expect(tcy.text, '123');
+
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+
+      testWidgets('TCYが文頭にある場合、先頭に配置される', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                // 「123番目」のようなパターン
+                final elements = [
+                  const TategakiTcy('123'),
+                  const TategakiChar('番'),
+                  const TategakiChar('目'),
+                ];
+
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 600,
+                  textStyle: textStyle,
+                );
+
+                expect(metrics.columns.length, 1);
+                final column = metrics.columns[0];
+
+                // 順序: 123→番→目
+                expect(column.items.length, 2);
+                expect(column.items[0], isA<PaintableTcy>());
+                expect(column.items[1], isA<PaintableColumnText>());
+
+                final tcy = column.items[0] as PaintableTcy;
+                expect(tcy.text, '123');
+
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+
+      testWidgets('複数のTCYが含まれる場合、それぞれ正しい位置に配置される', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                // 「第12話の34ページ」のようなパターン
+                final elements = [
+                  const TategakiChar('第'),
+                  const TategakiTcy('12'),
+                  const TategakiChar('話'),
+                  const TategakiChar('の'),
+                  const TategakiTcy('34'),
+                  const TategakiChar('ペ'),
+                  const TategakiChar('ー'),
+                  const TategakiChar('ジ'),
+                ];
+
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 600,
+                  textStyle: textStyle,
+                );
+
+                expect(metrics.columns.length, 1);
+                final column = metrics.columns[0];
+
+                // 順序を検証
+                // items[0]: 「第」
+                // items[1]: 「12」
+                // items[2]: 「話の」
+                // items[3]: 「34」
+                // items[4]: 「ページ」
+                expect(column.items.length, 5);
+                expect(column.items[0], isA<PaintableColumnText>());
+                expect(column.items[1], isA<PaintableTcy>());
+                expect(column.items[2], isA<PaintableColumnText>());
+                expect(column.items[3], isA<PaintableTcy>());
+                expect(column.items[4], isA<PaintableColumnText>());
+
+                // TCYの内容を検証
+                final tcy1 = column.items[1] as PaintableTcy;
+                final tcy2 = column.items[3] as PaintableTcy;
+                expect(tcy1.text, '12');
+                expect(tcy2.text, '34');
+
+                // 中間テキストの内容を検証
+                final between = column.items[2] as PaintableColumnText;
+                expect(between.text, '話\nの');
+
+                // 末尾テキストの内容を検証
+                final tail = column.items[4] as PaintableColumnText;
+                expect(tail.text, 'ペ\nー\nジ');
+
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+
+      testWidgets('TCYが文末にある場合、末尾に正しく配置される', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                // 「第1章」のようなパターン（TCYが末尾）
+                final elements = [
+                  const TategakiChar('第'),
+                  const TategakiChar('一'),
+                  const TategakiTcy('章'),
+                ];
+
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 600,
+                  textStyle: textStyle,
+                );
+
+                expect(metrics.columns.length, 1);
+                final column = metrics.columns[0];
+
+                // 順序: 「第一」→「章」(TCY)
+                expect(column.items.length, 2);
+                expect(column.items[0], isA<PaintableColumnText>());
+                expect(column.items[1], isA<PaintableTcy>());
+
+                final text = column.items[0] as PaintableColumnText;
+                expect(text.text, '第\n一');
+
+                final tcy = column.items[1] as PaintableTcy;
+                expect(tcy.text, '章');
+
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+
+      testWidgets('TCYのみの要素リストは単一TCYを持つ列を生成する', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                final elements = [
+                  const TategakiTcy('99'),
+                ];
+
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 600,
+                  textStyle: textStyle,
+                );
+
+                expect(metrics.columns.length, 1);
+                final column = metrics.columns[0];
+
+                expect(column.items.length, 1);
+                expect(column.items[0], isA<PaintableTcy>());
+
+                final tcy = column.items[0] as PaintableTcy;
+                expect(tcy.text, '99');
+
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+
+      testWidgets('連続するTCY要素が隣接して正しい順序で配置される', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                // 「12 34」のようにTCYが連続するパターン
+                final elements = [
+                  const TategakiTcy('12'),
+                  const TategakiTcy('34'),
+                ];
+
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 600,
+                  textStyle: textStyle,
+                );
+
+                expect(metrics.columns.length, 1);
+                final column = metrics.columns[0];
+
+                // 2つのTCYが連続して配置される
+                expect(column.items.length, 2);
+                expect(column.items[0], isA<PaintableTcy>());
+                expect(column.items[1], isA<PaintableTcy>());
+
+                final tcy1 = column.items[0] as PaintableTcy;
+                final tcy2 = column.items[1] as PaintableTcy;
+                expect(tcy1.text, '12');
+                expect(tcy2.text, '34');
+
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+
+      testWidgets('TCYが列高さ上限を超える場合、新しい列へ移動する', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                // 小さいmaxHeightでTCYが列をまたぐ状況を作る
+                // TCYのheightはpainter.width（横書き幅）なので数字が幅を持つ
+                final elements = [
+                  const TategakiChar('あ'),
+                  const TategakiChar('い'),
+                  const TategakiChar('う'),
+                  const TategakiChar('え'),
+                  const TategakiChar('お'),
+                  const TategakiTcy('99'),
+                ];
+
+                // 5文字ぶんのheightより少し大きく、TCYが入らない高さに設定
+                // fontSize=16 なので1文字約16px、5文字=80px。TCYの高さはwidthなので約32px。
+                // 80px に設定すると5文字で埋まりTCYは次の列へ
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 80,
+                  textStyle: textStyle,
+                );
+
+                // TCYが別の列に分かれることを確認
+                expect(metrics.columns.length, greaterThan(1));
+
+                // 最後の列にTCYが含まれることを確認
+                final lastColumn = metrics.columns.last;
+                expect(lastColumn.items.isNotEmpty, true);
+                expect(lastColumn.items.last, isA<PaintableTcy>());
+
+                final tcy = lastColumn.items.last as PaintableTcy;
+                expect(tcy.text, '99');
+
                 return const SizedBox();
               },
             ),
