@@ -384,5 +384,189 @@ void main() {
         );
       });
     });
+
+    group('TCY エッジケース', () {
+      testWidgets('TCYのみの要素リストで正しく配置される', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                final elements = [
+                  const TategakiTcy('99'),
+                ];
+
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 600,
+                  textStyle: textStyle,
+                );
+
+                expect(metrics.columns.length, 1);
+                final column = metrics.columns[0];
+                expect(column.items.length, 1);
+                expect(column.items[0], isA<PaintableTcy>());
+
+                final tcy = column.items[0] as PaintableTcy;
+                expect(tcy.text, '99');
+
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+
+      testWidgets('TCYが文末にある場合、末尾に配置される', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                // 「第三123」のようなパターン（TCYが末尾）
+                final elements = [
+                  const TategakiChar('第'),
+                  const TategakiChar('三'),
+                  const TategakiTcy('123'),
+                ];
+
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 600,
+                  textStyle: textStyle,
+                );
+
+                expect(metrics.columns.length, 1);
+                final column = metrics.columns[0];
+
+                // 「第三」→「123」の順
+                expect(column.items.length, 2);
+                expect(column.items[0], isA<PaintableColumnText>());
+                expect(column.items[1], isA<PaintableTcy>());
+
+                final text = column.items[0] as PaintableColumnText;
+                expect(text.text, '第\n三');
+
+                final tcy = column.items[1] as PaintableTcy;
+                expect(tcy.text, '123');
+
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+
+      testWidgets('連続するTCY要素が正しい順序で配置される', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                // TCYが連続するパターン
+                final elements = [
+                  const TategakiTcy('12'),
+                  const TategakiTcy('34'),
+                ];
+
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 600,
+                  textStyle: textStyle,
+                );
+
+                expect(metrics.columns.length, 1);
+                final column = metrics.columns[0];
+
+                expect(column.items.length, 2);
+                expect(column.items[0], isA<PaintableTcy>());
+                expect(column.items[1], isA<PaintableTcy>());
+
+                final tcy1 = column.items[0] as PaintableTcy;
+                final tcy2 = column.items[1] as PaintableTcy;
+                expect(tcy1.text, '12');
+                expect(tcy2.text, '34');
+
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+
+      testWidgets('TCYがmaxHeightを超える場合に新しい列を開始する', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                // 小さいmaxHeightで列分割を強制する
+                // 文字を多く追加して列をほぼ満杯にしてからTCYを追加
+                final elements = [
+                  ...List.generate(10, (_) => const TategakiChar('あ')),
+                  const TategakiTcy('99'),
+                ];
+
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 50, // 非常に小さい高さで強制的に列分割
+                  textStyle: textStyle,
+                );
+
+                // 列が複数になることを確認
+                expect(metrics.columns.length, greaterThan(1));
+
+                // 全列の中にPaintableTcyが1つだけ存在することを確認
+                final allItems =
+                    metrics.columns.expand((col) => col.items).toList();
+                final tcyItems =
+                    allItems.whereType<PaintableTcy>().toList();
+                expect(tcyItems.length, 1);
+                expect(tcyItems[0].text, '99');
+
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+
+      testWidgets('TCYの前後でバッファがフラッシュされ正しい順序になる（回帰テスト）',
+          (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) {
+                // 旧バグ: TCYがバッファをフラッシュせず直接追加されていたため
+                // 「あいう」→TCY→「えお」が TCY→「あいう」→「えお」になっていた
+                final elements = [
+                  const TategakiChar('あ'),
+                  const TategakiChar('い'),
+                  const TategakiTcy('12'),
+                  const TategakiChar('え'),
+                ];
+
+                final metrics = TategakiLayout.calculate(
+                  elements: elements,
+                  maxHeight: 600,
+                  textStyle: textStyle,
+                );
+
+                final column = metrics.columns[0];
+
+                // 正しい順序: PaintableColumnText('あ\nい') → PaintableTcy('12') → PaintableColumnText('え')
+                expect(column.items.length, 3);
+                expect(column.items[0], isA<PaintableColumnText>());
+                expect(column.items[1], isA<PaintableTcy>());
+                expect(column.items[2], isA<PaintableColumnText>());
+
+                final before = column.items[0] as PaintableColumnText;
+                final after = column.items[2] as PaintableColumnText;
+                expect(before.text, 'あ\nい');
+                expect(after.text, 'え');
+
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+      });
+    });
   });
 }
