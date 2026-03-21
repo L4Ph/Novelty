@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tategaki/src/painting/paintable_tcy.dart';
 
@@ -75,7 +76,9 @@ void main() {
     group('height/width の軸交換', () {
       testWidgets('heightはpainterのwidthと等しい（縦中横の軸交換）', (tester) async {
         await tester.pumpWidget(
-          const MaterialApp(home: SizedBox()),
+          const ProviderScope(
+            child: MaterialApp(home: SizedBox()),
+          ),
         );
         final painter = TextPainter(
           text: const TextSpan(
@@ -90,7 +93,9 @@ void main() {
 
       testWidgets('widthはpainterのheightと等しい（縦中横の軸交換）', (tester) async {
         await tester.pumpWidget(
-          const MaterialApp(home: SizedBox()),
+          const ProviderScope(
+            child: MaterialApp(home: SizedBox()),
+          ),
         );
         final painter = TextPainter(
           text: const TextSpan(
