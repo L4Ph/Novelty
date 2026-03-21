@@ -9,6 +9,9 @@ class PaintableColumnText extends Paintable {
   /// テキストペインター（内部に \n を含む想定）
   final TextPainter painter;
 
+  /// テキスト内容
+  String get text => painter.text?.toPlainText() ?? '';
+
   @override
   double get height => painter.height;
 
