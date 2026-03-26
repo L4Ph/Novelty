@@ -159,6 +159,7 @@ class _SwrSubscription<T> {
   Timer? _gcTimer;
   bool _isFetching = false;
   bool _isDisposed = false;
+  bool _hasEmitted = false;
   T? _lastEmittedData;
   bool _hasEmitted = false;
 
@@ -249,9 +250,11 @@ class _SwrSubscription<T> {
     if (_isDisposed || _controller.isClosed) return;
 
     // 前回と同じデータなら重複emitを防止
-    if (_lastEmittedData == data) return;
+    // ただし初回emitの場合は常に許可する（nullを含む）
+    if (_hasEmitted && _lastEmittedData == data) return;
 
     _lastEmittedData = data;
+    _hasEmitted = true;
     _controller.add(data);
   }
 
