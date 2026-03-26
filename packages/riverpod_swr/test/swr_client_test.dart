@@ -288,6 +288,9 @@ void main() {
       // バグがある場合はこのテストが失敗する
       expect(history, contains('fetcher-data-1'));
 
+      // fetcherは1回だけ呼ばれる
+      expect(fetcherCallCount, 1);
+
       await sub.cancel();
       await watcherController.close();
     });
