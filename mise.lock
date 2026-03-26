@@ -119,3 +119,62 @@ url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-darwin-x64.tar.gz"
 [tools.node."platforms.windows-x64"]
 checksum = "sha256:fba577c4bb87df04d54dd87bbdaa5a2272f1f99a2acbf9152e1a91b8b5f0b279"
 url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-win-x64.zip"
+
+[[tools.pinact]]
+version = "3.9.0"
+backend = "aqua:suzuki-shunsuke/pinact"
+
+[tools.pinact."platforms.linux-arm64"]
+checksum = "sha256:34a957423002662c6289782b571660beda6a37449a76d763c8ad8b1b9a500a54"
+url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.9.0/pinact_linux_arm64.tar.gz"
+provenance = "slsa"
+
+[tools.pinact."platforms.linux-arm64-musl"]
+checksum = "sha256:34a957423002662c6289782b571660beda6a37449a76d763c8ad8b1b9a500a54"
+url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.9.0/pinact_linux_arm64.tar.gz"
+provenance = "slsa"
+
+[tools.pinact."platforms.linux-x64"]
+checksum = "sha256:3829da718de38b1e914b974c3e77045a256999af84789437a7305b09130d8a6a"
+url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.9.0/pinact_linux_amd64.tar.gz"
+provenance = "github-attestations"
+
+[tools.pinact."platforms.linux-x64-baseline"]
+checksum = "sha256:3829da718de38b1e914b974c3e77045a256999af84789437a7305b09130d8a6a"
+url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.9.0/pinact_linux_amd64.tar.gz"
+provenance = "slsa"
+
+[tools.pinact."platforms.linux-x64-musl"]
+checksum = "sha256:3829da718de38b1e914b974c3e77045a256999af84789437a7305b09130d8a6a"
+url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.9.0/pinact_linux_amd64.tar.gz"
+provenance = "slsa"
+
+[tools.pinact."platforms.linux-x64-musl-baseline"]
+checksum = "sha256:3829da718de38b1e914b974c3e77045a256999af84789437a7305b09130d8a6a"
+url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.9.0/pinact_linux_amd64.tar.gz"
+provenance = "slsa"
+
+[tools.pinact."platforms.macos-arm64"]
+checksum = "sha256:23c8a4eda8fd7949c8cbb1cfe6f3d01279402fe6201e9cb0a90447a5ecfdef89"
+url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.9.0/pinact_darwin_arm64.tar.gz"
+provenance = "slsa"
+
+[tools.pinact."platforms.macos-x64"]
+checksum = "sha256:70f68407a05fa88843fbf9b400d979e6205489ef8af251dacc21841a07989df4"
+url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.9.0/pinact_darwin_amd64.tar.gz"
+provenance = "slsa"
+
+[tools.pinact."platforms.macos-x64-baseline"]
+checksum = "sha256:70f68407a05fa88843fbf9b400d979e6205489ef8af251dacc21841a07989df4"
+url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.9.0/pinact_darwin_amd64.tar.gz"
+provenance = "slsa"
+
+[tools.pinact."platforms.windows-x64"]
+checksum = "sha256:b923a567f88417d79ce183e59c2a2372d9cae9b697a472ce1f95d745932746b1"
+url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.9.0/pinact_windows_amd64.zip"
+provenance = "slsa"
+
+[tools.pinact."platforms.windows-x64-baseline"]
+checksum = "sha256:b923a567f88417d79ce183e59c2a2372d9cae9b697a472ce1f95d745932746b1"
+url = "https://github.com/suzuki-shunsuke/pinact/releases/download/v3.9.0/pinact_windows_amd64.zip"
+provenance = "slsa"
