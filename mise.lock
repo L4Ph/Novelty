@@ -96,14 +96,6 @@ url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.6/bun-windows-x
 checksum = "sha256:2ab7cb878041529617dcb86f9e8cb59539779ecb5ebe115a9eba2fa8361736b6"
 url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.6/bun-windows-x64-baseline.zip"
 
-[[tools.dart]]
-version = "3.11.4"
-backend = "http:dart"
-
-[tools.dart."platforms.linux-x64"]
-checksum = "blake3:1e6964882419acc720a74f99dc105f51e614d2f77072213908c75e4921b3a921"
-url = "https://storage.googleapis.com/dart-archive/channels/stable/release/3.11.4/sdk/dartsdk-linux-x64-release.zip"
-
 [[tools.flutter]]
 version = "stable"
 backend = "asdf:flutter"
