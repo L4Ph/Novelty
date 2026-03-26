@@ -137,6 +137,9 @@ jobs:
         with:
           cache: true
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@651bceb6f9ca583f16b8d75b62c36ded2ae6fc9c # v4.0.0
+
       - name: Get Flutter packages
         run: mise run get
 
