@@ -6,7 +6,7 @@ pre-commit:
         - "*.g.dart"
         - "*.mocks.dart"
         - "*.freezed.dart"
-      run: dart format {staged_files}
+      run: mise exec -- dart format {staged_files}
       stage_fixed: true
     analyze:
       glob: "*.dart"
@@ -14,4 +14,4 @@ pre-commit:
         - "*.g.dart"
         - "*.mocks.dart"
         - "*.freezed.dart"
-      run: dart analyze {staged_files}
+      run: mise exec -- dart analyze {staged_files}

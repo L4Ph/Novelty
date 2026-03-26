@@ -161,7 +161,6 @@ class _SwrSubscription<T> {
   bool _isDisposed = false;
   bool _hasEmitted = false;
   T? _lastEmittedData;
-  bool _hasEmitted = false;
 
   Stream<T> get stream => _controller.stream;
 
