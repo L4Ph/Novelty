@@ -11,6 +11,7 @@ class SwrClient {
 
   final Map<String, Object?> _cache = {};
   final Map<String, _SwrSubscription<Object?>> _subscriptions = {};
+  final Map<String, DateTime> _cacheTimestamps = {};
 
   /// 指定された [key] のリソースを監視します。
   ///
@@ -64,11 +65,13 @@ class SwrClient {
   /// 指定された [key] のキャッシュをクリアします。
   void clear(String key) {
     _cache.remove(key);
+    _cacheTimestamps.remove(key);
   }
 
   /// 全てのキャッシュをクリアします。
   void clearAll() {
     _cache.clear();
+    _cacheTimestamps.clear();
   }
 
   /// 指定された [key] のキャッシュと購読を完全に破棄します。
@@ -81,19 +84,29 @@ class SwrClient {
         subscription._dispose();
       }
     } on Exception catch (e) {
+      // エラーログを出力。これはSWRクライアントの内部エラーであり、
+      // アプリケーションの動作には影響しないためprintを許容する
       // ignore: avoid_print
       print('Failed to dispose subscription for "$key": $e');
     } finally {
       // _disposeが失敗しても、キャッシュとサブスクリプションは確実に削除
       _subscriptions.remove(key);
       _cache.remove(key);
+      _cacheTimestamps.remove(key);
     }
   }
 
   bool _shouldFetch(String key, SwrOptions options) {
-    // 簡易的な実装: 常に再検証するか、有効期限をチェックする
-    // 現在は staleTime=0 と同等の挙動
-    return true;
+    if (options.staleTime == Duration.zero) return true;
+
+    final cachedAt = _cacheTimestamps[key];
+    if (cachedAt == null) return true;
+
+    return DateTime.now().difference(cachedAt) > options.staleTime;
+  }
+
+  void _updateCacheTimestamp(String key) {
+    _cacheTimestamps[key] = DateTime.now();
   }
 
   Future<T> _executeFetch<T>(
@@ -104,6 +117,7 @@ class SwrClient {
   ) async {
     final data = await fetcher();
     _cache[key] = data;
+    _updateCacheTimestamp(key);
 
     if (onPersist != null) {
       try {
@@ -145,6 +159,7 @@ class _SwrSubscription<T> {
   Timer? _gcTimer;
   bool _isFetching = false;
   bool _isDisposed = false;
+  T? _lastEmittedData;
 
   Stream<T> get stream => _controller.stream;
 
@@ -218,11 +233,9 @@ class _SwrSubscription<T> {
           await client._executeFetch(key, fetcher, onPersist, options);
       if (_isDisposed) return;
 
-      // watcherが存在する場合は、fetcherのデータを送出しない
-      // watcherがDBの正確な状態を監視しているため
-      if (watcher == null) {
-        emitData(newData);
-      }
+      // watcherの有無に関わらず、fetcherのデータを送出する
+      // DB監視が遅延した場合でも、最新のデータがUIに反映されるように
+      emitData(newData);
     } on Object catch (e, st) {
       if (_isDisposed) return;
       emitError(e, st);
@@ -233,6 +246,11 @@ class _SwrSubscription<T> {
 
   void emitData(T data) {
     if (_isDisposed || _controller.isClosed) return;
+
+    // 前回と同じデータなら重複emitを防止
+    if (_lastEmittedData == data) return;
+
+    _lastEmittedData = data;
     _controller.add(data);
   }
 
