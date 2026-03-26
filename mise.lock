@@ -16,7 +16,15 @@ url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.1/lefthoo
 checksum = "sha256:5d29942bb5954c59d67d8c37184411034e576ed2829e22b0a6d88bba934e4fbb"
 url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.1/lefthook_2.1.1_Linux_x86_64.gz"
 
+[tools."aqua:evilmartians/lefthook"."platforms.linux-x64-baseline"]
+checksum = "sha256:5d29942bb5954c59d67d8c37184411034e576ed2829e22b0a6d88bba934e4fbb"
+url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.1/lefthook_2.1.1_Linux_x86_64.gz"
+
 [tools."aqua:evilmartians/lefthook"."platforms.linux-x64-musl"]
+checksum = "sha256:5d29942bb5954c59d67d8c37184411034e576ed2829e22b0a6d88bba934e4fbb"
+url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.1/lefthook_2.1.1_Linux_x86_64.gz"
+
+[tools."aqua:evilmartians/lefthook"."platforms.linux-x64-musl-baseline"]
 checksum = "sha256:5d29942bb5954c59d67d8c37184411034e576ed2829e22b0a6d88bba934e4fbb"
 url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.1/lefthook_2.1.1_Linux_x86_64.gz"
 
@@ -28,7 +36,15 @@ url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.1/lefthoo
 checksum = "sha256:a73e790b9e7b7bc13810cb9f7d7945462f899165c25d14f39bc31d9a70427638"
 url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.1/lefthook_2.1.1_MacOS_x86_64.gz"
 
+[tools."aqua:evilmartians/lefthook"."platforms.macos-x64-baseline"]
+checksum = "sha256:a73e790b9e7b7bc13810cb9f7d7945462f899165c25d14f39bc31d9a70427638"
+url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.1/lefthook_2.1.1_MacOS_x86_64.gz"
+
 [tools."aqua:evilmartians/lefthook"."platforms.windows-x64"]
+checksum = "sha256:ac26892266ce98066c469d2db7feafe067009b9cff85786dae7605cf3be0db50"
+url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.1/lefthook_2.1.1_Windows_x86_64.gz"
+
+[tools."aqua:evilmartians/lefthook"."platforms.windows-x64-baseline"]
 checksum = "sha256:ac26892266ce98066c469d2db7feafe067009b9cff85786dae7605cf3be0db50"
 url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.1/lefthook_2.1.1_Windows_x86_64.gz"
 
@@ -112,7 +128,15 @@ url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-linux-arm64.tar.gz"
 checksum = "sha256:7ad28fb172a9ab0593f86c1a39e5c268d0d8fc3d6cb0167f455b5655a7a6e2fd"
 url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-linux-x64.tar.gz"
 
+[tools.node."platforms.linux-x64-baseline"]
+checksum = "sha256:7ad28fb172a9ab0593f86c1a39e5c268d0d8fc3d6cb0167f455b5655a7a6e2fd"
+url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-linux-x64.tar.gz"
+
 [tools.node."platforms.linux-x64-musl"]
+checksum = "sha256:7ad28fb172a9ab0593f86c1a39e5c268d0d8fc3d6cb0167f455b5655a7a6e2fd"
+url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-linux-x64.tar.gz"
+
+[tools.node."platforms.linux-x64-musl-baseline"]
 checksum = "sha256:7ad28fb172a9ab0593f86c1a39e5c268d0d8fc3d6cb0167f455b5655a7a6e2fd"
 url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-linux-x64.tar.gz"
 
@@ -124,7 +148,15 @@ url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-darwin-arm64.tar.gz"
 checksum = "sha256:527f0578d9812e7dfa225121bda0b1546a6a0e4b5f556295fc8299c272de5fbf"
 url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-darwin-x64.tar.gz"
 
+[tools.node."platforms.macos-x64-baseline"]
+checksum = "sha256:527f0578d9812e7dfa225121bda0b1546a6a0e4b5f556295fc8299c272de5fbf"
+url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-darwin-x64.tar.gz"
+
 [tools.node."platforms.windows-x64"]
+checksum = "sha256:fba577c4bb87df04d54dd87bbdaa5a2272f1f99a2acbf9152e1a91b8b5f0b279"
+url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-win-x64.zip"
+
+[tools.node."platforms.windows-x64-baseline"]
 checksum = "sha256:fba577c4bb87df04d54dd87bbdaa5a2272f1f99a2acbf9152e1a91b8b5f0b279"
 url = "https://nodejs.org/dist/v24.13.1/node-v24.13.1-win-x64.zip"
 
