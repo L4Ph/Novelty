@@ -17,7 +17,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 version: 0.15.8+123
 environment:
-  sdk: ^3.9.2
+  sdk: 3.11.3
 workspace:
   - packages/narou_parser
   - packages/tategaki
@@ -63,7 +63,7 @@ dependencies:
   url_launcher: ^6.3.2
 dev_dependencies:
   build_runner: ^2.5.4
-  custom_lint: 0.8.0
+  custom_lint: 0.8.1
   drift_dev: ^2.14.0
   flutter_test:
     sdk: flutter
@@ -74,7 +74,7 @@ dev_dependencies:
   plugin_platform_interface: ^2.1.8
   riverpod_generator: ^3.0.0
   riverpod_lint: ^3.0.0
-  very_good_analysis: ^10.0.0
+  very_good_analysis: ^10.2.0
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
