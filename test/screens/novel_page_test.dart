@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/novel_page.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/gesture_shield.dart';
+
+@GenerateMocks([NovelRepository])
+import 'novel_page_test.mocks.dart';
 
 /// NovelPageの履歴追加ロジックのテスト
 void main() {
@@ -201,21 +206,6 @@ void main() {
       );
     }
 
-    /// テスト用のNovelRepository Fake実装
-    /// 実際のネットワーク/DBアクセスを行わず、必要なメソッドのみスタブ化
-    class FakeNovelRepository extends Fake implements NovelRepository {
-      @override
-      Future<void> addToHistory({
-        required String ncode,
-        required String title,
-        required String writer,
-        required int lastEpisode,
-      }) async {}
-
-      @override
-      void dispose() {}
-    }
-
     const testNcode = 'n0001';
     const testNovelInfo = NovelInfo(
       ncode: testNcode,
@@ -227,13 +217,23 @@ void main() {
 
     testWidgets('縦書き設定の場合、GestureShieldが表示される', (tester) async {
       // Arrange
+      addTearDown(tester.view.reset);
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(400, 800);
+
+      final mockNovelRepository = MockNovelRepository();
+      when(mockNovelRepository.addToHistory(
+        ncode: anyNamed('ncode'),
+        title: anyNamed('title'),
+        writer: anyNamed('writer'),
+        lastEpisode: anyNamed('lastEpisode'),
+      )).thenAnswer((_) async {});
+      when(mockNovelRepository.dispose()).thenReturn(null);
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            novelRepositoryProvider.overrideWithValue(FakeNovelRepository()),
+            novelRepositoryProvider.overrideWithValue(mockNovelRepository),
             settingsProvider.overrideWith(VerticalSettings.new),
             novelInfoWithCacheProvider.overrideWith(
               (ref, String ncode) => Stream.value(testNovelInfo),
@@ -261,13 +261,23 @@ void main() {
 
     testWidgets('横書き設定の場合、GestureShieldが表示されない', (tester) async {
       // Arrange
+      addTearDown(tester.view.reset);
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(400, 800);
+
+      final mockNovelRepository = MockNovelRepository();
+      when(mockNovelRepository.addToHistory(
+        ncode: anyNamed('ncode'),
+        title: anyNamed('title'),
+        writer: anyNamed('writer'),
+        lastEpisode: anyNamed('lastEpisode'),
+      )).thenAnswer((_) async {});
+      when(mockNovelRepository.dispose()).thenReturn(null);
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            novelRepositoryProvider.overrideWithValue(FakeNovelRepository()),
+            novelRepositoryProvider.overrideWithValue(mockNovelRepository),
             settingsProvider.overrideWith(HorizontalSettings.new),
             novelInfoWithCacheProvider.overrideWith(
               (ref, String ncode) => Stream.value(testNovelInfo),
