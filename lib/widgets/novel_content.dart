@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
@@ -80,6 +82,37 @@ class NovelContentBody extends HookWidget {
       return brightness == Brightness.dark ? Colors.white : Colors.black;
     }, [Theme.of(context).brightness]);
 
+    // 縦書き/横書きに応じてイマーシブモードを設定
+    useEffect(() {
+      Future<void> setUiMode(AppSettings data) async {
+        try {
+          final mode = data.isVertical
+              ? SystemUiMode.immersiveSticky
+              : SystemUiMode.edgeToEdge;
+          await SystemChrome.setEnabledSystemUIMode(mode);
+        } on PlatformException catch (e, s) {
+          // プラットフォームチャネルのエラーをログに出力
+          debugPrint('Failed to set SystemUIMode: $e\n$s');
+        }
+      }
+
+      // settingsがデータを持っている場合のみUIモードを設定
+      if (settings.hasValue) {
+        unawaited(setUiMode(settings.requireValue));
+      }
+
+      // クリーンアップ: ウィジェット破棄時はedgeToEdgeに戻す
+      return () {
+        unawaited(
+          SystemChrome.setEnabledSystemUIMode(
+            SystemUiMode.edgeToEdge,
+          ).catchError((Object e, StackTrace s) {
+            debugPrint('Failed to reset SystemUIMode on dispose: $e\n$s');
+          }),
+        );
+      };
+    }, [settings]);
+
     return settings.when(
       data: (settingsData) {
         return content.when(
@@ -94,7 +127,9 @@ class NovelContentBody extends HookWidget {
             // システムジェスチャーエリアを考慮したパディング計算
             // SafeAreaが既にpaddingを適用し、その上にsystemGestureInsetsを追加
             // デスクトップ環境ではsystemGestureInsetsが0なので、最低16pxを確保
-            final systemGestureInsets = MediaQuery.of(context).systemGestureInsets;
+            final systemGestureInsets = MediaQuery.of(
+              context,
+            ).systemGestureInsets;
 
             // 縦書きモード用（横スクロール）: 左右端のバックジェスチャー領域を確保
             final verticalModePadding = EdgeInsets.only(
