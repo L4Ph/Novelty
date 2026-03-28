@@ -1,7 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/novel_page.dart';
+import 'package:novelty/utils/settings_provider.dart';
+import 'package:novelty/widgets/gesture_shield.dart';
 
 /// NovelPageの履歴追加ロジックのテスト
 void main() {
@@ -162,6 +167,130 @@ void main() {
       expect(((100 - 1) ~/ 100) + 1, 1);
       // エピソード101 → ページ2
       expect(((101 - 1) ~/ 100) + 1, 2);
+    });
+  });
+
+  group('NovelPage GestureShield 統合テスト', () {
+    /// 縦書き設定をシミュレートするSettingsクラス
+    class VerticalSettings extends Settings {
+      @override
+      Future<AppSettings> build() async => const AppSettings(
+        fontSize: 16,
+        isVertical: true,
+        themeMode: ThemeMode.system,
+        lineHeight: 1.5,
+        fontFamily: 'NotoSansJP',
+        isIncognito: false,
+        isPageFlip: false,
+        isRubyEnabled: true,
+      );
+    }
+
+    /// 横書き設定をシミュレートするSettingsクラス
+    class HorizontalSettings extends Settings {
+      @override
+      Future<AppSettings> build() async => const AppSettings(
+        fontSize: 16,
+        isVertical: false,
+        themeMode: ThemeMode.system,
+        lineHeight: 1.5,
+        fontFamily: 'NotoSansJP',
+        isIncognito: false,
+        isPageFlip: false,
+        isRubyEnabled: true,
+      );
+    }
+
+    /// テスト用のNovelRepository Fake実装
+    /// 実際のネットワーク/DBアクセスを行わず、必要なメソッドのみスタブ化
+    class FakeNovelRepository extends Fake implements NovelRepository {
+      @override
+      Future<void> addToHistory({
+        required String ncode,
+        required String title,
+        required String writer,
+        required int lastEpisode,
+      }) async {}
+
+      @override
+      void dispose() {}
+    }
+
+    const testNcode = 'n0001';
+    const testNovelInfo = NovelInfo(
+      ncode: testNcode,
+      title: 'テスト小説',
+      writer: 'テスト作者',
+      novelType: 1,
+      generalAllNo: 3,
+    );
+
+    testWidgets('縦書き設定の場合、GestureShieldが表示される', (tester) async {
+      // Arrange
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(400, 800);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            novelRepositoryProvider.overrideWithValue(FakeNovelRepository()),
+            settingsProvider.overrideWith(VerticalSettings.new),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, String ncode) => Stream.value(testNovelInfo),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, String key) => Stream.value(<Episode>[]),
+            ),
+            novelContentProvider.overrideWith(
+              (ref, ({String ncode, int episode, String? revised}) arg) async =>
+                  [],
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelPage(ncode: testNcode, episode: 1),
+          ),
+        ),
+      );
+
+      // NovelInfoのStreamが処理されるまで待機
+      await tester.pumpAndSettle();
+
+      // Assert: 縦書き設定では GestureShield が表示される
+      expect(find.byType(GestureShield), findsOneWidget);
+    });
+
+    testWidgets('横書き設定の場合、GestureShieldが表示されない', (tester) async {
+      // Arrange
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(400, 800);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            novelRepositoryProvider.overrideWithValue(FakeNovelRepository()),
+            settingsProvider.overrideWith(HorizontalSettings.new),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, String ncode) => Stream.value(testNovelInfo),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, String key) => Stream.value(<Episode>[]),
+            ),
+            novelContentProvider.overrideWith(
+              (ref, ({String ncode, int episode, String? revised}) arg) async =>
+                  [],
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelPage(ncode: testNcode, episode: 1),
+          ),
+        ),
+      );
+
+      // NovelInfoのStreamが処理されるまで待機
+      await tester.pumpAndSettle();
+
+      // Assert: 横書き設定では GestureShield が表示されない
+      expect(find.byType(GestureShield), findsNothing);
     });
   });
 }

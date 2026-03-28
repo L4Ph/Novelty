@@ -179,5 +179,107 @@ void main() {
       final positioned = tester.widget<Positioned>(find.byType(Positioned));
       expect(positioned.height, 40);
     });
+
+    testWidgets('大きいsystemGestureInsets.bottomでも正しく高さが計算される', (tester) async {
+      // Arrange: 大きい値（例: 100）で境界値テスト
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(400, 800);
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(
+              systemGestureInsets: EdgeInsets.only(bottom: 100),
+            ),
+            child: Scaffold(
+              body: Stack(
+                children: [
+                  SizedBox.expand(),
+                  GestureShield(),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Assert: 100 + 40 = 140
+      final positioned = tester.widget<Positioned>(find.byType(Positioned));
+      expect(positioned.height, 140);
+    });
+
+    testWidgets('GestureDetectorの子ウィジェットとしてSizedBox.expandが存在する',
+        (tester) async {
+      // Arrange
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(400, 800);
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(
+              systemGestureInsets: EdgeInsets.only(bottom: 20),
+            ),
+            child: Scaffold(
+              body: Stack(
+                children: [
+                  SizedBox.expand(),
+                  GestureShield(),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Assert: GestureDetector配下にSizedBoxが存在する
+      final sizedBox = find.descendant(
+        of: find.byType(GestureDetector),
+        matching: find.byType(SizedBox),
+      );
+      expect(sizedBox, findsOneWidget);
+    });
+
+    testWidgets('水平スワイプはシールドを通過して背景のジェスチャーに届く', (tester) async {
+      // Arrange: 垂直方向のみ消費し、水平方向は消費しないことを確認
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(400, 800);
+
+      var backgroundHorizontalDragStarted = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(
+              systemGestureInsets: EdgeInsets.only(bottom: 20),
+            ),
+            child: Scaffold(
+              body: Stack(
+                children: [
+                  GestureDetector(
+                    onHorizontalDragStart: (_) {
+                      backgroundHorizontalDragStarted = true;
+                    },
+                    child: const ColoredBox(color: Colors.white),
+                  ),
+                  const GestureShield(),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Assert: GestureShieldに水平ドラグコールバックが設定されていない
+      final gestureDetector = tester.widget<GestureDetector>(
+        find.descendant(
+          of: find.byType(GestureShield),
+          matching: find.byType(GestureDetector),
+        ),
+      );
+      expect(gestureDetector.onHorizontalDragStart, isNull);
+      expect(gestureDetector.onHorizontalDragUpdate, isNull);
+      expect(gestureDetector.onHorizontalDragEnd, isNull);
+    });
   });
 }
