@@ -57,7 +57,7 @@ dependencies:
     path: packages/riverpod_swr
   share_plus: ^12.0.1
   shared_preferences: ^2.5.3
-  sqlite3_flutter_libs: ^0.5.40
+  sqlite3_flutter_libs: ^0.6.0+eol
   tategaki:
     path: packages/tategaki
   url_launcher: ^6.3.2
