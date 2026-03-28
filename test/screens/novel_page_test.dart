@@ -13,6 +13,36 @@ import 'package:novelty/widgets/gesture_shield.dart';
 @GenerateMocks([NovelRepository])
 import 'novel_page_test.mocks.dart';
 
+/// 縦書き設定をシミュレートするSettingsクラス
+class VerticalSettings extends Settings {
+  @override
+  Future<AppSettings> build() async => const AppSettings(
+    fontSize: 16,
+    isVertical: true,
+    themeMode: ThemeMode.system,
+    lineHeight: 1.5,
+    fontFamily: 'NotoSansJP',
+    isIncognito: false,
+    isPageFlip: false,
+    isRubyEnabled: true,
+  );
+}
+
+/// 横書き設定をシミュレートするSettingsクラス
+class HorizontalSettings extends Settings {
+  @override
+  Future<AppSettings> build() async => const AppSettings(
+    fontSize: 16,
+    isVertical: false,
+    themeMode: ThemeMode.system,
+    lineHeight: 1.5,
+    fontFamily: 'NotoSansJP',
+    isIncognito: false,
+    isPageFlip: false,
+    isRubyEnabled: true,
+  );
+}
+
 /// NovelPageの履歴追加ロジックのテスト
 void main() {
   group('NovelPage 履歴追加ロジック', () {
@@ -176,36 +206,6 @@ void main() {
   });
 
   group('NovelPage GestureShield 統合テスト', () {
-    /// 縦書き設定をシミュレートするSettingsクラス
-    class VerticalSettings extends Settings {
-      @override
-      Future<AppSettings> build() async => const AppSettings(
-        fontSize: 16,
-        isVertical: true,
-        themeMode: ThemeMode.system,
-        lineHeight: 1.5,
-        fontFamily: 'NotoSansJP',
-        isIncognito: false,
-        isPageFlip: false,
-        isRubyEnabled: true,
-      );
-    }
-
-    /// 横書き設定をシミュレートするSettingsクラス
-    class HorizontalSettings extends Settings {
-      @override
-      Future<AppSettings> build() async => const AppSettings(
-        fontSize: 16,
-        isVertical: false,
-        themeMode: ThemeMode.system,
-        lineHeight: 1.5,
-        fontFamily: 'NotoSansJP',
-        isIncognito: false,
-        isPageFlip: false,
-        isRubyEnabled: true,
-      );
-    }
-
     const testNcode = 'n0001';
     const testNovelInfo = NovelInfo(
       ncode: testNcode,
@@ -222,12 +222,14 @@ void main() {
       tester.view.physicalSize = const Size(400, 800);
 
       final mockNovelRepository = MockNovelRepository();
-      when(mockNovelRepository.addToHistory(
-        ncode: anyNamed('ncode'),
-        title: anyNamed('title'),
-        writer: anyNamed('writer'),
-        lastEpisode: anyNamed('lastEpisode'),
-      )).thenAnswer((_) async {});
+      when(
+        mockNovelRepository.addToHistory(
+          ncode: anyNamed('ncode'),
+          title: anyNamed('title'),
+          writer: anyNamed('writer'),
+          lastEpisode: anyNamed('lastEpisode'),
+        ),
+      ).thenAnswer((_) async {});
       when(mockNovelRepository.dispose()).thenReturn(null);
 
       await tester.pumpWidget(
@@ -266,12 +268,14 @@ void main() {
       tester.view.physicalSize = const Size(400, 800);
 
       final mockNovelRepository = MockNovelRepository();
-      when(mockNovelRepository.addToHistory(
-        ncode: anyNamed('ncode'),
-        title: anyNamed('title'),
-        writer: anyNamed('writer'),
-        lastEpisode: anyNamed('lastEpisode'),
-      )).thenAnswer((_) async {});
+      when(
+        mockNovelRepository.addToHistory(
+          ncode: anyNamed('ncode'),
+          title: anyNamed('title'),
+          writer: anyNamed('writer'),
+          lastEpisode: anyNamed('lastEpisode'),
+        ),
+      ).thenAnswer((_) async {});
       when(mockNovelRepository.dispose()).thenReturn(null);
 
       await tester.pumpWidget(

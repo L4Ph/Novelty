@@ -22,6 +22,7 @@ import 'package:shared_preferences/shared_preferences.dart' as _i2;
 // ignore_for_file: unnecessary_parenthesis
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
+// ignore_for_file: invalid_use_of_internal_member
 
 class _FakeSharedPreferences_0 extends _i1.SmartFake
     implements _i2.SharedPreferences {

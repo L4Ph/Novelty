@@ -26,6 +26,7 @@ import 'package:novelty/models/novel_download_summary.dart' as _i8;
 // ignore_for_file: unnecessary_parenthesis
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
+// ignore_for_file: invalid_use_of_internal_member
 
 class _FakeMigrationStrategy_0 extends _i1.SmartFake
     implements _i2.MigrationStrategy {
@@ -33,32 +34,32 @@ class _FakeMigrationStrategy_0 extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
-class _Fake$NovelsTable_1 extends _i1.SmartFake implements _i3.$NovelsTable {
-  _Fake$NovelsTable_1(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
-}
-
-class _Fake$LibraryEntriesTable_2 extends _i1.SmartFake
-    implements _i3.$LibraryEntriesTable {
-  _Fake$LibraryEntriesTable_2(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
-}
-
-class _Fake$ReadingHistoryTable_3 extends _i1.SmartFake
-    implements _i3.$ReadingHistoryTable {
-  _Fake$ReadingHistoryTable_3(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
-}
-
-class _Fake$EpisodeEntitiesTable_4 extends _i1.SmartFake
-    implements _i3.$EpisodeEntitiesTable {
-  _Fake$EpisodeEntitiesTable_4(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
-}
-
-class _Fake$AppDatabaseManager_5 extends _i1.SmartFake
+class _Fake$AppDatabaseManager_1 extends _i1.SmartFake
     implements _i3.$AppDatabaseManager {
-  _Fake$AppDatabaseManager_5(Object parent, Invocation parentInvocation)
+  _Fake$AppDatabaseManager_1(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _Fake$NovelsTable_2 extends _i1.SmartFake implements _i3.$NovelsTable {
+  _Fake$NovelsTable_2(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _Fake$LibraryEntriesTable_3 extends _i1.SmartFake
+    implements _i3.$LibraryEntriesTable {
+  _Fake$LibraryEntriesTable_3(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _Fake$ReadingHistoryTable_4 extends _i1.SmartFake
+    implements _i3.$ReadingHistoryTable {
+  _Fake$ReadingHistoryTable_4(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _Fake$EpisodeEntitiesTable_5 extends _i1.SmartFake
+    implements _i3.$EpisodeEntitiesTable {
+  _Fake$EpisodeEntitiesTable_5(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -108,7 +109,7 @@ class _FakeMigrator_13 extends _i1.SmartFake implements _i2.Migrator {
     : super(parent, parentInvocation);
 }
 
-class _FakeFuture_14<T1> extends _i1.SmartFake implements _i5.Future<T1> {
+class _FakeFuture_14<T> extends _i1.SmartFake implements _i5.Future<T> {
   _FakeFuture_14(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
@@ -187,10 +188,21 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i2.MigrationStrategy);
 
   @override
+  _i3.$AppDatabaseManager get managers =>
+      (super.noSuchMethod(
+            Invocation.getter(#managers),
+            returnValue: _Fake$AppDatabaseManager_1(
+              this,
+              Invocation.getter(#managers),
+            ),
+          )
+          as _i3.$AppDatabaseManager);
+
+  @override
   _i3.$NovelsTable get novels =>
       (super.noSuchMethod(
             Invocation.getter(#novels),
-            returnValue: _Fake$NovelsTable_1(this, Invocation.getter(#novels)),
+            returnValue: _Fake$NovelsTable_2(this, Invocation.getter(#novels)),
           )
           as _i3.$NovelsTable);
 
@@ -198,7 +210,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i3.$LibraryEntriesTable get libraryEntries =>
       (super.noSuchMethod(
             Invocation.getter(#libraryEntries),
-            returnValue: _Fake$LibraryEntriesTable_2(
+            returnValue: _Fake$LibraryEntriesTable_3(
               this,
               Invocation.getter(#libraryEntries),
             ),
@@ -209,7 +221,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i3.$ReadingHistoryTable get readingHistory =>
       (super.noSuchMethod(
             Invocation.getter(#readingHistory),
-            returnValue: _Fake$ReadingHistoryTable_3(
+            returnValue: _Fake$ReadingHistoryTable_4(
               this,
               Invocation.getter(#readingHistory),
             ),
@@ -220,23 +232,12 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   _i3.$EpisodeEntitiesTable get episodeEntities =>
       (super.noSuchMethod(
             Invocation.getter(#episodeEntities),
-            returnValue: _Fake$EpisodeEntitiesTable_4(
+            returnValue: _Fake$EpisodeEntitiesTable_5(
               this,
               Invocation.getter(#episodeEntities),
             ),
           )
           as _i3.$EpisodeEntitiesTable);
-
-  @override
-  _i3.$AppDatabaseManager get managers =>
-      (super.noSuchMethod(
-            Invocation.getter(#managers),
-            returnValue: _Fake$AppDatabaseManager_5(
-              this,
-              Invocation.getter(#managers),
-            ),
-          )
-          as _i3.$AppDatabaseManager);
 
   @override
   Iterable<_i2.TableInfo<_i2.Table, Object?>> get allTables =>
@@ -594,6 +595,37 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
           as _i5.Future<void>);
+
+  @override
+  _i5.Future<Ret> computeWithDatabase<Ret, DB extends _i2.GeneratedDatabase>({
+    required _i5.FutureOr<Ret> Function(DB)? computation,
+    required DB Function(_i2.DatabaseConnection)? connect,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#computeWithDatabase, [], {
+              #computation: computation,
+              #connect: connect,
+            }),
+            returnValue:
+                _i6.ifNotNull(
+                  _i6.dummyValueOrNull<Ret>(
+                    this,
+                    Invocation.method(#computeWithDatabase, [], {
+                      #computation: computation,
+                      #connect: connect,
+                    }),
+                  ),
+                  (Ret v) => _i5.Future<Ret>.value(v),
+                ) ??
+                _FakeFuture_14<Ret>(
+                  this,
+                  Invocation.method(#computeWithDatabase, [], {
+                    #computation: computation,
+                    #connect: connect,
+                  }),
+                ),
+          )
+          as _i5.Future<Ret>);
 
   @override
   _i5.Stream<T> createStream<T extends Object>(

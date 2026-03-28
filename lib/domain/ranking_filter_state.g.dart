@@ -63,7 +63,7 @@ final class RankingFilterStateNotifierProvider
 }
 
 String _$rankingFilterStateNotifierHash() =>
-    r'20f7773afb2ec492a0ab3e759b37787cb6ae5e2e';
+    r'4c58b206be77d66545b2a996af79df7627a5b096';
 
 /// ランキングタイプごとのフィルタ状態を管理するNotifier。
 
