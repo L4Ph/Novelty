@@ -232,49 +232,5 @@ void main() {
       );
       expect(disposeCall.arguments, 'SystemUiMode.edgeToEdge');
     });
-
-    testWidgets('横書き設定時にもimmersiveStickyが設定されること', (tester) async {
-      await pumpWidget(
-        tester,
-        contentValue: AsyncData(testContent),
-        settingsValue: AsyncData(
-          defaultTestSettings.copyWith(isVertical: false),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final uiModeCall = uiModeCalls.firstWhere(
-        (call) => call.method == 'SystemChrome.setEnabledSystemUIMode',
-      );
-      // 横書き・縦書き問わず常にimmersiveStickyを期待
-      expect(uiModeCall.arguments, 'SystemUiMode.immersiveSticky');
-    });
-
-    testWidgets('ウィジェット破棄時にedgeToEdgeに戻ること', (tester) async {
-      await pumpWidget(
-        tester,
-        contentValue: AsyncData(testContent),
-        settingsValue: AsyncData(
-          defaultTestSettings.copyWith(isVertical: true),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // ウィジェットを破棄
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: SizedBox(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // 破棄時の呼び出しを確認
-      final disposeCall = uiModeCalls.lastWhere(
-        (call) => call.method == 'SystemChrome.setEnabledSystemUIMode',
-      );
-      expect(disposeCall.arguments, 'SystemUiMode.edgeToEdge');
-    });
   });
 }

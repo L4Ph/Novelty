@@ -96,10 +96,8 @@ class NovelContentBody extends HookWidget {
         }
       }
 
-      // settingsがデータを持っている場合のみUIモードを設定
-      if (settings.hasValue) {
-        unawaited(setUiMode());
-      }
+      // エピソード表示中は常にUIモードを設定
+      unawaited(setUiMode());
 
       // クリーンアップ: ウィジェット破棄時はedgeToEdgeに戻す
       return () {
