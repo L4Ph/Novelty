@@ -7,6 +7,7 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:novelty/widgets/gesture_shield.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
 /// 小説のページを表示するウィジェット。
@@ -128,43 +129,50 @@ class NovelPage extends HookConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              body: PageView.builder(
-                scrollDirection: settings.isVertical
-                    ? Axis.vertical
-                    : Axis.horizontal,
-                controller: pageController,
-                itemCount: itemCount,
-                onPageChanged: (index) {
-                  _handlePageChanged(
-                    index,
-                    currentEpisode,
-                    totalEpisodes,
-                    pageController,
-                    ref,
-                    novelInfo,
-                  );
-                },
-                itemBuilder: (context, index) {
-                  final episodeNum = _getEpisodeNumber(
-                    index,
-                    currentEpisode.value,
-                    totalEpisodes,
-                  );
+              body: Stack(
+                children: [
+                  PageView.builder(
+                    scrollDirection: settings.isVertical
+                        ? Axis.vertical
+                        : Axis.horizontal,
+                    controller: pageController,
+                    itemCount: itemCount,
+                    onPageChanged: (index) {
+                      _handlePageChanged(
+                        index,
+                        currentEpisode,
+                        totalEpisodes,
+                        pageController,
+                        ref,
+                        novelInfo,
+                      );
+                    },
+                    itemBuilder: (context, index) {
+                      final episodeNum = _getEpisodeNumber(
+                        index,
+                        currentEpisode.value,
+                        totalEpisodes,
+                      );
 
-                  // 指定されたエピソードかつ改稿日時が指定されている場合はそちらを優先
-                  // それ以外はNovelInfoから取得した改稿日時を使用
-                  final revisedDate = (episodeNum == episode && revised != null)
-                      ? revised
-                      : episodeMap[episodeNum];
+                      // 指定されたエピソードかつ改稿日時が指定されている場合はそちらを優先
+                      // それ以外はNovelInfoから取得した改稿日時を使用
+                      final revisedDate =
+                          (episodeNum == episode && revised != null)
+                          ? revised
+                          : episodeMap[episodeNum];
 
-                  return RepaintBoundary(
-                    child: NovelContent(
-                      ncode: ncode,
-                      episode: episodeNum,
-                      revised: revisedDate,
-                    ),
-                  );
-                },
+                      return RepaintBoundary(
+                        child: NovelContent(
+                          ncode: ncode,
+                          episode: episodeNum,
+                          revised: revisedDate,
+                        ),
+                      );
+                    },
+                  ),
+                  // 縦書きモード時、ホームジェスチャーとの競合を防ぐためシールドを表示
+                  if (settings.isVertical) const GestureShield(),
+                ],
               ),
             );
           },

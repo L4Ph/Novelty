@@ -82,24 +82,22 @@ class NovelContentBody extends HookWidget {
       return brightness == Brightness.dark ? Colors.white : Colors.black;
     }, [Theme.of(context).brightness]);
 
-    // 縦書き/横書きに応じてイマーシブモードを設定
+    // エピソード表示中は常にimmersiveStickyモードを設定
     useEffect(() {
-      Future<void> setUiMode(AppSettings data) async {
+      Future<void> setUiMode() async {
         try {
-          final mode = data.isVertical
-              ? SystemUiMode.immersiveSticky
-              : SystemUiMode.edgeToEdge;
-          await SystemChrome.setEnabledSystemUIMode(mode);
+          // 縦書き・横書き問わず常にimmersiveStickyを使用
+          await SystemChrome.setEnabledSystemUIMode(
+            SystemUiMode.immersiveSticky,
+          );
         } on PlatformException catch (e, s) {
           // プラットフォームチャネルのエラーをログに出力
           debugPrint('Failed to set SystemUIMode: $e\n$s');
         }
       }
 
-      // settingsがデータを持っている場合のみUIモードを設定
-      if (settings.hasValue) {
-        unawaited(setUiMode(settings.requireValue));
-      }
+      // エピソード表示中は常にUIモードを設定
+      unawaited(setUiMode());
 
       // クリーンアップ: ウィジェット破棄時はedgeToEdgeに戻す
       return () {

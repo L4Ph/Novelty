@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
@@ -150,5 +151,86 @@ void main() {
 
     // 破棄後もエラーが発生しないことを確認
     expect(tester.takeException(), isNull);
+  });
+
+  group('SystemUiMode設定', () {
+    final uiModeCalls = <MethodCall>[];
+
+    setUp(() {
+      uiModeCalls.clear();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            SystemChannels.platform,
+            (MethodCall methodCall) async {
+              uiModeCalls.add(methodCall);
+              return null;
+            },
+          );
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null);
+    });
+
+    testWidgets('縦書き設定時にimmersiveStickyが設定されること', (tester) async {
+      await pumpWidget(
+        tester,
+        contentValue: AsyncData(testContent),
+        settingsValue: AsyncData(
+          defaultTestSettings.copyWith(isVertical: true),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final uiModeCall = uiModeCalls.firstWhere(
+        (call) => call.method == 'SystemChrome.setEnabledSystemUIMode',
+      );
+      expect(uiModeCall.arguments, 'SystemUiMode.immersiveSticky');
+    });
+
+    testWidgets('横書き設定時にもimmersiveStickyが設定されること', (tester) async {
+      await pumpWidget(
+        tester,
+        contentValue: AsyncData(testContent),
+        settingsValue: AsyncData(
+          defaultTestSettings.copyWith(isVertical: false),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final uiModeCall = uiModeCalls.firstWhere(
+        (call) => call.method == 'SystemChrome.setEnabledSystemUIMode',
+      );
+      // 横書き・縦書き問わず常にimmersiveStickyを期待
+      expect(uiModeCall.arguments, 'SystemUiMode.immersiveSticky');
+    });
+
+    testWidgets('ウィジェット破棄時にedgeToEdgeに戻ること', (tester) async {
+      await pumpWidget(
+        tester,
+        contentValue: AsyncData(testContent),
+        settingsValue: AsyncData(
+          defaultTestSettings.copyWith(isVertical: true),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // ウィジェットを破棄
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: SizedBox(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // 破棄時の呼び出しを確認
+      final disposeCall = uiModeCalls.lastWhere(
+        (call) => call.method == 'SystemChrome.setEnabledSystemUIMode',
+      );
+      expect(disposeCall.arguments, 'SystemUiMode.edgeToEdge');
+    });
   });
 }
