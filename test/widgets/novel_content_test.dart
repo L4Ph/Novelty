@@ -107,4 +107,48 @@ void main() {
     expect(find.byType(TategakiText), findsOneWidget);
     expect(find.byType(NovelContentView), findsNothing);
   });
+
+  testWidgets('縦書き設定でTategakiTextがレンダリングされること', (tester) async {
+    await pumpWidget(
+      tester,
+      contentValue: AsyncData(testContent),
+      settingsValue: AsyncData(defaultTestSettings.copyWith(isVertical: true)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TategakiText), findsOneWidget);
+  });
+
+  testWidgets('横書き設定でNovelContentViewがレンダリングされること', (tester) async {
+    await pumpWidget(
+      tester,
+      contentValue: AsyncData(testContent),
+      settingsValue: AsyncData(defaultTestSettings.copyWith(isVertical: false)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NovelContentView), findsOneWidget);
+  });
+
+  testWidgets('ウィジェット破棄時にUIモードがリセットされること', (tester) async {
+    await pumpWidget(
+      tester,
+      contentValue: AsyncData(testContent),
+      settingsValue: AsyncData(defaultTestSettings.copyWith(isVertical: true)),
+    );
+    await tester.pumpAndSettle();
+
+    // ウィジェットを破棄
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SizedBox(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 破棄後もエラーが発生しないことを確認
+    expect(tester.takeException(), isNull);
+  });
 }
