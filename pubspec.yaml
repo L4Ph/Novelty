@@ -30,7 +30,7 @@ workspace:
 # versions available, run `flutter pub outdated`.
 dependencies:
   archive: ^4.0.7
-  connectivity_plus: ^7.0.0
+  connectivity_plus: ^7.1.0
   dio: ^5.9.0
   drift: ^2.29.0
   dynamic_color: ^1.7.0
