@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/string_to_int_converter.dart';
+import 'package:novelty/utils/html_escape_converter.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 
 part 'novel_info.freezed.dart';
@@ -17,7 +18,7 @@ abstract class NovelInfo with _$NovelInfo {
   /// [NovelInfo]のコンストラクタ
   const factory NovelInfo({
     /// 作品名。
-    String? title,
+    @HtmlEscapeConverter() String? title,
 
     /// Nコード
     ///
@@ -25,10 +26,10 @@ abstract class NovelInfo with _$NovelInfo {
     String? ncode,
 
     /// 作者名。
-    String? writer,
+    @HtmlEscapeConverter() String? writer,
 
     /// 作品のあらすじ。
-    String? story,
+    @HtmlEscapeConverter() String? story,
 
     /// 小説タイプ。
     ///
@@ -53,7 +54,7 @@ abstract class NovelInfo with _$NovelInfo {
     @StringToIntConverter() int? genre,
 
     /// キーワード。
-    String? keyword,
+    @HtmlEscapeConverter() String? keyword,
 
     /// 初回掲載日。
     ///
