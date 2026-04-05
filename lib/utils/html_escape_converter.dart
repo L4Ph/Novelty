@@ -15,12 +15,22 @@ class HtmlEscapeConverter implements JsonConverter<String?, String?> {
   /// [HtmlEscapeConverter]のコンストラクタ
   const HtmlEscapeConverter();
 
+  /// JSON文字列からHTMLエスケープされた文字列をデコードする。
+  ///
+  /// [json] - デコードするHTMLエスケープされた文字列（nullable）
+  ///
+  /// Returns: デコードされた文字列、または入力がnullの場合はnull
   @override
   String? fromJson(String? json) {
     if (json == null) return null;
     return _decodeHtmlEntities(json);
   }
 
+  /// 文字列をJSON用のHTMLエスケープ形式にエンコードする。
+  ///
+  /// [object] - エンコードする文字列（nullable）
+  ///
+  /// Returns: HTMLエスケープされた文字列、または入力がnullの場合はnull
   @override
   String? toJson(String? object) {
     return object;
