@@ -7,7 +7,7 @@ part of 'episode.dart';
 // **************************************************************************
 
 Episode _$EpisodeFromJson(Map<String, dynamic> json) => Episode(
-  subtitle: json['subtitle'] as String?,
+  subtitle: const HtmlEscapeConverter().fromJson(json['subtitle'] as String?),
   url: json['url'] as String?,
   update: json['update'] as String?,
   revised: json['revised'] as String?,
@@ -19,7 +19,7 @@ Episode _$EpisodeFromJson(Map<String, dynamic> json) => Episode(
 );
 
 Map<String, dynamic> _$EpisodeToJson(Episode instance) => <String, dynamic>{
-  'subtitle': instance.subtitle,
+  'subtitle': const HtmlEscapeConverter().toJson(instance.subtitle),
   'url': instance.url,
   'update': instance.update,
   'revised': instance.revised,

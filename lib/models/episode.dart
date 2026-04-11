@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:novelty/utils/html_escape_converter.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/value_wrapper.dart';
 
@@ -32,6 +33,7 @@ class Episode {
   });
 
   /// サブタイトル。
+  @HtmlEscapeConverter()
   final String? subtitle;
 
   /// エピソードへのURL。

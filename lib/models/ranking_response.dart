@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:novelty/models/string_to_int_converter.dart';
+import 'package:novelty/utils/html_escape_converter.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/value_wrapper.dart';
 
@@ -65,6 +66,7 @@ class RankingResponse {
   final int? allPoint;
 
   /// 作品名。
+  @HtmlEscapeConverter()
   final String? title;
 
   /// 小説タイプ。
@@ -89,9 +91,11 @@ class RankingResponse {
   final int? genre;
 
   /// 作者名。
+  @HtmlEscapeConverter()
   final String? writer;
 
   /// 作品のあらすじ。
+  @HtmlEscapeConverter()
   final String? story;
 
   /// 作者のユーザID(数値)。
@@ -107,6 +111,7 @@ class RankingResponse {
   final int? generalAllNo;
 
   /// キーワード。
+  @HtmlEscapeConverter()
   final String? keyword;
 
   /// JSONに変換する
