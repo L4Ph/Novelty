@@ -36,53 +36,45 @@ class HtmlEscapeConverter implements JsonConverter<String?, String?> {
     return object;
   }
 
-  /// HTMLエンティティをデコードする。
+  static final _entityRegex = RegExp(
+    r'&(?:(quot|amp|lt|gt|nbsp)|#(\d+)|#x([0-9a-fA-F]+));',
+    caseSensitive: false,
+  );
+
+  static const _namedEntities = {
+    'quot': '"',
+    'amp': '&',
+    'lt': '<',
+    'gt': '>',
+    'nbsp': ' ',
+  };
+
   static String _decodeHtmlEntities(String text) {
     if (!text.contains('&')) return text;
 
-    return text
-        // 名前付きエンティティ（大文字小文字不問）
-        .replaceAllMapped(
-          RegExp('&quot;', caseSensitive: false),
-          (_) => '"',
-        )
-        .replaceAllMapped(
-          RegExp('&amp;', caseSensitive: false),
-          (_) => '&',
-        )
-        .replaceAllMapped(
-          RegExp('&lt;', caseSensitive: false),
-          (_) => '<',
-        )
-        .replaceAllMapped(
-          RegExp('&gt;', caseSensitive: false),
-          (_) => '>',
-        )
-        .replaceAllMapped(
-          RegExp('&nbsp;', caseSensitive: false),
-          (_) => ' ',
-        )
-        // 十進数値参照 &#34; → "
-        .replaceAllMapped(
-          RegExp('&#(\\d+);'),
-          (match) {
-            final code = int.tryParse(match.group(1)!);
-            if (code != null && code >= 0 && code <= 0x10FFFF) {
-              return String.fromCharCode(code);
-            }
-            return match.group(0)!;
-          },
-        )
-        // 十六進数値参照 &#x22; → "
-        .replaceAllMapped(
-          RegExp('&#[xX]([0-9a-fA-F]+);'),
-          (match) {
-            final code = int.tryParse(match.group(1)!, radix: 16);
-            if (code != null && code >= 0 && code <= 0x10FFFF) {
-              return String.fromCharCode(code);
-            }
-            return match.group(0)!;
-          },
-        );
+    return text.replaceAllMapped(_entityRegex, (match) {
+      final named = match.group(1);
+      if (named != null) {
+        return _namedEntities[named.toLowerCase()] ?? match.group(0)!;
+      }
+
+      final decimal = match.group(2);
+      if (decimal != null) {
+        final code = int.tryParse(decimal);
+        if (code != null && code >= 0 && code <= 0x10FFFF) {
+          return String.fromCharCode(code);
+        }
+      }
+
+      final hex = match.group(3);
+      if (hex != null) {
+        final code = int.tryParse(hex, radix: 16);
+        if (code != null && code >= 0 && code <= 0x10FFFF) {
+          return String.fromCharCode(code);
+        }
+      }
+
+      return match.group(0)!;
+    });
   }
 }
