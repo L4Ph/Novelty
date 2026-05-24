@@ -277,10 +277,21 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                     ),
                     const SizedBox(height: 12),
                     // Writer
-                    Text(
-                      novelInfo.writer ?? '',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    InkWell(
+                      onTap: novelInfo.userId != null
+                          ? () {
+                              unawaited(
+                                context.push('/author/${novelInfo.userId}'),
+                              );
+                            }
+                          : null,
+                      child: Text(
+                        novelInfo.writer ?? '',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: novelInfo.userId != null
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 32),

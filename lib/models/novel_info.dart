@@ -28,6 +28,9 @@ abstract class NovelInfo with _$NovelInfo {
     /// 作者名。
     @HtmlEscapeConverter() String? writer,
 
+    /// ユーザID。
+    @StringToIntConverter() @JsonKey(name: 'userid') int? userId,
+
     /// 作品のあらすじ。
     @HtmlEscapeConverter() String? story,
 
@@ -173,6 +176,7 @@ extension NovelInfoEx on NovelInfo {
       ncode: Value(ncode!),
       title: Value(title),
       writer: Value(writer),
+      userId: Value(userId),
       story: Value(story),
       novelType: Value(novelType),
       end: Value(end),

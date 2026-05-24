@@ -43,6 +43,16 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
+  static const drift.VerificationMeta _userIdMeta =
+      const drift.VerificationMeta('userId');
+  @override
+  late final drift.GeneratedColumn<int> userId = drift.GeneratedColumn<int>(
+    'user_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const drift.VerificationMeta _storyMeta = const drift.VerificationMeta(
     'story',
   );
@@ -337,6 +347,7 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
     ncode,
     title,
     writer,
+    userId,
     story,
     novelType,
     end,
@@ -395,6 +406,12 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
       context.handle(
         _writerMeta,
         writer.isAcceptableOrUnknown(data['writer']!, _writerMeta),
+      );
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
       );
     }
     if (data.containsKey('story')) {
@@ -610,6 +627,10 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
         DriftSqlType.string,
         data['${effectivePrefix}writer'],
       ),
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}user_id'],
+      ),
       story: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}story'],
@@ -737,6 +758,9 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   /// 小説の著者
   final String? writer;
 
+  /// ユーザID
+  final int? userId;
+
   /// 小説のあらすじ
   final String? story;
 
@@ -825,6 +849,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     required this.ncode,
     this.title,
     this.writer,
+    this.userId,
     this.story,
     this.novelType,
     this.end,
@@ -862,6 +887,9 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     }
     if (!nullToAbsent || writer != null) {
       map['writer'] = drift.Variable<String>(writer);
+    }
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = drift.Variable<int>(userId);
     }
     if (!nullToAbsent || story != null) {
       map['story'] = drift.Variable<String>(story);
@@ -956,6 +984,9 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       writer: writer == null && nullToAbsent
           ? const drift.Value.absent()
           : drift.Value(writer),
+      userId: userId == null && nullToAbsent
+          ? const drift.Value.absent()
+          : drift.Value(userId),
       story: story == null && nullToAbsent
           ? const drift.Value.absent()
           : drift.Value(story),
@@ -1049,6 +1080,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       ncode: serializer.fromJson<String>(json['ncode']),
       title: serializer.fromJson<String?>(json['title']),
       writer: serializer.fromJson<String?>(json['writer']),
+      userId: serializer.fromJson<int?>(json['userId']),
       story: serializer.fromJson<String?>(json['story']),
       novelType: serializer.fromJson<int?>(json['novelType']),
       end: serializer.fromJson<int?>(json['end']),
@@ -1085,6 +1117,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       'ncode': serializer.toJson<String>(ncode),
       'title': serializer.toJson<String?>(title),
       'writer': serializer.toJson<String?>(writer),
+      'userId': serializer.toJson<int?>(userId),
       'story': serializer.toJson<String?>(story),
       'novelType': serializer.toJson<int?>(novelType),
       'end': serializer.toJson<int?>(end),
@@ -1119,6 +1152,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     String? ncode,
     drift.Value<String?> title = const drift.Value.absent(),
     drift.Value<String?> writer = const drift.Value.absent(),
+    drift.Value<int?> userId = const drift.Value.absent(),
     drift.Value<String?> story = const drift.Value.absent(),
     drift.Value<int?> novelType = const drift.Value.absent(),
     drift.Value<int?> end = const drift.Value.absent(),
@@ -1150,6 +1184,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     ncode: ncode ?? this.ncode,
     title: title.present ? title.value : this.title,
     writer: writer.present ? writer.value : this.writer,
+    userId: userId.present ? userId.value : this.userId,
     story: story.present ? story.value : this.story,
     novelType: novelType.present ? novelType.value : this.novelType,
     end: end.present ? end.value : this.end,
@@ -1189,6 +1224,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       ncode: data.ncode.present ? data.ncode.value : this.ncode,
       title: data.title.present ? data.title.value : this.title,
       writer: data.writer.present ? data.writer.value : this.writer,
+      userId: data.userId.present ? data.userId.value : this.userId,
       story: data.story.present ? data.story.value : this.story,
       novelType: data.novelType.present ? data.novelType.value : this.novelType,
       end: data.end.present ? data.end.value : this.end,
@@ -1249,6 +1285,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
           ..write('ncode: $ncode, ')
           ..write('title: $title, ')
           ..write('writer: $writer, ')
+          ..write('userId: $userId, ')
           ..write('story: $story, ')
           ..write('novelType: $novelType, ')
           ..write('end: $end, ')
@@ -1285,6 +1322,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     ncode,
     title,
     writer,
+    userId,
     story,
     novelType,
     end,
@@ -1320,6 +1358,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
           other.ncode == this.ncode &&
           other.title == this.title &&
           other.writer == this.writer &&
+          other.userId == this.userId &&
           other.story == this.story &&
           other.novelType == this.novelType &&
           other.end == this.end &&
@@ -1353,6 +1392,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
   final drift.Value<String> ncode;
   final drift.Value<String?> title;
   final drift.Value<String?> writer;
+  final drift.Value<int?> userId;
   final drift.Value<String?> story;
   final drift.Value<int?> novelType;
   final drift.Value<int?> end;
@@ -1385,6 +1425,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     this.ncode = const drift.Value.absent(),
     this.title = const drift.Value.absent(),
     this.writer = const drift.Value.absent(),
+    this.userId = const drift.Value.absent(),
     this.story = const drift.Value.absent(),
     this.novelType = const drift.Value.absent(),
     this.end = const drift.Value.absent(),
@@ -1418,6 +1459,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     required String ncode,
     this.title = const drift.Value.absent(),
     this.writer = const drift.Value.absent(),
+    this.userId = const drift.Value.absent(),
     this.story = const drift.Value.absent(),
     this.novelType = const drift.Value.absent(),
     this.end = const drift.Value.absent(),
@@ -1451,6 +1493,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     drift.Expression<String>? ncode,
     drift.Expression<String>? title,
     drift.Expression<String>? writer,
+    drift.Expression<int>? userId,
     drift.Expression<String>? story,
     drift.Expression<int>? novelType,
     drift.Expression<int>? end,
@@ -1484,6 +1527,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
       if (ncode != null) 'ncode': ncode,
       if (title != null) 'title': title,
       if (writer != null) 'writer': writer,
+      if (userId != null) 'user_id': userId,
       if (story != null) 'story': story,
       if (novelType != null) 'novel_type': novelType,
       if (end != null) 'end': end,
@@ -1519,6 +1563,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     drift.Value<String>? ncode,
     drift.Value<String?>? title,
     drift.Value<String?>? writer,
+    drift.Value<int?>? userId,
     drift.Value<String?>? story,
     drift.Value<int?>? novelType,
     drift.Value<int?>? end,
@@ -1552,6 +1597,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
       ncode: ncode ?? this.ncode,
       title: title ?? this.title,
       writer: writer ?? this.writer,
+      userId: userId ?? this.userId,
       story: story ?? this.story,
       novelType: novelType ?? this.novelType,
       end: end ?? this.end,
@@ -1594,6 +1640,9 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     }
     if (writer.present) {
       map['writer'] = drift.Variable<String>(writer.value);
+    }
+    if (userId.present) {
+      map['user_id'] = drift.Variable<int>(userId.value);
     }
     if (story.present) {
       map['story'] = drift.Variable<String>(story.value);
@@ -1688,6 +1737,7 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
           ..write('ncode: $ncode, ')
           ..write('title: $title, ')
           ..write('writer: $writer, ')
+          ..write('userId: $userId, ')
           ..write('story: $story, ')
           ..write('novelType: $novelType, ')
           ..write('end: $end, ')
@@ -2866,6 +2916,7 @@ typedef $$NovelsTableCreateCompanionBuilder =
       required String ncode,
       drift.Value<String?> title,
       drift.Value<String?> writer,
+      drift.Value<int?> userId,
       drift.Value<String?> story,
       drift.Value<int?> novelType,
       drift.Value<int?> end,
@@ -2900,6 +2951,7 @@ typedef $$NovelsTableUpdateCompanionBuilder =
       drift.Value<String> ncode,
       drift.Value<String?> title,
       drift.Value<String?> writer,
+      drift.Value<int?> userId,
       drift.Value<String?> story,
       drift.Value<int?> novelType,
       drift.Value<int?> end,
@@ -3027,6 +3079,11 @@ class $$NovelsTableFilterComposer
 
   drift.ColumnFilters<String> get writer => $composableBuilder(
     column: $table.writer,
+    builder: (column) => drift.ColumnFilters(column),
+  );
+
+  drift.ColumnFilters<int> get userId => $composableBuilder(
+    column: $table.userId,
     builder: (column) => drift.ColumnFilters(column),
   );
 
@@ -3265,6 +3322,11 @@ class $$NovelsTableOrderingComposer
     builder: (column) => drift.ColumnOrderings(column),
   );
 
+  drift.ColumnOrderings<int> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => drift.ColumnOrderings(column),
+  );
+
   drift.ColumnOrderings<String> get story => $composableBuilder(
     column: $table.story,
     builder: (column) => drift.ColumnOrderings(column),
@@ -3418,6 +3480,9 @@ class $$NovelsTableAnnotationComposer
 
   drift.GeneratedColumn<String> get writer =>
       $composableBuilder(column: $table.writer, builder: (column) => column);
+
+  drift.GeneratedColumn<int> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
 
   drift.GeneratedColumn<String> get story =>
       $composableBuilder(column: $table.story, builder: (column) => column);
@@ -3635,6 +3700,7 @@ class $$NovelsTableTableManager
                 drift.Value<String> ncode = const drift.Value.absent(),
                 drift.Value<String?> title = const drift.Value.absent(),
                 drift.Value<String?> writer = const drift.Value.absent(),
+                drift.Value<int?> userId = const drift.Value.absent(),
                 drift.Value<String?> story = const drift.Value.absent(),
                 drift.Value<int?> novelType = const drift.Value.absent(),
                 drift.Value<int?> end = const drift.Value.absent(),
@@ -3668,6 +3734,7 @@ class $$NovelsTableTableManager
                 ncode: ncode,
                 title: title,
                 writer: writer,
+                userId: userId,
                 story: story,
                 novelType: novelType,
                 end: end,
@@ -3702,6 +3769,7 @@ class $$NovelsTableTableManager
                 required String ncode,
                 drift.Value<String?> title = const drift.Value.absent(),
                 drift.Value<String?> writer = const drift.Value.absent(),
+                drift.Value<int?> userId = const drift.Value.absent(),
                 drift.Value<String?> story = const drift.Value.absent(),
                 drift.Value<int?> novelType = const drift.Value.absent(),
                 drift.Value<int?> end = const drift.Value.absent(),
@@ -3735,6 +3803,7 @@ class $$NovelsTableTableManager
                 ncode: ncode,
                 title: title,
                 writer: writer,
+                userId: userId,
                 story: story,
                 novelType: novelType,
                 end: end,
