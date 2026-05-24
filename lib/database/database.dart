@@ -372,7 +372,7 @@ class AppDatabase extends _$AppDatabase {
           await _populateFtsTables();
         }
 
-        if (from < 15) {
+        if (from >= 12 && from < 15) {
           await customStatement(
             'ALTER TABLE novels ADD COLUMN user_id INTEGER',
           );

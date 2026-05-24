@@ -124,7 +124,15 @@ final router = GoRouter(
       path: '/author/:userId',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
-        final userId = int.parse(state.pathParameters['userId']!);
+        final userId = int.tryParse(state.pathParameters['userId'] ?? '');
+        if (userId == null) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: const Center(
+              child: Text('無効なユーザーIDです'),
+            ),
+          );
+        }
         return AuthorNovelsPage(userId: userId);
       },
     ),

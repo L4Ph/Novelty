@@ -17,7 +17,13 @@ class AuthorNovelsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('作者の作品'),
+        title:
+            novelsAsync.whenOrNull(
+              data: (novels) => novels.isNotEmpty
+                  ? Text(novels.first.writer ?? '作者の作品')
+                  : null,
+            ) ??
+            const Text('作者の作品'),
       ),
       body: novelsAsync.when(
         data: (novels) {
@@ -40,9 +46,12 @@ class AuthorNovelsPage extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(),
         ),
-        error: (error, stackTrace) => Center(
-          child: Text('エラーが発生しました: $error'),
-        ),
+        error: (error, stackTrace) {
+          debugPrint('作者の作品一覧取得エラー: $error\n$stackTrace');
+          return const Center(
+            child: Text('データの読み込み中に問題が発生しました'),
+          );
+        },
       ),
     );
   }
