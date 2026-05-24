@@ -32,18 +32,17 @@ jobs:
       - name: Calculate new version
         id: calculate_version
         run: |
-          CURRENT_VERSION=$(yq '.version' pubspec.yaml)
-          if [[ "$CURRENT_VERSION" == *"+"* ]]; then
-            BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
+          NEW_VERSION="${{ inputs.version }}"
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          TAG_NAME="v$(echo "$NEW_VERSION" | cut -d'+' -f1)"
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          if [[ "$NEW_VERSION" == *"+"* ]]; then
+            BUILD_NUMBER=$(echo "$NEW_VERSION" | cut -d'+' -f2)
           else
             BUILD_NUMBER=0
           fi
-          NEW_BUILD_NUMBER=$((BUILD_NUMBER + 1))
-          NEW_VERSION="${{ inputs.version }}+${NEW_BUILD_NUMBER}"
-          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-          echo "build_number=$NEW_BUILD_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "tag_name=v${{ inputs.version }}" >> "$GITHUB_OUTPUT"
-          echo "Generated new version: $NEW_VERSION"
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "Generated version: $NEW_VERSION"
 
       - name: Check if tag exists
         id: check_tag
