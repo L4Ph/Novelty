@@ -114,6 +114,9 @@ class Novels extends Table {
   /// 小説の著者
   TextColumn get writer => text().nullable()();
 
+  /// ユーザID
+  IntColumn get userId => integer().nullable()();
+
   /// 小説のあらすじ
   TextColumn get story => text().nullable()();
 
@@ -287,7 +290,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.memory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration {
@@ -367,6 +370,12 @@ class AppDatabase extends _$AppDatabase {
 
           await _createFtsTables();
           await _populateFtsTables();
+        }
+
+        if (from >= 12 && from < 15) {
+          await customStatement(
+            'ALTER TABLE novels ADD COLUMN user_id INTEGER',
+          );
         }
       },
     );

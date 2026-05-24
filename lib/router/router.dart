@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:novelty/screens/about_page.dart';
+import 'package:novelty/screens/author_novels_page.dart';
 import 'package:novelty/screens/data_storage_page.dart';
 import 'package:novelty/screens/download_manager_page.dart';
 import 'package:novelty/screens/explore_page.dart';
@@ -118,6 +119,22 @@ final router = GoRouter(
           },
         ),
       ],
+    ),
+    GoRoute(
+      path: '/author/:userId',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (BuildContext context, GoRouterState state) {
+        final userId = int.tryParse(state.pathParameters['userId'] ?? '');
+        if (userId == null) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: const Center(
+              child: Text('無効なユーザーIDです'),
+            ),
+          );
+        }
+        return AuthorNovelsPage(userId: userId);
+      },
     ),
   ],
 );

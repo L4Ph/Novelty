@@ -8,6 +8,7 @@ void main() {
         'title': 'Test Novel',
         'ncode': 'N1234AB',
         'writer': 'Author',
+        'userid': '12345',
         'novel_type': '1',
         'end': '0',
         'general_all_no': '100',
@@ -19,6 +20,7 @@ void main() {
 
       expect(novel.title, equals('Test Novel'));
       expect(novel.ncode, equals('n1234ab'));
+      expect(novel.userId, equals(12345));
       expect(novel.novelType, equals(1));
       expect(novel.globalPoint, equals(10000));
     });
@@ -41,6 +43,7 @@ void main() {
         ncode: 'n1234',
         title: 'Test Novel',
         writer: 'Author',
+        userId: 12345,
         novelType: 1,
         end: 0,
         genre: 1,
@@ -51,6 +54,7 @@ void main() {
 
       expect(companion.ncode.value, equals('n1234'));
       expect(companion.title.value, equals('Test Novel'));
+      expect(companion.userId.value, equals(12345));
     });
   });
 }
