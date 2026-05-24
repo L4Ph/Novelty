@@ -36,33 +36,41 @@ jobs:
           echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           TAG_NAME="v$(echo "$NEW_VERSION" | cut -d'+' -f1)"
           echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
-          if [[ "$NEW_VERSION" == *"+"* ]]; then
-            BUILD_NUMBER=$(echo "$NEW_VERSION" | cut -d'+' -f2)
-          else
-            BUILD_NUMBER=0
-          fi
-          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
-          echo "Generated version: $NEW_VERSION"
 
-      - name: Check if tag exists
-        id: check_tag
-        run: |
-          if git rev-parse "${{ steps.calculate_version.outputs.tag_name }}" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "Tag ${{ steps.calculate_version.outputs.tag_name }} already exists"
+          # pubspec.yamlから現在のbuild numberを取得
+          CURRENT_VERSION=$(yq '.version' pubspec.yaml)
+          if [[ "$CURRENT_VERSION" == *"+"* ]]; then
+            CURRENT_BUILD_NUMBER=$(echo "$CURRENT_VERSION" | cut -d'+' -f2)
           else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "Tag ${{ steps.calculate_version.outputs.tag_name }} does not exist"
+            CURRENT_BUILD_NUMBER=0
           fi
+
+          # タグが存在する場合はpubspec.yamlの値を優先（auto-releaseのフォールバック）
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            BUILD_NUMBER=$CURRENT_BUILD_NUMBER
+            echo "Tag exists, using pubspec build number: $BUILD_NUMBER"
+          else
+            # 入力からbuild numberを取得
+            if [[ "$NEW_VERSION" == *"+"* ]]; then
+              BUILD_NUMBER=$(echo "$NEW_VERSION" | cut -d'+' -f2)
+            else
+              BUILD_NUMBER=$CURRENT_BUILD_NUMBER
+            fi
+            echo "Tag does not exist, using input build number: $BUILD_NUMBER"
+          fi
+
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "tag_exists=$([[ $(git rev-parse "$TAG_NAME" >/dev/null 2>&1; echo $?) -eq 0 ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "Generated version: $NEW_VERSION (build: $BUILD_NUMBER)"
 
       - name: Update pubspec.yaml version
-        if: steps.check_tag.outputs.exists == 'false'
+        if: steps.calculate_version.outputs.tag_exists == 'false'
         run: |
           yq -i '.version = "${{ steps.calculate_version.outputs.new_version }}"' pubspec.yaml
           echo "Updated pubspec.yaml with version: ${{ steps.calculate_version.outputs.new_version }}"
 
       - name: Commit version bump
-        if: steps.check_tag.outputs.exists == 'false'
+        if: steps.calculate_version.outputs.tag_exists == 'false'
         id: commit
         run: |
           git config user.name "github-actions[bot]"
@@ -75,7 +83,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Create and push tag
-        if: steps.check_tag.outputs.exists == 'false'
+        if: steps.calculate_version.outputs.tag_exists == 'false'
         run: |
           git tag ${{ steps.calculate_version.outputs.tag_name }} ${{ steps.commit.outputs.sha }}
           git push origin ${{ steps.calculate_version.outputs.tag_name }}
