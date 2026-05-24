@@ -45,12 +45,26 @@ jobs:
           echo "tag_name=v${{ inputs.version }}" >> "$GITHUB_OUTPUT"
           echo "Generated new version: $NEW_VERSION"
 
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse "${{ steps.calculate_version.outputs.tag_name }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag ${{ steps.calculate_version.outputs.tag_name }} already exists"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Tag ${{ steps.calculate_version.outputs.tag_name }} does not exist"
+          fi
+
       - name: Update pubspec.yaml version
+        if: steps.check_tag.outputs.exists == 'false'
         run: |
           yq -i '.version = "${{ steps.calculate_version.outputs.new_version }}"' pubspec.yaml
           echo "Updated pubspec.yaml with version: ${{ steps.calculate_version.outputs.new_version }}"
 
       - name: Commit version bump
+        if: steps.check_tag.outputs.exists == 'false'
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -62,6 +76,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Create and push tag
+        if: steps.check_tag.outputs.exists == 'false'
         run: |
           git tag ${{ steps.calculate_version.outputs.tag_name }} ${{ steps.commit.outputs.sha }}
           git push origin ${{ steps.calculate_version.outputs.tag_name }}
