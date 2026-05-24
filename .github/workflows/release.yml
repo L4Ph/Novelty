@@ -7,6 +7,10 @@ on:
         description: "バージョン番号 (例: 0.7.0)"
         required: true
         type: string
+      build_number:
+        description: "Build number（省略時は現在のpubspec.yamlの値を維持）"
+        required: false
+        type: string
 
 jobs:
   release:
@@ -32,9 +36,8 @@ jobs:
       - name: Calculate new version
         id: calculate_version
         run: |
-          NEW_VERSION="${{ inputs.version }}"
-          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-          TAG_NAME="v$(echo "$NEW_VERSION" | cut -d'+' -f1)"
+          SEMVER="${{ inputs.version }}"
+          TAG_NAME="v$SEMVER"
           echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
 
           # pubspec.yamlから現在のbuild numberを取得
@@ -48,20 +51,24 @@ jobs:
           # タグが存在する場合はpubspec.yamlの値を優先（auto-releaseのフォールバック）
           if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
             BUILD_NUMBER=$CURRENT_BUILD_NUMBER
+            NEW_VERSION="${SEMVER}+${BUILD_NUMBER}"
             echo "Tag exists, using pubspec build number: $BUILD_NUMBER"
           else
-            # 入力からbuild numberを取得
-            if [[ "$NEW_VERSION" == *"+"* ]]; then
-              BUILD_NUMBER=$(echo "$NEW_VERSION" | cut -d'+' -f2)
+            # build_number入力があればそれを使い、なければ現在の値を維持
+            INPUT_BUILD_NUMBER="${{ inputs.build_number }}"
+            if [[ -n "$INPUT_BUILD_NUMBER" ]]; then
+              BUILD_NUMBER=$INPUT_BUILD_NUMBER
             else
               BUILD_NUMBER=$CURRENT_BUILD_NUMBER
             fi
-            echo "Tag does not exist, using input build number: $BUILD_NUMBER"
+            NEW_VERSION="${SEMVER}+${BUILD_NUMBER}"
+            echo "Tag does not exist, using build number: $BUILD_NUMBER"
           fi
 
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
           echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
           echo "tag_exists=$([[ $(git rev-parse "$TAG_NAME" >/dev/null 2>&1; echo $?) -eq 0 ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-          echo "Generated version: $NEW_VERSION (build: $BUILD_NUMBER)"
+          echo "Generated version: $NEW_VERSION"
 
       - name: Update pubspec.yaml version
         if: steps.calculate_version.outputs.tag_exists == 'false'
