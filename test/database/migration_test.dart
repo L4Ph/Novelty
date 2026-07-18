@@ -76,6 +76,127 @@ void main() {
     db.dispose();
   }
 
+  /// 中断により中間状態が残った v15 相当の DB を作成する。
+  /// episode_list_entries / episode_contents が既に存在し、
+  /// episodes テーブルもまだ残っている状態を再現する。
+  Future<void> createBrokenV15Database(File file) async {
+    final db = sqlite3.open(file.path);
+
+    const statements = <String>[
+      'CREATE TABLE novels (ncode TEXT NOT NULL PRIMARY KEY, title TEXT)',
+      '''
+      CREATE TABLE episodes (
+        ncode TEXT NOT NULL REFERENCES novels(ncode),
+        episode_id INTEGER NOT NULL,
+        subtitle TEXT,
+        url TEXT,
+        published_at TEXT,
+        revised_at TEXT,
+        content TEXT,
+        fetched_at INTEGER,
+        PRIMARY KEY (ncode, episode_id)
+      )
+      ''',
+      'INSERT INTO novels (ncode, title) VALUES (\'n1234ab\', \'テスト小説\')',
+      '''
+      INSERT INTO episodes VALUES (
+        'n1234ab', 1, '第1話', 'https://example.com/1',
+        '2024-01-01 00:00:00', '2024-01-02 00:00:00',
+        '[{"runtimeType":"plainText","text":"本文"}]', 1000)
+      ''',
+      '''
+      INSERT INTO episodes VALUES (
+        'n1234ab', 2, '第2話', 'https://example.com/2',
+        '2024-01-01 00:00:00', NULL, '[]', 2000)
+      ''',
+      '''
+      INSERT INTO episodes
+        (ncode, episode_id, subtitle, url, published_at, revised_at)
+      VALUES (
+        'n1234ab', 3, '第3話', 'https://example.com/3',
+        '2024-01-03 00:00:00', '2024-01-04 00:00:00')
+      ''',
+      // マイグレーションが中断された状態：目次・本文テーブルは存在するが
+      // user_version や is_private カラムは更新されていない
+      '''
+      CREATE TABLE episode_list_entries (
+        ncode TEXT NOT NULL REFERENCES novels(ncode),
+        episode_id INTEGER NOT NULL,
+        subtitle TEXT,
+        url TEXT,
+        published_at TEXT,
+        revised_at TEXT,
+        fetched_at INTEGER,
+        PRIMARY KEY (ncode, episode_id)
+      )
+      ''',
+      '''
+      CREATE TABLE episode_contents (
+        ncode TEXT NOT NULL REFERENCES novels(ncode),
+        episode_id INTEGER NOT NULL,
+        content TEXT,
+        fetched_at INTEGER,
+        revised_at TEXT,
+        PRIMARY KEY (ncode, episode_id)
+      )
+      ''',
+      '''
+      INSERT INTO episode_list_entries
+        (ncode, episode_id, subtitle, url, published_at, revised_at, fetched_at)
+      SELECT ncode, episode_id, subtitle, url, published_at, revised_at, NULL
+      FROM episodes
+      ''',
+      '''
+      INSERT INTO episode_contents
+        (ncode, episode_id, content, fetched_at, revised_at)
+      SELECT ncode, episode_id, content, fetched_at, revised_at
+      FROM episodes
+      WHERE content IS NOT NULL
+      ''',
+      'PRAGMA user_version = 15',
+    ];
+
+    for (final sql in statements) {
+      db.execute(sql);
+    }
+    db.dispose();
+  }
+
+  test('v15中間状態からの修復：目次・本文が重複せず正常に完了すること', () async {
+    await createBrokenV15Database(dbFile);
+
+    final db = AppDatabase.test(NativeDatabase(dbFile));
+    addTearDown(db.close);
+
+    // 目次は3件保持されていること
+    final listRows = await db.select(db.episodeListEntries).get();
+    expect(listRows.length, 3);
+
+    // 本文は2件保持されていること
+    final contentRows = await db.select(db.episodeContents).get();
+    expect(contentRows.length, 2);
+
+    // 旧テーブルが削除されていること
+    final oldTables = await db
+        .customSelect(
+          'SELECT name FROM sqlite_master '
+          "WHERE type='table' AND name='episodes'",
+        )
+        .get();
+    expect(oldTables, isEmpty);
+
+    // スキーマバージョンが16に更新されていること
+    final versionResult = await db
+        .customSelect('PRAGMA user_version')
+        .getSingle();
+    expect(versionResult.read<int>('user_version'), 16);
+
+    // novelsに非公開フラグが追加されていること
+    final novel = await db.getNovel('n1234ab');
+    expect(novel, isNotNull);
+    expect(novel!.isPrivate, isFalse);
+  });
+
   test('v15からのアップグレードで目次・本文が新テーブルに引き継がれること', () async {
     await createV15Database(dbFile);
 
