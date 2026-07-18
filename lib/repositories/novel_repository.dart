@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/download_progress.dart';
@@ -14,7 +13,6 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:riverpod_swr/riverpod_swr.dart';
 
 part 'novel_repository.g.dart';
 
@@ -24,14 +22,12 @@ NovelRepository novelRepository(Ref ref) {
   final apiService = ref.watch(apiServiceProvider);
   final settings = ref.watch(settingsProvider);
   final db = ref.watch(appDatabaseProvider);
-  final swrClient = ref.watch(swrClientProvider);
 
   final repository = NovelRepository(
     ref: ref,
     apiService: apiService,
     settings: settings,
     db: db,
-    swrClient: swrClient,
   );
 
   ref.onDispose(repository.dispose);
@@ -47,9 +43,7 @@ class NovelRepository {
     required this.apiService,
     required this.settings,
     required AppDatabase db,
-    required SwrClient swrClient,
-  }) : _db = db,
-       _swrClient = swrClient;
+  }) : _db = db;
 
   /// アプリケーションの設定を取得するためのリファレンス。
   final Ref ref;
@@ -61,11 +55,6 @@ class NovelRepository {
   final AsyncValue<AppSettings> settings;
 
   final AppDatabase _db;
-
-  final SwrClient _swrClient;
-
-  /// SWRクライアントを取得する
-  SwrClient get swrClient => _swrClient;
 
   /// ダウンロード進捗のストリームコントローラー
   final Map<String, StreamController<DownloadProgress>> _progressControllers =
@@ -704,7 +693,7 @@ class NovelRepository {
 // ==================== Providers ====================
 
 @riverpod
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+/// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 Stream<NovelInfo> novelInfoWithCache(
   Ref ref,
   String ncode,
@@ -712,17 +701,6 @@ Stream<NovelInfo> novelInfoWithCache(
   ref.keepAlive();
   final normalizedNcode = ncode.toNormalizedNcode();
   final repository = ref.watch(novelRepositoryProvider);
-
-  // SWRクライアントを直接キャプチャして、Provider破棄時に確実にキャッシュをクリア
-  final swrClient = repository.swrClient;
-  ref.onDispose(() {
-    try {
-      swrClient.invalidate('novel_info:$normalizedNcode');
-    } on Exception catch (e) {
-      // キャッシュクリアの失敗は無視（アプリの動作に影響しない）
-      debugPrint('Failed to invalidate SWR cache: $e');
-    }
-  });
 
   return repository.watchNovelInfo(normalizedNcode);
 }
@@ -839,7 +817,7 @@ class DownloadStatus extends _$DownloadStatus {
 }
 
 @riverpod
-/// エピソードリストをページ単位で取得するプロバイダー（SWR）
+/// エピソードリストをページ単位で取得するプロバイダー。
 Stream<List<Episode>> episodeList(
   Ref ref,
   String ncodeAndPage,
@@ -849,19 +827,6 @@ Stream<List<Episode>> episodeList(
   final ncode = parts[0];
   final page = int.parse(parts[1]);
   final repository = ref.watch(novelRepositoryProvider);
-
-  // SWRクライアントを直接キャプチャして、Provider破棄時に確実にキャッシュをクリア
-  final swrClient = repository.swrClient;
-  ref.onDispose(() {
-    try {
-      swrClient.invalidate(
-        'episode_list:${ncode.toNormalizedNcode()}:$page',
-      );
-    } on Exception catch (e) {
-      // キャッシュクリアの失敗は無視（アプリの動作に影響しない）
-      debugPrint('Failed to invalidate SWR cache: $e');
-    }
-  });
 
   return repository.watchEpisodeList(ncode, page);
 }

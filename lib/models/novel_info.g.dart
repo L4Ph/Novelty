@@ -45,6 +45,7 @@ _NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => _NovelInfo(
   iszankoku: const StringToIntConverter().fromJson(json['iszankoku']),
   istensei: const StringToIntConverter().fromJson(json['istensei']),
   istenni: const StringToIntConverter().fromJson(json['istenni']),
+  isPrivate: json['isPrivate'] as bool?,
 );
 
 Map<String, dynamic> _$NovelInfoToJson(
@@ -86,4 +87,5 @@ Map<String, dynamic> _$NovelInfoToJson(
   'iszankoku': const StringToIntConverter().toJson(instance.iszankoku),
   'istensei': const StringToIntConverter().toJson(instance.istensei),
   'istenni': const StringToIntConverter().toJson(instance.istenni),
+  'isPrivate': instance.isPrivate,
 };
