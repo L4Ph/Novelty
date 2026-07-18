@@ -381,9 +381,9 @@ class AppDatabase extends _$AppDatabase {
               await customStatement('DROP TABLE IF EXISTS reading_history');
 
               // 1. 新規テーブルを作成する
-              await m.createTableIfNotExists(novels);
-              await m.createTableIfNotExists(libraryEntries);
-              await m.createTableIfNotExists(readingHistory);
+              await m.createTable(novels);
+              await m.createTable(libraryEntries);
+              await m.createTable(readingHistory);
               // 旧episodesテーブル(v12〜v15で使用)を作成する
               // v16マイグレーションで目次・本文テーブルへ分割される
               await customStatement('''
@@ -458,8 +458,8 @@ class AppDatabase extends _$AppDatabase {
               // 旧episodesテーブルを目次・本文の2テーブルに分割する
               // v14のFTS再構築より前に実行し、_populateFtsTables()で
               // episode_list_entries / episode_contents を参照できるようにする
-              await m.createTableIfNotExists(episodeListEntries);
-              await m.createTableIfNotExists(episodeContents);
+              await m.createTable(episodeListEntries);
+              await m.createTable(episodeContents);
 
               // episodes テーブルが存在する場合のみデータを引き継ぐ
               // （マイグレーション中断により episodes が既に削除されている可能性もあるため）
@@ -507,15 +507,15 @@ class AppDatabase extends _$AppDatabase {
           });
         } on MigrationException {
           rethrow;
-        } on Object catch (e, s) {
-          await _saveMigrationErrorReport(from, to, e, s);
-          throw MigrationException(
+        } on Object catch (e) {
+          final exception = MigrationException(
             fromVersion: from,
             toVersion: to,
             step: 'onUpgrade',
             cause: e,
-            stackTrace: s,
           );
+          await _saveMigrationErrorReport(exception);
+          throw exception;
         }
 
         await _clearMigrationErrorReports();
@@ -523,22 +523,11 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  Future<void> _saveMigrationErrorReport(
-    int? fromVersion,
-    int toVersion,
-    Object error,
-    StackTrace stackTrace,
-  ) async {
+  Future<void> _saveMigrationErrorReport(MigrationException exception) async {
     try {
       final dbFilePath = await _databaseFilePath();
-      final report = MigrationErrorReport(
-        formatVersion: 1,
-        timestamp: DateTime.now().toIso8601String(),
-        schemaVersionBefore: fromVersion,
-        schemaVersionAfter: toVersion,
-        failedStep: 'onUpgrade',
-        errorMessage: error.toString(),
-        stackTrace: stackTrace.toString(),
+      final report = MigrationErrorReport.fromException(
+        exception,
         dbFilePath: dbFilePath,
       );
       await saveMigrationErrorReport(report);

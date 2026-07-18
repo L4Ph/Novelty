@@ -54,7 +54,6 @@ class MyApp extends ConsumerWidget {
         return MaterialApp(
           home: MigrationRecoveryScreen(
             error: err,
-            stackTrace: stack,
             onRetry: () {
               ref.invalidate(appDatabaseProvider);
               ref.read(migrationRetryCounterProvider.notifier).state++;

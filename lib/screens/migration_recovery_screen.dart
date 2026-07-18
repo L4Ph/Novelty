@@ -1,8 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'package:novelty/database/migration_helper.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// マイグレーション失敗時に表示するリカバリー画面。
@@ -12,16 +11,12 @@ class MigrationRecoveryScreen extends StatelessWidget {
   const MigrationRecoveryScreen({
     required this.error,
     super.key,
-    this.stackTrace,
     this.onRetry,
     this.onExportDatabase,
   });
 
   /// マイグレーション失敗の原因となった例外
   final Object error;
-
-  /// スタックトレース
-  final StackTrace? stackTrace;
 
   /// リトライボタンが押されたときに呼ばれるコールバック
   final VoidCallback? onRetry;
@@ -130,23 +125,7 @@ class MigrationRecoveryScreen extends StatelessWidget {
   }
 
   Future<File?> _findLatestMigrationReport() async {
-    final docsDir = await getApplicationDocumentsDirectory();
-    final files = docsDir
-        .listSync()
-        .whereType<File>()
-        .where(
-          (file) =>
-              p.basename(file.path)
-                  .startsWith('novelty_migration_error_report_') &&
-              p.basename(file.path).endsWith('.json'),
-        )
-        .toList();
-    if (files.isEmpty) {
-      return null;
-    }
-    files.sort(
-      (a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()),
-    );
-    return files.first;
+    final files = await listMigrationErrorReports();
+    return files.isEmpty ? null : files.first;
   }
 }

@@ -14,7 +14,6 @@ class MigrationException implements Exception {
     required this.toVersion,
     required this.step,
     required this.cause,
-    this.stackTrace,
   });
 
   /// 移行前のスキーマバージョン
@@ -28,9 +27,6 @@ class MigrationException implements Exception {
 
   /// 元のエラー
   final Object cause;
-
-  /// スタックトレース
-  final StackTrace? stackTrace;
 
   @override
   String toString() {
@@ -49,10 +45,24 @@ class MigrationErrorReport {
     required this.schemaVersionAfter,
     required this.failedStep,
     required this.errorMessage,
-    this.stackTrace,
-    this.appVersion,
     this.dbFilePath,
   });
+
+  /// 例外からレポートを生成する。
+  factory MigrationErrorReport.fromException(
+    MigrationException exception, {
+    String? dbFilePath,
+  }) {
+    return MigrationErrorReport(
+      formatVersion: 1,
+      timestamp: DateTime.now().toIso8601String(),
+      schemaVersionBefore: exception.fromVersion,
+      schemaVersionAfter: exception.toVersion,
+      failedStep: exception.step,
+      errorMessage: exception.cause.toString(),
+      dbFilePath: dbFilePath,
+    );
+  }
 
   /// レポート形式のバージョン
   final int formatVersion;
@@ -72,12 +82,6 @@ class MigrationErrorReport {
   /// エラーメッセージ
   final String errorMessage;
 
-  /// スタックトレース（存在する場合）
-  final String? stackTrace;
-
-  /// アプリバージョン（存在する場合）
-  final String? appVersion;
-
   /// DBファイルパス（存在する場合）
   final String? dbFilePath;
 
@@ -89,11 +93,12 @@ class MigrationErrorReport {
         'schemaVersionAfter': schemaVersionAfter,
         'failedStep': failedStep,
         'errorMessage': errorMessage,
-        if (stackTrace != null) 'stackTrace': stackTrace,
-        if (appVersion != null) 'appVersion': appVersion,
         if (dbFilePath != null) 'dbFilePath': dbFilePath,
       };
 }
+
+/// マイグレーションエラーレポートファイル名の接頭辞。
+const String _migrationReportFilePrefix = 'novelty_migration_error_report_';
 
 /// [Migrator] に冪等・原子なマイグレーションを支援するための拡張メソッド。
 extension MigratorHelpers on Migrator {
@@ -101,15 +106,6 @@ extension MigratorHelpers on Migrator {
   /// マイグレーション内の全操作を原子化するために使用する。
   Future<void> runInTransaction(Future<void> Function() action) async {
     await database.transaction(action);
-  }
-
-  /// テーブルが存在しない場合のみ作成する。
-  /// Drift の [createTable] は内部で `CREATE TABLE IF NOT EXISTS` を発行するため、
-  /// そのまま委譲する。
-  Future<void> createTableIfNotExists<T extends Table, D extends DataClass>(
-    TableInfo<T, D> table,
-  ) async {
-    await createTable(table);
   }
 
   /// 指定したカラムが存在しない場合のみ追加する。
@@ -148,25 +144,32 @@ Future<void> saveMigrationErrorReport(MigrationErrorReport report) async {
   final file = File(
     p.join(
       docsDir.path,
-      'novelty_migration_error_report_$timestamp.json',
+      '$_migrationReportFilePrefix$timestamp.json',
     ),
   );
   await file.writeAsString(jsonEncode(report.toJson()));
 }
 
-/// 既存のマイグレーションエラーレポートファイルをすべて削除する。
-/// マイグレーション成功後に呼び出すことを想定している。
-Future<void> clearMigrationErrorReports() async {
+/// 保存されているマイグレーションエラーレポートファイルを一覧返す。
+/// 更新日時が新しい順にソートされる。
+Future<List<File>> listMigrationErrorReports() async {
   final docsDir = await getApplicationDocumentsDirectory();
-  final files = docsDir
+  return docsDir
       .listSync()
       .whereType<File>()
       .where(
         (file) =>
-            p.basename(file.path).startsWith('novelty_migration_error_report_')
-            &&
+            p.basename(file.path).startsWith(_migrationReportFilePrefix) &&
             p.basename(file.path).endsWith('.json'),
-      );
+      )
+      .toList()
+    ..sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+}
+
+/// 既存のマイグレーションエラーレポートファイルをすべて削除する。
+/// マイグレーション成功後に呼び出すことを想定している。
+Future<void> clearMigrationErrorReports() async {
+  final files = await listMigrationErrorReports();
   for (final file in files) {
     await file.delete();
   }
