@@ -258,6 +258,78 @@ void main() {
       expect(novel?.isPrivate, isTrue);
     });
 
+    test('キャッシュが無い状態で非公開作品と判定された場合、プレースホルダーが挿入される', () async {
+      when(
+        mockApiService.fetchNovelInfo(normalizedNcode),
+      ).thenThrow(const NovelNotFoundException());
+
+      final repository = container.read(novelRepositoryProvider);
+      final stream = repository.watchNovelInfo(testNcode);
+
+      await expectLater(
+        stream,
+        emits(
+          predicate<NovelInfo>(
+            (info) =>
+                info.ncode == normalizedNcode &&
+                info.title == null &&
+                info.isPrivate,
+          ),
+        ),
+      );
+
+      final novel = await database.getNovel(normalizedNcode);
+      expect(novel, isNotNull);
+      expect(novel!.isPrivate, isTrue);
+      expect(novel.cachedAt, isNotNull);
+    });
+
+    test('キャッシュが無い状態でネットワークエラー時もプレースホルダーが挿入される', () async {
+      when(
+        mockApiService.fetchNovelInfo(normalizedNcode),
+      ).thenThrow(Exception('network error'));
+
+      final repository = container.read(novelRepositoryProvider);
+      final stream = repository.watchNovelInfo(testNcode);
+
+      await expectLater(
+        stream,
+        emits(
+          predicate<NovelInfo>(
+            (info) =>
+                info.ncode == normalizedNcode &&
+                info.title == null &&
+                !info.isPrivate,
+          ),
+        ),
+      );
+
+      final novel = await database.getNovel(normalizedNcode);
+      expect(novel, isNotNull);
+      expect(novel!.isPrivate, isFalse);
+      expect(novel.cachedAt, isNotNull);
+    });
+
+    test('エラー時にcachedAtが更新され、TTL内は再取得しない', () async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      when(
+        mockApiService.fetchNovelInfo(normalizedNcode),
+      ).thenThrow(Exception('network error'));
+
+      final repository = container.read(novelRepositoryProvider);
+      await repository.watchNovelInfo(testNcode).first;
+
+      // プレースホルダーが挿入され、cachedAtが更新されていること
+      final novelAfterFirst = await database.getNovel(normalizedNcode);
+      expect(novelAfterFirst?.cachedAt, isNotNull);
+      expect(novelAfterFirst!.cachedAt! >= now - 1000, isTrue);
+
+      // TTL内に再度watchしてもAPIは呼ばれないこと
+      clearInteractions(mockApiService);
+      await repository.watchNovelInfo(testNcode).first;
+      verifyNever(mockApiService.fetchNovelInfo(any));
+    });
+
     test('非公開フラグが立っていても復活時に解除される', () async {
       final now = DateTime.now().millisecondsSinceEpoch;
       await insertCachedNovel(
@@ -317,6 +389,64 @@ void main() {
       expect(events1.last.title, 'dedup title');
       expect(events2.last.title, 'dedup title');
       verify(mockApiService.fetchNovelInfo(normalizedNcode)).called(1);
+    });
+  });
+
+  group('NovelRepository downloadSingleEpisode', () {
+    const testNcode = 'N1234AB';
+    final normalizedNcode = testNcode.toNormalizedNcode();
+    const episodeId = 1;
+
+    late db.AppDatabase database;
+    late MockApiService mockApiService;
+    late ProviderContainer container;
+
+    setUp(() {
+      database = db.AppDatabase.memory();
+      mockApiService = MockApiService();
+      container = ProviderContainer(
+        overrides: [
+          db.appDatabaseProvider.overrideWithValue(database),
+          apiServiceProvider.overrideWithValue(mockApiService),
+          settingsProvider.overrideWith(FakeSettings.new),
+          isOfflineProvider.overrideWithValue(false),
+        ],
+      );
+    });
+
+    tearDown(() async {
+      container.dispose();
+      await database.close();
+    });
+
+    test('フェッチ失敗時に既存の目次サブタイトルが上書きされない', () async {
+      await database.insertNovel(
+        NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
+      );
+      await database.upsertEpisodes([
+        db.EpisodeListEntriesCompanion(
+          ncode: drift.Value(normalizedNcode),
+          episodeId: const drift.Value(episodeId),
+          subtitle: const drift.Value('元のサブタイトル'),
+          url: const drift.Value('https://example.com/1/'),
+        ),
+      ]);
+
+      when(
+        mockApiService.fetchEpisode(normalizedNcode, episodeId),
+      ).thenThrow(Exception('network error'));
+
+      final repository = container.read(novelRepositoryProvider);
+      final result = await repository.downloadSingleEpisode(
+        testNcode,
+        episodeId,
+      );
+
+      expect(result, isFalse);
+
+      final data = await database.getEpisodeData(normalizedNcode, episodeId);
+      expect(data?.subtitle, '元のサブタイトル');
+      expect(data?.content, isEmpty);
     });
   });
 

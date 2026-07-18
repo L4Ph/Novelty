@@ -824,6 +824,40 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  /// 小説の取得状態を確保する
+  ///
+  /// 指定したncodeの行が存在しない場合はプレースホルダー行を挿入し、
+  /// 存在する場合はcachedAtを更新する。
+  /// [isPrivate]を指定した場合は非公開フラグも更新する。
+  Future<void> ensureNovelFetchState(
+    String ncode, {
+    required int cachedAt,
+    bool? isPrivate,
+  }) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    final existing = await getNovel(normalizedNcode);
+    if (existing == null) {
+      await insertNovel(
+        NovelsCompanion(
+          ncode: Value(normalizedNcode),
+          isPrivate: Value(isPrivate ?? false),
+          cachedAt: Value(cachedAt),
+        ),
+      );
+    } else {
+      await (update(
+        novels,
+      )..where((t) => t.ncode.equals(normalizedNcode))).write(
+        NovelsCompanion(
+          isPrivate: isPrivate != null
+              ? Value(isPrivate)
+              : const Value.absent(),
+          cachedAt: Value(cachedAt),
+        ),
+      );
+    }
+  }
+
   /// 指定範囲の目次データのうち、最も古い取得日時を返す
   Future<int?> getEpisodeListOldestFetchedAt(
     String ncode,
@@ -831,7 +865,7 @@ class AppDatabase extends _$AppDatabase {
     int end,
   ) async {
     final result = await customSelect(
-      'SELECT MIN(fetched_at) as oldest '
+      'SELECT MIN(COALESCE(fetched_at, 0)) as oldest '
       'FROM episode_list_entries '
       'WHERE ncode = ? AND episode_id BETWEEN ? AND ?',
       variables: [
@@ -1065,11 +1099,17 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// 特定エピソードのデータ（目次 + 本文）を監視
-  Stream<EpisodeData?> watchEpisodeEntity(String ncode, int episodeId) {
+  Stream<EpisodeData?> watchEpisodeData(String ncode, int episodeId) {
     return _episodeDataSelect(
       ncode.toNormalizedNcode(),
       episodeId,
     ).watchSingleOrNull();
+  }
+
+  /// 特定エピソードのデータ（目次 + 本文）を監視
+  @Deprecated('watchEpisodeDataを使用してください')
+  Stream<EpisodeData?> watchEpisodeEntity(String ncode, int episodeId) {
+    return watchEpisodeData(ncode, episodeId);
   }
 
   /// 目次と本文を結合したエピソードデータを取得するSELECT
@@ -1104,31 +1144,7 @@ class AppDatabase extends _$AppDatabase {
   /// エピソード一覧を取得
   Future<List<Episode>> getEpisodes(String ncode) async {
     final normalizedNcode = ncode.toNormalizedNcode();
-    final rows = await customSelect(
-      'SELECT '
-      'l.ncode, l.episode_id, l.subtitle, l.url, l.published_at, l.revised_at, '
-      "CASE WHEN c.content IS NOT NULL AND c.content != '[]' "
-      'THEN 1 ELSE 0 END as is_downloaded '
-      'FROM episode_list_entries l '
-      'LEFT JOIN episode_contents c '
-      'ON c.ncode = l.ncode AND c.episode_id = l.episode_id '
-      'WHERE l.ncode = ? '
-      'ORDER BY l.episode_id',
-      variables: [Variable.withString(normalizedNcode)],
-      readsFrom: {episodeListEntries, episodeContents},
-    ).get();
-
-    return rows.map((row) {
-      return Episode(
-        ncode: row.read<String>('ncode'),
-        index: row.read<int>('episode_id'),
-        subtitle: row.read<String?>('subtitle'),
-        url: row.read<String?>('url'),
-        update: row.read<String?>('published_at'),
-        revised: row.read<String?>('revised_at'),
-        isDownloaded: row.read<int>('is_downloaded') == 1,
-      );
-    }).toList();
+    return _episodeListSelect(normalizedNcode).get();
   }
 
   /// 指定範囲のエピソード一覧を取得 (Optimized)
@@ -1138,35 +1154,11 @@ class AppDatabase extends _$AppDatabase {
     int end,
   ) async {
     final normalizedNcode = ncode.toNormalizedNcode();
-    final rows = await customSelect(
-      'SELECT '
-      'l.ncode, l.episode_id, l.subtitle, l.url, l.published_at, l.revised_at, '
-      "CASE WHEN c.content IS NOT NULL AND c.content != '[]' "
-      'THEN 1 ELSE 0 END as is_downloaded '
-      'FROM episode_list_entries l '
-      'LEFT JOIN episode_contents c '
-      'ON c.ncode = l.ncode AND c.episode_id = l.episode_id '
-      'WHERE l.ncode = ? AND l.episode_id BETWEEN ? AND ? '
-      'ORDER BY l.episode_id',
-      variables: [
-        Variable.withString(normalizedNcode),
-        Variable.withInt(start),
-        Variable.withInt(end),
-      ],
-      readsFrom: {episodeListEntries, episodeContents},
+    return _episodeListSelect(
+      normalizedNcode,
+      start: start,
+      end: end,
     ).get();
-
-    return rows.map((row) {
-      return Episode(
-        ncode: row.read<String>('ncode'),
-        index: row.read<int>('episode_id'),
-        subtitle: row.read<String?>('subtitle'),
-        url: row.read<String?>('url'),
-        update: row.read<String?>('published_at'),
-        revised: row.read<String?>('revised_at'),
-        isDownloaded: row.read<int>('is_downloaded') == 1,
-      );
-    }).toList();
   }
 
   /// 指定範囲のエピソード一覧を監視 (Optimized)
@@ -1176,6 +1168,20 @@ class AppDatabase extends _$AppDatabase {
     int end,
   ) {
     final normalizedNcode = ncode.toNormalizedNcode();
+    return _episodeListSelect(
+      normalizedNcode,
+      start: start,
+      end: end,
+    ).watch();
+  }
+
+  /// 目次と本文を結合したエピソード一覧のSELECT
+  Selectable<Episode> _episodeListSelect(
+    String ncode, {
+    int? start,
+    int? end,
+  }) {
+    final hasRange = start != null && end != null;
     return customSelect(
       'SELECT '
       'l.ncode, l.episode_id, l.subtitle, l.url, l.published_at, l.revised_at, '
@@ -1184,27 +1190,28 @@ class AppDatabase extends _$AppDatabase {
       'FROM episode_list_entries l '
       'LEFT JOIN episode_contents c '
       'ON c.ncode = l.ncode AND c.episode_id = l.episode_id '
-      'WHERE l.ncode = ? AND l.episode_id BETWEEN ? AND ? '
+      'WHERE l.ncode = ? '
+      '${hasRange ? 'AND l.episode_id BETWEEN ? AND ? ' : ''}'
       'ORDER BY l.episode_id',
       variables: [
-        Variable.withString(normalizedNcode),
-        Variable.withInt(start),
-        Variable.withInt(end),
+        Variable.withString(ncode),
+        if (hasRange) Variable.withInt(start),
+        if (hasRange) Variable.withInt(end),
       ],
       readsFrom: {episodeListEntries, episodeContents},
-    ).watch().map((rows) {
-      return rows.map((row) {
-        return Episode(
-          ncode: row.read<String>('ncode'),
-          index: row.read<int>('episode_id'),
-          subtitle: row.read<String?>('subtitle'),
-          url: row.read<String?>('url'),
-          update: row.read<String?>('published_at'),
-          revised: row.read<String?>('revised_at'),
-          isDownloaded: row.read<int>('is_downloaded') == 1,
-        );
-      }).toList();
-    });
+    ).map(_mapEpisodeRow);
+  }
+
+  static Episode _mapEpisodeRow(QueryRow row) {
+    return Episode(
+      ncode: row.read<String>('ncode'),
+      index: row.read<int>('episode_id'),
+      subtitle: row.read<String?>('subtitle'),
+      url: row.read<String?>('url'),
+      update: row.read<String?>('published_at'),
+      revised: row.read<String?>('revised_at'),
+      isDownloaded: row.read<int>('is_downloaded') == 1,
+    );
   }
 
   /// ダウンロード中の小説を監視

@@ -160,7 +160,7 @@ abstract class NovelInfo with _$NovelInfo {
     @StringToIntConverter() int? istenni,
 
     /// 非公開・削除等でAPIから取得できない状態か。
-    bool? isPrivate,
+    @Default(false) bool isPrivate,
   }) = _NovelInfo;
 
   /// JSONから[NovelInfo]を生成するファクトリコンストラクタ
@@ -206,7 +206,7 @@ extension NovelInfoEx on NovelInfo {
       iszankoku: Value(iszankoku),
       istensei: Value(istensei),
       istenni: Value(istenni),
-      isPrivate: Value(isPrivate ?? false),
+      isPrivate: Value(isPrivate),
     );
   }
 }

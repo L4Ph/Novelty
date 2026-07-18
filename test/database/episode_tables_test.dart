@@ -173,5 +173,26 @@ void main() {
 
       await expectation;
     });
+
+    test('取得日時がNULLの行が含まれる場合、最古取得日時は0を返すこと', () async {
+      const ncode = 'n1234ab';
+      await insertDummyNovel(ncode);
+
+      // updateEpisodeContentを直接呼ぶと、目次行は作られるがfetchedAtはNULLのまま
+      await db.updateEpisodeContent(
+        ncode: ncode,
+        episodeId: 1,
+        content: [NovelContentElement.plainText('本文テキスト')],
+        fetchedAt: 222,
+      );
+
+      // episodeId=1の目次行はfetchedAtがNULLのままであること
+      final listRows = await db.select(db.episodeListEntries).get();
+      expect(listRows.single.fetchedAt, isNull);
+
+      // NULL行が含まれるため、最古取得日時は0（TTL切れ）として返されること
+      final oldest = await db.getEpisodeListOldestFetchedAt(ncode, 1, 100);
+      expect(oldest, 0);
+    });
   });
 }

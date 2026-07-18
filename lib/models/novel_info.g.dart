@@ -45,7 +45,7 @@ _NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => _NovelInfo(
   iszankoku: const StringToIntConverter().fromJson(json['iszankoku']),
   istensei: const StringToIntConverter().fromJson(json['istensei']),
   istenni: const StringToIntConverter().fromJson(json['istenni']),
-  isPrivate: json['isPrivate'] as bool?,
+  isPrivate: json['isPrivate'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$NovelInfoToJson(

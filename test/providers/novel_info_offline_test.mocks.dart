@@ -503,6 +503,23 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<int>);
 
   @override
+  _i5.Future<void> ensureNovelFetchState(
+    String? ncode, {
+    required int? cachedAt,
+    bool? isPrivate,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #ensureNovelFetchState,
+              [ncode],
+              {#cachedAt: cachedAt, #isPrivate: isPrivate},
+            ),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
   _i5.Future<int?> getEpisodeListOldestFetchedAt(
     String? ncode,
     int? start,
@@ -605,6 +622,17 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
             returnValue: _i5.Future<_i3.EpisodeData?>.value(),
           )
           as _i5.Future<_i3.EpisodeData?>);
+
+  @override
+  _i5.Stream<_i3.EpisodeData?> watchEpisodeData(
+    String? ncode,
+    int? episodeId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#watchEpisodeData, [ncode, episodeId]),
+            returnValue: _i5.Stream<_i3.EpisodeData?>.empty(),
+          )
+          as _i5.Stream<_i3.EpisodeData?>);
 
   @override
   _i5.Stream<_i3.EpisodeData?> watchEpisodeEntity(

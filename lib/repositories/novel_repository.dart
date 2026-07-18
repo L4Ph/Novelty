@@ -70,6 +70,23 @@ class NovelRepository {
   /// エピソード目次のTTL
   static const Duration _episodeListTtl = Duration(hours: 1);
 
+  /// 指定したキーで実行中の再取得があればそれを待ち、
+  /// なければ[task]を実行してマップに登録する。
+  Future<void> _dedup(String key, Future<void> Function() task) async {
+    final pending = _pendingFetches[key];
+    if (pending != null) {
+      return pending;
+    }
+
+    final future = task();
+    _pendingFetches[key] = future;
+    try {
+      await future;
+    } finally {
+      final _ = _pendingFetches.remove(key);
+    }
+  }
+
   /// リソースをクリーンアップする
   void dispose() {
     for (final controller in _progressControllers.values) {
@@ -144,14 +161,14 @@ class NovelRepository {
 
     final validEpisode = lastEpisode > 0 ? lastEpisode : 1;
 
-    // Note: addToHistory now expects ReadingHistoryCompanion
-    // We assume the novel is already in Novels table
-    // (fetched via API or Library).
-    // If not, we should ideally insert it,
-    // but we don't have full metadata here.
-    // The previous implementation inserted into History table which had title/writer.
-    // The new ReadingHistory table only links to Novels.
-    // For now, we proceed with inserting into ReadingHistory.
+    // addToHistoryは現在ReadingHistoryCompanionを受け取る。
+    // 小説情報は既にNovelsテーブルに存在するものとして扱う
+    // （APIまたはライブラリ経由で取得済み）。
+    // 存在しない場合は本来であれば挿入すべきだが、
+    // ここでは完全なメタデータを持たないため挿入しない。
+    // 以前の実装ではタイトル・作者名を持つHistoryテーブルに挿入していたが、
+    // 新しいReadingHistoryテーブルはNovelsへの参照のみを持つ。
+    // そのため、ReadingHistoryへの挿入のみを行う。
 
     await _db.addToHistory(
       ReadingHistoryCompanion(
@@ -169,7 +186,7 @@ class NovelRepository {
     await _db.deleteHistory(normalizedNcode);
   }
 
-  /// Helper to fetch full episode data including metadata
+  /// メタデータを含むエピソード本文を取得するヘルパーメソッド。
   Future<Episode> _fetchEpisode(
     String ncode,
     int episode,
@@ -226,28 +243,19 @@ class NovelRepository {
       return true;
     } on Exception {
       // データベースに保存（失敗）
-      // We need to insert a record with empty content
-      // to mark failure/attempt.
-      // But updateEpisodeContent requires subtitle/url.
-      // If fetch failed, we might not have them.
-      // If we have existing metadata, we can try to use it,
-      // but here we assume fetch failed completely.
-      // For now, we skip saving failure state if we can't get metadata,
-      // OR we save with empty strings if that's acceptable.
-      // Let's try to save with empty strings to indicate failure.
+      // フェッチに失敗した場合、空の本文で失敗記録を残す。
+      // subtitle/urlは指定せず、既存の目次メタデータを上書きしない。
 
       try {
         await _db.updateEpisodeContent(
           ncode: ncodeLower,
           episodeId: episode,
-          content: const [], // Empty content
+          content: const [], // 空の本文
           fetchedAt: now,
           revisedAt: revised,
-          subtitle: '',
-          url: '',
         );
       } on Exception catch (_) {
-        // Ignore secondary failure
+        // 二次的な失敗は無視する
       }
 
       return false;
@@ -314,7 +322,8 @@ class NovelRepository {
         return cached.content!;
       }
 
-      // 失敗時は空contentで保存
+      // 失敗時は空の本文で失敗記録を残す
+      // subtitle/urlは指定せず、既存の目次メタデータを上書きしない
       try {
         await _db.updateEpisodeContent(
           ncode: ncode.toNormalizedNcode(),
@@ -322,8 +331,6 @@ class NovelRepository {
           content: const [],
           fetchedAt: DateTime.now().millisecondsSinceEpoch,
           revisedAt: revised,
-          subtitle: '',
-          url: '',
         );
       } on Exception catch (_) {}
       rethrow;
@@ -521,7 +528,7 @@ class NovelRepository {
           url: Value(e.url),
           publishedAt: Value(e.update),
           revisedAt: Value(e.revised),
-          // content is not updated here
+          // 本文はここでは更新しない
         );
       }).toList();
       await _db.upsertEpisodes(episodesCompanions);
@@ -546,7 +553,7 @@ class NovelRepository {
   /// DBにキャッシュがあれば即座に返し、TTLが切れていれば裏で再取得する。
   Stream<NovelInfo> watchNovelInfo(String ncode) {
     final normalizedNcode = ncode.toNormalizedNcode();
-    unawaited(_refreshNovelInfoIfNeeded(normalizedNcode));
+    _refreshNovelInfoIfNeeded(normalizedNcode).ignore();
 
     return _db
         .watchNovel(normalizedNcode)
@@ -557,18 +564,7 @@ class NovelRepository {
   /// 小説情報のTTLを判定し、必要なら裏で再取得する
   Future<void> _refreshNovelInfoIfNeeded(String normalizedNcode) async {
     final key = 'novel_info:$normalizedNcode';
-    final pending = _pendingFetches[key];
-    if (pending != null) {
-      return pending;
-    }
-
-    final future = _doRefreshNovelInfo(normalizedNcode);
-    _pendingFetches[key] = future;
-    try {
-      await future;
-    } finally {
-      final _ = _pendingFetches.remove(key);
-    }
+    await _dedup(key, () => _doRefreshNovelInfo(normalizedNcode));
   }
 
   /// 小説情報をAPIから取得しDBに保存する
@@ -587,19 +583,21 @@ class NovelRepository {
 
     try {
       final info = await apiService.fetchNovelInfo(normalizedNcode);
-      await _db.insertNovel(
-        info.toDbCompanion().copyWith(
-          isPrivate: const Value(false),
-        ),
-      );
+      await _db.insertNovel(info.toDbCompanion());
     } on NovelNotFoundException {
       // 非公開・削除された作品でもキャッシュは保持する
-      await _db.updateNovelPrivateFlag(
+      await _db.ensureNovelFetchState(
         normalizedNcode,
         isPrivate: true,
+        cachedAt: now,
       );
     } on Exception {
       // ネットワークエラー等は無視し、キャッシュ表示を継続する
+      // キャッシュが無い場合はプレースホルダーを挿入して無限ローディングを防ぐ
+      await _db.ensureNovelFetchState(
+        normalizedNcode,
+        cachedAt: now,
+      );
     }
   }
 
@@ -610,7 +608,7 @@ class NovelRepository {
     final normalizedNcode = ncode.toNormalizedNcode();
     final start = (page - 1) * 100 + 1;
 
-    unawaited(_refreshEpisodeListIfNeeded(normalizedNcode, page, start));
+    _refreshEpisodeListIfNeeded(normalizedNcode, page, start).ignore();
 
     return _db.watchEpisodesRange(
       normalizedNcode,
@@ -626,18 +624,10 @@ class NovelRepository {
     int start,
   ) async {
     final key = 'episode_list:$normalizedNcode:$page';
-    final pending = _pendingFetches[key];
-    if (pending != null) {
-      return pending;
-    }
-
-    final future = _doRefreshEpisodeList(normalizedNcode, page, start);
-    _pendingFetches[key] = future;
-    try {
-      await future;
-    } finally {
-      final _ = _pendingFetches.remove(key);
-    }
+    await _dedup(
+      key,
+      () => _doRefreshEpisodeList(normalizedNcode, page, start),
+    );
   }
 
   /// エピソード目次をAPIから取得しDBに保存する
@@ -737,8 +727,8 @@ class LibraryStatus extends _$LibraryStatus {
     state = const AsyncValue.loading();
     try {
       if (newStatus) {
-        // Note: We need to ensure Novel is in Novels table first.
-        // Usually fetchNovelInfo handles this.
+        // 事前にNovelsテーブルに小説情報が存在することを保証する必要がある。
+        // 通常はfetchNovelInfoによって挿入済み。
         await db.insertNovel(novelInfo.toDbCompanion());
         await db.addToLibrary(novelInfo.ncode!);
       } else {
