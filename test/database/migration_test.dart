@@ -97,7 +97,7 @@ void main() {
         PRIMARY KEY (ncode, episode_id)
       )
       ''',
-      'INSERT INTO novels (ncode, title) VALUES (\'n1234ab\', \'テスト小説\')',
+      "INSERT INTO novels (ncode, title) VALUES ('n1234ab', 'テスト小説')",
       '''
       INSERT INTO episodes VALUES (
         'n1234ab', 1, '第1話', 'https://example.com/1',
@@ -156,11 +156,78 @@ void main() {
       'PRAGMA user_version = 15',
     ];
 
+    // 可読性のためforEachは使用しない
+    // ignore: prefer_foreach
     for (final sql in statements) {
       db.execute(sql);
     }
     db.dispose();
   }
+
+  /// 中断により episode_list_entries が不完全なスキーマで存在する
+  /// 壊れた v15 DB を作成する。
+  Future<void> createBrokenSchemaV15Database(File file) async {
+    final db = sqlite3.open(file.path);
+
+    const statements = <String>[
+      'CREATE TABLE novels (ncode TEXT NOT NULL PRIMARY KEY, title TEXT)',
+      '''
+      CREATE TABLE episodes (
+        ncode TEXT NOT NULL REFERENCES novels(ncode),
+        episode_id INTEGER NOT NULL,
+        subtitle TEXT,
+        url TEXT,
+        published_at TEXT,
+        revised_at TEXT,
+        content TEXT,
+        fetched_at INTEGER,
+        PRIMARY KEY (ncode, episode_id)
+      )
+      ''',
+      "INSERT INTO novels (ncode, title) VALUES ('n1234ab', 'テスト小説')",
+      '''
+      INSERT INTO episodes VALUES (
+        'n1234ab', 1, '第1話', 'https://example.com/1',
+        '2024-01-01 00:00:00', '2024-01-02 00:00:00',
+        '[{"runtimeType":"plainText","text":"本文"}]', 1000)
+      ''',
+      // 不完全なスキーマで episode_list_entries が作成されている
+      '''
+      CREATE TABLE episode_list_entries (
+        ncode TEXT NOT NULL,
+        episode_id INTEGER NOT NULL,
+        PRIMARY KEY (ncode, episode_id)
+      )
+      ''',
+      'PRAGMA user_version = 15',
+    ];
+
+    // 可読性のためforEachは使用しない
+    // ignore: prefer_foreach
+    for (final sql in statements) {
+      db.execute(sql);
+    }
+    db.dispose();
+  }
+
+  test('v15マイグレーション失敗時にMigrationExceptionが投げられること', () async {
+    await createBrokenSchemaV15Database(dbFile);
+
+    await expectLater(
+      () async {
+        final db = AppDatabase.test(NativeDatabase(dbFile));
+        await db.doWhenOpened((_) async {});
+        return db;
+      },
+      throwsA(
+        isA<MigrationException>().having(
+          (e) => e.toVersion,
+          'toVersion',
+          16,
+        ),
+      ),
+    );
+  });
 
   test('v15中間状態からの修復：目次・本文が重複せず正常に完了すること', () async {
     await createBrokenV15Database(dbFile);
@@ -297,6 +364,7 @@ void main() {
       'PRAGMA user_version = 14',
     ];
 
+    // 可読性のためforEachは使用しない
     // ignore: prefer_foreach
     for (final sql in statements) {
       db.execute(sql);

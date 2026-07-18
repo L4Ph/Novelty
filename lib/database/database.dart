@@ -15,6 +15,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 export 'database_providers.dart';
+export 'migration_helper.dart';
 
 part 'database.g.dart';
 
@@ -364,141 +365,203 @@ class AppDatabase extends _$AppDatabase {
         await _createFtsTables();
       },
       onUpgrade: (m, from, to) async {
-        await m.runInTransaction(() async {
-          if (from < 12) {
-            // 以前のマイグレーション失敗などでテーブルが中途半端に存在する可能性があるため、
-            // 既存テーブルを削除してから新しいテーブルを作成する。
-            await customStatement('DROP TABLE IF EXISTS episodes');
-            await customStatement('DROP TABLE IF EXISTS library_entries');
-            await customStatement('DROP TABLE IF EXISTS reading_history');
-
-            // 1. 新規テーブルを作成する
-            await m.createTableIfNotExists(novels);
-            await m.createTableIfNotExists(libraryEntries);
-            await m.createTableIfNotExists(readingHistory);
-            // 旧episodesテーブル(v12〜v15で使用)を作成する
-            // v16マイグレーションで目次・本文テーブルへ分割される
-            await customStatement('''
-                CREATE TABLE IF NOT EXISTS episodes (
-                  ncode TEXT NOT NULL REFERENCES novels(ncode),
-                  episode_id INTEGER NOT NULL,
-                  subtitle TEXT,
-                  url TEXT,
-                  published_at TEXT,
-                  revised_at TEXT,
-                  content TEXT,
-                  fetched_at INTEGER,
-                  PRIMARY KEY (ncode, episode_id)
-                );
-              ''');
-
-            // 2. LibraryNovels から LibraryEntries と Novels へ移行
-            await customStatement('''
-                INSERT OR IGNORE INTO novels (
-                  ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
-                )
-                SELECT 
-                  ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
-                FROM library_novels;
-              ''');
-
-            await customStatement('''
-                INSERT OR IGNORE INTO library_entries (ncode, added_at)
-                SELECT ncode, added_at FROM library_novels;
-              ''');
-
-            // 3. History から ReadingHistory と Novels へ移行
-            await customStatement('''
-                INSERT OR IGNORE INTO novels (ncode, cached_at)
-                SELECT ncode, viewed_at FROM history;
-              ''');
-
-            await customStatement('''
-                INSERT OR IGNORE INTO reading_history
-                  (ncode, last_episode_id, viewed_at, updated_at)
-                SELECT ncode, last_episode, viewed_at, updated_at FROM history;
-              ''');
-
-            // 4. CachedEpisodes から Episodes へ移行
-
-            // 古いキャッシュエピソードテーブルが存在するか確認する
-            final cachedEpisodesResult = await customSelect(
-              'SELECT name FROM sqlite_master '
-              "WHERE type='table' AND name='cached_episodes'",
-            ).get();
-
-            if (cachedEpisodesResult.isNotEmpty) {
-              await customStatement('''
-                  INSERT OR IGNORE INTO episodes
-                    (ncode, episode_id, content, fetched_at, revised_at)
-                  SELECT ncode, episode, content, cached_at, revised FROM cached_episodes;
-                ''');
-            }
-
-            // 5. 旧テーブルを削除する
-            await customStatement('DROP TABLE IF EXISTS library_novels');
-            await customStatement('DROP TABLE IF EXISTS history');
-            await customStatement('DROP TABLE IF EXISTS cached_episodes');
-          }
-
-          if (from < 13) {
-            // Version 13 migration (Triggers based FTS)
-            // - skipped or overwritten by 14
-          }
-
-          if (from < 16) {
-            // 旧episodesテーブルを目次・本文の2テーブルに分割する
-            // v14のFTS再構築より前に実行し、_populateFtsTables()で
-            // episode_list_entries / episode_contents を参照できるようにする
-            await m.createTableIfNotExists(episodeListEntries);
-            await m.createTableIfNotExists(episodeContents);
-
-            // episodes テーブルが存在する場合のみデータを引き継ぐ
-            // （マイグレーション中断により episodes が既に削除されている可能性もあるため）
-            if (await m.tableExists('episodes')) {
-              // 目次データの引き継ぎ(目次の取得日時は旧スキーマに存在しないためNULL)
-              await customStatement('''
-                  INSERT OR IGNORE INTO episode_list_entries
-                    (ncode, episode_id, subtitle, url, published_at, revised_at, fetched_at)
-                  SELECT ncode, episode_id, subtitle, url, published_at, revised_at, NULL
-                  FROM episodes;
-                ''');
-
-              // 本文データの引き継ぎ(content IS NOT NULL の行のみ)
-              await customStatement('''
-                  INSERT OR IGNORE INTO episode_contents
-                    (ncode, episode_id, content, fetched_at, revised_at)
-                  SELECT ncode, episode_id, content, fetched_at, revised_at
-                  FROM episodes
-                  WHERE content IS NOT NULL;
-                ''');
-
+        try {
+          await m.runInTransaction(() async {
+            if (from < 12) {
+              // 以前のマイグレーション失敗などでテーブルが中途半端に存在する可能性があるため、
+              // 既存テーブルを削除してから新しいテーブルを作成する。
               await customStatement('DROP TABLE IF EXISTS episodes');
+              await customStatement('DROP TABLE IF EXISTS library_entries');
+              await customStatement('DROP TABLE IF EXISTS reading_history');
+
+              // 1. 新規テーブルを作成する
+              await m.createTableIfNotExists(novels);
+              await m.createTableIfNotExists(libraryEntries);
+              await m.createTableIfNotExists(readingHistory);
+              // 旧episodesテーブル(v12〜v15で使用)を作成する
+              // v16マイグレーションで目次・本文テーブルへ分割される
+              await customStatement('''
+                  CREATE TABLE IF NOT EXISTS episodes (
+                    ncode TEXT NOT NULL REFERENCES novels(ncode),
+                    episode_id INTEGER NOT NULL,
+                    subtitle TEXT,
+                    url TEXT,
+                    published_at TEXT,
+                    revised_at TEXT,
+                    content TEXT,
+                    fetched_at INTEGER,
+                    PRIMARY KEY (ncode, episode_id)
+                  );
+                ''');
+
+              // 2. LibraryNovels から LibraryEntries と Novels へ移行
+              await customStatement('''
+                  INSERT OR IGNORE INTO novels (
+                    ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
+                  )
+                  SELECT 
+                    ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
+                  FROM library_novels;
+                ''');
+
+              await customStatement('''
+                  INSERT OR IGNORE INTO library_entries (ncode, added_at)
+                  SELECT ncode, added_at FROM library_novels;
+                ''');
+
+              // 3. History から ReadingHistory と Novels へ移行
+              await customStatement('''
+                  INSERT OR IGNORE INTO novels (ncode, cached_at)
+                  SELECT ncode, viewed_at FROM history;
+                ''');
+
+              await customStatement('''
+                  INSERT OR IGNORE INTO reading_history
+                    (ncode, last_episode_id, viewed_at, updated_at)
+                  SELECT ncode, last_episode, viewed_at, updated_at FROM history;
+                ''');
+
+              // 4. CachedEpisodes から Episodes へ移行
+
+              // 古いキャッシュエピソードテーブルが存在するか確認する
+              final cachedEpisodesResult = await customSelect(
+                'SELECT name FROM sqlite_master '
+                "WHERE type='table' AND name='cached_episodes'",
+              ).get();
+
+              if (cachedEpisodesResult.isNotEmpty) {
+                await customStatement('''
+                    INSERT OR IGNORE INTO episodes
+                      (ncode, episode_id, content, fetched_at, revised_at)
+                    SELECT ncode, episode, content, cached_at, revised FROM cached_episodes;
+                  ''');
+              }
+
+              // 5. 旧テーブルを削除する
+              await customStatement('DROP TABLE IF EXISTS library_novels');
+              await customStatement('DROP TABLE IF EXISTS history');
+              await customStatement('DROP TABLE IF EXISTS cached_episodes');
             }
 
-            // 非公開フラグカラムの追加
-            // (v12未満からのマイグレーションではNovelsが新スキーマで作成済みのため不要)
-            if (from >= 12) {
-              await m.addColumnIfNotExists(novels, novels.isPrivate);
+            if (from < 13) {
+              // Version 13 migration (Triggers based FTS)
+              // - skipped or overwritten by 14
             }
-          }
 
-          if (from >= 12 && from < 15) {
-            await m.addColumnIfNotExists(novels, novels.userId);
-          }
+            if (from < 16) {
+              // 旧episodesテーブルを目次・本文の2テーブルに分割する
+              // v14のFTS再構築より前に実行し、_populateFtsTables()で
+              // episode_list_entries / episode_contents を参照できるようにする
+              await m.createTableIfNotExists(episodeListEntries);
+              await m.createTableIfNotExists(episodeContents);
 
-          if (from < 14) {
-            // トリグラムトークナイザーからデフォルトトークナイザー(simple)へ切り替え、
-            // トリガーを削除したためFTSテーブルを手動で再構築・再投入する
-            await customStatement('DROP TABLE IF EXISTS novels_search');
-            await customStatement('DROP TABLE IF EXISTS episodes_search');
+              // episodes テーブルが存在する場合のみデータを引き継ぐ
+              // （マイグレーション中断により episodes が既に削除されている可能性もあるため）
+              if (await m.tableExists('episodes')) {
+                // 目次データの引き継ぎ(目次の取得日時は旧スキーマに存在しないためNULL)
+                await customStatement('''
+                    INSERT OR IGNORE INTO episode_list_entries
+                      (ncode, episode_id, subtitle, url, published_at, revised_at, fetched_at)
+                    SELECT ncode, episode_id, subtitle, url, published_at, revised_at, NULL
+                    FROM episodes;
+                  ''');
 
-            await _createFtsTables();
-            await _populateFtsTables();
-          }
-        });
+                // 本文データの引き継ぎ(content IS NOT NULL の行のみ)
+                await customStatement('''
+                    INSERT OR IGNORE INTO episode_contents
+                      (ncode, episode_id, content, fetched_at, revised_at)
+                    SELECT ncode, episode_id, content, fetched_at, revised_at
+                    FROM episodes
+                    WHERE content IS NOT NULL;
+                  ''');
+
+                await customStatement('DROP TABLE IF EXISTS episodes');
+              }
+
+              // 非公開フラグカラムの追加
+              // (v12未満からのマイグレーションではNovelsが新スキーマで作成済みのため不要)
+              if (from >= 12) {
+                await m.addColumnIfNotExists(novels, novels.isPrivate);
+              }
+            }
+
+            if (from >= 12 && from < 15) {
+              await m.addColumnIfNotExists(novels, novels.userId);
+            }
+
+            if (from < 14) {
+              // トリグラムトークナイザーからデフォルトトークナイザー(simple)へ切り替え、
+              // トリガーを削除したためFTSテーブルを手動で再構築・再投入する
+              await customStatement('DROP TABLE IF EXISTS novels_search');
+              await customStatement('DROP TABLE IF EXISTS episodes_search');
+
+              await _createFtsTables();
+              await _populateFtsTables();
+            }
+          });
+        } on MigrationException {
+          rethrow;
+        } on Object catch (e, s) {
+          await _saveMigrationErrorReport(from, to, e, s);
+          throw MigrationException(
+            fromVersion: from,
+            toVersion: to,
+            step: 'onUpgrade',
+            cause: e,
+            stackTrace: s,
+          );
+        }
+
+        await _clearMigrationErrorReports();
       },
     );
+  }
+
+  Future<void> _saveMigrationErrorReport(
+    int? fromVersion,
+    int toVersion,
+    Object error,
+    StackTrace stackTrace,
+  ) async {
+    try {
+      final dbFilePath = await _databaseFilePath();
+      final report = MigrationErrorReport(
+        formatVersion: 1,
+        timestamp: DateTime.now().toIso8601String(),
+        schemaVersionBefore: fromVersion,
+        schemaVersionAfter: toVersion,
+        failedStep: 'onUpgrade',
+        errorMessage: error.toString(),
+        stackTrace: stackTrace.toString(),
+        dbFilePath: dbFilePath,
+      );
+      await saveMigrationErrorReport(report);
+    } on Exception catch (e) {
+      // レポート保存自体の失敗は無視する（マイグレーション失敗より重要ではない）
+      debugPrint('マイグレーションエラーレポートの保存に失敗しました: $e');
+    }
+  }
+
+  Future<String?> _databaseFilePath() async {
+    try {
+      final rows = await customSelect('PRAGMA database_list').get();
+      for (final row in rows) {
+        if (row.read<int>('seq') == 0) {
+          return row.read<String?>('file');
+        }
+      }
+      return null;
+    } on Exception {
+      return null;
+    }
+  }
+
+  Future<void> _clearMigrationErrorReports() async {
+    try {
+      await clearMigrationErrorReports();
+    } on Exception catch (e) {
+      debugPrint('マイグレーションエラーレポートの削除に失敗しました: $e');
+    }
   }
 
   Future<void> _createFtsTables() async {
