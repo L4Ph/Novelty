@@ -77,12 +77,12 @@ void main() {
     );
     await db.addToLibrary('n1234a');
     await db.upsertEpisodes([
-      EpisodeEntitiesCompanion.insert(
+      EpisodeListEntriesCompanion.insert(
         ncode: 'n1234a',
         episodeId: 1,
         subtitle: const Value('プロローグ'),
       ),
-      EpisodeEntitiesCompanion.insert(
+      EpisodeListEntriesCompanion.insert(
         ncode: 'n1234a',
         episodeId: 2,
         subtitle: const Value('旅立ち'),
@@ -91,29 +91,25 @@ void main() {
 
     // Update content (this triggers the FTS update via updateEpisodeContent)
     await db.updateEpisodeContent(
-      EpisodeEntitiesCompanion(
-        ncode: const Value('n1234a'),
-        episodeId: const Value(1),
-        content: Value([
-          NovelContentElement.plainText('昔々あるところに'),
-        ]),
-        fetchedAt: const Value(1234567890),
-        subtitle: const Value('プロローグ'),
-        url: const Value('http://example.com/1'),
-      ),
+      ncode: 'n1234a',
+      episodeId: 1,
+      content: [
+        NovelContentElement.plainText('昔々あるところに'),
+      ],
+      fetchedAt: 1234567890,
+      subtitle: 'プロローグ',
+      url: 'http://example.com/1',
     );
 
     await db.updateEpisodeContent(
-      EpisodeEntitiesCompanion(
-        ncode: const Value('n1234a'),
-        episodeId: const Value(2),
-        content: Value([
-          NovelContentElement.plainText('勇者は旅に出た'),
-        ]),
-        fetchedAt: const Value(1234567890),
-        subtitle: const Value('旅立ち'),
-        url: const Value('http://example.com/2'),
-      ),
+      ncode: 'n1234a',
+      episodeId: 2,
+      content: [
+        NovelContentElement.plainText('勇者は旅に出た'),
+      ],
+      fetchedAt: 1234567890,
+      subtitle: '旅立ち',
+      url: 'http://example.com/2',
     );
 
     // Act & Assert
@@ -130,6 +126,57 @@ void main() {
     // No match
     final results3 = await db.searchEpisodes('魔王');
     expect(results3.isEmpty, true);
+  });
+
+  test('サブタイトルが変更されても本文が同一でも検索インデックスが更新されること', () async {
+    // Arrange
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        ncode: 'n1234a',
+        title: const Value('Test Novel'),
+      ),
+    );
+    await db.addToLibrary('n1234a');
+    await db.upsertEpisodes([
+      EpisodeListEntriesCompanion.insert(
+        ncode: 'n1234a',
+        episodeId: 1,
+        subtitle: const Value('旧サブタイトル'),
+      ),
+    ]);
+
+    // 本文を保存してインデックスを作成
+    await db.updateEpisodeContent(
+      ncode: 'n1234a',
+      episodeId: 1,
+      content: [
+        NovelContentElement.plainText('本文はそのまま'),
+      ],
+      fetchedAt: 1234567890,
+      subtitle: '旧サブタイトル',
+      url: 'http://example.com/1',
+    );
+    expect((await db.searchEpisodes('旧サブタイトル')).length, 1);
+
+    // サブタイトルのみ変更
+    await db.updateEpisodeContent(
+      ncode: 'n1234a',
+      episodeId: 1,
+      content: [
+        NovelContentElement.plainText('本文はそのまま'),
+      ],
+      fetchedAt: 1234567891,
+      subtitle: '新サブタイトル',
+      url: 'http://example.com/1',
+    );
+
+    // 新サブタイトルで検索できるようになっていること
+    final results = await db.searchEpisodes('新サブタイトル');
+    expect(results.length, 1);
+    expect(results.first.subtitle, '新サブタイトル');
+
+    // 旧サブタイトルでは検索できないこと
+    expect((await db.searchEpisodes('旧サブタイトル')).isEmpty, true);
   });
 
   test('Deleting novel removes from search index', () async {

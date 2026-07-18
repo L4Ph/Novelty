@@ -133,6 +133,7 @@ void main() {
         ncode: 'n1234ab',
         title: 'テスト小説1',
         writer: 'テスト作者',
+        isPrivate: false,
       );
 
       when(

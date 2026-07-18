@@ -21,7 +21,6 @@ environment:
 workspace:
   - packages/narou_parser
   - packages/tategaki
-  - packages/riverpod_swr
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -53,8 +52,6 @@ dependencies:
   path_provider: ^2.1.2
   riverpod: ^3.0.3
   riverpod_annotation: ^3.0.3
-  riverpod_swr:
-    path: packages/riverpod_swr
   share_plus: ^12.0.1
   shared_preferences: ^2.5.3
   sqlite3_flutter_libs: ^0.5.40
@@ -74,6 +71,7 @@ dev_dependencies:
   plugin_platform_interface: ^2.1.8
   riverpod_generator: ^3.0.0
   riverpod_lint: ^3.0.0
+  sqlite3: ^2.9.4
   very_good_analysis: ^10.2.0
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

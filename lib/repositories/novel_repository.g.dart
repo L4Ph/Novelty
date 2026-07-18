@@ -53,20 +53,20 @@ final class NovelRepositoryProvider
   }
 }
 
-String _$novelRepositoryHash() => r'4daeeb4416e0a2340591856b406a4724344c0f5c';
+String _$novelRepositoryHash() => r'2e5398c23a6f338f7d37b8928e2cce71860f7f06';
 
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+/// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 
 @ProviderFor(novelInfoWithCache)
 const novelInfoWithCacheProvider = NovelInfoWithCacheFamily._();
 
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+/// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 
 final class NovelInfoWithCacheProvider
     extends
         $FunctionalProvider<AsyncValue<NovelInfo>, NovelInfo, Stream<NovelInfo>>
     with $FutureModifier<NovelInfo>, $StreamProvider<NovelInfo> {
-  /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+  /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
   const NovelInfoWithCacheProvider._({
     required NovelInfoWithCacheFamily super.from,
     required String super.argument,
@@ -111,9 +111,9 @@ final class NovelInfoWithCacheProvider
 }
 
 String _$novelInfoWithCacheHash() =>
-    r'44d72943d65b03757a4599eaca9c8762af9b11e4';
+    r'85c561a8aa25cc764fb0c76d7f65d3eed8b24b92';
 
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+/// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 
 final class NovelInfoWithCacheFamily extends $Family
     with $FunctionalFamilyOverride<Stream<NovelInfo>, String> {
@@ -126,7 +126,7 @@ final class NovelInfoWithCacheFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// 小説の情報を取得し、DBにキャッシュするプロバイダー（SWR）。
+  /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 
   NovelInfoWithCacheProvider call(String ncode) =>
       NovelInfoWithCacheProvider._(argument: ncode, from: this);
@@ -535,12 +535,12 @@ abstract class _$DownloadStatus extends $StreamNotifier<bool> {
   }
 }
 
-/// エピソードリストをページ単位で取得するプロバイダー（SWR）
+/// エピソードリストをページ単位で取得するプロバイダー。
 
 @ProviderFor(episodeList)
 const episodeListProvider = EpisodeListFamily._();
 
-/// エピソードリストをページ単位で取得するプロバイダー（SWR）
+/// エピソードリストをページ単位で取得するプロバイダー。
 
 final class EpisodeListProvider
     extends
@@ -550,7 +550,7 @@ final class EpisodeListProvider
           Stream<List<Episode>>
         >
     with $FutureModifier<List<Episode>>, $StreamProvider<List<Episode>> {
-  /// エピソードリストをページ単位で取得するプロバイダー（SWR）
+  /// エピソードリストをページ単位で取得するプロバイダー。
   const EpisodeListProvider._({
     required EpisodeListFamily super.from,
     required String super.argument,
@@ -595,9 +595,9 @@ final class EpisodeListProvider
   }
 }
 
-String _$episodeListHash() => r'04de7fd006cd46f9869f93737a4e7bf6b9ed8f87';
+String _$episodeListHash() => r'729c91da200730b7686dc58033503a05891e5a32';
 
-/// エピソードリストをページ単位で取得するプロバイダー（SWR）
+/// エピソードリストをページ単位で取得するプロバイダー。
 
 final class EpisodeListFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<Episode>>, String> {
@@ -610,7 +610,7 @@ final class EpisodeListFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// エピソードリストをページ単位で取得するプロバイダー（SWR）
+  /// エピソードリストをページ単位で取得するプロバイダー。
 
   EpisodeListProvider call(String ncodeAndPage) =>
       EpisodeListProvider._(argument: ncodeAndPage, from: this);

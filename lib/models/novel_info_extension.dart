@@ -49,6 +49,7 @@ extension NovelInfoFromDb on db.Novel {
       iszankoku: iszankoku,
       istensei: istensei,
       istenni: istenni,
+      isPrivate: isPrivate,
     );
   }
 }

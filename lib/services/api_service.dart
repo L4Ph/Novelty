@@ -14,6 +14,24 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'api_service.g.dart';
 
+/// 作品が非公開・削除されていてAPIから取得できない場合の例外。
+class NovelNotFoundException implements Exception {
+  /// コンストラクタ。
+  const NovelNotFoundException();
+
+  @override
+  String toString() => 'NovelNotFoundException';
+}
+
+/// オフライン状態で取得できない場合の例外。
+class OfflineException implements Exception {
+  /// コンストラクタ。
+  const OfflineException();
+
+  @override
+  String toString() => 'OfflineException';
+}
+
 /// 累計ランキングの表示上限数
 /// なろう小説APIの制限値（最大500件）を最大限活用
 const int allTimeRankingLimit = 500;
@@ -28,7 +46,10 @@ ApiService apiService(Ref ref) => ApiService();
 
 /// APIサービスクラス。
 class ApiService {
-  final Dio _dio = Dio();
+  /// [dio] を外部から注入可能にする。テスト時はモックを渡すことができる。
+  ApiService({Dio? dio}) : _dio = dio ?? Dio();
+
+  final Dio _dio;
 
   Future<Response<String>> _fetchWithCache(String url) async {
     final response = await _dio.get<String>(
@@ -78,19 +99,37 @@ class ApiService {
     });
 
     final data = await _fetchData(uri.toString());
-    if (data.isNotEmpty &&
-        (data[0] as Map<String, dynamic>?)?['allcount'] != null &&
-        ((data[0] as Map<String, dynamic>?)?['allcount'] as int? ?? 0) > 0 &&
-        data.length > 1) {
-      final novelData = data[1] as Map<String, dynamic>;
 
-      // デバッグ: APIレスポンスを確認
-
-      final processedData = _processNovelType(novelData);
-      return NovelInfo.fromJson(processedData);
-    } else {
-      throw Exception('Novel not found');
+    if (data.isEmpty) {
+      throw const FormatException('APIレスポンスが空です');
     }
+
+    if (data[0] != null && data[0] is! Map<String, dynamic>) {
+      throw const FormatException('APIレスポンスのメタデータが不正です');
+    }
+    final metadata = data[0] as Map<String, dynamic>?;
+    if (metadata == null || metadata['allcount'] is! int) {
+      throw const FormatException('APIレスポンスのメタデータが不正です');
+    }
+
+    final allcount = metadata['allcount'] as int;
+    if (allcount == 0) {
+      throw const NovelNotFoundException();
+    }
+
+    if (data.length <= 1) {
+      throw const FormatException('APIレスポンスに作品データがありません');
+    }
+
+    if (data[1] is! Map<String, dynamic>) {
+      throw const FormatException('APIレスポンスに作品データがありません');
+    }
+    final novelData = data[1] as Map<String, dynamic>;
+
+    // デバッグ: APIレスポンスを確認
+
+    final processedData = _processNovelType(novelData);
+    return NovelInfo.fromJson(processedData);
   }
 
   /// Fetches multiple novels' basic information in a single API request

@@ -202,6 +202,10 @@ class Novels extends Table {
   /// キャッシュ日時(?)
   IntColumn get cachedAt => integer().nullable()();
 
+  /// 非公開(凍結・削除等)かどうか
+  /// true: 非公開、false: 公開中
+  BoolColumn get isPrivate => boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column> get primaryKey => {ncode};
 }
@@ -237,13 +241,9 @@ class ReadingHistory extends Table {
   Set<Column> get primaryKey => {ncode};
 }
 
-/// エピソード情報を格納するテーブル（メタデータ + コンテンツ）
-/// Domain ModelのEpisodeと名前が被るため、Entityを明示
-@DataClassName('EpisodeRow')
-class EpisodeEntities extends Table {
-  @override
-  String get tableName => 'episodes';
-
+/// エピソード目次(メタデータ)を格納するテーブル
+/// 旧EpisodeEntitiesテーブルから目次情報を分離したもの
+class EpisodeListEntries extends Table {
   /// 小説のncode (外部キー)
   TextColumn get ncode => text().references(Novels, #ncode)();
 
@@ -262,15 +262,74 @@ class EpisodeEntities extends Table {
   /// 改稿日（APIのrevised）
   TextColumn get revisedAt => text().nullable()();
 
-  /// エピソードの内容（キャッシュ）
-  /// JSON形式で保存される。空配列=失敗、中身あり=成功、NULL=未取得
-  TextColumn get content => text().map(const ContentConverter()).nullable()();
-
-  /// コンテンツ取得日時
+  /// 目次の最終取得日時（UNIXタイムスタンプ・ミリ秒）
   IntColumn get fetchedAt => integer().nullable()();
 
   @override
   Set<Column> get primaryKey => {ncode, episodeId};
+}
+
+/// エピソード本文(キャッシュ)を格納するテーブル
+/// 旧EpisodeEntitiesテーブルから本文キャッシュを分離したもの
+class EpisodeContents extends Table {
+  /// 小説のncode (外部キー)
+  TextColumn get ncode => text().references(Novels, #ncode)();
+
+  /// エピソード番号
+  IntColumn get episodeId => integer()();
+
+  /// エピソードの内容（キャッシュ）
+  /// JSON形式で保存される。空配列=失敗、中身あり=成功、NULL=未取得
+  TextColumn get content => text().map(const ContentConverter()).nullable()();
+
+  /// 本文の最終取得日時（UNIXタイムスタンプ・ミリ秒）
+  IntColumn get fetchedAt => integer().nullable()();
+
+  /// 本文改訂判定用の改稿日
+  TextColumn get revisedAt => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {ncode, episodeId};
+}
+
+/// 目次と本文を結合したエピソード情報のDTO
+@immutable
+class EpisodeData {
+  /// コンストラクタ
+  const EpisodeData({
+    required this.ncode,
+    required this.episodeId,
+    this.subtitle,
+    this.url,
+    this.publishedAt,
+    this.revisedAt,
+    this.content,
+    this.fetchedAt,
+  });
+
+  /// 小説のncode
+  final String ncode;
+
+  /// エピソード番号
+  final int episodeId;
+
+  /// サブタイトル
+  final String? subtitle;
+
+  /// URL
+  final String? url;
+
+  /// 掲載日
+  final String? publishedAt;
+
+  /// 改稿日
+  final String? revisedAt;
+
+  /// エピソードの内容（キャッシュ）
+  final List<NovelContentElement>? content;
+
+  /// 本文の最終取得日時
+  final int? fetchedAt;
 }
 
 @DriftDatabase(
@@ -278,7 +337,8 @@ class EpisodeEntities extends Table {
     Novels,
     LibraryEntries,
     ReadingHistory,
-    EpisodeEntities,
+    EpisodeListEntries,
+    EpisodeContents,
   ],
 )
 /// アプリケーションのデータベース
@@ -289,30 +349,48 @@ class AppDatabase extends _$AppDatabase {
   /// テスト用コンストラクタ
   AppDatabase.memory() : super(NativeDatabase.memory());
 
+  /// テスト用コンストラクタ（任意のQueryExecutorを指定する）
+  AppDatabase.test(super.e);
+
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 16;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
-      onCreate: (Migrator m) async {
+      onCreate: (m) async {
         await m.createAll();
         await _createFtsTables();
       },
-      onUpgrade: (Migrator m, int from, int to) async {
+      onUpgrade: (m, from, to) async {
         if (from < 12) {
-          // Ensure new tables are fresh (in case of previous failed migration)
+          // 以前のマイグレーション失敗などでテーブルが中途半端に存在する可能性があるため、
+          // 既存テーブルを削除してから新しいテーブルを作成する。
           await customStatement('DROP TABLE IF EXISTS episodes');
           await customStatement('DROP TABLE IF EXISTS library_entries');
           await customStatement('DROP TABLE IF EXISTS reading_history');
 
-          // 1. Create new tables
+          // 1. 新規テーブルを作成する
           await m.createTable(novels);
           await m.createTable(libraryEntries);
           await m.createTable(readingHistory);
-          await m.createTable(episodeEntities);
+          // 旧episodesテーブル(v12〜v15で使用)を作成する
+          // v16マイグレーションで目次・本文テーブルへ分割される
+          await customStatement('''
+              CREATE TABLE episodes (
+                ncode TEXT NOT NULL REFERENCES novels(ncode),
+                episode_id INTEGER NOT NULL,
+                subtitle TEXT,
+                url TEXT,
+                published_at TEXT,
+                revised_at TEXT,
+                content TEXT,
+                fetched_at INTEGER,
+                PRIMARY KEY (ncode, episode_id)
+              );
+            ''');
 
-          // 2. Migrate LibraryNovels -> LibraryEntries & Novels
+          // 2. LibraryNovels から LibraryEntries と Novels へ移行
           await customStatement('''
               INSERT OR IGNORE INTO novels (
                 ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
@@ -327,7 +405,7 @@ class AppDatabase extends _$AppDatabase {
               SELECT ncode, added_at FROM library_novels;
             ''');
 
-          // 3. Migrate History -> ReadingHistory & Novels
+          // 3. History から ReadingHistory と Novels へ移行
           await customStatement('''
               INSERT OR IGNORE INTO novels (ncode, cached_at)
               SELECT ncode, viewed_at FROM history;
@@ -338,9 +416,9 @@ class AppDatabase extends _$AppDatabase {
               SELECT ncode, last_episode, viewed_at, updated_at FROM history;
             ''');
 
-          // 4. Migrate CachedEpisodes -> Episodes
+          // 4. CachedEpisodes から Episodes へ移行
 
-          // Check if cached_episodes table exists
+          // 古いキャッシュエピソードテーブルが存在するか確認する
           final cachedEpisodesResult = await customSelect(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='cached_episodes'",
           ).get();
@@ -352,7 +430,7 @@ class AppDatabase extends _$AppDatabase {
               ''');
           }
 
-          // 5. Drop old tables
+          // 5. 旧テーブルを削除する
           await customStatement('DROP TABLE IF EXISTS library_novels');
           await customStatement('DROP TABLE IF EXISTS history');
           await customStatement('DROP TABLE IF EXISTS cached_episodes');
@@ -362,14 +440,37 @@ class AppDatabase extends _$AppDatabase {
           // Version 13 migration (Triggers based FTS) - skipped or overwritten by 14
         }
 
-        if (from < 14) {
-          // Re-create FTS tables with default tokenizer (simple) instead of trigram
-          // and populate them manually (since we removed triggers)
-          await customStatement('DROP TABLE IF EXISTS novels_search');
-          await customStatement('DROP TABLE IF EXISTS episodes_search');
+        if (from < 16) {
+          // 旧episodesテーブルを目次・本文の2テーブルに分割する
+          // v14のFTS再構築より前に実行し、_populateFtsTables()で
+          // episode_list_entries / episode_contents を参照できるようにする
+          await m.createTable(episodeListEntries);
+          await m.createTable(episodeContents);
 
-          await _createFtsTables();
-          await _populateFtsTables();
+          // 目次データの引き継ぎ(目次の取得日時は旧スキーマに存在しないためNULL)
+          await customStatement('''
+              INSERT INTO episode_list_entries
+                (ncode, episode_id, subtitle, url, published_at, revised_at, fetched_at)
+              SELECT ncode, episode_id, subtitle, url, published_at, revised_at, NULL
+              FROM episodes;
+            ''');
+
+          // 本文データの引き継ぎ(content IS NOT NULL の行のみ)
+          await customStatement('''
+              INSERT INTO episode_contents
+                (ncode, episode_id, content, fetched_at, revised_at)
+              SELECT ncode, episode_id, content, fetched_at, revised_at
+              FROM episodes
+              WHERE content IS NOT NULL;
+            ''');
+
+          await customStatement('DROP TABLE episodes');
+
+          // 非公開フラグカラムの追加
+          // (v12未満からのマイグレーションではNovelsが新スキーマで作成済みのため不要)
+          if (from >= 12) {
+            await m.addColumn(novels, novels.isPrivate);
+          }
         }
 
         if (from >= 12 && from < 15) {
@@ -377,12 +478,22 @@ class AppDatabase extends _$AppDatabase {
             'ALTER TABLE novels ADD COLUMN user_id INTEGER',
           );
         }
+
+        if (from < 14) {
+          // トリグラムトークナイザーからデフォルトトークナイザー(simple)へ切り替え、
+          // トリガーを削除したためFTSテーブルを手動で再構築・再投入する
+          await customStatement('DROP TABLE IF EXISTS novels_search');
+          await customStatement('DROP TABLE IF EXISTS episodes_search');
+
+          await _createFtsTables();
+          await _populateFtsTables();
+        }
       },
     );
   }
 
   Future<void> _createFtsTables() async {
-    // Novels FTS (default tokenizer)
+    // Novels用FTSテーブル（デフォルトトークナイザー）
     await customStatement('''
       CREATE VIRTUAL TABLE IF NOT EXISTS novels_search USING fts5(
         ncode UNINDEXED,
@@ -392,7 +503,7 @@ class AppDatabase extends _$AppDatabase {
       );
     ''');
 
-    // Episodes FTS (default tokenizer)
+    // Episodes用FTSテーブル（デフォルトトークナイザー）
     await customStatement('''
       CREATE VIRTUAL TABLE IF NOT EXISTS episodes_search USING fts5(
         ncode UNINDEXED,
@@ -402,22 +513,34 @@ class AppDatabase extends _$AppDatabase {
       );
     ''');
 
-    // No triggers here anymore
+    // トリガーによる自動更新は行わない
   }
 
   Future<void> _populateFtsTables() async {
-    // Populate Novels FTS
+    // Novels検索インデックスを再構築
     final allNovels = await select(novels).get();
     for (final novel in allNovels) {
       await _updateNovelSearchIndex(novel);
     }
 
-    // Populate Episodes FTS
-    final allEpisodes = await select(episodeEntities).get();
-    for (final episode in allEpisodes) {
-      if (episode.content != null) {
-        await _updateEpisodeSearchIndex(episode);
-      }
+    // Episodes検索インデックスを再構築
+    final episodeRows = await customSelect(
+      'SELECT l.ncode, l.episode_id, l.subtitle, c.content '
+      'FROM episode_list_entries l '
+      'JOIN episode_contents c '
+      'ON c.ncode = l.ncode AND c.episode_id = l.episode_id '
+      'WHERE c.content IS NOT NULL',
+      readsFrom: {episodeListEntries, episodeContents},
+    ).get();
+    for (final row in episodeRows) {
+      final contentJson = row.read<String?>('content');
+      if (contentJson == null) continue;
+      await _updateEpisodeSearchIndex(
+        ncode: row.read<String>('ncode'),
+        episodeId: row.read<int>('episode_id'),
+        subtitle: row.read<String?>('subtitle'),
+        content: const ContentConverter().fromSql(contentJson),
+      );
     }
   }
 
@@ -446,15 +569,19 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// エピソードの検索インデックスを更新
-  Future<void> _updateEpisodeSearchIndex(EpisodeRow episode) async {
-    if (episode.content == null) return;
+  Future<void> _updateEpisodeSearchIndex({
+    required String ncode,
+    required int episodeId,
+    required String? subtitle,
+    required List<NovelContentElement>? content,
+  }) async {
+    if (content == null) return;
 
-    final tokenizedSubtitle = SearchTokenizer.tokenize(episode.subtitle ?? '');
+    final tokenizedSubtitle = SearchTokenizer.tokenize(subtitle ?? '');
 
-    // Extract text content from JSON
-    final contentList = episode.content!;
+    // 本文コンテンツから検索用テキストを抽出する
     final buffer = StringBuffer();
-    for (final element in contentList) {
+    for (final element in content) {
       if (element is PlainText) {
         buffer.write(element.text);
       } else if (element is RubyText) {
@@ -472,10 +599,10 @@ class AppDatabase extends _$AppDatabase {
       )
       ''',
       [
-        episode.ncode,
-        episode.episodeId,
-        episode.ncode,
-        episode.episodeId,
+        ncode,
+        episodeId,
+        ncode,
+        episodeId,
         tokenizedSubtitle,
         tokenizedContent,
       ],
@@ -546,21 +673,22 @@ class AppDatabase extends _$AppDatabase {
     final results = await customSelect(
       '''
       SELECT 
-        e.ncode,
-        e.episode_id,
-        e.subtitle,
-        e.content,
+        l.ncode,
+        l.episode_id,
+        l.subtitle,
+        c.content,
         n.title as novel_title
-      FROM episodes e
-      JOIN novels n ON e.ncode = n.ncode
-      JOIN library_entries le ON e.ncode = le.ncode
-      JOIN episodes_search es ON e.ncode = es.ncode AND e.episode_id = es.episode_id
+      FROM episode_list_entries l
+      LEFT JOIN episode_contents c ON c.ncode = l.ncode AND c.episode_id = l.episode_id
+      JOIN novels n ON l.ncode = n.ncode
+      JOIN library_entries le ON l.ncode = le.ncode
+      JOIN episodes_search es ON l.ncode = es.ncode AND l.episode_id = es.episode_id
       WHERE es.episodes_search MATCH ?
       ORDER BY es.rank
       LIMIT 100
       ''',
       variables: [Variable.withString(tokenizedQuery)],
-      readsFrom: {episodeEntities, novels, libraryEntries},
+      readsFrom: {episodeListEntries, episodeContents, novels, libraryEntries},
     ).get();
 
     return results
@@ -571,7 +699,7 @@ class AppDatabase extends _$AppDatabase {
           final contentJson = row.read<String?>('content');
           if (contentJson == null) return false;
 
-          // Parse content to check for exact match
+          // 完全一致を確認するため本文を解析する
           try {
             final contentList = const ContentConverter().fromSql(contentJson);
             for (final element in contentList) {
@@ -582,7 +710,7 @@ class AppDatabase extends _$AppDatabase {
               }
             }
           } on Exception catch (_) {
-            // Ignore parsing errors
+            // 解析失敗は無視する
           }
           return false;
         })
@@ -664,7 +792,7 @@ class AppDatabase extends _$AppDatabase {
       mode: InsertMode.insertOrReplace,
     );
 
-    // Update Search Index
+    // 検索インデックスを更新
     // タイトル、著者、あらすじが変更された場合のみインデックスを更新
     var shouldUpdateIndex = true;
     if (existingNovel != null) {
@@ -683,6 +811,81 @@ class AppDatabase extends _$AppDatabase {
     }
 
     return id;
+  }
+
+  /// 小説の非公開フラグを更新する
+  Future<int> updateNovelPrivateFlag(
+    String ncode, {
+    required bool isPrivate,
+  }) {
+    return (update(
+      novels,
+    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).write(
+      NovelsCompanion(
+        isPrivate: Value(isPrivate),
+      ),
+    );
+  }
+
+  /// 小説の取得状態を確保する
+  ///
+  /// 指定したncodeの行が存在しない場合はプレースホルダー行を挿入し、
+  /// 存在する場合はcachedAtを更新する。
+  /// [isPrivate]を指定した場合は非公開フラグも更新する。
+  Future<void> ensureNovelFetchState(
+    String ncode, {
+    required int cachedAt,
+    bool? isPrivate,
+  }) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    final existing = await getNovel(normalizedNcode);
+    if (existing == null) {
+      await insertNovel(
+        NovelsCompanion(
+          ncode: Value(normalizedNcode),
+          isPrivate: Value(isPrivate ?? false),
+          cachedAt: Value(cachedAt),
+        ),
+      );
+    } else {
+      await (update(
+        novels,
+      )..where((t) => t.ncode.equals(normalizedNcode))).write(
+        NovelsCompanion(
+          isPrivate: isPrivate != null
+              ? Value(isPrivate)
+              : const Value.absent(),
+          cachedAt: Value(cachedAt),
+        ),
+      );
+    }
+  }
+
+  /// 指定範囲の目次データのうち、最も古い取得日時を返す
+  ///
+  /// 対象範囲に取得日時が未設定(fetched_at IS NULL)の行が含まれる場合は
+  /// 期限切れとして扱えるようNULLを返す。
+  Future<int?> getEpisodeListOldestFetchedAt(
+    String ncode,
+    int start,
+    int end,
+  ) async {
+    final result = await customSelect(
+      'SELECT '
+      'CASE '
+      'WHEN COUNT(*) = COUNT(fetched_at) THEN MIN(fetched_at) '
+      'ELSE NULL '
+      'END as oldest '
+      'FROM episode_list_entries '
+      'WHERE ncode = ? AND episode_id BETWEEN ? AND ?',
+      variables: [
+        Variable.withString(ncode.toNormalizedNcode()),
+        Variable.withInt(start),
+        Variable.withInt(end),
+      ],
+      readsFrom: {episodeListEntries},
+    ).getSingleOrNull();
+    return result?.read<int?>('oldest');
   }
 
   /// 履歴の追加
@@ -757,7 +960,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// エピソード情報（目次）の保存
   Future<void> upsertEpisodes(
-    List<EpisodeEntitiesCompanion> newEpisodes,
+    List<EpisodeListEntriesCompanion> newEpisodes,
   ) async {
     if (newEpisodes.isEmpty) return;
 
@@ -766,33 +969,22 @@ class AppDatabase extends _$AppDatabase {
     // 既存データを効率的に取得できる。
     final ncode = newEpisodes.first.ncode.value;
     final existingRows = await (select(
-      episodeEntities,
+      episodeListEntries,
     )..where((t) => t.ncode.equals(ncode))).get();
 
     final existingSubtitles = {
       for (final row in existingRows) row.episodeId: row.subtitle,
     };
 
+    // 目次の取得日時
+    final now = DateTime.now().millisecondsSinceEpoch;
+
     await batch((batch) {
       for (final episode in newEpisodes) {
-        batch.customStatement(
-          '''
-          INSERT INTO episodes (ncode, episode_id, subtitle, url, published_at, revised_at)
-          VALUES (?, ?, ?, ?, ?, ?)
-          ON CONFLICT(ncode, episode_id) DO UPDATE SET
-            subtitle = excluded.subtitle,
-            url = excluded.url,
-            published_at = excluded.published_at,
-            revised_at = excluded.revised_at;
-        ''',
-          [
-            episode.ncode.value,
-            episode.episodeId.value,
-            episode.subtitle.value,
-            episode.url.value,
-            episode.publishedAt.value,
-            episode.revisedAt.value,
-          ],
+        batch.insert(
+          episodeListEntries,
+          episode.copyWith(fetchedAt: Value(now)),
+          mode: InsertMode.insertOrReplace,
         );
       }
     });
@@ -810,84 +1002,161 @@ class AppDatabase extends _$AppDatabase {
       if (existingSubtitles.containsKey(epId)) {
         final oldSubtitle = existingSubtitles[epId];
         if (oldSubtitle != newSubtitle) {
-          final row = await getEpisodeData(
-            episode.ncode.value,
-            epId,
+          final contentRow =
+              await (select(episodeContents)..where(
+                    (t) =>
+                        t.ncode.equals(episode.ncode.value) &
+                        t.episodeId.equals(epId),
+                  ))
+                  .getSingleOrNull();
+          await _updateEpisodeSearchIndex(
+            ncode: episode.ncode.value,
+            episodeId: epId,
+            subtitle: newSubtitle,
+            content: contentRow?.content,
           );
-          if (row != null) {
-            await _updateEpisodeSearchIndex(row);
-          }
         }
       }
     }
   }
 
   /// エピソード本文の保存
-  Future<void> updateEpisodeContent(EpisodeEntitiesCompanion episode) async {
+  Future<void> updateEpisodeContent({
+    required String ncode,
+    required int episodeId,
+    required List<NovelContentElement> content,
+    required int fetchedAt,
+    String? revisedAt,
+    String? subtitle,
+    String? url,
+    String? publishedAt,
+  }) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+
     // FTS更新が必要かどうかを判定するために既存データを取得
-    final existingRow = await getEpisodeData(
-      episode.ncode.value,
-      episode.episodeId.value,
+    final existingContentRow =
+        await (select(episodeContents)..where(
+              (t) =>
+                  t.ncode.equals(normalizedNcode) &
+                  t.episodeId.equals(episodeId),
+            ))
+            .getSingleOrNull();
+    final existingListRow =
+        await (select(episodeListEntries)..where(
+              (t) =>
+                  t.ncode.equals(normalizedNcode) &
+                  t.episodeId.equals(episodeId),
+            ))
+            .getSingleOrNull();
+
+    // メタデータが指定されている場合は目次テーブルも更新する
+    // 指定されなかった項目は既存の値を保持する
+    await customStatement(
+      '''
+      INSERT INTO episode_list_entries
+        (ncode, episode_id, subtitle, url, published_at, revised_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(ncode, episode_id) DO UPDATE SET
+        subtitle = COALESCE(excluded.subtitle, episode_list_entries.subtitle),
+        url = COALESCE(excluded.url, episode_list_entries.url),
+        published_at =
+          COALESCE(excluded.published_at, episode_list_entries.published_at),
+        revised_at =
+          COALESCE(excluded.revised_at, episode_list_entries.revised_at);
+    ''',
+      [normalizedNcode, episodeId, subtitle, url, publishedAt, revisedAt],
     );
 
-    await into(episodeEntities).insertOnConflictUpdate(episode);
+    // 本文テーブルを更新する
+    await into(episodeContents).insertOnConflictUpdate(
+      EpisodeContentsCompanion(
+        ncode: Value(normalizedNcode),
+        episodeId: Value(episodeId),
+        content: Value(content),
+        fetchedAt: Value(fetchedAt),
+        revisedAt: revisedAt != null ? Value(revisedAt) : const Value.absent(),
+      ),
+    );
 
-    // Update Search Index
-    // コンテンツが変更された場合のみインデックスを更新
+    // コンテンツまたはサブタイトルが変更された場合のみインデックスを更新
     var shouldUpdateIndex = true;
-    if (existingRow != null &&
-        existingRow.content != null &&
-        episode.content.value != null) {
-      // リストの内容を比較
-      if (listEquals(existingRow.content, episode.content.value)) {
+    if (existingContentRow != null && existingListRow != null) {
+      final contentUnchanged =
+          existingContentRow.content != null &&
+          listEquals(existingContentRow.content, content);
+      final subtitleUnchanged = existingListRow.subtitle == subtitle;
+      if (contentUnchanged && subtitleUnchanged) {
         shouldUpdateIndex = false;
       }
     }
 
     if (shouldUpdateIndex) {
-      final row = await getEpisodeData(
-        episode.ncode.value,
-        episode.episodeId.value,
+      await _updateEpisodeSearchIndex(
+        ncode: normalizedNcode,
+        episodeId: episodeId,
+        subtitle: subtitle ?? existingListRow?.subtitle,
+        content: content,
       );
-      if (row != null) {
-        await _updateEpisodeSearchIndex(row);
-      }
     }
   }
 
   // ...
 
-  /// 特定エピソードの生データ（Entity）を取得
-  Future<EpisodeRow?> getEpisodeData(String ncode, int episodeId) {
-    return (select(episodeEntities)..where(
-          (t) =>
-              t.ncode.equals(ncode.toNormalizedNcode()) &
-              t.episodeId.equals(episodeId),
-        ))
-        .getSingleOrNull();
+  /// 特定エピソードのデータ（目次 + 本文）を取得
+  Future<EpisodeData?> getEpisodeData(String ncode, int episodeId) {
+    return _episodeDataSelect(
+      ncode.toNormalizedNcode(),
+      episodeId,
+    ).getSingleOrNull();
+  }
+
+  /// 特定エピソードのデータ（目次 + 本文）を監視
+  Stream<EpisodeData?> watchEpisodeData(String ncode, int episodeId) {
+    return _episodeDataSelect(
+      ncode.toNormalizedNcode(),
+      episodeId,
+    ).watchSingleOrNull();
+  }
+
+  /// 特定エピソードのデータ（目次 + 本文）を監視
+  @Deprecated('watchEpisodeDataを使用してください')
+  Stream<EpisodeData?> watchEpisodeEntity(String ncode, int episodeId) {
+    return watchEpisodeData(ncode, episodeId);
+  }
+
+  /// 目次と本文を結合したエピソードデータを取得するSELECT
+  Selectable<EpisodeData> _episodeDataSelect(String ncode, int episodeId) {
+    return customSelect(
+      'SELECT l.ncode, l.episode_id, l.subtitle, l.url, l.published_at, '
+      'COALESCE(c.revised_at, l.revised_at) AS revised_at, '
+      'c.content AS content, c.fetched_at AS fetched_at '
+      'FROM episode_list_entries l '
+      'LEFT JOIN episode_contents c '
+      'ON c.ncode = l.ncode AND c.episode_id = l.episode_id '
+      'WHERE l.ncode = ? AND l.episode_id = ?',
+      variables: [Variable.withString(ncode), Variable.withInt(episodeId)],
+      readsFrom: {episodeListEntries, episodeContents},
+    ).map((row) {
+      final contentJson = row.read<String?>('content');
+      return EpisodeData(
+        ncode: row.read<String>('ncode'),
+        episodeId: row.read<int>('episode_id'),
+        subtitle: row.read<String?>('subtitle'),
+        url: row.read<String?>('url'),
+        publishedAt: row.read<String?>('published_at'),
+        revisedAt: row.read<String?>('revised_at'),
+        content: contentJson != null
+            ? const ContentConverter().fromSql(contentJson)
+            : null,
+        fetchedAt: row.read<int?>('fetched_at'),
+      );
+    });
   }
 
   /// エピソード一覧を取得
   Future<List<Episode>> getEpisodes(String ncode) async {
-    final rows =
-        await (select(episodeEntities)
-              ..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))
-              ..orderBy([(t) => OrderingTerm(expression: t.episodeId)]))
-            .get();
-
-    return rows
-        .map(
-          (row) => Episode(
-            ncode: row.ncode,
-            index: row.episodeId,
-            subtitle: row.subtitle,
-            url: row.url,
-            update: row.publishedAt,
-            revised: row.revisedAt,
-            isDownloaded: row.content != null && row.content!.isNotEmpty,
-          ),
-        )
-        .toList();
+    final normalizedNcode = ncode.toNormalizedNcode();
+    return _episodeListSelect(normalizedNcode).get();
   }
 
   /// 指定範囲のエピソード一覧を取得 (Optimized)
@@ -897,32 +1166,11 @@ class AppDatabase extends _$AppDatabase {
     int end,
   ) async {
     final normalizedNcode = ncode.toNormalizedNcode();
-    final rows = await customSelect(
-      'SELECT '
-      'ncode, episode_id, subtitle, url, published_at, revised_at, '
-      "CASE WHEN content IS NOT NULL AND content != '[]' THEN 1 ELSE 0 END as is_downloaded "
-      'FROM episodes '
-      'WHERE ncode = ? AND episode_id BETWEEN ? AND ? '
-      'ORDER BY episode_id',
-      variables: [
-        Variable.withString(normalizedNcode),
-        Variable.withInt(start),
-        Variable.withInt(end),
-      ],
-      readsFrom: {episodeEntities},
+    return _episodeListSelect(
+      normalizedNcode,
+      start: start,
+      end: end,
     ).get();
-
-    return rows.map((row) {
-      return Episode(
-        ncode: row.read<String>('ncode'),
-        index: row.read<int>('episode_id'),
-        subtitle: row.read<String?>('subtitle'),
-        url: row.read<String?>('url'),
-        update: row.read<String?>('published_at'),
-        revised: row.read<String?>('revised_at'),
-        isDownloaded: row.read<int>('is_downloaded') == 1,
-      );
-    }).toList();
   }
 
   /// 指定範囲のエピソード一覧を監視 (Optimized)
@@ -932,42 +1180,50 @@ class AppDatabase extends _$AppDatabase {
     int end,
   ) {
     final normalizedNcode = ncode.toNormalizedNcode();
-    return customSelect(
-      'SELECT '
-      'ncode, episode_id, subtitle, url, published_at, revised_at, '
-      "CASE WHEN content IS NOT NULL AND content != '[]' THEN 1 ELSE 0 END as is_downloaded "
-      'FROM episodes '
-      'WHERE ncode = ? AND episode_id BETWEEN ? AND ? '
-      'ORDER BY episode_id',
-      variables: [
-        Variable.withString(normalizedNcode),
-        Variable.withInt(start),
-        Variable.withInt(end),
-      ],
-      readsFrom: {episodeEntities},
-    ).watch().map((rows) {
-      return rows.map((row) {
-        return Episode(
-          ncode: row.read<String>('ncode'),
-          index: row.read<int>('episode_id'),
-          subtitle: row.read<String?>('subtitle'),
-          url: row.read<String?>('url'),
-          update: row.read<String?>('published_at'),
-          revised: row.read<String?>('revised_at'),
-          isDownloaded: row.read<int>('is_downloaded') == 1,
-        );
-      }).toList();
-    });
+    return _episodeListSelect(
+      normalizedNcode,
+      start: start,
+      end: end,
+    ).watch();
   }
 
-  /// 特定エピソードのEntityを監視
-  Stream<EpisodeRow?> watchEpisodeEntity(String ncode, int episodeId) {
-    return (select(episodeEntities)..where(
-          (t) =>
-              t.ncode.equals(ncode.toNormalizedNcode()) &
-              t.episodeId.equals(episodeId),
-        ))
-        .watchSingleOrNull();
+  /// 目次と本文を結合したエピソード一覧のSELECT
+  Selectable<Episode> _episodeListSelect(
+    String ncode, {
+    int? start,
+    int? end,
+  }) {
+    final hasRange = start != null && end != null;
+    return customSelect(
+      'SELECT '
+      'l.ncode, l.episode_id, l.subtitle, l.url, l.published_at, l.revised_at, '
+      "CASE WHEN c.content IS NOT NULL AND c.content != '[]' "
+      'THEN 1 ELSE 0 END as is_downloaded '
+      'FROM episode_list_entries l '
+      'LEFT JOIN episode_contents c '
+      'ON c.ncode = l.ncode AND c.episode_id = l.episode_id '
+      'WHERE l.ncode = ? '
+      '${hasRange ? 'AND l.episode_id BETWEEN ? AND ? ' : ''}'
+      'ORDER BY l.episode_id',
+      variables: [
+        Variable.withString(ncode),
+        if (hasRange) Variable.withInt(start),
+        if (hasRange) Variable.withInt(end),
+      ],
+      readsFrom: {episodeListEntries, episodeContents},
+    ).map(_mapEpisodeRow);
+  }
+
+  static Episode _mapEpisodeRow(QueryRow row) {
+    return Episode(
+      ncode: row.read<String>('ncode'),
+      index: row.read<int>('episode_id'),
+      subtitle: row.read<String?>('subtitle'),
+      url: row.read<String?>('url'),
+      update: row.read<String?>('published_at'),
+      revised: row.read<String?>('revised_at'),
+      isDownloaded: row.read<int>('is_downloaded') == 1,
+    );
   }
 
   /// ダウンロード中の小説を監視
@@ -977,14 +1233,15 @@ class AppDatabase extends _$AppDatabase {
     final query = customSelect(
       'SELECT '
       'e.ncode, '
-      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content != '[]' THEN 1 END) as success_count, "
+      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content != '[]' "
+      'THEN 1 END) as success_count, '
       "COUNT(CASE WHEN e.content = '[]' THEN 1 END) as failure_count, "
       'n.general_all_no '
-      'FROM episodes e '
+      'FROM episode_contents e '
       'JOIN novels n ON e.ncode = n.ncode '
       'WHERE e.content IS NOT NULL '
       'GROUP BY e.ncode',
-      readsFrom: {episodeEntities, novels},
+      readsFrom: {episodeContents, novels},
     ).watch();
 
     return query.map((rows) {
@@ -1015,18 +1272,19 @@ class AppDatabase extends _$AppDatabase {
   /// 完了済みダウンロード小説を監視
   Stream<List<NovelDownloadSummary>> watchCompletedDownloads() {
     // 全エピソードの集計（GROUP BY）と、全ノベル情報を結合してストリーム化
-    // Logic is same as watchDownloadingNovels but filter differs
+    // 処理自体はwatchDownloadingNovelsと同じだが、フィルタ条件のみ異なる
     final query = customSelect(
       'SELECT '
       'e.ncode, '
-      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content != '[]' THEN 1 END) as success_count, "
+      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content != '[]' "
+      'THEN 1 END) as success_count, '
       "COUNT(CASE WHEN e.content = '[]' THEN 1 END) as failure_count, "
       'n.general_all_no '
-      'FROM episodes e '
+      'FROM episode_contents e '
       'JOIN novels n ON e.ncode = n.ncode '
       'WHERE e.content IS NOT NULL '
       'GROUP BY e.ncode',
-      readsFrom: {episodeEntities, novels},
+      readsFrom: {episodeContents, novels},
     ).watch();
 
     return query.map((rows) {

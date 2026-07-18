@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -142,6 +142,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     required bool isLoading,
     required bool hasError,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isShortStory = novelInfo.generalAllNo == 1;
     final downloadProgressAsync = ref.watch(
       downloadProgressProvider(widget.ncode),
@@ -189,11 +190,11 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(novelInfoWithCacheProvider(widget.ncode));
+          final repository = ref.read(novelRepositoryProvider);
+          await repository.refreshNovelInfo(widget.ncode);
           for (var i = 1; i <= _currentPage; i++) {
-            ref.invalidate(episodeListProvider('${widget.ncode}_$i'));
+            await repository.refreshEpisodeList(widget.ncode, i);
           }
-          await Future<void>.delayed(const Duration(milliseconds: 800));
         },
         child: CustomScrollView(
           controller: _scrollController,
@@ -201,8 +202,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
             SliverAppBar(
               floating: true,
               pinned: true,
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              surfaceTintColor: Theme.of(context).colorScheme.surface,
+              backgroundColor: colorScheme.surface,
+              surfaceTintColor: colorScheme.surface,
               title: AnimatedOpacity(
                 opacity: _showTitle ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 200),
@@ -266,6 +267,36 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
+                    // 非公開バナー
+                    if (novelInfo.isPrivate)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.errorContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: colorScheme.onErrorContainer,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'この作品は非公開・削除されているため、'
+                                '新しいデータを取得できません。'
+                                'キャッシュから表示しています。',
+                                style: TextStyle(
+                                  color: colorScheme.onErrorContainer,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (novelInfo.isPrivate) const SizedBox(height: 16),
                     // Title
                     Text(
                       novelInfo.title ?? '',
@@ -289,8 +320,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                         novelInfo.writer ?? '',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: novelInfo.userId != null
-                              ? Theme.of(context).colorScheme.primary
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                              ? colorScheme.primary
+                              : colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -315,12 +346,9 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                               icon: const Icon(Icons.favorite),
                               label: const Text('ライブラリ登録済み'),
                               style: FilledButton.styleFrom(
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.secondaryContainer,
-                                foregroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.onSecondaryContainer,
+                                backgroundColor: colorScheme.secondaryContainer,
+                                foregroundColor:
+                                    colorScheme.onSecondaryContainer,
                               ),
                             )
                           : FilledButton.icon(
@@ -355,9 +383,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                                     label: Text(keyword),
                                     visualDensity: VisualDensity.compact,
                                     side: BorderSide.none,
-                                    backgroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.surfaceContainerHigh,
+                                    backgroundColor:
+                                        colorScheme.surfaceContainerHigh,
                                     padding: EdgeInsets.zero,
                                     labelStyle: Theme.of(
                                       context,
@@ -492,6 +519,7 @@ class _EpisodeListSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     // If we have no episodes and are loading, show spinner (though parent might handle this)
     if (episodes.isEmpty && isLoading) {
       return const SliverToBoxAdapter(
@@ -525,7 +553,7 @@ class _EpisodeListSliver extends StatelessWidget {
                 '全$totalEpisodes話',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: colorScheme.onSurface,
                 ),
               ),
             );
@@ -625,6 +653,7 @@ class _EpisodeListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
     final episodeNumber = extractEpisodeNumber(episode.url);
     final episodeTitle = episode.subtitle ?? 'No Title';
 
@@ -660,7 +689,7 @@ class _EpisodeListTile extends ConsumerWidget {
           Text(
             '第$episodeNumber話',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
+              color: colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -686,7 +715,7 @@ class _EpisodeListTile extends ConsumerWidget {
       trailing: isDownloaded
           ? Icon(
               Icons.check_circle,
-              color: Theme.of(context).colorScheme.primary,
+              color: colorScheme.primary,
             )
           : null,
       onTap: () {
