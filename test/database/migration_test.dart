@@ -126,6 +126,94 @@ void main() {
     expect(novel!.isPrivate, isFalse);
   });
 
+  /// v14 相当のスキーマとデータを持つDBファイルを作成する
+  Future<void> createV14Database(File file) async {
+    final db = sqlite3.open(file.path);
+
+    const createNovelsV14 = '''
+      CREATE TABLE novels (
+        ncode TEXT NOT NULL PRIMARY KEY,
+        title TEXT,
+        cached_at INTEGER)
+    ''';
+    const createLibraryEntriesV14 = '''
+      CREATE TABLE library_entries (
+        ncode TEXT NOT NULL PRIMARY KEY REFERENCES novels(ncode),
+        added_at INTEGER)
+    ''';
+    const createReadingHistoryV14 = '''
+      CREATE TABLE reading_history (
+        ncode TEXT NOT NULL PRIMARY KEY REFERENCES novels(ncode),
+        last_episode_id INTEGER,
+        viewed_at INTEGER,
+        updated_at INTEGER)
+    ''';
+
+    const statements = <String>[
+      createNovelsV14,
+      createLibraryEntriesV14,
+      createReadingHistoryV14,
+      '''
+      CREATE TABLE episodes (
+        ncode TEXT NOT NULL REFERENCES novels(ncode),
+        episode_id INTEGER NOT NULL,
+        subtitle TEXT,
+        url TEXT,
+        published_at TEXT,
+        revised_at TEXT,
+        content TEXT,
+        fetched_at INTEGER,
+        PRIMARY KEY (ncode, episode_id)
+      )
+      ''',
+      "INSERT INTO novels (ncode, title) VALUES ('n1234ab', 'テスト小説')",
+      '''
+      INSERT INTO episodes VALUES (
+        'n1234ab', 1, '第1話', 'https://example.com/1',
+        '2024-01-01 00:00:00', '2024-01-02 00:00:00',
+        '[{"runtimeType":"plainText","text":"本文"}]', 1000)
+      ''',
+      'PRAGMA user_version = 14',
+    ];
+
+    // ignore: prefer_foreach
+    for (final sql in statements) {
+      db.execute(sql);
+    }
+    db.dispose();
+  }
+
+  test('v14からのアップグレードでFTS再構築前にテーブル分割が完了すること', () async {
+    await createV14Database(dbFile);
+
+    final db = AppDatabase.test(NativeDatabase(dbFile));
+    addTearDown(db.close);
+
+    // 目次・本文テーブルが作成されてデータが引き継がれること
+    final listRows = await db.select(db.episodeListEntries).get();
+    expect(listRows.length, 1);
+    expect(listRows.single.episodeId, 1);
+    expect(listRows.single.subtitle, '第1話');
+
+    final contentRows = await db.select(db.episodeContents).get();
+    expect(contentRows.length, 1);
+    expect(contentRows.single.episodeId, 1);
+
+    // 旧テーブルが削除されていること
+    final oldTables = await db
+        .customSelect(
+          'SELECT name FROM sqlite_master '
+          "WHERE type='table' AND name='episodes'",
+        )
+        .get();
+    expect(oldTables, isEmpty);
+
+    // novelsテーブルに非公開フラグが追加されること
+    final novel = await db.getNovel('n1234ab');
+    expect(novel, isNotNull);
+    expect(novel!.isPrivate, isFalse);
+  });
+
   test('新規作成データベースでも非公開フラグのデフォルトがfalseであること', () async {
     final db = AppDatabase.memory();
     addTearDown(db.close);

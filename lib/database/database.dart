@@ -364,12 +364,13 @@ class AppDatabase extends _$AppDatabase {
       },
       onUpgrade: (m, from, to) async {
         if (from < 12) {
-          // Ensure new tables are fresh (in case of previous failed migration)
+          // 以前のマイグレーション失敗などでテーブルが中途半端に存在する可能性があるため、
+          // 既存テーブルを削除してから新しいテーブルを作成する。
           await customStatement('DROP TABLE IF EXISTS episodes');
           await customStatement('DROP TABLE IF EXISTS library_entries');
           await customStatement('DROP TABLE IF EXISTS reading_history');
 
-          // 1. Create new tables
+          // 1. 新規テーブルを作成する
           await m.createTable(novels);
           await m.createTable(libraryEntries);
           await m.createTable(readingHistory);
@@ -389,7 +390,7 @@ class AppDatabase extends _$AppDatabase {
               );
             ''');
 
-          // 2. Migrate LibraryNovels -> LibraryEntries & Novels
+          // 2. LibraryNovels から LibraryEntries と Novels へ移行
           await customStatement('''
               INSERT OR IGNORE INTO novels (
                 ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
@@ -404,7 +405,7 @@ class AppDatabase extends _$AppDatabase {
               SELECT ncode, added_at FROM library_novels;
             ''');
 
-          // 3. Migrate History -> ReadingHistory & Novels
+          // 3. History から ReadingHistory と Novels へ移行
           await customStatement('''
               INSERT OR IGNORE INTO novels (ncode, cached_at)
               SELECT ncode, viewed_at FROM history;
@@ -415,9 +416,9 @@ class AppDatabase extends _$AppDatabase {
               SELECT ncode, last_episode, viewed_at, updated_at FROM history;
             ''');
 
-          // 4. Migrate CachedEpisodes -> Episodes
+          // 4. CachedEpisodes から Episodes へ移行
 
-          // Check if cached_episodes table exists
+          // 古いキャッシュエピソードテーブルが存在するか確認する
           final cachedEpisodesResult = await customSelect(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='cached_episodes'",
           ).get();
@@ -429,7 +430,7 @@ class AppDatabase extends _$AppDatabase {
               ''');
           }
 
-          // 5. Drop old tables
+          // 5. 旧テーブルを削除する
           await customStatement('DROP TABLE IF EXISTS library_novels');
           await customStatement('DROP TABLE IF EXISTS history');
           await customStatement('DROP TABLE IF EXISTS cached_episodes');
@@ -439,24 +440,10 @@ class AppDatabase extends _$AppDatabase {
           // Version 13 migration (Triggers based FTS) - skipped or overwritten by 14
         }
 
-        if (from < 14) {
-          // Re-create FTS tables with default tokenizer (simple) instead of trigram
-          // and populate them manually (since we removed triggers)
-          await customStatement('DROP TABLE IF EXISTS novels_search');
-          await customStatement('DROP TABLE IF EXISTS episodes_search');
-
-          await _createFtsTables();
-          await _populateFtsTables();
-        }
-
-        if (from >= 12 && from < 15) {
-          await customStatement(
-            'ALTER TABLE novels ADD COLUMN user_id INTEGER',
-          );
-        }
-
         if (from < 16) {
           // 旧episodesテーブルを目次・本文の2テーブルに分割する
+          // v14のFTS再構築より前に実行し、_populateFtsTables()で
+          // episode_list_entries / episode_contents を参照できるようにする
           await m.createTable(episodeListEntries);
           await m.createTable(episodeContents);
 
@@ -485,12 +472,28 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(novels, novels.isPrivate);
           }
         }
+
+        if (from >= 12 && from < 15) {
+          await customStatement(
+            'ALTER TABLE novels ADD COLUMN user_id INTEGER',
+          );
+        }
+
+        if (from < 14) {
+          // トリグラムトークナイザーからデフォルトトークナイザー(simple)へ切り替え、
+          // トリガーを削除したためFTSテーブルを手動で再構築・再投入する
+          await customStatement('DROP TABLE IF EXISTS novels_search');
+          await customStatement('DROP TABLE IF EXISTS episodes_search');
+
+          await _createFtsTables();
+          await _populateFtsTables();
+        }
       },
     );
   }
 
   Future<void> _createFtsTables() async {
-    // Novels FTS (default tokenizer)
+    // Novels用FTSテーブル（デフォルトトークナイザー）
     await customStatement('''
       CREATE VIRTUAL TABLE IF NOT EXISTS novels_search USING fts5(
         ncode UNINDEXED,
@@ -500,7 +503,7 @@ class AppDatabase extends _$AppDatabase {
       );
     ''');
 
-    // Episodes FTS (default tokenizer)
+    // Episodes用FTSテーブル（デフォルトトークナイザー）
     await customStatement('''
       CREATE VIRTUAL TABLE IF NOT EXISTS episodes_search USING fts5(
         ncode UNINDEXED,
@@ -510,17 +513,17 @@ class AppDatabase extends _$AppDatabase {
       );
     ''');
 
-    // No triggers here anymore
+    // トリガーによる自動更新は行わない
   }
 
   Future<void> _populateFtsTables() async {
-    // Populate Novels FTS
+    // Novels検索インデックスを再構築
     final allNovels = await select(novels).get();
     for (final novel in allNovels) {
       await _updateNovelSearchIndex(novel);
     }
 
-    // Populate Episodes FTS
+    // Episodes検索インデックスを再構築
     final episodeRows = await customSelect(
       'SELECT l.ncode, l.episode_id, l.subtitle, c.content '
       'FROM episode_list_entries l '
@@ -576,7 +579,7 @@ class AppDatabase extends _$AppDatabase {
 
     final tokenizedSubtitle = SearchTokenizer.tokenize(subtitle ?? '');
 
-    // Extract text content from JSON
+    // 本文コンテンツから検索用テキストを抽出する
     final buffer = StringBuffer();
     for (final element in content) {
       if (element is PlainText) {
@@ -696,7 +699,7 @@ class AppDatabase extends _$AppDatabase {
           final contentJson = row.read<String?>('content');
           if (contentJson == null) return false;
 
-          // Parse content to check for exact match
+          // 完全一致を確認するため本文を解析する
           try {
             final contentList = const ContentConverter().fromSql(contentJson);
             for (final element in contentList) {
@@ -707,7 +710,7 @@ class AppDatabase extends _$AppDatabase {
               }
             }
           } on Exception catch (_) {
-            // Ignore parsing errors
+            // 解析失敗は無視する
           }
           return false;
         })
@@ -789,7 +792,7 @@ class AppDatabase extends _$AppDatabase {
       mode: InsertMode.insertOrReplace,
     );
 
-    // Update Search Index
+    // 検索インデックスを更新
     // タイトル、著者、あらすじが変更された場合のみインデックスを更新
     var shouldUpdateIndex = true;
     if (existingNovel != null) {
@@ -859,13 +862,20 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// 指定範囲の目次データのうち、最も古い取得日時を返す
+  ///
+  /// 対象範囲に取得日時が未設定(fetched_at IS NULL)の行が含まれる場合は
+  /// 期限切れとして扱えるようNULLを返す。
   Future<int?> getEpisodeListOldestFetchedAt(
     String ncode,
     int start,
     int end,
   ) async {
     final result = await customSelect(
-      'SELECT MIN(COALESCE(fetched_at, 0)) as oldest '
+      'SELECT '
+      'CASE '
+      'WHEN COUNT(*) = COUNT(fetched_at) THEN MIN(fetched_at) '
+      'ELSE NULL '
+      'END as oldest '
       'FROM episode_list_entries '
       'WHERE ncode = ? AND episode_id BETWEEN ? AND ?',
       variables: [
@@ -1024,8 +1034,15 @@ class AppDatabase extends _$AppDatabase {
     final normalizedNcode = ncode.toNormalizedNcode();
 
     // FTS更新が必要かどうかを判定するために既存データを取得
-    final existingRow =
+    final existingContentRow =
         await (select(episodeContents)..where(
+              (t) =>
+                  t.ncode.equals(normalizedNcode) &
+                  t.episodeId.equals(episodeId),
+            ))
+            .getSingleOrNull();
+    final existingListRow =
+        await (select(episodeListEntries)..where(
               (t) =>
                   t.ncode.equals(normalizedNcode) &
                   t.episodeId.equals(episodeId),
@@ -1061,28 +1078,23 @@ class AppDatabase extends _$AppDatabase {
       ),
     );
 
-    // Update Search Index
-    // コンテンツが変更された場合のみインデックスを更新
+    // コンテンツまたはサブタイトルが変更された場合のみインデックスを更新
     var shouldUpdateIndex = true;
-    if (existingRow != null && existingRow.content != null) {
-      // リストの内容を比較
-      if (listEquals(existingRow.content, content)) {
+    if (existingContentRow != null && existingListRow != null) {
+      final contentUnchanged =
+          existingContentRow.content != null &&
+          listEquals(existingContentRow.content, content);
+      final subtitleUnchanged = existingListRow.subtitle == subtitle;
+      if (contentUnchanged && subtitleUnchanged) {
         shouldUpdateIndex = false;
       }
     }
 
     if (shouldUpdateIndex) {
-      final listRow =
-          await (select(episodeListEntries)..where(
-                (t) =>
-                    t.ncode.equals(normalizedNcode) &
-                    t.episodeId.equals(episodeId),
-              ))
-              .getSingleOrNull();
       await _updateEpisodeSearchIndex(
         ncode: normalizedNcode,
         episodeId: episodeId,
-        subtitle: listRow?.subtitle,
+        subtitle: subtitle ?? existingListRow?.subtitle,
         content: content,
       );
     }
@@ -1260,7 +1272,7 @@ class AppDatabase extends _$AppDatabase {
   /// 完了済みダウンロード小説を監視
   Stream<List<NovelDownloadSummary>> watchCompletedDownloads() {
     // 全エピソードの集計（GROUP BY）と、全ノベル情報を結合してストリーム化
-    // Logic is same as watchDownloadingNovels but filter differs
+    // 処理自体はwatchDownloadingNovelsと同じだが、フィルタ条件のみ異なる
     final query = customSelect(
       'SELECT '
       'e.ncode, '

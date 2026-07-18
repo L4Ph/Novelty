@@ -190,11 +190,11 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(novelInfoWithCacheProvider(widget.ncode));
+          final repository = ref.read(novelRepositoryProvider);
+          await repository.refreshNovelInfo(widget.ncode);
           for (var i = 1; i <= _currentPage; i++) {
-            ref.invalidate(episodeListProvider('${widget.ncode}_$i'));
+            await repository.refreshEpisodeList(widget.ncode, i);
           }
-          await Future<void>.delayed(const Duration(milliseconds: 800));
         },
         child: CustomScrollView(
           controller: _scrollController,

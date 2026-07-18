@@ -174,7 +174,7 @@ void main() {
       await expectation;
     });
 
-    test('取得日時がNULLの行が含まれる場合、最古取得日時は0を返すこと', () async {
+    test('取得日時がNULLの行が含まれる場合、最古取得日時はNULLを返すこと', () async {
       const ncode = 'n1234ab';
       await insertDummyNovel(ncode);
 
@@ -190,9 +190,29 @@ void main() {
       final listRows = await db.select(db.episodeListEntries).get();
       expect(listRows.single.fetchedAt, isNull);
 
-      // NULL行が含まれるため、最古取得日時は0（TTL切れ）として返されること
+      // NULL行が含まれるため、最古取得日時はNULL（TTL切れ）として返されること
       final oldest = await db.getEpisodeListOldestFetchedAt(ncode, 1, 100);
-      expect(oldest, 0);
+      expect(oldest, isNull);
+    });
+
+    test('全行の取得日時が設定されている場合、最古取得日時を返すこと', () async {
+      const ncode = 'n1234ab';
+      await insertDummyNovel(ncode);
+
+      await db
+          .into(db.episodeListEntries)
+          .insert(
+            const EpisodeListEntriesCompanion(
+              ncode: Value(ncode),
+              episodeId: Value(1),
+              subtitle: Value('第1話'),
+              url: Value('https://example.com/1'),
+              fetchedAt: Value(1000),
+            ),
+          );
+
+      final oldest = await db.getEpisodeListOldestFetchedAt(ncode, 1, 100);
+      expect(oldest, 1000);
     });
   });
 }

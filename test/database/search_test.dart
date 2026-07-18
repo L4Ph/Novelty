@@ -128,6 +128,57 @@ void main() {
     expect(results3.isEmpty, true);
   });
 
+  test('サブタイトルが変更されても本文が同一でも検索インデックスが更新されること', () async {
+    // Arrange
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        ncode: 'n1234a',
+        title: const Value('Test Novel'),
+      ),
+    );
+    await db.addToLibrary('n1234a');
+    await db.upsertEpisodes([
+      EpisodeListEntriesCompanion.insert(
+        ncode: 'n1234a',
+        episodeId: 1,
+        subtitle: const Value('旧サブタイトル'),
+      ),
+    ]);
+
+    // 本文を保存してインデックスを作成
+    await db.updateEpisodeContent(
+      ncode: 'n1234a',
+      episodeId: 1,
+      content: [
+        NovelContentElement.plainText('本文はそのまま'),
+      ],
+      fetchedAt: 1234567890,
+      subtitle: '旧サブタイトル',
+      url: 'http://example.com/1',
+    );
+    expect((await db.searchEpisodes('旧サブタイトル')).length, 1);
+
+    // サブタイトルのみ変更
+    await db.updateEpisodeContent(
+      ncode: 'n1234a',
+      episodeId: 1,
+      content: [
+        NovelContentElement.plainText('本文はそのまま'),
+      ],
+      fetchedAt: 1234567891,
+      subtitle: '新サブタイトル',
+      url: 'http://example.com/1',
+    );
+
+    // 新サブタイトルで検索できるようになっていること
+    final results = await db.searchEpisodes('新サブタイトル');
+    expect(results.length, 1);
+    expect(results.first.subtitle, '新サブタイトル');
+
+    // 旧サブタイトルでは検索できないこと
+    expect((await db.searchEpisodes('旧サブタイトル')).isEmpty, true);
+  });
+
   test('Deleting novel removes from search index', () async {
     // Arrange
     await db.insertNovel(

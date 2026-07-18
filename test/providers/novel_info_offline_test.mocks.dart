@@ -1465,12 +1465,30 @@ class MockNovelRepository extends _i1.Mock implements _i15.NovelRepository {
           as _i5.Stream<_i6.NovelInfo>);
 
   @override
+  _i5.Future<void> refreshNovelInfo(String? ncode) =>
+      (super.noSuchMethod(
+            Invocation.method(#refreshNovelInfo, [ncode]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
   _i5.Stream<List<_i7.Episode>> watchEpisodeList(String? ncode, int? page) =>
       (super.noSuchMethod(
             Invocation.method(#watchEpisodeList, [ncode, page]),
             returnValue: _i5.Stream<List<_i7.Episode>>.empty(),
           )
           as _i5.Stream<List<_i7.Episode>>);
+
+  @override
+  _i5.Future<void> refreshEpisodeList(String? ncode, int? page) =>
+      (super.noSuchMethod(
+            Invocation.method(#refreshEpisodeList, [ncode, page]),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
 
   @override
   _i5.Stream<int?> watchLastReadEpisode(String? ncode) =>

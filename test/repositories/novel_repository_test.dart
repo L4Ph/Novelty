@@ -284,7 +284,7 @@ void main() {
       expect(novel.cachedAt, isNotNull);
     });
 
-    test('キャッシュが無い状態でネットワークエラー時もプレースホルダーが挿入される', () async {
+    test('キャッシュが無い状態でネットワークエラー時はストリームエラーとして伝播する', () async {
       when(
         mockApiService.fetchNovelInfo(normalizedNcode),
       ).thenThrow(Exception('network error'));
@@ -294,24 +294,20 @@ void main() {
 
       await expectLater(
         stream,
-        emits(
-          predicate<NovelInfo>(
-            (info) =>
-                info.ncode == normalizedNcode &&
-                info.title == null &&
-                !info.isPrivate,
-          ),
+        emitsError(
+          predicate<Exception>((e) => e.toString().contains('network error')),
         ),
       );
 
       final novel = await database.getNovel(normalizedNcode);
-      expect(novel, isNotNull);
-      expect(novel!.isPrivate, isFalse);
-      expect(novel.cachedAt, isNotNull);
+      expect(novel, isNull);
     });
 
     test('エラー時にcachedAtが更新され、TTL内は再取得しない', () async {
       final now = DateTime.now().millisecondsSinceEpoch;
+      await insertCachedNovel(
+        cachedAt: now - const Duration(hours: 2).inMilliseconds,
+      );
       when(
         mockApiService.fetchNovelInfo(normalizedNcode),
       ).thenThrow(Exception('network error'));
@@ -319,7 +315,7 @@ void main() {
       final repository = container.read(novelRepositoryProvider);
       await repository.watchNovelInfo(testNcode).first;
 
-      // プレースホルダーが挿入され、cachedAtが更新されていること
+      // キャッシュのcachedAtが更新されていること
       final novelAfterFirst = await database.getNovel(normalizedNcode);
       expect(novelAfterFirst?.cachedAt, isNotNull);
       expect(novelAfterFirst!.cachedAt! >= now - 1000, isTrue);
@@ -379,7 +375,13 @@ void main() {
           .watchNovelInfo(testNcode)
           .listen(events2.add);
 
-      await Future<void>.delayed(const Duration(milliseconds: 150));
+      await expectLater(
+        repository.watchNovelInfo(testNcode),
+        emitsInOrder([
+          predicate<NovelInfo>((info) => info.title == 'cached title'),
+          predicate<NovelInfo>((info) => info.title == 'dedup title'),
+        ]),
+      );
 
       await subscription1.cancel();
       await subscription2.cancel();
@@ -389,6 +391,46 @@ void main() {
       expect(events1.last.title, 'dedup title');
       expect(events2.last.title, 'dedup title');
       verify(mockApiService.fetchNovelInfo(normalizedNcode)).called(1);
+    });
+    test('force指定でTTL内でもAPIを再取得する', () async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await insertCachedNovel(
+        cachedAt: now - const Duration(minutes: 30).inMilliseconds,
+      );
+
+      when(mockApiService.fetchNovelInfo(normalizedNcode)).thenAnswer(
+        (_) async => NovelInfo(
+          ncode: normalizedNcode,
+          title: 'force refreshed title',
+        ),
+      );
+
+      final repository = container.read(novelRepositoryProvider);
+      await repository.refreshNovelInfo(testNcode);
+
+      verify(mockApiService.fetchNovelInfo(normalizedNcode)).called(1);
+      final novel = await database.getNovel(normalizedNcode);
+      expect(novel?.title, 'force refreshed title');
+    });
+
+    test('オフラインかつキャッシュが無い場合はOfflineExceptionを投げる', () async {
+      container = ProviderContainer(
+        overrides: [
+          db.appDatabaseProvider.overrideWithValue(database),
+          apiServiceProvider.overrideWithValue(mockApiService),
+          settingsProvider.overrideWith(FakeSettings.new),
+          isOfflineProvider.overrideWithValue(true),
+        ],
+      );
+
+      final repository = container.read(novelRepositoryProvider);
+      final stream = repository.watchNovelInfo(testNcode);
+
+      await expectLater(
+        stream,
+        emitsError(isA<OfflineException>()),
+      );
+      verifyNever(mockApiService.fetchNovelInfo(any));
     });
   });
 
@@ -577,6 +619,107 @@ void main() {
         ),
       );
       verify(mockApiService.fetchEpisodeList(normalizedNcode, page)).called(1);
+    });
+
+    test('キャッシュが無い状態で取得成功なら目次を返す', () async {
+      await database.insertNovel(
+        NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
+      );
+
+      when(
+        mockApiService.fetchEpisodeList(normalizedNcode, page),
+      ).thenAnswer(
+        (_) async => [
+          const Episode(
+            ncode: 'n1234ab',
+            index: 1,
+            subtitle: 'fresh ep',
+            url: 'http://example.com/1/',
+          ),
+        ],
+      );
+
+      final repository = container.read(novelRepositoryProvider);
+      final stream = repository.watchEpisodeList(testNcode, page);
+
+      await expectLater(
+        stream,
+        emits(
+          predicate<List<Episode>>(
+            (list) => list.single.subtitle == 'fresh ep',
+          ),
+        ),
+      );
+    });
+
+    test('キャッシュが無い状態でAPI失敗時はストリームエラーとして伝播する', () async {
+      await database.insertNovel(
+        NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
+      );
+
+      when(
+        mockApiService.fetchEpisodeList(normalizedNcode, page),
+      ).thenThrow(Exception('network error'));
+
+      final repository = container.read(novelRepositoryProvider);
+      final stream = repository.watchEpisodeList(testNcode, page);
+
+      await expectLater(
+        stream,
+        emitsError(
+          predicate<Exception>((e) => e.toString().contains('network error')),
+        ),
+      );
+    });
+
+    test('force指定でTTL内でもAPIを再取得する', () async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      await insertNovelAndEpisodes(
+        fetchedAt: now - const Duration(minutes: 30).inMilliseconds,
+      );
+
+      when(
+        mockApiService.fetchEpisodeList(normalizedNcode, page),
+      ).thenAnswer(
+        (_) async => [
+          const Episode(
+            ncode: 'n1234ab',
+            index: 1,
+            subtitle: 'force refreshed ep',
+            url: 'http://example.com/1/',
+          ),
+        ],
+      );
+
+      final repository = container.read(novelRepositoryProvider);
+      await repository.refreshEpisodeList(testNcode, page);
+
+      verify(mockApiService.fetchEpisodeList(normalizedNcode, page)).called(1);
+      final list = await database.getEpisodesRange(normalizedNcode, 1, 100);
+      expect(list.single.subtitle, 'force refreshed ep');
+    });
+
+    test('オフラインかつキャッシュが無い場合はOfflineExceptionを投げる', () async {
+      container = ProviderContainer(
+        overrides: [
+          db.appDatabaseProvider.overrideWithValue(database),
+          apiServiceProvider.overrideWithValue(mockApiService),
+          settingsProvider.overrideWith(FakeSettings.new),
+          isOfflineProvider.overrideWithValue(true),
+        ],
+      );
+      await database.insertNovel(
+        NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
+      );
+
+      final repository = container.read(novelRepositoryProvider);
+      final stream = repository.watchEpisodeList(testNcode, page);
+
+      await expectLater(
+        stream,
+        emitsError(isA<OfflineException>()),
+      );
+      verifyNever(mockApiService.fetchEpisodeList(any, any));
     });
   });
 }
