@@ -104,6 +104,9 @@ class ApiService {
       throw const FormatException('APIレスポンスが空です');
     }
 
+    if (data[0] != null && data[0] is! Map<String, dynamic>) {
+      throw const FormatException('APIレスポンスのメタデータが不正です');
+    }
     final metadata = data[0] as Map<String, dynamic>?;
     if (metadata == null || metadata['allcount'] is! int) {
       throw const FormatException('APIレスポンスのメタデータが不正です');
@@ -118,6 +121,9 @@ class ApiService {
       throw const FormatException('APIレスポンスに作品データがありません');
     }
 
+    if (data[1] is! Map<String, dynamic>) {
+      throw const FormatException('APIレスポンスに作品データがありません');
+    }
     final novelData = data[1] as Map<String, dynamic>;
 
     // デバッグ: APIレスポンスを確認

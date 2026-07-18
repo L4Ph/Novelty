@@ -414,6 +414,7 @@ void main() {
     });
 
     test('オフラインかつキャッシュが無い場合はOfflineExceptionを投げる', () async {
+      container.dispose();
       container = ProviderContainer(
         overrides: [
           db.appDatabaseProvider.overrideWithValue(database),
@@ -700,6 +701,7 @@ void main() {
     });
 
     test('オフラインかつキャッシュが無い場合はOfflineExceptionを投げる', () async {
+      container.dispose();
       container = ProviderContainer(
         overrides: [
           db.appDatabaseProvider.overrideWithValue(database),
