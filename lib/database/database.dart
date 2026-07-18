@@ -100,7 +100,10 @@ class HistoryData {
 
   @override
   String toString() {
-    return 'HistoryData(ncode: $ncode, title: $title, writer: $writer, lastEpisode: $lastEpisode, viewedAt: $viewedAt, updatedAt: $updatedAt)';
+    return 'HistoryData('
+        'ncode: $ncode, title: $title, writer: $writer, '
+        'lastEpisode: $lastEpisode, viewedAt: $viewedAt, '
+        'updatedAt: $updatedAt)';
   }
 }
 
@@ -1419,4 +1422,4 @@ LazyDatabase _openConnection() {
   });
 }
 
-// ==================== Providers Moved to database_providers.dart ====================
+// === Providers moved to database_providers.dart ===
