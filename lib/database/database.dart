@@ -810,6 +810,40 @@ class AppDatabase extends _$AppDatabase {
     return id;
   }
 
+  /// 小説の非公開フラグを更新する
+  Future<int> updateNovelPrivateFlag(
+    String ncode, {
+    required bool isPrivate,
+  }) {
+    return (update(
+      novels,
+    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).write(
+      NovelsCompanion(
+        isPrivate: Value(isPrivate),
+      ),
+    );
+  }
+
+  /// 指定範囲の目次データのうち、最も古い取得日時を返す
+  Future<int?> getEpisodeListOldestFetchedAt(
+    String ncode,
+    int start,
+    int end,
+  ) async {
+    final result = await customSelect(
+      'SELECT MIN(fetched_at) as oldest '
+      'FROM episode_list_entries '
+      'WHERE ncode = ? AND episode_id BETWEEN ? AND ?',
+      variables: [
+        Variable.withString(ncode.toNormalizedNcode()),
+        Variable.withInt(start),
+        Variable.withInt(end),
+      ],
+      readsFrom: {episodeListEntries},
+    ).getSingleOrNull();
+    return result?.read<int?>('oldest');
+  }
+
   /// 履歴の追加
   Future<int> addToHistory(ReadingHistoryCompanion history) {
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -903,27 +937,10 @@ class AppDatabase extends _$AppDatabase {
 
     await batch((batch) {
       for (final episode in newEpisodes) {
-        batch.customStatement(
-          '''
-          INSERT INTO episode_list_entries
-            (ncode, episode_id, subtitle, url, published_at, revised_at, fetched_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(ncode, episode_id) DO UPDATE SET
-            subtitle = excluded.subtitle,
-            url = excluded.url,
-            published_at = excluded.published_at,
-            revised_at = excluded.revised_at,
-            fetched_at = excluded.fetched_at;
-        ''',
-          [
-            episode.ncode.value,
-            episode.episodeId.value,
-            episode.subtitle.value,
-            episode.url.value,
-            episode.publishedAt.value,
-            episode.revisedAt.value,
-            now,
-          ],
+        batch.insert(
+          episodeListEntries,
+          episode.copyWith(fetchedAt: Value(now)),
+          mode: InsertMode.insertOrReplace,
         );
       }
     });

@@ -71,6 +71,16 @@ class NovelRepository {
   final Map<String, StreamController<DownloadProgress>> _progressControllers =
       {};
 
+  /// 実行中のバックグラウンド再取得を管理するマップ
+  /// 同一キーの再取得は1つに集約し、多重API呼び出しを防ぐ
+  final Map<String, Future<void>> _pendingFetches = {};
+
+  /// 小説情報のTTL
+  static const Duration _novelInfoTtl = Duration(hours: 1);
+
+  /// エピソード目次のTTL
+  static const Duration _episodeListTtl = Duration(hours: 1);
+
   /// リソースをクリーンアップする
   void dispose() {
     for (final controller in _progressControllers.values) {
@@ -79,6 +89,7 @@ class NovelRepository {
       }
     }
     _progressControllers.clear();
+    _pendingFetches.clear();
   }
 
   /// ダウンロード進捗を監視するストリーム
@@ -541,49 +552,143 @@ class NovelRepository {
     }
   }
 
-  /// 小説情報を監視する（SWR）
+  /// 小説情報を監視する
+  ///
+  /// DBにキャッシュがあれば即座に返し、TTLが切れていれば裏で再取得する。
   Stream<NovelInfo> watchNovelInfo(String ncode) {
     final normalizedNcode = ncode.toNormalizedNcode();
-    return _swrClient.watch<NovelInfo>(
-      key: 'novel_info:$normalizedNcode',
-      fetcher: () => apiService.fetchNovelInfo(normalizedNcode),
-      watcher: () => _db
-          .watchNovel(normalizedNcode)
-          .where((novel) => novel != null)
-          .map((novel) => novel!.toModel()),
-      onPersist: (data) async {
-        await _db.insertNovel(data.toDbCompanion());
-      },
-    );
+    unawaited(_refreshNovelInfoIfNeeded(normalizedNcode));
+
+    return _db
+        .watchNovel(normalizedNcode)
+        .where((novel) => novel != null)
+        .map((novel) => novel!.toModel());
   }
 
-  /// エピソードリストを監視する（SWR）
+  /// 小説情報のTTLを判定し、必要なら裏で再取得する
+  Future<void> _refreshNovelInfoIfNeeded(String normalizedNcode) async {
+    final key = 'novel_info:$normalizedNcode';
+    final pending = _pendingFetches[key];
+    if (pending != null) {
+      return pending;
+    }
+
+    final future = _doRefreshNovelInfo(normalizedNcode);
+    _pendingFetches[key] = future;
+    try {
+      await future;
+    } finally {
+      final _ = _pendingFetches.remove(key);
+    }
+  }
+
+  /// 小説情報をAPIから取得しDBに保存する
+  Future<void> _doRefreshNovelInfo(String normalizedNcode) async {
+    final isOffline = ref.read(isOfflineProvider);
+    if (isOffline) {
+      return;
+    }
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final cached = await _db.getNovel(normalizedNcode);
+    final cachedAt = cached?.cachedAt;
+    if (cachedAt != null && now - cachedAt < _novelInfoTtl.inMilliseconds) {
+      return;
+    }
+
+    try {
+      final info = await apiService.fetchNovelInfo(normalizedNcode);
+      await _db.insertNovel(
+        info.toDbCompanion().copyWith(
+          isPrivate: const Value(false),
+        ),
+      );
+    } on NovelNotFoundException {
+      // 非公開・削除された作品でもキャッシュは保持する
+      await _db.updateNovelPrivateFlag(
+        normalizedNcode,
+        isPrivate: true,
+      );
+    } on Exception {
+      // ネットワークエラー等は無視し、キャッシュ表示を継続する
+    }
+  }
+
+  /// エピソードリストを監視する
+  ///
+  /// DBにキャッシュがあれば即座に返し、TTLが切れていれば裏で再取得する。
   Stream<List<Episode>> watchEpisodeList(String ncode, int page) {
     final normalizedNcode = ncode.toNormalizedNcode();
     final start = (page - 1) * 100 + 1;
 
-    return _swrClient.watch<List<Episode>>(
-      key: 'episode_list:$normalizedNcode:$page',
-      fetcher: () => apiService.fetchEpisodeList(normalizedNcode, page),
-      watcher: () => _db.watchEpisodesRange(
-        normalizedNcode,
-        start,
-        start + 99,
-      ), // Assuming 100 episodes per page
-      onPersist: (data) async {
-        final companions = data.map((e) {
-          return EpisodeListEntriesCompanion(
-            ncode: Value(normalizedNcode),
-            episodeId: Value(e.index ?? 0),
-            subtitle: Value(e.subtitle ?? ''),
-            url: Value(e.url ?? ''),
-            publishedAt: Value(e.update ?? ''),
-            revisedAt: Value(e.revised ?? ''),
-          );
-        }).toList();
-        await _db.upsertEpisodes(companions);
-      },
+    unawaited(_refreshEpisodeListIfNeeded(normalizedNcode, page, start));
+
+    return _db.watchEpisodesRange(
+      normalizedNcode,
+      start,
+      start + 99,
     );
+  }
+
+  /// エピソード目次のTTLを判定し、必要なら裏で再取得する
+  Future<void> _refreshEpisodeListIfNeeded(
+    String normalizedNcode,
+    int page,
+    int start,
+  ) async {
+    final key = 'episode_list:$normalizedNcode:$page';
+    final pending = _pendingFetches[key];
+    if (pending != null) {
+      return pending;
+    }
+
+    final future = _doRefreshEpisodeList(normalizedNcode, page, start);
+    _pendingFetches[key] = future;
+    try {
+      await future;
+    } finally {
+      final _ = _pendingFetches.remove(key);
+    }
+  }
+
+  /// エピソード目次をAPIから取得しDBに保存する
+  Future<void> _doRefreshEpisodeList(
+    String normalizedNcode,
+    int page,
+    int start,
+  ) async {
+    final isOffline = ref.read(isOfflineProvider);
+    if (isOffline) {
+      return;
+    }
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final oldestFetchedAt = await _db.getEpisodeListOldestFetchedAt(
+      normalizedNcode,
+      start,
+      start + 99,
+    );
+    if (oldestFetchedAt != null &&
+        now - oldestFetchedAt < _episodeListTtl.inMilliseconds) {
+      return;
+    }
+
+    try {
+      final episodes = await apiService.fetchEpisodeList(normalizedNcode, page);
+      final companions = episodes.map((e) {
+        return EpisodeListEntriesCompanion(
+          ncode: Value(normalizedNcode),
+          episodeId: Value(e.index ?? 0),
+          subtitle: Value(e.subtitle ?? ''),
+          url: Value(e.url ?? ''),
+          publishedAt: Value(e.update ?? ''),
+          revisedAt: Value(e.revised ?? ''),
+        );
+      }).toList();
+      await _db.upsertEpisodes(companions);
+    } on Exception {
+      // ネットワークエラー等は無視し、キャッシュ表示を継続する
+    }
   }
 
   /// 最後に読んだエピソード番号を監視する

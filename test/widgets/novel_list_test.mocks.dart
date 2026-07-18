@@ -472,6 +472,37 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<int>);
 
   @override
+  _i5.Future<int> updateNovelPrivateFlag(
+    String? ncode, {
+    required bool? isPrivate,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #updateNovelPrivateFlag,
+              [ncode],
+              {#isPrivate: isPrivate},
+            ),
+            returnValue: _i5.Future<int>.value(0),
+          )
+          as _i5.Future<int>);
+
+  @override
+  _i5.Future<int?> getEpisodeListOldestFetchedAt(
+    String? ncode,
+    int? start,
+    int? end,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getEpisodeListOldestFetchedAt, [
+              ncode,
+              start,
+              end,
+            ]),
+            returnValue: _i5.Future<int?>.value(),
+          )
+          as _i5.Future<int?>);
+
+  @override
   _i5.Future<int> addToHistory(_i3.ReadingHistoryCompanion? history) =>
       (super.noSuchMethod(
             Invocation.method(#addToHistory, [history]),

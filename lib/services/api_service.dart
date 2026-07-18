@@ -14,6 +14,15 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'api_service.g.dart';
 
+/// 作品が非公開・削除されていてAPIから取得できない場合の例外。
+class NovelNotFoundException implements Exception {
+  /// コンストラクタ。
+  const NovelNotFoundException();
+
+  @override
+  String toString() => 'NovelNotFoundException';
+}
+
 /// 累計ランキングの表示上限数
 /// なろう小説APIの制限値（最大500件）を最大限活用
 const int allTimeRankingLimit = 500;
@@ -89,7 +98,7 @@ class ApiService {
       final processedData = _processNovelType(novelData);
       return NovelInfo.fromJson(processedData);
     } else {
-      throw Exception('Novel not found');
+      throw const NovelNotFoundException();
     }
   }
 
