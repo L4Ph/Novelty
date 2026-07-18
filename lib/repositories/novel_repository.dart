@@ -145,8 +145,10 @@ class NovelRepository {
     final validEpisode = lastEpisode > 0 ? lastEpisode : 1;
 
     // Note: addToHistory now expects ReadingHistoryCompanion
-    // We assume the novel is already in Novels table (fetched via API or Library).
-    // If not, we should ideally insert it, but we don't have full metadata here.
+    // We assume the novel is already in Novels table
+    // (fetched via API or Library).
+    // If not, we should ideally insert it,
+    // but we don't have full metadata here.
     // The previous implementation inserted into History table which had title/writer.
     // The new ReadingHistory table only links to Novels.
     // For now, we proceed with inserting into ReadingHistory.
@@ -211,44 +213,38 @@ class NovelRepository {
 
       // データベースに保存（成功）
       await _db.updateEpisodeContent(
-        EpisodeEntitiesCompanion(
-          ncode: Value(ncodeLower),
-          episodeId: Value(episode),
-          content: Value(content),
-          fetchedAt: Value(now),
-          revisedAt: Value(revised),
-          subtitle: ep.subtitle != null
-              ? Value(ep.subtitle)
-              : const Value.absent(),
-          url: ep.url != null ? Value(ep.url) : const Value.absent(),
-          publishedAt: ep.update != null
-              ? Value(ep.update)
-              : const Value.absent(),
-        ),
+        ncode: ncodeLower,
+        episodeId: episode,
+        content: content,
+        fetchedAt: now,
+        revisedAt: revised,
+        subtitle: ep.subtitle,
+        url: ep.url,
+        publishedAt: ep.update,
       );
 
       return true;
     } on Exception {
       // データベースに保存（失敗）
-      // We need to insert a record with empty content to mark failure/attempt.
+      // We need to insert a record with empty content
+      // to mark failure/attempt.
       // But updateEpisodeContent requires subtitle/url.
       // If fetch failed, we might not have them.
-      // If we have existing metadata, we can try to use it, but here we assume fetch failed completely.
+      // If we have existing metadata, we can try to use it,
+      // but here we assume fetch failed completely.
       // For now, we skip saving failure state if we can't get metadata,
       // OR we save with empty strings if that's acceptable.
       // Let's try to save with empty strings to indicate failure.
 
       try {
         await _db.updateEpisodeContent(
-          EpisodeEntitiesCompanion(
-            ncode: Value(ncodeLower),
-            episodeId: Value(episode),
-            content: const Value([]), // Empty content
-            fetchedAt: Value(now),
-            revisedAt: Value(revised),
-            subtitle: const Value(''),
-            url: const Value(''),
-          ),
+          ncode: ncodeLower,
+          episodeId: episode,
+          content: const [], // Empty content
+          fetchedAt: now,
+          revisedAt: revised,
+          subtitle: '',
+          url: '',
         );
       } on Exception catch (_) {
         // Ignore secondary failure
@@ -300,20 +296,14 @@ class NovelRepository {
           : <NovelContentElement>[];
 
       await _db.updateEpisodeContent(
-        EpisodeEntitiesCompanion(
-          ncode: Value(ncode.toNormalizedNcode()),
-          episodeId: Value(episode),
-          content: Value(content),
-          fetchedAt: Value(DateTime.now().millisecondsSinceEpoch),
-          revisedAt: Value(revised),
-          subtitle: ep.subtitle != null
-              ? Value(ep.subtitle)
-              : const Value.absent(),
-          url: ep.url != null ? Value(ep.url) : const Value.absent(),
-          publishedAt: ep.update != null
-              ? Value(ep.update)
-              : const Value.absent(),
-        ),
+        ncode: ncode.toNormalizedNcode(),
+        episodeId: episode,
+        content: content,
+        fetchedAt: DateTime.now().millisecondsSinceEpoch,
+        revisedAt: revised,
+        subtitle: ep.subtitle,
+        url: ep.url,
+        publishedAt: ep.update,
       );
       return content;
     } on Exception {
@@ -327,15 +317,13 @@ class NovelRepository {
       // 失敗時は空contentで保存
       try {
         await _db.updateEpisodeContent(
-          EpisodeEntitiesCompanion(
-            ncode: Value(ncode.toNormalizedNcode()),
-            episodeId: Value(episode),
-            content: const Value([]),
-            fetchedAt: Value(DateTime.now().millisecondsSinceEpoch),
-            revisedAt: Value(revised),
-            subtitle: const Value(''),
-            url: const Value(''),
-          ),
+          ncode: ncode.toNormalizedNcode(),
+          episodeId: episode,
+          content: const [],
+          fetchedAt: DateTime.now().millisecondsSinceEpoch,
+          revisedAt: revised,
+          subtitle: '',
+          url: '',
         );
       } on Exception catch (_) {}
       rethrow;
@@ -444,13 +432,13 @@ class NovelRepository {
   /// ダウンロード済みエピソードを削除するメソッド。
   Future<void> deleteDownloadedEpisode(String ncode, int episode) async {
     // コンテンツをNULLに更新
-    await (_db.update(_db.episodeEntities)..where(
+    await (_db.update(_db.episodeContents)..where(
           (e) =>
               e.ncode.equals(ncode.toNormalizedNcode()) &
               e.episodeId.equals(episode),
         ))
         .write(
-          const EpisodeEntitiesCompanion(
+          const EpisodeContentsCompanion(
             content: Value<List<NovelContentElement>?>(null),
           ),
         );
@@ -462,9 +450,9 @@ class NovelRepository {
   Future<void> deleteDownloadedNovel(String ncode) async {
     // コンテンツをNULLに更新する。
     await (_db.update(
-      _db.episodeEntities,
+      _db.episodeContents,
     )..where((e) => e.ncode.equals(ncode.toNormalizedNcode()))).write(
-      const EpisodeEntitiesCompanion(
+      const EpisodeContentsCompanion(
         content: Value<List<NovelContentElement>?>(null),
       ),
     );
@@ -526,7 +514,7 @@ class NovelRepository {
 
       // DBに保存
       final episodesCompanions = episodes.map((e) {
-        return EpisodeEntitiesCompanion(
+        return EpisodeListEntriesCompanion(
           ncode: Value(normalizedNcode),
           episodeId: Value(e.index ?? 0),
           subtitle: Value(e.subtitle),
@@ -583,8 +571,8 @@ class NovelRepository {
         start + 99,
       ), // Assuming 100 episodes per page
       onPersist: (data) async {
-        final companions = data.map((Episode e) {
-          return EpisodeEntitiesCompanion(
+        final companions = data.map((e) {
+          return EpisodeListEntriesCompanion(
             ncode: Value(normalizedNcode),
             episodeId: Value(e.index ?? 0),
             subtitle: Value(e.subtitle ?? ''),

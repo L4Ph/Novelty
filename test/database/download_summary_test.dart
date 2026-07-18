@@ -35,9 +35,9 @@ void main() {
       // Insert Episodes
       // 1. Downloaded (Success)
       await database
-          .into(database.episodeEntities)
+          .into(database.episodeContents)
           .insert(
-            EpisodeEntitiesCompanion(
+            EpisodeContentsCompanion(
               ncode: Value(normalizedNcode),
               episodeId: const Value(1),
               content: Value([NovelContentElement.plainText('Content 1')]),
@@ -46,9 +46,9 @@ void main() {
 
       // 2. Downloaded (Success)
       await database
-          .into(database.episodeEntities)
+          .into(database.episodeContents)
           .insert(
-            EpisodeEntitiesCompanion(
+            EpisodeContentsCompanion(
               ncode: Value(normalizedNcode),
               episodeId: const Value(2),
               content: Value([NovelContentElement.plainText('Content 2')]),
@@ -57,9 +57,9 @@ void main() {
 
       // 3. Downloaded (Failed - Empty List)
       await database
-          .into(database.episodeEntities)
+          .into(database.episodeContents)
           .insert(
-            EpisodeEntitiesCompanion(
+            EpisodeContentsCompanion(
               ncode: Value(normalizedNcode),
               episodeId: const Value(3),
               content: const Value([]), // Empty list means failure
@@ -68,9 +68,9 @@ void main() {
 
       // 4. Not Downloaded (Null content)
       await database
-          .into(database.episodeEntities)
+          .into(database.episodeContents)
           .insert(
-            EpisodeEntitiesCompanion(
+            EpisodeContentsCompanion(
               ncode: Value(normalizedNcode),
               episodeId: const Value(4),
               content: const Value(null),
@@ -79,9 +79,9 @@ void main() {
 
       // 5. Downloaded (Success - Content with structure)
       await database
-          .into(database.episodeEntities)
+          .into(database.episodeContents)
           .insert(
-            EpisodeEntitiesCompanion(
+            EpisodeContentsCompanion(
               ncode: Value(normalizedNcode),
               episodeId: const Value(5),
               content: Value([NovelContentElement.rubyText('漢字', 'かんじ')]),
@@ -118,18 +118,18 @@ void main() {
             );
 
         await database
-            .into(database.episodeEntities)
+            .into(database.episodeContents)
             .insert(
-              EpisodeEntitiesCompanion(
+              EpisodeContentsCompanion(
                 ncode: Value(normalizedNcode),
                 episodeId: const Value(1),
                 content: Value([NovelContentElement.plainText('1')]),
               ),
             );
         await database
-            .into(database.episodeEntities)
+            .into(database.episodeContents)
             .insert(
-              EpisodeEntitiesCompanion(
+              EpisodeContentsCompanion(
                 ncode: Value(normalizedNcode),
                 episodeId: const Value(2),
                 content: Value([NovelContentElement.plainText('2')]),

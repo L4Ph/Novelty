@@ -27,6 +27,7 @@ void main() {
         generalAllNo: 10,
         novelUpdatedAt: DateTime.now().toIso8601String(),
         cachedAt: DateTime.now().millisecondsSinceEpoch,
+        isPrivate: false,
       ),
       Novel(
         ncode: 'n5678cd',
@@ -38,6 +39,7 @@ void main() {
         generalAllNo: 1,
         novelUpdatedAt: DateTime.now().toIso8601String(),
         cachedAt: DateTime.now().millisecondsSinceEpoch,
+        isPrivate: false,
       ),
     ];
 
