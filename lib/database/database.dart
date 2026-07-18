@@ -354,8 +354,11 @@ class AppDatabase extends _$AppDatabase {
   /// テスト用コンストラクタ（任意のQueryExecutorを指定する）
   AppDatabase.test(super.e);
 
+  /// 現在のデータベーススキーマバージョン
+  static const int currentSchemaVersion = 16;
+
   @override
-  int get schemaVersion => 16;
+  int get schemaVersion => currentSchemaVersion;
 
   @override
   MigrationStrategy get migration {
