@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/providers/connectivity_provider.dart';
+import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -678,7 +678,7 @@ class _EpisodeListTile extends ConsumerWidget {
       );
     }
 
-    final isOffline = ref.watch(isOfflineProvider);
+    final isOfflineMode = ref.watch(isOfflineModeProvider);
     final isDownloaded = episode.isDownloaded;
 
     return ListTile(
@@ -727,9 +727,18 @@ class _EpisodeListTile extends ConsumerWidget {
         );
         unawaited(context.push(uri.toString()));
       },
-      onLongPress: isOffline
-          ? null
+      onLongPress: isOfflineMode
+          ? () => _showOfflineDisabledSnackBar(context)
           : () => _showEpisodeMenu(context, ref, episodeNumber, isDownloaded),
+    );
+  }
+
+  /// オフラインモード中の長押しメニュー無効化メッセージを表示
+  void _showOfflineDisabledSnackBar(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('オフラインモード中はエピソードのダウンロード・削除ができません'),
+      ),
     );
   }
 

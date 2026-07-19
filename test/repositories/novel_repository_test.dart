@@ -6,7 +6,7 @@ import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart' as db;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/providers/connectivity_provider.dart';
+import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
@@ -33,7 +33,7 @@ void main() {
           db.appDatabaseProvider.overrideWithValue(mockDatabase),
           apiServiceProvider.overrideWithValue(mockApiService),
           settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineProvider.overrideWithValue(isOffline),
+          isOfflineModeProvider.overrideWithValue(isOffline),
         ],
       );
     }
@@ -140,7 +140,7 @@ void main() {
           db.appDatabaseProvider.overrideWithValue(database),
           apiServiceProvider.overrideWithValue(mockApiService),
           settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineProvider.overrideWithValue(false),
+          isOfflineModeProvider.overrideWithValue(false),
         ],
       );
     });
@@ -420,7 +420,7 @@ void main() {
           db.appDatabaseProvider.overrideWithValue(database),
           apiServiceProvider.overrideWithValue(mockApiService),
           settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineProvider.overrideWithValue(true),
+          isOfflineModeProvider.overrideWithValue(true),
         ],
       );
 
@@ -452,7 +452,7 @@ void main() {
           db.appDatabaseProvider.overrideWithValue(database),
           apiServiceProvider.overrideWithValue(mockApiService),
           settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineProvider.overrideWithValue(false),
+          isOfflineModeProvider.overrideWithValue(false),
         ],
       );
     });
@@ -510,7 +510,7 @@ void main() {
           db.appDatabaseProvider.overrideWithValue(database),
           apiServiceProvider.overrideWithValue(mockApiService),
           settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineProvider.overrideWithValue(false),
+          isOfflineModeProvider.overrideWithValue(false),
         ],
       );
     });
@@ -707,7 +707,7 @@ void main() {
           db.appDatabaseProvider.overrideWithValue(database),
           apiServiceProvider.overrideWithValue(mockApiService),
           settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineProvider.overrideWithValue(true),
+          isOfflineModeProvider.overrideWithValue(true),
         ],
       );
       await database.insertNovel(

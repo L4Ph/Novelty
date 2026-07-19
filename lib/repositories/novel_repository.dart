@@ -8,7 +8,7 @@ import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_info_extension.dart';
-import 'package:novelty/providers/connectivity_provider.dart';
+import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
@@ -275,7 +275,7 @@ class NovelRepository {
 
     // ネットワーク接続状態を確認
     // ネットワーク接続状態を確認
-    final isOffline = ref.read(isOfflineProvider);
+    final isOffline = ref.read(isOfflineModeProvider);
 
     // 1. オフラインの場合はキャッシュを強制的に使用
     if (isOffline) {
@@ -499,7 +499,7 @@ class NovelRepository {
     final end = page * 100;
 
     // ネットワーク接続状態を確認
-    final isOffline = ref.read(isOfflineProvider);
+    final isOffline = ref.read(isOfflineModeProvider);
 
     // オフラインの場合はDBから取得
     if (isOffline) {
@@ -601,7 +601,7 @@ class NovelRepository {
     String normalizedNcode, {
     bool force = false,
   }) async {
-    final isOffline = ref.read(isOfflineProvider);
+    final isOffline = ref.read(isOfflineModeProvider);
     if (isOffline) {
       final cached = await _db.getNovel(normalizedNcode);
       if (cached == null) {
@@ -707,7 +707,7 @@ class NovelRepository {
     int start, {
     bool force = false,
   }) async {
-    final isOffline = ref.read(isOfflineProvider);
+    final isOffline = ref.read(isOfflineModeProvider);
     if (isOffline) {
       final cached = await _db.getEpisodesRange(
         normalizedNcode,
