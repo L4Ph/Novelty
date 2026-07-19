@@ -15,7 +15,9 @@ class BackupService {
   final AppDatabase _database;
 
   /// 現在のスキーマバージョン
-  static const int currentSchemaVersion = 11;
+  /// AppDatabase.currentSchemaVersion と常に同期させることで、
+  /// バックアップ名とマイグレーション判定の信頼性を保つ。
+  static int get currentSchemaVersion => AppDatabase.currentSchemaVersion;
 
   /// データベース全体をエクスポートする
   ///
@@ -43,7 +45,8 @@ class BackupService {
 
       // バックアップファイル名を生成(スキーマバージョンを含める)
       final fileName =
-          'novelty_backup_${_formatDateTime(DateTime.now())}_v$currentSchemaVersion.db';
+          'novelty_backup_${_formatDateTime(DateTime.now())}'
+          '_v$currentSchemaVersion.db';
       final backupPath = p.join(selectedDirectory, fileName);
 
       // データベースファイルをコピー
@@ -123,7 +126,13 @@ class BackupService {
 
   /// 日時をファイル名用にフォーマットする
   String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.year}${dateTime.month.toString().padLeft(2, '0')}${dateTime.day.toString().padLeft(2, '0')}_${dateTime.hour.toString().padLeft(2, '0')}${dateTime.minute.toString().padLeft(2, '0')}${dateTime.second.toString().padLeft(2, '0')}';
+    final year = dateTime.year;
+    final month = dateTime.month.toString().padLeft(2, '0');
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final second = dateTime.second.toString().padLeft(2, '0');
+    return '$year$month${day}_$hour$minute$second';
   }
 }
 

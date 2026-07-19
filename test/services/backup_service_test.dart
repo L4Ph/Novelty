@@ -20,6 +20,13 @@ void main() {
       expect(backupService, isA<BackupService>());
     });
 
+    test('currentSchemaVersionはAppDatabase.currentSchemaVersionと一致する', () {
+      expect(
+        BackupService.currentSchemaVersion,
+        AppDatabase.currentSchemaVersion,
+      );
+    });
+
     // ファイル選択ダイアログが関わるため、実際のテストはUIテストで行う
     // ここでは基本的なインスタンス化のみテスト
   });
