@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
@@ -8,10 +9,10 @@ import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_info_extension.dart';
+import 'package:novelty/providers/network_fallback_event_provider.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
-import 'package:novelty/utils/settings_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'novel_repository.g.dart';
@@ -60,33 +61,6 @@ class NovelRepository {
   final Map<String, StreamController<DownloadProgress>> _progressControllers =
       {};
 
-  /// 実行中のバックグラウンド再取得を管理するマップ
-  /// 同一キーの再取得は1つに集約し、多重API呼び出しを防ぐ
-  final Map<String, Future<void>> _pendingFetches = {};
-
-  /// 小説情報のTTL
-  static const Duration _novelInfoTtl = Duration(hours: 1);
-
-  /// エピソード目次のTTL
-  static const Duration _episodeListTtl = Duration(hours: 1);
-
-  /// 指定したキーで実行中の再取得があればそれを待ち、
-  /// なければ[task]を実行してマップに登録する。
-  Future<void> _dedup(String key, Future<void> Function() task) async {
-    final pending = _pendingFetches[key];
-    if (pending != null) {
-      return pending;
-    }
-
-    final future = task();
-    _pendingFetches[key] = future;
-    try {
-      await future;
-    } finally {
-      final _ = _pendingFetches.remove(key);
-    }
-  }
-
   /// リソースをクリーンアップする
   void dispose() {
     for (final controller in _progressControllers.values) {
@@ -95,7 +69,6 @@ class NovelRepository {
       }
     }
     _progressControllers.clear();
-    _pendingFetches.clear();
   }
 
   /// ダウンロード進捗を監視するストリーム
@@ -315,10 +288,11 @@ class NovelRepository {
       );
       return content;
     } on Exception {
-      // 失敗時はキャッシュがあればそれを返す
+      // 失敗時はキャッシュがあればフォールバックして返す
       if (cached != null &&
           cached.content != null &&
           cached.content!.isNotEmpty) {
+        _emitFallbackEvent('最新のエピソードを取得できませんでした。キャッシュを表示しています。');
         return cached.content!;
       }
 
@@ -550,7 +524,7 @@ class NovelRepository {
 
   /// 小説情報を監視する
   ///
-  /// DBにキャッシュがあれば即座に返し、TTLが切れていれば裏で再取得する。
+  /// DBにキャッシュがあれば即座に返し、最新情報を取得して更新する。
   /// キャッシュが無くて取得に失敗した場合はストリームエラーとして伝播する。
   Stream<NovelInfo> watchNovelInfo(String ncode) {
     final normalizedNcode = ncode.toNormalizedNcode();
@@ -559,7 +533,7 @@ class NovelRepository {
       (cached) {
         if (cached != null) {
           // キャッシュが存在する場合は即座に発行し、裏で再取得する
-          _refreshNovelInfoIfNeeded(normalizedNcode).ignore();
+          _refreshNovelInfo(normalizedNcode).ignore();
           return _db
               .watchNovel(normalizedNcode)
               .where((novel) => novel != null)
@@ -567,7 +541,7 @@ class NovelRepository {
         }
         // キャッシュが無い場合は再取得に成功するまで待つ
         return Stream.fromFuture(
-          _refreshNovelInfoIfNeeded(normalizedNcode),
+          _refreshNovelInfo(normalizedNcode),
         ).asyncExpand(
           (_) => _db
               .watchNovel(normalizedNcode)
@@ -581,41 +555,19 @@ class NovelRepository {
   /// 小説情報を明示的に再取得する
   Future<void> refreshNovelInfo(String ncode) async {
     final normalizedNcode = ncode.toNormalizedNcode();
-    await _refreshNovelInfoIfNeeded(normalizedNcode, force: true);
+    await _refreshNovelInfo(normalizedNcode);
   }
 
-  /// 小説情報のTTLを判定し、必要なら裏で再取得する
-  Future<void> _refreshNovelInfoIfNeeded(
-    String normalizedNcode, {
-    bool force = false,
-  }) async {
-    final key = 'novel_info:$normalizedNcode';
-    await _dedup(
-      key,
-      () => _doRefreshNovelInfo(normalizedNcode, force: force),
-    );
-  }
-
-  /// 小説情報をAPIから取得しDBに保存する
-  Future<void> _doRefreshNovelInfo(
-    String normalizedNcode, {
-    bool force = false,
-  }) async {
+  /// 小説情報をAPIから取得しDBに保存する。
+  /// 取得失敗時はキャッシュがあればフォールバックイベントを発行し、
+  /// キャッシュが無い場合はエラーを呼び出し元に伝える。
+  Future<void> _refreshNovelInfo(String normalizedNcode) async {
     final isOffline = ref.read(isOfflineModeProvider);
     if (isOffline) {
       final cached = await _db.getNovel(normalizedNcode);
       if (cached == null) {
         throw const OfflineException();
       }
-      return;
-    }
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final cached = await _db.getNovel(normalizedNcode);
-    final cachedAt = cached?.cachedAt;
-    if (!force &&
-        cachedAt != null &&
-        now - cachedAt < _novelInfoTtl.inMilliseconds) {
       return;
     }
 
@@ -627,15 +579,17 @@ class NovelRepository {
       await _db.ensureNovelFetchState(
         normalizedNcode,
         isPrivate: true,
-        cachedAt: now,
+        cachedAt: DateTime.now().millisecondsSinceEpoch,
       );
     } on Exception {
-      // ネットワークエラー等はキャッシュがあれば無視し、
+      // ネットワークエラー等はキャッシュがあればフォールバックし、
       // キャッシュが無い場合はエラーを呼び出し元に伝える
+      final cached = await _db.getNovel(normalizedNcode);
       if (cached != null) {
+        _emitFallbackEvent('最新の作品情報を取得できませんでした。キャッシュを表示しています。');
         await _db.ensureNovelFetchState(
           normalizedNcode,
-          cachedAt: now,
+          cachedAt: DateTime.now().millisecondsSinceEpoch,
         );
       } else {
         rethrow;
@@ -645,7 +599,7 @@ class NovelRepository {
 
   /// エピソードリストを監視する
   ///
-  /// DBにキャッシュがあれば即座に返し、TTLが切れていれば裏で再取得する。
+  /// DBにキャッシュがあれば即座に返し、最新の目次を取得して更新する。
   /// キャッシュが無くて取得に失敗した場合はストリームエラーとして伝播する。
   Stream<List<Episode>> watchEpisodeList(String ncode, int page) {
     final normalizedNcode = ncode.toNormalizedNcode();
@@ -657,12 +611,12 @@ class NovelRepository {
     ).asyncExpand((cached) {
       if (cached.isNotEmpty) {
         // キャッシュが存在する場合は即座に発行し、裏で再取得する
-        _refreshEpisodeListIfNeeded(normalizedNcode, page, start).ignore();
+        _refreshEpisodeList(normalizedNcode, page, start).ignore();
         return _db.watchEpisodesRange(normalizedNcode, start, end);
       }
       // キャッシュが無い場合は再取得に成功するまで待つ
       return Stream.fromFuture(
-        _refreshEpisodeListIfNeeded(normalizedNcode, page, start),
+        _refreshEpisodeList(normalizedNcode, page, start),
       ).asyncExpand(
         (_) => _db.watchEpisodesRange(normalizedNcode, start, end),
       );
@@ -673,40 +627,17 @@ class NovelRepository {
   Future<void> refreshEpisodeList(String ncode, int page) async {
     final normalizedNcode = ncode.toNormalizedNcode();
     final start = (page - 1) * 100 + 1;
-    await _refreshEpisodeListIfNeeded(
-      normalizedNcode,
-      page,
-      start,
-      force: true,
-    );
+    await _refreshEpisodeList(normalizedNcode, page, start);
   }
 
-  /// エピソード目次のTTLを判定し、必要なら裏で再取得する
-  Future<void> _refreshEpisodeListIfNeeded(
+  /// エピソード目次をAPIから取得しDBに保存する。
+  /// 取得失敗時はキャッシュがあればフォールバックイベントを発行し、
+  /// キャッシュが無い場合はエラーを呼び出し元に伝える。
+  Future<void> _refreshEpisodeList(
     String normalizedNcode,
     int page,
-    int start, {
-    bool force = false,
-  }) async {
-    final key = 'episode_list:$normalizedNcode:$page';
-    await _dedup(
-      key,
-      () => _doRefreshEpisodeList(
-        normalizedNcode,
-        page,
-        start,
-        force: force,
-      ),
-    );
-  }
-
-  /// エピソード目次をAPIから取得しDBに保存する
-  Future<void> _doRefreshEpisodeList(
-    String normalizedNcode,
-    int page,
-    int start, {
-    bool force = false,
-  }) async {
+    int start,
+  ) async {
     final isOffline = ref.read(isOfflineModeProvider);
     if (isOffline) {
       final cached = await _db.getEpisodesRange(
@@ -718,19 +649,6 @@ class NovelRepository {
         throw const OfflineException();
       }
       return;
-    }
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-    if (!force) {
-      final oldestFetchedAt = await _db.getEpisodeListOldestFetchedAt(
-        normalizedNcode,
-        start,
-        start + 99,
-      );
-      if (oldestFetchedAt != null &&
-          now - oldestFetchedAt < _episodeListTtl.inMilliseconds) {
-        return;
-      }
     }
 
     try {
@@ -747,14 +665,16 @@ class NovelRepository {
       }).toList();
       await _db.upsertEpisodes(companions);
     } on Exception {
-      // ネットワークエラー等はキャッシュがあれば無視し、
+      // ネットワークエラー等はキャッシュがあればフォールバックし、
       // キャッシュが無い場合はエラーを呼び出し元に伝える
       final cached = await _db.getEpisodesRange(
         normalizedNcode,
         start,
         start + 99,
       );
-      if (cached.isEmpty) {
+      if (cached.isNotEmpty) {
+        _emitFallbackEvent('最新の目次を取得できませんでした。キャッシュを表示しています。');
+      } else {
         rethrow;
       }
     }
@@ -767,6 +687,15 @@ class NovelRepository {
           ..where((t) => t.ncode.equals(normalizedNcode)))
         .watchSingleOrNull()
         .map((history) => history?.lastEpisodeId);
+  }
+
+  /// フォールバックイベントを発行する。
+  void _emitFallbackEvent(String message) {
+    try {
+      ref.read(networkFallbackEventProvider.notifier).emit(message);
+    } on Exception catch (e) {
+      debugPrint('フォールバックイベントの発行に失敗: $e');
+    }
   }
 }
 

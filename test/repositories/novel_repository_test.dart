@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
+import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart' as db;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/utils/settings_provider.dart';
+import 'package:novelty/providers/network_fallback_event_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/ncode_utils.dart';
@@ -124,13 +125,14 @@ void main() {
     });
   });
 
-  group('NovelRepository watchNovelInfo TTL', () {
+  group('NovelRepository watchNovelInfo', () {
     const testNcode = 'N1234AB';
     final normalizedNcode = testNcode.toNormalizedNcode();
 
     late db.AppDatabase database;
     late MockApiService mockApiService;
     late ProviderContainer container;
+    NetworkFallbackEventData? fallbackEvent;
 
     setUp(() {
       database = db.AppDatabase.memory();
@@ -143,6 +145,12 @@ void main() {
           isOfflineModeProvider.overrideWithValue(false),
         ],
       );
+      container.listen(
+        networkFallbackEventProvider,
+        (_, next) => fallbackEvent = next,
+        fireImmediately: true,
+      );
+      fallbackEvent = null;
     });
 
     tearDown(() async {
@@ -151,43 +159,22 @@ void main() {
     });
 
     Future<void> insertCachedNovel({
-      required int cachedAt,
+      required String title,
       bool isPrivate = false,
     }) async {
       await database.insertNovel(
         NovelInfo(
           ncode: normalizedNcode,
-          title: 'cached title',
+          title: title,
         ).toDbCompanion().copyWith(
-          cachedAt: drift.Value(cachedAt),
+          cachedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
           isPrivate: drift.Value(isPrivate),
         ),
       );
     }
 
-    test('TTL以内ならAPIを呼ばずにキャッシュを返す', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertCachedNovel(
-        cachedAt: now - const Duration(minutes: 30).inMilliseconds,
-      );
-
-      final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchNovelInfo(testNcode);
-
-      await expectLater(
-        stream,
-        emits(
-          predicate<NovelInfo>((info) => info.title == 'cached title'),
-        ),
-      );
-      verifyNever(mockApiService.fetchNovelInfo(any));
-    });
-
-    test('TTL切れならAPIを取得して新しいデータを返す', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertCachedNovel(
-        cachedAt: now - const Duration(hours: 2).inMilliseconds,
-      );
+    test('キャッシュがあれば即座に発行し、裏で最新を取得して更新する', () async {
+      await insertCachedNovel(title: 'cached title');
 
       when(mockApiService.fetchNovelInfo(normalizedNcode)).thenAnswer(
         (_) async {
@@ -212,11 +199,8 @@ void main() {
       verify(mockApiService.fetchNovelInfo(normalizedNcode)).called(1);
     });
 
-    test('API失敗時もキャッシュを維持して返す', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertCachedNovel(
-        cachedAt: now - const Duration(hours: 2).inMilliseconds,
-      );
+    test('API失敗時はキャッシュを維持し、フォールバックイベントを発行する', () async {
+      await insertCachedNovel(title: 'cached title');
 
       when(
         mockApiService.fetchNovelInfo(normalizedNcode),
@@ -232,13 +216,14 @@ void main() {
         ),
       );
       verify(mockApiService.fetchNovelInfo(normalizedNcode)).called(1);
+      expect(
+        fallbackEvent?.message,
+        '最新の作品情報を取得できませんでした。キャッシュを表示しています。',
+      );
     });
 
     test('非公開作品と判定されたらisPrivateフラグを立ててキャッシュを維持', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertCachedNovel(
-        cachedAt: now - const Duration(hours: 2).inMilliseconds,
-      );
+      await insertCachedNovel(title: 'cached title');
 
       when(
         mockApiService.fetchNovelInfo(normalizedNcode),
@@ -256,6 +241,26 @@ void main() {
 
       final novel = await database.getNovel(normalizedNcode);
       expect(novel?.isPrivate, isTrue);
+    });
+
+    test('キャッシュが無い状態で取得成功ならデータを返す', () async {
+      when(mockApiService.fetchNovelInfo(normalizedNcode)).thenAnswer(
+        (_) async => NovelInfo(
+          ncode: normalizedNcode,
+          title: 'fresh title',
+        ),
+      );
+
+      final repository = container.read(novelRepositoryProvider);
+      final stream = repository.watchNovelInfo(testNcode);
+
+      await expectLater(
+        stream,
+        emits(
+          predicate<NovelInfo>((info) => info.title == 'fresh title'),
+        ),
+      );
+      verify(mockApiService.fetchNovelInfo(normalizedNcode)).called(1);
     });
 
     test('キャッシュが無い状態で非公開作品と判定された場合、プレースホルダーが挿入される', () async {
@@ -303,116 +308,6 @@ void main() {
       expect(novel, isNull);
     });
 
-    test('エラー時にcachedAtが更新され、TTL内は再取得しない', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertCachedNovel(
-        cachedAt: now - const Duration(hours: 2).inMilliseconds,
-      );
-      when(
-        mockApiService.fetchNovelInfo(normalizedNcode),
-      ).thenThrow(Exception('network error'));
-
-      final repository = container.read(novelRepositoryProvider);
-      await repository.watchNovelInfo(testNcode).first;
-
-      // キャッシュのcachedAtが更新されていること
-      final novelAfterFirst = await database.getNovel(normalizedNcode);
-      expect(novelAfterFirst?.cachedAt, isNotNull);
-      expect(novelAfterFirst!.cachedAt! >= now - 1000, isTrue);
-
-      // TTL内に再度watchしてもAPIは呼ばれないこと
-      clearInteractions(mockApiService);
-      await repository.watchNovelInfo(testNcode).first;
-      verifyNever(mockApiService.fetchNovelInfo(any));
-    });
-
-    test('非公開フラグが立っていても復活時に解除される', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertCachedNovel(
-        cachedAt: now - const Duration(hours: 2).inMilliseconds,
-        isPrivate: true,
-      );
-
-      when(mockApiService.fetchNovelInfo(normalizedNcode)).thenAnswer(
-        (_) async => NovelInfo(
-          ncode: normalizedNcode,
-          title: 'revived title',
-        ),
-      );
-
-      final repository = container.read(novelRepositoryProvider);
-      await repository.watchNovelInfo(testNcode).first;
-      await Future<void>.delayed(Duration.zero);
-
-      final novel = await database.getNovel(normalizedNcode);
-      expect(novel?.isPrivate, isFalse);
-      expect(novel?.title, 'revived title');
-    });
-
-    test('同じ小説のwatchを同時に呼んでもAPIは1回だけ', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertCachedNovel(
-        cachedAt: now - const Duration(hours: 2).inMilliseconds,
-      );
-
-      when(mockApiService.fetchNovelInfo(normalizedNcode)).thenAnswer(
-        (_) async {
-          await Future<void>.delayed(const Duration(milliseconds: 50));
-          return NovelInfo(
-            ncode: normalizedNcode,
-            title: 'dedup title',
-          );
-        },
-      );
-
-      final repository = container.read(novelRepositoryProvider);
-      final events1 = <NovelInfo>[];
-      final events2 = <NovelInfo>[];
-      final subscription1 = repository
-          .watchNovelInfo(testNcode)
-          .listen(events1.add);
-      final subscription2 = repository
-          .watchNovelInfo(testNcode)
-          .listen(events2.add);
-
-      await expectLater(
-        repository.watchNovelInfo(testNcode),
-        emitsInOrder([
-          predicate<NovelInfo>((info) => info.title == 'cached title'),
-          predicate<NovelInfo>((info) => info.title == 'dedup title'),
-        ]),
-      );
-
-      await subscription1.cancel();
-      await subscription2.cancel();
-
-      expect(events1, isNotEmpty);
-      expect(events2, isNotEmpty);
-      expect(events1.last.title, 'dedup title');
-      expect(events2.last.title, 'dedup title');
-      verify(mockApiService.fetchNovelInfo(normalizedNcode)).called(1);
-    });
-    test('force指定でTTL内でもAPIを再取得する', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertCachedNovel(
-        cachedAt: now - const Duration(minutes: 30).inMilliseconds,
-      );
-
-      when(mockApiService.fetchNovelInfo(normalizedNcode)).thenAnswer(
-        (_) async => NovelInfo(
-          ncode: normalizedNcode,
-          title: 'force refreshed title',
-        ),
-      );
-
-      final repository = container.read(novelRepositoryProvider);
-      await repository.refreshNovelInfo(testNcode);
-
-      verify(mockApiService.fetchNovelInfo(normalizedNcode)).called(1);
-      final novel = await database.getNovel(normalizedNcode);
-      expect(novel?.title, 'force refreshed title');
-    });
-
     test('オフラインかつキャッシュが無い場合はOfflineExceptionを投げる', () async {
       container.dispose();
       container = ProviderContainer(
@@ -422,6 +317,10 @@ void main() {
           settingsProvider.overrideWith(FakeSettings.new),
           isOfflineModeProvider.overrideWithValue(true),
         ],
+      );
+      container.listen(
+        networkFallbackEventProvider,
+        (_, __) {},
       );
 
       final repository = container.read(novelRepositoryProvider);
@@ -493,7 +392,7 @@ void main() {
     });
   });
 
-  group('NovelRepository watchEpisodeList TTL', () {
+  group('NovelRepository watchEpisodeList', () {
     const testNcode = 'N1234AB';
     final normalizedNcode = testNcode.toNormalizedNcode();
     const page = 1;
@@ -501,6 +400,7 @@ void main() {
     late db.AppDatabase database;
     late MockApiService mockApiService;
     late ProviderContainer container;
+    NetworkFallbackEventData? fallbackEvent;
 
     setUp(() {
       database = db.AppDatabase.memory();
@@ -513,6 +413,12 @@ void main() {
           isOfflineModeProvider.overrideWithValue(false),
         ],
       );
+      container.listen(
+        networkFallbackEventProvider,
+        (_, next) => fallbackEvent = next,
+        fireImmediately: true,
+      );
+      fallbackEvent = null;
     });
 
     tearDown(() async {
@@ -520,50 +426,23 @@ void main() {
       await database.close();
     });
 
-    Future<void> insertNovelAndEpisodes({
-      required int fetchedAt,
-    }) async {
+    Future<void> insertNovelAndEpisodes() async {
       await database.insertNovel(
         NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
       );
-      await database
-          .into(database.episodeListEntries)
-          .insert(
+      await database.into(database.episodeListEntries).insert(
             db.EpisodeListEntriesCompanion(
               ncode: drift.Value(normalizedNcode),
               episodeId: const drift.Value(1),
               subtitle: const drift.Value('cached ep'),
               url: const drift.Value('http://example.com/1/'),
-              fetchedAt: drift.Value(fetchedAt),
+              fetchedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
             ),
           );
     }
 
-    test('TTL以内ならAPIを呼ばずにキャッシュ目次を返す', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertNovelAndEpisodes(
-        fetchedAt: now - const Duration(minutes: 30).inMilliseconds,
-      );
-
-      final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchEpisodeList(testNcode, page);
-
-      await expectLater(
-        stream,
-        emits(
-          predicate<List<Episode>>(
-            (list) => list.single.subtitle == 'cached ep',
-          ),
-        ),
-      );
-      verifyNever(mockApiService.fetchEpisodeList(any, any));
-    });
-
-    test('TTL切れならAPIを取得して新しい目次を返す', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertNovelAndEpisodes(
-        fetchedAt: now - const Duration(hours: 2).inMilliseconds,
-      );
+    test('キャッシュがあれば即座に発行し、裏で最新を取得して更新する', () async {
+      await insertNovelAndEpisodes();
 
       when(
         mockApiService.fetchEpisodeList(normalizedNcode, page),
@@ -598,11 +477,8 @@ void main() {
       verify(mockApiService.fetchEpisodeList(normalizedNcode, page)).called(1);
     });
 
-    test('API失敗時もキャッシュ目次を維持して返す', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertNovelAndEpisodes(
-        fetchedAt: now - const Duration(hours: 2).inMilliseconds,
-      );
+    test('API失敗時はキャッシュ目次を維持し、フォールバックイベントを発行する', () async {
+      await insertNovelAndEpisodes();
 
       when(
         mockApiService.fetchEpisodeList(normalizedNcode, page),
@@ -620,6 +496,10 @@ void main() {
         ),
       );
       verify(mockApiService.fetchEpisodeList(normalizedNcode, page)).called(1);
+      expect(
+        fallbackEvent?.message,
+        '最新の目次を取得できませんでした。キャッシュを表示しています。',
+      );
     });
 
     test('キャッシュが無い状態で取得成功なら目次を返す', () async {
@@ -673,33 +553,6 @@ void main() {
       );
     });
 
-    test('force指定でTTL内でもAPIを再取得する', () async {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await insertNovelAndEpisodes(
-        fetchedAt: now - const Duration(minutes: 30).inMilliseconds,
-      );
-
-      when(
-        mockApiService.fetchEpisodeList(normalizedNcode, page),
-      ).thenAnswer(
-        (_) async => [
-          const Episode(
-            ncode: 'n1234ab',
-            index: 1,
-            subtitle: 'force refreshed ep',
-            url: 'http://example.com/1/',
-          ),
-        ],
-      );
-
-      final repository = container.read(novelRepositoryProvider);
-      await repository.refreshEpisodeList(testNcode, page);
-
-      verify(mockApiService.fetchEpisodeList(normalizedNcode, page)).called(1);
-      final list = await database.getEpisodesRange(normalizedNcode, 1, 100);
-      expect(list.single.subtitle, 'force refreshed ep');
-    });
-
     test('オフラインかつキャッシュが無い場合はOfflineExceptionを投げる', () async {
       container.dispose();
       container = ProviderContainer(
@@ -709,6 +562,10 @@ void main() {
           settingsProvider.overrideWith(FakeSettings.new),
           isOfflineModeProvider.overrideWithValue(true),
         ],
+      );
+      container.listen(
+        networkFallbackEventProvider,
+        (_, __) {},
       );
       await database.insertNovel(
         NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
@@ -722,6 +579,92 @@ void main() {
         emitsError(isA<OfflineException>()),
       );
       verifyNever(mockApiService.fetchEpisodeList(any, any));
+    });
+  });
+
+  group('NovelRepository getEpisode', () {
+    const testNcode = 'N1234AB';
+    final normalizedNcode = testNcode.toNormalizedNcode();
+    const episodeId = 1;
+
+    late db.AppDatabase database;
+    late MockApiService mockApiService;
+    late ProviderContainer container;
+    NetworkFallbackEventData? fallbackEvent;
+
+    setUp(() {
+      database = db.AppDatabase.memory();
+      mockApiService = MockApiService();
+      container = ProviderContainer(
+        overrides: [
+          db.appDatabaseProvider.overrideWithValue(database),
+          apiServiceProvider.overrideWithValue(mockApiService),
+          settingsProvider.overrideWith(FakeSettings.new),
+          isOfflineModeProvider.overrideWithValue(false),
+        ],
+      );
+      container.listen(
+        networkFallbackEventProvider,
+        (_, next) => fallbackEvent = next,
+        fireImmediately: true,
+      );
+      fallbackEvent = null;
+    });
+
+    tearDown(() async {
+      container.dispose();
+      await database.close();
+    });
+
+    Future<void> insertEpisodeContent() async {
+      await database.insertNovel(
+        NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
+      );
+      await database.updateEpisodeContent(
+        ncode: normalizedNcode,
+        episodeId: episodeId,
+        content: [NovelContentElement.plainText('cached body')],
+        fetchedAt: DateTime.now().millisecondsSinceEpoch,
+        revisedAt: '2024-01-01',
+      );
+    }
+
+    test('改稿がなければキャッシュを返し通信しない', () async {
+      await insertEpisodeContent();
+
+      final repository = container.read(novelRepositoryProvider);
+      final content = await repository.getEpisode(
+        normalizedNcode,
+        episodeId,
+        revised: '2024-01-01',
+      );
+
+      expect(content.first, isA<PlainText>());
+      expect((content.first as PlainText).text, 'cached body');
+      verifyNever(mockApiService.fetchEpisode(any, any));
+    });
+
+    test('改稿ありで取得失敗時はキャッシュを返しフォールバックイベントを発行する', () async {
+      await insertEpisodeContent();
+
+      when(
+        mockApiService.fetchEpisode(normalizedNcode, episodeId),
+      ).thenThrow(Exception('network error'));
+
+      final repository = container.read(novelRepositoryProvider);
+      final content = await repository.getEpisode(
+        normalizedNcode,
+        episodeId,
+        revised: '2024-02-01',
+      );
+
+      expect(content.first, isA<PlainText>());
+      expect((content.first as PlainText).text, 'cached body');
+      verify(mockApiService.fetchEpisode(normalizedNcode, episodeId)).called(1);
+      expect(
+        fallbackEvent?.message,
+        '最新のエピソードを取得できませんでした。キャッシュを表示しています。',
+      );
     });
   });
 }
