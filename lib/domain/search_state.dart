@@ -3,6 +3,7 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:novelty/utils/value_wrapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'search_state.g.dart';
@@ -45,7 +46,7 @@ class SearchState {
     int? allCount,
     bool? isLoading,
     bool? isSearching,
-    Object? error,
+    Value<Object?>? error,
   }) {
     return SearchState(
       query: query ?? this.query,
@@ -53,7 +54,7 @@ class SearchState {
       allCount: allCount ?? this.allCount,
       isLoading: isLoading ?? this.isLoading,
       isSearching: isSearching ?? this.isSearching,
-      error: error,
+      error: error != null ? error.value : this.error,
     );
   }
 
@@ -107,7 +108,7 @@ class SearchStateNotifier extends _$SearchStateNotifier {
     if (ref.read(isOfflineModeProvider)) {
       state = state.copyWith(
         isLoading: false,
-        error: const OfflineException(),
+        error: const Value<Object?>(OfflineException()),
       );
       return;
     }
@@ -120,11 +121,12 @@ class SearchStateNotifier extends _$SearchStateNotifier {
         results: result.novels,
         allCount: result.allCount,
         isLoading: false,
+        error: const Value<Object?>(null),
       );
     } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e,
+        error: Value<Object?>(e),
       );
     }
   }
@@ -138,12 +140,15 @@ class SearchStateNotifier extends _$SearchStateNotifier {
     if (ref.read(isOfflineModeProvider)) {
       state = state.copyWith(
         isLoading: false,
-        error: const OfflineException(),
+        error: const Value<Object?>(OfflineException()),
       );
       return;
     }
 
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(
+      isLoading: true,
+      error: const Value<Object?>(null),
+    );
 
     try {
       final nextQuery = state.query.copyWith(
@@ -158,11 +163,12 @@ class SearchStateNotifier extends _$SearchStateNotifier {
       state = state.copyWith(
         results: newResults,
         isLoading: false,
+        error: const Value<Object?>(null),
       );
     } on Object catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e,
+        error: Value<Object?>(e),
       );
     }
   }

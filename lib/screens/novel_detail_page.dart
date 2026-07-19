@@ -41,8 +41,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
   }
 
   void _onScroll() {
-    // Threshold can be adjusted.
-    // 40.0 is roughly where the big title might start disappearing.
+    // しきい値は調整可能。
+    // 40.0はおおよそ大きなタイトルが消え始める位置。
     final show = _scrollController.offset > 40.0;
     if (show != _showTitle) {
       setState(() {
@@ -173,13 +173,13 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // Short story: always go to episode 1.
+          // 短編: 常にエピソード1へ移動
           if (isShortStory) {
             await context.push('/novel/${widget.ncode}/1');
             return;
           }
 
-          // Series: go to last read episode or episode 1.
+          // 連載: 最後に読んだエピソードまたはエピソード1へ移動
           final targetEpisode = lastReadEpisode ?? 1;
           await context.push('/novel/${widget.ncode}/$targetEpisode');
         },
@@ -529,7 +529,7 @@ class _EpisodeListSliver extends StatelessWidget {
     required this.isLoading,
     required this.hasMore,
     required this.onLoadMoreRequested,
-    // initialLoadDone is no longer needed as parent handles loading state
+    // initialLoadDoneは不要（親がローディング状態を管理）
   });
 
   final String ncode;
@@ -542,8 +542,8 @@ class _EpisodeListSliver extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    // If we have no episodes and are loading, show spinner.
-    // (Parent might handle this, but we keep a fallback here.)
+    // エピソードがなくローディング中の場合はスピナーを表示。
+    // （親が処理する可能性もあるが、ここにフォールバックを保持）
     if (episodes.isEmpty && isLoading) {
       return const SliverToBoxAdapter(
         child: Center(
@@ -584,12 +584,12 @@ class _EpisodeListSliver extends StatelessWidget {
 
           final episodeIndex = index - 1;
           if (episodeIndex >= episodes.length) {
-            // Reached end of list
+            // リストの末尾に到達
             if (hasMore) {
-              // Trigger load more if we still have more page and are not
-              // currently loading the NEXT page.
-              // Note: isLoading here is aggregate. We might want to be more
-              // specific, but we avoid spamming while scrolling.
+              // さらにページがあり、次のページを現在ローディング中でなければ
+              // 追加読み込みをトリガーする。
+              // 注: ここのisLoadingは集約値。より具体的にすることもできるが、
+              // スクロール中のスパムを避けるため現状のままとする。
               if (!isLoading) {
                 unawaited(Future.microtask(onLoadMoreRequested));
               }
@@ -607,7 +607,7 @@ class _EpisodeListSliver extends StatelessWidget {
             ncode: ncode,
           );
         },
-        childCount: episodes.length + 2, // Header + Items + Footer
+        childCount: episodes.length + 2, // ヘッダー + アイテム + フッター
       ),
     );
   }

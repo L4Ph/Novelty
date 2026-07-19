@@ -40,55 +40,53 @@ class OfflineModeBanner extends ConsumerWidget {
       }
     });
 
-    if (!isOfflineMode) {
-      return child;
-    }
-
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
       children: [
-        Material(
-          color: colorScheme.errorContainer,
-          child: InkWell(
-            onTap: () {
-              if (context.mounted) {
-                context.go('/more');
-              }
-            },
-            child: SizedBox(
-              height: 28,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.cloud_off,
-                      size: 16,
-                      color: colorScheme.onErrorContainer,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'オフラインモード',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onErrorContainer,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+        // オフラインモード時のみバナーを表示（常にColumnで囲んで構造を安定化）
+        if (isOfflineMode)
+          Material(
+            color: colorScheme.errorContainer,
+            child: InkWell(
+              onTap: () {
+                if (context.mounted) {
+                  context.go('/more');
+                }
+              },
+              child: SizedBox(
+                height: 28,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.cloud_off,
+                        size: 16,
+                        color: colorScheme.onErrorContainer,
                       ),
-                    ),
-                    Icon(
-                      Icons.settings,
-                      size: 16,
-                      color: colorScheme.onErrorContainer,
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'オフラインモード',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onErrorContainer,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(
+                        Icons.settings,
+                        size: 16,
+                        color: colorScheme.onErrorContainer,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
         Expanded(child: child),
       ],
     );

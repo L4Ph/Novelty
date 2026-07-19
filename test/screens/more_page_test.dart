@@ -53,10 +53,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final switchWidget = find.byType(Switch).first;
-    expect(switchWidget, findsOneWidget);
+    // オフラインモードのSwitchListTileを明示的に指定
+    final switchListTile = find.widgetWithText(SwitchListTile, 'オフラインモード');
+    expect(switchListTile, findsOneWidget);
 
-    await tester.tap(switchWidget);
+    await tester.tap(switchListTile);
     await tester.pumpAndSettle();
 
     final prefs = await SharedPreferences.getInstance();
