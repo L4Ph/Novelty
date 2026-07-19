@@ -15,7 +15,6 @@ class MorePage extends ConsumerStatefulWidget {
 }
 
 class _MorePageState extends ConsumerState<MorePage> {
-
   @override
   Widget build(BuildContext context) {
     final settingsAsync = ref.watch(settingsProvider);

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/screens/more_page.dart';
-import 'package:novelty/utils/settings_provider.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +21,11 @@ void main() {
 
   setUp(() {
     PathProviderPlatform.instance = FakePathProviderPlatform();
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  tearDown(() {
+    // 他のテストへの状態漏れを防ぐため、モックSharedPreferencesをリセットする
     SharedPreferences.setMockInitialValues({});
   });
 

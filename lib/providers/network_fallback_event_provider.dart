@@ -1,4 +1,4 @@
-import 'package:meta/meta.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'network_fallback_event_provider.g.dart';
@@ -31,7 +31,8 @@ class NetworkFallbackEvent extends _$NetworkFallbackEvent {
   NetworkFallbackEventData? build() => null;
 
   /// イベントを発行する。
-  void emit(String message) => state = NetworkFallbackEventData(message: message);
+  void emit(String message) =>
+      state = NetworkFallbackEventData(message: message);
 
   /// イベントをクリアする。
   void clear() => state = null;

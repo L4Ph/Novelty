@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,16 +20,17 @@ class OfflineModeBanner extends ConsumerWidget {
 
     ref.listen(networkFallbackEventProvider, (_, next) {
       if (next != null) {
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.message),
             action: SnackBarAction(
               label: 'オフラインモードをオン',
               onPressed: () {
-                ref
-                    .read(settingsProvider.notifier)
-                    .setIsOfflineMode(isOfflineMode: true);
+                unawaited(
+                  ref
+                      .read(settingsProvider.notifier)
+                      .setIsOfflineMode(isOfflineMode: true),
+                );
               },
             ),
           ),

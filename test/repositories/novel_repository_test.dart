@@ -137,19 +137,19 @@ void main() {
     setUp(() {
       database = db.AppDatabase.memory();
       mockApiService = MockApiService();
-      container = ProviderContainer(
-        overrides: [
-          db.appDatabaseProvider.overrideWithValue(database),
-          apiServiceProvider.overrideWithValue(mockApiService),
-          settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineModeProvider.overrideWithValue(false),
-        ],
-      );
-      container.listen(
-        networkFallbackEventProvider,
-        (_, next) => fallbackEvent = next,
-        fireImmediately: true,
-      );
+      container =
+          ProviderContainer(
+            overrides: [
+              db.appDatabaseProvider.overrideWithValue(database),
+              apiServiceProvider.overrideWithValue(mockApiService),
+              settingsProvider.overrideWith(FakeSettings.new),
+              isOfflineModeProvider.overrideWithValue(false),
+            ],
+          )..listen(
+            networkFallbackEventProvider,
+            (_, next) => fallbackEvent = next,
+            fireImmediately: true,
+          );
       fallbackEvent = null;
     });
 
@@ -310,18 +310,18 @@ void main() {
 
     test('オフラインかつキャッシュが無い場合はOfflineExceptionを投げる', () async {
       container.dispose();
-      container = ProviderContainer(
-        overrides: [
-          db.appDatabaseProvider.overrideWithValue(database),
-          apiServiceProvider.overrideWithValue(mockApiService),
-          settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineModeProvider.overrideWithValue(true),
-        ],
-      );
-      container.listen(
-        networkFallbackEventProvider,
-        (_, __) {},
-      );
+      container =
+          ProviderContainer(
+            overrides: [
+              db.appDatabaseProvider.overrideWithValue(database),
+              apiServiceProvider.overrideWithValue(mockApiService),
+              settingsProvider.overrideWith(FakeSettings.new),
+              isOfflineModeProvider.overrideWithValue(true),
+            ],
+          )..listen(
+            networkFallbackEventProvider,
+            (_, _) {},
+          );
 
       final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchNovelInfo(testNcode);
@@ -405,19 +405,19 @@ void main() {
     setUp(() {
       database = db.AppDatabase.memory();
       mockApiService = MockApiService();
-      container = ProviderContainer(
-        overrides: [
-          db.appDatabaseProvider.overrideWithValue(database),
-          apiServiceProvider.overrideWithValue(mockApiService),
-          settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineModeProvider.overrideWithValue(false),
-        ],
-      );
-      container.listen(
-        networkFallbackEventProvider,
-        (_, next) => fallbackEvent = next,
-        fireImmediately: true,
-      );
+      container =
+          ProviderContainer(
+            overrides: [
+              db.appDatabaseProvider.overrideWithValue(database),
+              apiServiceProvider.overrideWithValue(mockApiService),
+              settingsProvider.overrideWith(FakeSettings.new),
+              isOfflineModeProvider.overrideWithValue(false),
+            ],
+          )..listen(
+            networkFallbackEventProvider,
+            (_, next) => fallbackEvent = next,
+            fireImmediately: true,
+          );
       fallbackEvent = null;
     });
 
@@ -430,7 +430,9 @@ void main() {
       await database.insertNovel(
         NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
       );
-      await database.into(database.episodeListEntries).insert(
+      await database
+          .into(database.episodeListEntries)
+          .insert(
             db.EpisodeListEntriesCompanion(
               ncode: drift.Value(normalizedNcode),
               episodeId: const drift.Value(1),
@@ -555,18 +557,18 @@ void main() {
 
     test('オフラインかつキャッシュが無い場合はOfflineExceptionを投げる', () async {
       container.dispose();
-      container = ProviderContainer(
-        overrides: [
-          db.appDatabaseProvider.overrideWithValue(database),
-          apiServiceProvider.overrideWithValue(mockApiService),
-          settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineModeProvider.overrideWithValue(true),
-        ],
-      );
-      container.listen(
-        networkFallbackEventProvider,
-        (_, __) {},
-      );
+      container =
+          ProviderContainer(
+            overrides: [
+              db.appDatabaseProvider.overrideWithValue(database),
+              apiServiceProvider.overrideWithValue(mockApiService),
+              settingsProvider.overrideWith(FakeSettings.new),
+              isOfflineModeProvider.overrideWithValue(true),
+            ],
+          )..listen(
+            networkFallbackEventProvider,
+            (_, _) {},
+          );
       await database.insertNovel(
         NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
       );
@@ -595,19 +597,19 @@ void main() {
     setUp(() {
       database = db.AppDatabase.memory();
       mockApiService = MockApiService();
-      container = ProviderContainer(
-        overrides: [
-          db.appDatabaseProvider.overrideWithValue(database),
-          apiServiceProvider.overrideWithValue(mockApiService),
-          settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineModeProvider.overrideWithValue(false),
-        ],
-      );
-      container.listen(
-        networkFallbackEventProvider,
-        (_, next) => fallbackEvent = next,
-        fireImmediately: true,
-      );
+      container =
+          ProviderContainer(
+            overrides: [
+              db.appDatabaseProvider.overrideWithValue(database),
+              apiServiceProvider.overrideWithValue(mockApiService),
+              settingsProvider.overrideWith(FakeSettings.new),
+              isOfflineModeProvider.overrideWithValue(false),
+            ],
+          )..listen(
+            networkFallbackEventProvider,
+            (_, next) => fallbackEvent = next,
+            fireImmediately: true,
+          );
       fallbackEvent = null;
     });
 

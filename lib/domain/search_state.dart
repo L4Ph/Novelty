@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/utils/settings_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'search_state.g.dart';
@@ -103,6 +104,14 @@ class SearchStateNotifier extends _$SearchStateNotifier {
   Future<void> search(NovelSearchQuery query) async {
     state = SearchState(query: query, isLoading: true, isSearching: true);
 
+    if (ref.read(isOfflineModeProvider)) {
+      state = state.copyWith(
+        isLoading: false,
+        error: const OfflineException(),
+      );
+      return;
+    }
+
     try {
       final apiService = ref.read(apiServiceProvider);
       final result = await apiService.searchNovels(query);
@@ -111,7 +120,6 @@ class SearchStateNotifier extends _$SearchStateNotifier {
         results: result.novels,
         allCount: result.allCount,
         isLoading: false,
-        error: null,
       );
     } on Object catch (e) {
       state = state.copyWith(
@@ -126,6 +134,14 @@ class SearchStateNotifier extends _$SearchStateNotifier {
   /// 現在の検索条件で次のページを取得し、結果に追加する。
   Future<void> loadMore() async {
     if (state.isLoading || !state.hasMore) return;
+
+    if (ref.read(isOfflineModeProvider)) {
+      state = state.copyWith(
+        isLoading: false,
+        error: const OfflineException(),
+      );
+      return;
+    }
 
     state = state.copyWith(isLoading: true);
 
@@ -142,7 +158,6 @@ class SearchStateNotifier extends _$SearchStateNotifier {
       state = state.copyWith(
         results: newResults,
         isLoading: false,
-        error: null,
       );
     } on Object catch (e) {
       state = state.copyWith(

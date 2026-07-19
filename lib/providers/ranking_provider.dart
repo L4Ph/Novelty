@@ -5,6 +5,7 @@ import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/utils/value_wrapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -108,6 +109,13 @@ class RankingNotifier extends _$RankingNotifier {
     if (currentState.isLoading ||
         currentState.isLoadingMore ||
         !currentState.hasMore) {
+      return;
+    }
+
+    if (ref.read(isOfflineModeProvider)) {
+      state = currentState.copyWith(
+        error: const Value<Object?>(OfflineException()),
+      );
       return;
     }
 

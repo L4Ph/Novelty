@@ -363,7 +363,8 @@ class Settings extends _$Settings {
           // ロールバック: isRubyEnabledを元に戻す
           await _rollbackIsRubyEnabled(repo, originalIsRubyEnabled);
           throw Exception(
-            'Failed to save line height setting. Ruby setting has been rolled back.',
+            'Failed to save line height setting. '
+            'Ruby setting has been rolled back.',
           );
         }
         newSettings = newSettings.copyWith(lineHeight: minLineHeightWithRuby);
@@ -403,7 +404,8 @@ class Settings extends _$Settings {
     } on Exception catch (rollbackError, rollbackStackTrace) {
       // Exceptionの場合はそのまま再スロー
       debugPrint(
-        'CRITICAL: Rollback threw exception: $rollbackError\n$rollbackStackTrace',
+        'CRITICAL: Rollback threw exception: $rollbackError\n'
+        '$rollbackStackTrace',
       );
       throw Exception(
         'Failed to save line height and rollback threw exception. '
@@ -418,8 +420,10 @@ class Settings extends _$Settings {
 /// [settingsProvider] の値から派生し、取得中やエラー時は `false` を返す。
 @riverpod
 bool isOfflineMode(Ref ref) {
-  return ref.watch(settingsProvider).maybeWhen(
-    data: (settings) => settings.isOfflineMode,
-    orElse: () => false,
-  );
+  return ref
+      .watch(settingsProvider)
+      .maybeWhen(
+        data: (settings) => settings.isOfflineMode,
+        orElse: () => false,
+      );
 }

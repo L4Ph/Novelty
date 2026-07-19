@@ -6,8 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/utils/settings_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// 小説の詳細ページ
@@ -41,7 +41,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
   }
 
   void _onScroll() {
-    // Threshold can be adjusted. 40.0 is roughly where the big title might start disappearing.
+    // Threshold can be adjusted.
+    // 40.0 is roughly where the big title might start disappearing.
     final show = _scrollController.offset > 40.0;
     if (show != _showTitle) {
       setState(() {
@@ -143,6 +144,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     required bool hasError,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isOfflineMode = ref.watch(isOfflineModeProvider);
     final isShortStory = novelInfo.generalAllNo == 1;
     final downloadProgressAsync = ref.watch(
       downloadProgressProvider(widget.ncode),
@@ -237,18 +239,38 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == 'download') {
+                      if (isOfflineMode) {
+                        showOfflineDisabledSnackBar(context);
+                        return;
+                      }
                       unawaited(_handleDownload(context, ref, novelInfo));
                     }
                   },
-                  itemBuilder: (BuildContext context) {
+                  itemBuilder: (context) {
                     return [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'download',
                         child: Row(
                           children: [
-                            Icon(Icons.download),
-                            SizedBox(width: 8),
-                            Text('一括ダウンロード'),
+                            Icon(
+                              Icons.download,
+                              color: isOfflineMode
+                                  ? colorScheme.onSurface.withValues(
+                                      alpha: 0.38,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '一括ダウンロード',
+                              style: isOfflineMode
+                                  ? TextStyle(
+                                      color: colorScheme.onSurface.withValues(
+                                        alpha: 0.38,
+                                      ),
+                                    )
+                                  : null,
+                            ),
                           ],
                         ),
                       ),
@@ -520,7 +542,8 @@ class _EpisodeListSliver extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    // If we have no episodes and are loading, show spinner (though parent might handle this)
+    // If we have no episodes and are loading, show spinner.
+    // (Parent might handle this, but we keep a fallback here.)
     if (episodes.isEmpty && isLoading) {
       return const SliverToBoxAdapter(
         child: Center(
@@ -563,9 +586,10 @@ class _EpisodeListSliver extends StatelessWidget {
           if (episodeIndex >= episodes.length) {
             // Reached end of list
             if (hasMore) {
-              // Trigger load more if we still have more page and not currently loading the NEXT page
-              // Note: isLoading passed here is aggregate. We might want to be more specific.
-              // But strictly, if we are scrolling and see spinner, we shouldn't spam.
+              // Trigger load more if we still have more page and are not
+              // currently loading the NEXT page.
+              // Note: isLoading here is aggregate. We might want to be more
+              // specific, but we avoid spamming while scrolling.
               if (!isLoading) {
                 unawaited(Future.microtask(onLoadMoreRequested));
               }
@@ -587,6 +611,15 @@ class _EpisodeListSliver extends StatelessWidget {
       ),
     );
   }
+}
+
+/// オフラインモード中の操作無効化メッセージを表示
+void showOfflineDisabledSnackBar(BuildContext context) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('オフラインモード中はエピソードのダウンロード・削除ができません'),
+    ),
+  );
 }
 
 Future<void> _handleDownload(
@@ -728,17 +761,8 @@ class _EpisodeListTile extends ConsumerWidget {
         unawaited(context.push(uri.toString()));
       },
       onLongPress: isOfflineMode
-          ? () => _showOfflineDisabledSnackBar(context)
+          ? () => showOfflineDisabledSnackBar(context)
           : () => _showEpisodeMenu(context, ref, episodeNumber, isDownloaded),
-    );
-  }
-
-  /// オフラインモード中の長押しメニュー無効化メッセージを表示
-  void _showOfflineDisabledSnackBar(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('オフラインモード中はエピソードのダウンロード・削除ができません'),
-      ),
     );
   }
 
@@ -767,7 +791,7 @@ class _EpisodeListTile extends ConsumerWidget {
                     Navigator.pop(bottomSheetContext);
                     try {
                       await handleDownload(context, ref, episodeNumber);
-                    } catch (e, stackTrace) {
+                    } on Object catch (e, stackTrace) {
                       debugPrint('予期しないエラー: $e\n$stackTrace');
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -793,7 +817,7 @@ class _EpisodeListTile extends ConsumerWidget {
                     Navigator.pop(bottomSheetContext);
                     try {
                       await handleDelete(context, ref, episodeNumber);
-                    } catch (e, stackTrace) {
+                    } on Object catch (e, stackTrace) {
                       debugPrint('予期しないエラー: $e\n$stackTrace');
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -830,7 +854,7 @@ class _EpisodeListTile extends ConsumerWidget {
           const SnackBar(content: Text('削除しました')),
         );
       }
-    } catch (e, stackTrace) {
+    } on Object catch (e, stackTrace) {
       debugPrint('削除エラー: $e\n$stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -865,7 +889,7 @@ class _EpisodeListTile extends ConsumerWidget {
           const SnackBar(content: Text('ダウンロードに失敗しました')),
         );
       }
-    } catch (e, stackTrace) {
+    } on Object catch (e, stackTrace) {
       debugPrint('ダウンロードエラー: $e\n$stackTrace');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

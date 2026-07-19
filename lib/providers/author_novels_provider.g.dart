@@ -68,7 +68,7 @@ final class AuthorNovelsProvider
   }
 }
 
-String _$authorNovelsHash() => r'16b9425294ee33feb1b0529f49f9709f0aa722a6';
+String _$authorNovelsHash() => r'27b51fd26cce245383fb8d894cdfdda77a1d44b9';
 
 /// 指定したuserIdの作者の小説一覧を取得するFutureProvider
 
