@@ -210,12 +210,83 @@ void main() {
     db.dispose();
   }
 
+  /// 中断により episode_list_entries / episode_contents が不完全なデータで
+  /// 存在する壊れた v15 DB を作成する。
+  Future<void> createBrokenV15DatabaseWithIncompleteEntries(File file) async {
+    final db = sqlite3.open(file.path);
+
+    const statements = <String>[
+      'CREATE TABLE novels (ncode TEXT NOT NULL PRIMARY KEY, title TEXT)',
+      '''
+      CREATE TABLE episodes (
+        ncode TEXT NOT NULL REFERENCES novels(ncode),
+        episode_id INTEGER NOT NULL,
+        subtitle TEXT,
+        url TEXT,
+        published_at TEXT,
+        revised_at TEXT,
+        content TEXT,
+        fetched_at INTEGER,
+        PRIMARY KEY (ncode, episode_id)
+      )
+      ''',
+      "INSERT INTO novels (ncode, title) VALUES ('n1234ab', 'テスト小説')",
+      '''
+      INSERT INTO episodes VALUES (
+        'n1234ab', 1, '第1話', 'https://example.com/1',
+        '2024-01-01 00:00:00', '2024-01-02 00:00:00',
+        '[{"runtimeType":"plainText","text":"本文"}]', 1000)
+      ''',
+      '''
+      CREATE TABLE episode_list_entries (
+        ncode TEXT NOT NULL REFERENCES novels(ncode),
+        episode_id INTEGER NOT NULL,
+        subtitle TEXT,
+        url TEXT,
+        published_at TEXT,
+        revised_at TEXT,
+        fetched_at INTEGER,
+        PRIMARY KEY (ncode, episode_id)
+      )
+      ''',
+      '''
+      CREATE TABLE episode_contents (
+        ncode TEXT NOT NULL REFERENCES novels(ncode),
+        episode_id INTEGER NOT NULL,
+        content TEXT,
+        fetched_at INTEGER,
+        revised_at TEXT,
+        PRIMARY KEY (ncode, episode_id)
+      )
+      ''',
+      // 不完全な目次データ（subtitle 等が NULL）
+      '''
+      INSERT INTO episode_list_entries (ncode, episode_id)
+      VALUES ('n1234ab', 1)
+      ''',
+      // 不完全な本文データ（content 等が NULL）
+      '''
+      INSERT INTO episode_contents (ncode, episode_id)
+      VALUES ('n1234ab', 1)
+      ''',
+      'PRAGMA user_version = 15',
+    ];
+
+    // 可読性のためforEachは使用しない
+    // ignore: prefer_foreach
+    for (final sql in statements) {
+      db.execute(sql);
+    }
+    db.dispose();
+  }
+
   test('v15マイグレーション失敗時にMigrationExceptionが投げられること', () async {
     await createBrokenSchemaV15Database(dbFile);
 
     await expectLater(
       () async {
         final db = AppDatabase.test(NativeDatabase(dbFile));
+        addTearDown(db.close);
         await db.doWhenOpened((_) async {});
         return db;
       },
@@ -262,6 +333,33 @@ void main() {
     final novel = await db.getNovel('n1234ab');
     expect(novel, isNotNull);
     expect(novel!.isPrivate, isFalse);
+  });
+
+  test('v15中間状態からの修復：不完全な目次・本文行が episodes の値で上書きされること', () async {
+    await createBrokenV15DatabaseWithIncompleteEntries(dbFile);
+
+    final db = AppDatabase.test(NativeDatabase(dbFile));
+    addTearDown(db.close);
+
+    // 目次行の値が episodes 側の完全な値で修復されていること
+    final listRows = await db.select(db.episodeListEntries).get();
+    expect(listRows.length, 1);
+    final listRow = listRows.single;
+    expect(listRow.episodeId, 1);
+    expect(listRow.subtitle, '第1話');
+    expect(listRow.url, 'https://example.com/1');
+    expect(listRow.publishedAt, '2024-01-01 00:00:00');
+    expect(listRow.revisedAt, '2024-01-02 00:00:00');
+
+    // 本文行の値が episodes 側の完全な値で修復されていること
+    final contentRows = await db.select(db.episodeContents).get();
+    expect(contentRows.length, 1);
+    final contentRow = contentRows.single;
+    expect(contentRow.episodeId, 1);
+    expect(contentRow.content, isNotNull);
+    expect(contentRow.content!.length, 1);
+    expect(contentRow.fetchedAt, 1000);
+    expect(contentRow.revisedAt, '2024-01-02 00:00:00');
   });
 
   test('v15からのアップグレードで目次・本文が新テーブルに引き継がれること', () async {

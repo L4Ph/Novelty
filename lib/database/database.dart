@@ -375,12 +375,9 @@ class AppDatabase extends _$AppDatabase {
           await m.runInTransaction(() async {
             if (from < 12) {
               // 以前のマイグレーション失敗などでテーブルが中途半端に存在する可能性があるため、
-              // 既存テーブルを削除してから新しいテーブルを作成する。
-              await customStatement('DROP TABLE IF EXISTS episodes');
-              await customStatement('DROP TABLE IF EXISTS library_entries');
-              await customStatement('DROP TABLE IF EXISTS reading_history');
+              // 既存の新規テーブルはそのまま残し、不足データを補填する形で移行する。
 
-              // 1. 新規テーブルを作成する
+              // 1. 新規テーブルが存在しない場合のみ作成する
               await m.createTable(novels);
               await m.createTable(libraryEntries);
               await m.createTable(readingHistory);
@@ -400,34 +397,63 @@ class AppDatabase extends _$AppDatabase {
                   );
                 ''');
 
-              // 2. LibraryNovels から LibraryEntries と Novels へ移行
-              await customStatement('''
-                  INSERT OR IGNORE INTO novels (
-                    ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
-                  )
-                  SELECT 
-                    ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
-                  FROM library_novels;
-                ''');
+              // 2. library_novels から library_entries と novels へ移行
+              final libraryNovelsResult = await customSelect(
+                '''
+                SELECT name FROM sqlite_master
+                WHERE type='table' AND name='library_novels'
+                ''',
+              ).get();
+              if (libraryNovelsResult.isNotEmpty) {
+                await customStatement('''
+                    INSERT OR IGNORE INTO novels (
+                      ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
+                    )
+                    SELECT
+                      ncode, title, writer, story, novel_type, "end", general_all_no, novel_updated_at
+                    FROM library_novels;
+                  ''');
 
-              await customStatement('''
-                  INSERT OR IGNORE INTO library_entries (ncode, added_at)
-                  SELECT ncode, added_at FROM library_novels;
-                ''');
+                await customStatement('''
+                    INSERT OR IGNORE INTO library_entries (ncode, added_at)
+                    SELECT ncode, added_at FROM library_novels;
+                  ''');
+              }
 
-              // 3. History から ReadingHistory と Novels へ移行
-              await customStatement('''
-                  INSERT OR IGNORE INTO novels (ncode, cached_at)
-                  SELECT ncode, viewed_at FROM history;
-                ''');
+              // 3. history から reading_history と novels へ移行
+              final historyResult = await customSelect(
+                '''
+                SELECT name FROM sqlite_master
+                WHERE type='table' AND name='history'
+                ''',
+              ).get();
+              if (historyResult.isNotEmpty) {
+                await customStatement('''
+                    INSERT OR IGNORE INTO novels (ncode, cached_at)
+                    SELECT ncode, viewed_at FROM history
+                    WHERE viewed_at IS NOT NULL;
+                  ''');
 
-              await customStatement('''
-                  INSERT OR IGNORE INTO reading_history
-                    (ncode, last_episode_id, viewed_at, updated_at)
-                  SELECT ncode, last_episode, viewed_at, updated_at FROM history;
-                ''');
+                await customStatement('''
+                    UPDATE novels
+                    SET cached_at = (
+                      SELECT viewed_at FROM history
+                      WHERE history.ncode = novels.ncode
+                    )
+                    WHERE EXISTS (
+                      SELECT 1 FROM history
+                      WHERE history.ncode = novels.ncode
+                    );
+                  ''');
 
-              // 4. CachedEpisodes から Episodes へ移行
+                await customStatement('''
+                    INSERT OR IGNORE INTO reading_history
+                      (ncode, last_episode_id, viewed_at, updated_at)
+                    SELECT ncode, last_episode, viewed_at, updated_at FROM history;
+                  ''');
+              }
+
+              // 4. cached_episodes から episodes へ移行
 
               // 古いキャッシュエピソードテーブルが存在するか確認する
               final cachedEpisodesResult = await customSelect(
@@ -450,8 +476,8 @@ class AppDatabase extends _$AppDatabase {
             }
 
             if (from < 13) {
-              // Version 13 migration (Triggers based FTS)
-              // - skipped or overwritten by 14
+              // バージョン13のマイグレーション（トリガー方式のFTS）
+              // - バージョン14で上書きされるためスキップ
             }
 
             if (from < 16) {
@@ -465,6 +491,7 @@ class AppDatabase extends _$AppDatabase {
               // （マイグレーション中断により episodes が既に削除されている可能性もあるため）
               if (await m.tableExists('episodes')) {
                 // 目次データの引き継ぎ(目次の取得日時は旧スキーマに存在しないためNULL)
+                // 競合時は episodes 側の完全な値で上書きする
                 await customStatement('''
                     INSERT OR IGNORE INTO episode_list_entries
                       (ncode, episode_id, subtitle, url, published_at, revised_at, fetched_at)
@@ -472,13 +499,72 @@ class AppDatabase extends _$AppDatabase {
                     FROM episodes;
                   ''');
 
+                await customStatement('''
+                    UPDATE episode_list_entries
+                    SET subtitle = (
+                        SELECT subtitle FROM episodes
+                        WHERE episodes.ncode = episode_list_entries.ncode
+                          AND episodes.episode_id = episode_list_entries.episode_id
+                      ),
+                      url = (
+                        SELECT url FROM episodes
+                        WHERE episodes.ncode = episode_list_entries.ncode
+                          AND episodes.episode_id = episode_list_entries.episode_id
+                      ),
+                      published_at = (
+                        SELECT published_at FROM episodes
+                        WHERE episodes.ncode = episode_list_entries.ncode
+                          AND episodes.episode_id = episode_list_entries.episode_id
+                      ),
+                      revised_at = (
+                        SELECT revised_at FROM episodes
+                        WHERE episodes.ncode = episode_list_entries.ncode
+                          AND episodes.episode_id = episode_list_entries.episode_id
+                      ),
+                      fetched_at = (
+                        SELECT fetched_at FROM episodes
+                        WHERE episodes.ncode = episode_list_entries.ncode
+                          AND episodes.episode_id = episode_list_entries.episode_id
+                      )
+                    WHERE EXISTS (
+                      SELECT 1 FROM episodes
+                      WHERE episodes.ncode = episode_list_entries.ncode
+                        AND episodes.episode_id = episode_list_entries.episode_id
+                    );
+                  ''');
+
                 // 本文データの引き継ぎ(content IS NOT NULL の行のみ)
+                // 競合時は episodes 側の完全な値で上書きする
                 await customStatement('''
                     INSERT OR IGNORE INTO episode_contents
                       (ncode, episode_id, content, fetched_at, revised_at)
                     SELECT ncode, episode_id, content, fetched_at, revised_at
                     FROM episodes
                     WHERE content IS NOT NULL;
+                  ''');
+
+                await customStatement('''
+                    UPDATE episode_contents
+                    SET content = (
+                        SELECT content FROM episodes
+                        WHERE episodes.ncode = episode_contents.ncode
+                          AND episodes.episode_id = episode_contents.episode_id
+                      ),
+                      fetched_at = (
+                        SELECT fetched_at FROM episodes
+                        WHERE episodes.ncode = episode_contents.ncode
+                          AND episodes.episode_id = episode_contents.episode_id
+                      ),
+                      revised_at = (
+                        SELECT revised_at FROM episodes
+                        WHERE episodes.ncode = episode_contents.ncode
+                          AND episodes.episode_id = episode_contents.episode_id
+                      )
+                    WHERE EXISTS (
+                      SELECT 1 FROM episodes
+                      WHERE episodes.ncode = episode_contents.ncode
+                        AND episodes.episode_id = episode_contents.episode_id
+                    );
                   ''');
 
                 await customStatement('DROP TABLE IF EXISTS episodes');

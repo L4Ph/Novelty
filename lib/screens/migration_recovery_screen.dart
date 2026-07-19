@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -22,7 +23,7 @@ class MigrationRecoveryScreen extends StatelessWidget {
   final VoidCallback? onRetry;
 
   /// DBエクスポートボタンが押されたときに呼ばれるコールバック
-  final VoidCallback? onExportDatabase;
+  final Future<void> Function()? onExportDatabase;
 
   @override
   Widget build(BuildContext context) {
@@ -82,13 +83,13 @@ class MigrationRecoveryScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: onExportDatabase,
+              onPressed: () => _onExport(context),
               icon: const Icon(Icons.save_alt),
               label: const Text('データベースをエクスポート'),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: () => _shareLatestReport(context),
+              onPressed: () => unawaited(_shareLatestReport(context)),
               icon: const Icon(Icons.share),
               label: const Text('エラーレポートを共有'),
             ),
@@ -96,6 +97,21 @@ class MigrationRecoveryScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _onExport(BuildContext context) async {
+    if (onExportDatabase == null) {
+      return;
+    }
+    try {
+      await onExportDatabase!();
+    } on Exception catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エクスポートに失敗しました: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _shareLatestReport(BuildContext context) async {

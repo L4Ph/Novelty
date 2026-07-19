@@ -62,7 +62,7 @@ void main() {
         MaterialApp(
           home: MigrationRecoveryScreen(
             error: Exception('test error'),
-            onExportDatabase: () {
+            onExportDatabase: () async {
               exportCalled = true;
             },
           ),

@@ -49,6 +49,7 @@ class MigrationErrorReport {
   });
 
   /// 例外からレポートを生成する。
+  /// dbFilePath にはファイル名のみを保持し、絶対パスは記録しない。
   factory MigrationErrorReport.fromException(
     MigrationException exception, {
     String? dbFilePath,
@@ -60,7 +61,7 @@ class MigrationErrorReport {
       schemaVersionAfter: exception.toVersion,
       failedStep: exception.step,
       errorMessage: exception.cause.toString(),
-      dbFilePath: dbFilePath,
+      dbFilePath: dbFilePath != null ? p.basename(dbFilePath) : null,
     );
   }
 
