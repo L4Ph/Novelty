@@ -36,7 +36,7 @@ final class SettingsProvider
   Settings create() => Settings();
 }
 
-String _$settingsHash() => r'f6492a4fe61ce03e536c53e95cf101be0c572db7';
+String _$settingsHash() => r'4284da6d9d927f1dd707d065d04271917bf27bf6';
 
 /// アプリケーションの設定を提供するプロバイダー。
 
@@ -58,3 +58,54 @@ abstract class _$Settings extends $AsyncNotifier<AppSettings> {
     element.handleValue(ref, created);
   }
 }
+
+/// オフラインモードが有効かどうかを同期で取得するプロバイダー。
+///
+/// [settingsProvider] の値から派生し、取得中やエラー時は `false` を返す。
+
+@ProviderFor(isOfflineMode)
+const isOfflineModeProvider = IsOfflineModeProvider._();
+
+/// オフラインモードが有効かどうかを同期で取得するプロバイダー。
+///
+/// [settingsProvider] の値から派生し、取得中やエラー時は `false` を返す。
+
+final class IsOfflineModeProvider extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  /// オフラインモードが有効かどうかを同期で取得するプロバイダー。
+  ///
+  /// [settingsProvider] の値から派生し、取得中やエラー時は `false` を返す。
+  const IsOfflineModeProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'isOfflineModeProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$isOfflineModeHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return isOfflineMode(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$isOfflineModeHash() => r'8e04cbaa3263f0ac8ac4d95c25045666e76b9c71';
