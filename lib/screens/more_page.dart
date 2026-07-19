@@ -15,8 +15,6 @@ class MorePage extends ConsumerStatefulWidget {
 }
 
 class _MorePageState extends ConsumerState<MorePage> {
-  // TODO(L4Ph): Connect to actual library filter provider
-  final bool _isDownloadedOnly = false;
 
   @override
   Widget build(BuildContext context) {
@@ -66,14 +64,23 @@ class _MorePageState extends ConsumerState<MorePage> {
   Widget _buildQuickActions(AsyncValue<AppSettings> settingsAsync) {
     return Column(
       children: [
-        SwitchListTile(
-          secondary: const Icon(Icons.download_done),
-          title: const Text('ダウンロード済みのみ'),
-          subtitle: const Text('ライブラリにある項目はフィルターされます'),
-          value: _isDownloadedOnly,
-          onChanged: null,
-
-          // TODO(L4Ph): Implement filter logic
+        settingsAsync.when(
+          data: (settings) => SwitchListTile(
+            secondary: const Icon(Icons.cloud_off),
+            title: const Text('オフラインモード'),
+            subtitle: const Text('通信を行わず、保存済みのコンテンツのみ利用します'),
+            value: settings.isOfflineMode,
+            onChanged: (value) async {
+              await ref
+                  .read(settingsProvider.notifier)
+                  .setIsOfflineMode(isOfflineMode: value);
+            },
+          ),
+          loading: () => const ListTile(
+            leading: CircularProgressIndicator(),
+            title: Text('読み込み中...'),
+          ),
+          error: (err, stack) => ListTile(title: Text('Error: $err')),
         ),
         settingsAsync.when(
           data: (settings) => SwitchListTile(
