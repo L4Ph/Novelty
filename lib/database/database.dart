@@ -519,11 +519,6 @@ class AppDatabase extends _$AppDatabase {
                         SELECT revised_at FROM episodes
                         WHERE episodes.ncode = episode_list_entries.ncode
                           AND episodes.episode_id = episode_list_entries.episode_id
-                      ),
-                      fetched_at = (
-                        SELECT fetched_at FROM episodes
-                        WHERE episodes.ncode = episode_list_entries.ncode
-                          AND episodes.episode_id = episode_list_entries.episode_id
                       )
                     WHERE EXISTS (
                       SELECT 1 FROM episodes
