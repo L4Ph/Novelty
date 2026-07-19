@@ -101,14 +101,8 @@ class MigrationErrorReport {
 /// マイグレーションエラーレポートファイル名の接頭辞。
 const String _migrationReportFilePrefix = 'novelty_migration_error_report_';
 
-/// [Migrator] に冪等・原子なマイグレーションを支援するための拡張メソッド。
+/// [Migrator] に冪等なマイグレーションを支援するための拡張メソッド。
 extension MigratorHelpers on Migrator {
-  /// 指定したアクションをトランザクション内で実行する。
-  /// マイグレーション内の全操作を原子化するために使用する。
-  Future<void> runInTransaction(Future<void> Function() action) async {
-    await database.transaction(action);
-  }
-
   /// 指定したカラムが存在しない場合のみ追加する。
   Future<void> addColumnIfNotExists<T extends Table, D extends DataClass>(
     TableInfo<T, D> table,
@@ -155,16 +149,18 @@ Future<void> saveMigrationErrorReport(MigrationErrorReport report) async {
 /// 更新日時が新しい順にソートされる。
 Future<List<File>> listMigrationErrorReports() async {
   final docsDir = await getApplicationDocumentsDirectory();
-  return docsDir
-      .listSync()
-      .whereType<File>()
-      .where(
-        (file) =>
-            p.basename(file.path).startsWith(_migrationReportFilePrefix) &&
-            p.basename(file.path).endsWith('.json'),
-      )
-      .toList()
-    ..sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+  final files = <File>[];
+  await for (final entity in docsDir.list()) {
+    if (entity is File) {
+      final basename = p.basename(entity.path);
+      if (basename.startsWith(_migrationReportFilePrefix) &&
+          basename.endsWith('.json')) {
+        files.add(entity);
+      }
+    }
+  }
+  files.sort((a, b) => b.lastModifiedSync().compareTo(a.lastModifiedSync()));
+  return files;
 }
 
 /// 既存のマイグレーションエラーレポートファイルをすべて削除する。

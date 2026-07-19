@@ -372,8 +372,7 @@ class AppDatabase extends _$AppDatabase {
       },
       onUpgrade: (m, from, to) async {
         try {
-          await m.runInTransaction(() async {
-            if (from < 12) {
+          if (from < 12) {
               // 以前のマイグレーション失敗などでテーブルが中途半端に存在する可能性があるため、
               // 既存の新規テーブルはそのまま残し、不足データを補填する形で移行する。
 
@@ -590,7 +589,6 @@ class AppDatabase extends _$AppDatabase {
               await _createFtsTables();
               await _populateFtsTables();
             }
-          });
         } on MigrationException {
           rethrow;
         } on Object catch (e) {
