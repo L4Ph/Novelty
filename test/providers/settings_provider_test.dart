@@ -105,6 +105,70 @@ void main() {
       expect(settings.isRubyEnabled, equals(false));
     });
 
+    test('should default to false for isOfflineMode when no preferences exist', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      final settings = await container.read(settingsProvider.future);
+
+      expect(settings.isOfflineMode, equals(false));
+    });
+
+    test('should load saved isOfflineMode preference', () async {
+      SharedPreferences.setMockInitialValues({
+        'is_offline_mode': true,
+      });
+
+      final settings = await container.read(settingsProvider.future);
+
+      expect(settings.isOfflineMode, equals(true));
+    });
+
+    test('should update isOfflineMode setting', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      await container.read(settingsProvider.future);
+
+      final settingsNotifier = container.read(settingsProvider.notifier);
+      await settingsNotifier.setIsOfflineMode(isOfflineMode: true);
+
+      final asyncValue = container.read(settingsProvider);
+      expect(asyncValue.hasValue, isTrue);
+      final settings = asyncValue.value!;
+      expect(settings.isOfflineMode, isTrue);
+    });
+
+    test('should persist isOfflineMode to SharedPreferences', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      await container.read(settingsProvider.future);
+
+      final settingsNotifier = container.read(settingsProvider.notifier);
+      await settingsNotifier.setIsOfflineMode(isOfflineMode: true);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('is_offline_mode'), equals(true));
+    });
+
+    test('isOfflineModeProvider returns default false when settings not loaded', () {
+      SharedPreferences.setMockInitialValues({});
+
+      final isOfflineMode = container.read(isOfflineModeProvider);
+
+      expect(isOfflineMode, isFalse);
+    });
+
+    test('isOfflineModeProvider returns true when offline mode is enabled', () async {
+      SharedPreferences.setMockInitialValues({
+        'is_offline_mode': true,
+      });
+
+      await container.read(settingsProvider.future);
+
+      final isOfflineMode = container.read(isOfflineModeProvider);
+
+      expect(isOfflineMode, isTrue);
+    });
+
     test('should update isRubyEnabled setting', () async {
       SharedPreferences.setMockInitialValues({});
 

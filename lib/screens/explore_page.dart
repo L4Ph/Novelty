@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/domain/search_state.dart';
 import 'package:novelty/models/novel_search_query.dart';
+import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
 import 'package:novelty/widgets/ranking_list.dart';
@@ -112,6 +114,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
   @override
   Widget build(BuildContext context) {
     final searchState = ref.watch(searchStateProvider);
+    final isOfflineMode = ref.watch(isOfflineModeProvider);
 
     return PopScope(
       canPop: !searchState.isSearching,
@@ -134,12 +137,16 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
               ),
             IconButton(
               icon: const Icon(Icons.search),
-              onPressed: _showSearchModal,
+              onPressed: isOfflineMode
+                  ? () => _showOfflineDisabledSnackBar(context)
+                  : _showSearchModal,
             ),
             if (!searchState.isSearching)
               IconButton(
                 icon: const Icon(Icons.filter_list),
-                onPressed: _showRankingFilterDialog,
+                onPressed: isOfflineMode
+                    ? () => _showOfflineDisabledSnackBar(context)
+                    : _showRankingFilterDialog,
               ),
           ],
           bottom: searchState.isSearching
@@ -161,6 +168,8 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
                   : _EnrichedSearchResults(
                       onModifySearch: _showSearchModal,
                     )
+            : isOfflineMode
+            ? const _OfflineExploreBody()
             : TabBarView(
                 controller: _tabController,
                 children: const [
@@ -186,6 +195,41 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
                   ),
                 ],
               ),
+      ),
+    );
+  }
+
+  void _showOfflineDisabledSnackBar(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('オフラインモード中は検索・ランキングを利用できません'),
+      ),
+    );
+  }
+}
+
+/// オフラインモード中の「見つける」画面の内容。
+class _OfflineExploreBody extends StatelessWidget {
+  const _OfflineExploreBody();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.cloud_off, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text(
+            'オフラインモード中は検索・ランキングを利用できません',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: () => context.go('/'),
+            child: const Text('ライブラリに戻る'),
+          ),
+        ],
       ),
     );
   }

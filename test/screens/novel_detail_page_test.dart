@@ -5,6 +5,7 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/novel_detail_page.dart';
+import 'package:novelty/utils/settings_provider.dart';
 
 /// テスト用のライブラリ状態Notifier
 class FakeLibraryStatus extends LibraryStatus {
@@ -22,6 +23,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            isOfflineModeProvider.overrideWithValue(false),
             novelInfoWithCacheProvider.overrideWith(
               (ref, ncode) => Stream.value(
                 NovelInfo(
@@ -64,6 +66,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            isOfflineModeProvider.overrideWithValue(false),
             novelInfoWithCacheProvider.overrideWith(
               (ref, ncode) => Stream.value(
                 NovelInfo(
@@ -99,6 +102,92 @@ void main() {
         ),
         findsNothing,
       );
+    });
+
+    testWidgets('オフラインモード中は一括ダウンロードメニューが無効化される', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isOfflineModeProvider.overrideWithValue(true),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, ncode) => Stream.value(
+                NovelInfo(
+                  ncode: ncode,
+                  title: 'オフライン小説',
+                ),
+              ),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, key) => Stream.value(<Episode>[]),
+            ),
+            downloadProgressProvider.overrideWith(
+              (ref, ncode) => Stream.value(null),
+            ),
+            libraryStatusProvider.overrideWith(FakeLibraryStatus.new),
+            lastReadEpisodeProvider.overrideWith(
+              (ref, ncode) => Stream.value(null),
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelDetailPage(ncode: testNcode),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // AppBarのポップアップメニューを開く
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+
+      expect(find.text('一括ダウンロード'), findsOneWidget);
+
+      // 無効化されているメニューをタップ
+      await tester.tap(find.text('一括ダウンロード'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('オフラインモード中はエピソードのダウンロード・削除ができません'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('オフラインモード中でもライブラリ追加ボタンは有効', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isOfflineModeProvider.overrideWithValue(true),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, ncode) => Stream.value(
+                NovelInfo(
+                  ncode: ncode,
+                  title: 'オフライン小説',
+                ),
+              ),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, key) => Stream.value(<Episode>[]),
+            ),
+            downloadProgressProvider.overrideWith(
+              (ref, ncode) => Stream.value(null),
+            ),
+            libraryStatusProvider.overrideWith(FakeLibraryStatus.new),
+            lastReadEpisodeProvider.overrideWith(
+              (ref, ncode) => Stream.value(null),
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelDetailPage(ncode: testNcode),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'ライブラリに追加'),
+      );
+      expect(button.enabled, isTrue);
     });
   });
 }

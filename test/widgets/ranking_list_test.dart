@@ -132,12 +132,14 @@ void main() {
           title: 'Ongoing Novel',
           writer: 'Writer',
           novelType: 1, // Ongoing
+          end: 1, // 連載中
         ),
         const NovelInfo(
           ncode: 'n2',
           title: 'Short Story',
           writer: 'Writer',
           novelType: 2, // Short
+          end: 0, // 短編または完結
         ),
       ];
 
@@ -191,6 +193,7 @@ void main() {
           title: 'Initial Novel',
           writer: 'Writer',
           novelType: 1,
+          end: 1,
         ),
       ];
       final filteredNovels = [
@@ -199,6 +202,7 @@ void main() {
           title: 'Filtered Novel',
           writer: 'Writer',
           novelType: 1,
+          end: 1,
         ),
       ];
 

@@ -17,6 +17,7 @@ class AppSettings {
     required this.isIncognito,
     required this.isPageFlip,
     required this.isRubyEnabled,
+    this.isOfflineMode = false,
   });
 
   /// テーマモード (system, light, dark)。
@@ -47,6 +48,11 @@ class AppSettings {
   /// これにより、行間をより小さく設定することができます。
   final bool isRubyEnabled;
 
+  /// オフラインモード設定。
+  ///
+  /// `true` の場合、ネットワーク通信を行わず、ダウンロード済みのコンテンツのみを利用します。
+  final bool isOfflineMode;
+
   /// 設定をコピーするメソッド。
   AppSettings copyWith({
     ThemeMode? themeMode,
@@ -57,6 +63,7 @@ class AppSettings {
     bool? isIncognito,
     bool? isPageFlip,
     bool? isRubyEnabled,
+    bool? isOfflineMode,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -67,6 +74,7 @@ class AppSettings {
       isIncognito: isIncognito ?? this.isIncognito,
       isPageFlip: isPageFlip ?? this.isPageFlip,
       isRubyEnabled: isRubyEnabled ?? this.isRubyEnabled,
+      isOfflineMode: isOfflineMode ?? this.isOfflineMode,
     );
   }
 }
@@ -82,6 +90,7 @@ class Settings extends _$Settings {
   static const _isIncognitoKey = 'is_incognito';
   static const _isPageFlipKey = 'is_page_flip';
   static const _isRubyEnabledKey = 'is_ruby_enabled';
+  static const _isOfflineModeKey = 'is_offline_mode';
 
   /// ルビ表示時の最小行間。
   ///
@@ -113,6 +122,7 @@ class Settings extends _$Settings {
     final isIncognito = await repo.getBool(_isIncognitoKey) ?? false;
     final isPageFlip = await repo.getBool(_isPageFlipKey) ?? false;
     final isRubyEnabled = await repo.getBool(_isRubyEnabledKey) ?? true;
+    final isOfflineMode = await repo.getBool(_isOfflineModeKey) ?? false;
 
     return AppSettings(
       themeMode: ThemeMode.values[themeModeIndex],
@@ -123,6 +133,7 @@ class Settings extends _$Settings {
       isIncognito: isIncognito,
       isPageFlip: isPageFlip,
       isRubyEnabled: isRubyEnabled,
+      isOfflineMode: isOfflineMode,
     );
   }
 
@@ -259,6 +270,31 @@ class Settings extends _$Settings {
     }
   }
 
+  /// オフラインモードを設定するメソッド。
+  Future<void> setIsOfflineMode({required bool isOfflineMode}) async {
+    if (!state.hasValue) {
+      throw StateError('Settings are not loaded');
+    }
+
+    try {
+      final repo = await _repo;
+      final success = await repo.setBool(
+        _isOfflineModeKey,
+        isOfflineMode,
+      );
+      if (!success) {
+        throw Exception('Failed to save offline mode setting');
+      }
+      state = AsyncData(state.value!.copyWith(isOfflineMode: isOfflineMode));
+    } catch (e, stackTrace) {
+      debugPrint(
+        'Error saving offline mode setting: $e\nStack trace: $stackTrace',
+      );
+      state = AsyncError(e, stackTrace);
+      rethrow;
+    }
+  }
+
   /// ページ送り設定を更新するメソッド。
   Future<void> setIsPageFlip({required bool isPageFlip}) async {
     if (!state.hasValue) {
@@ -327,7 +363,8 @@ class Settings extends _$Settings {
           // ロールバック: isRubyEnabledを元に戻す
           await _rollbackIsRubyEnabled(repo, originalIsRubyEnabled);
           throw Exception(
-            'Failed to save line height setting. Ruby setting has been rolled back.',
+            'Failed to save line height setting. '
+            'Ruby setting has been rolled back.',
           );
         }
         newSettings = newSettings.copyWith(lineHeight: minLineHeightWithRuby);
@@ -367,7 +404,8 @@ class Settings extends _$Settings {
     } on Exception catch (rollbackError, rollbackStackTrace) {
       // Exceptionの場合はそのまま再スロー
       debugPrint(
-        'CRITICAL: Rollback threw exception: $rollbackError\n$rollbackStackTrace',
+        'CRITICAL: Rollback threw exception: $rollbackError\n'
+        '$rollbackStackTrace',
       );
       throw Exception(
         'Failed to save line height and rollback threw exception. '
@@ -375,4 +413,17 @@ class Settings extends _$Settings {
       );
     }
   }
+}
+
+/// オフラインモードが有効かどうかを同期で取得するプロバイダー。
+///
+/// [settingsProvider] の値から派生し、取得中やエラー時は `false` を返す。
+@riverpod
+bool isOfflineMode(Ref ref) {
+  return ref
+      .watch(settingsProvider)
+      .maybeWhen(
+        data: (settings) => settings.isOfflineMode,
+        orElse: () => false,
+      );
 }
