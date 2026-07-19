@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:novelty/providers/network_fallback_event_provider.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 /// オフラインモードON時に全画面の上部に表示する帯。
@@ -14,6 +15,27 @@ class OfflineModeBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOfflineMode = ref.watch(isOfflineModeProvider);
+
+    ref.listen(networkFallbackEventProvider, (_, next) {
+      if (next != null) {
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(next.message),
+            action: SnackBarAction(
+              label: 'オフラインモードをオン',
+              onPressed: () {
+                ref
+                    .read(settingsProvider.notifier)
+                    .setIsOfflineMode(isOfflineMode: true);
+              },
+            ),
+          ),
+        );
+        // イベントを消費して重複表示を防ぐ
+        ref.read(networkFallbackEventProvider.notifier).clear();
+      }
+    });
 
     if (!isOfflineMode) {
       return child;

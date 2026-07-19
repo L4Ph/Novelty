@@ -459,28 +459,22 @@ class ApiService {
           't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua',
     });
 
-    try {
-      final data = await _fetchData(uri.toString());
-      if (data.isNotEmpty &&
-          (data[0] as Map<String, dynamic>?)?['allcount'] != null) {
-        final allCount =
-            (data[0] as Map<String, dynamic>)['allcount'] as int? ?? 0;
-        final novels = data
-            .sublist(1)
-            .map(
-              (item) => NovelInfo.fromJson(
-                _processNovelType(item as Map<String, dynamic>),
-              ),
-            )
-            .toList();
-        return NovelSearchResult(novels: novels, allCount: allCount);
-      }
-      return const NovelSearchResult(novels: [], allCount: 0);
-    } on Object {
-      // 全てのエラーをキャッチして空の結果として返す
-      // これにより、UI側で無限ロードやクラッシュが発生するのを防ぐ
-      return const NovelSearchResult(novels: [], allCount: 0);
+    final data = await _fetchData(uri.toString());
+    if (data.isNotEmpty &&
+        (data[0] as Map<String, dynamic>?)?['allcount'] != null) {
+      final allCount =
+          (data[0] as Map<String, dynamic>)['allcount'] as int? ?? 0;
+      final novels = data
+          .sublist(1)
+          .map(
+            (item) => NovelInfo.fromJson(
+              _processNovelType(item as Map<String, dynamic>),
+            ),
+          )
+          .toList();
+      return NovelSearchResult(novels: novels, allCount: allCount);
     }
+    return const NovelSearchResult(novels: [], allCount: 0);
   }
 
   Map<String, dynamic> _processNovelType(Map<String, dynamic> novelData) {
