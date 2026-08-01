@@ -30,8 +30,8 @@ class AppSettings {
   /// 行間。
   final double lineHeight;
 
-  /// フォントファミリー。
-  final String fontFamily;
+  /// フォント設定（意味的なキー）。
+  final FontFamilySetting fontFamily;
 
   /// 縦書き設定。
   final bool isVertical;
@@ -59,7 +59,7 @@ class AppSettings {
     ThemeMode? themeMode,
     double? fontSize,
     double? lineHeight,
-    String? fontFamily,
+    FontFamilySetting? fontFamily,
     bool? isVertical,
     bool? isIncognito,
     bool? isPageFlip,
@@ -118,17 +118,14 @@ class Settings extends _$Settings {
         await repo.getInt(_themeModeKey) ?? ThemeMode.system.index;
     final fontSize = await repo.getDouble(_fontSizeKey) ?? 16.0;
     final lineHeight = await repo.getDouble(_lineHeightKey) ?? 1.5;
-    // フォント設定は意味的なキー ('sans'/'serif') で管理する。
+    // フォント設定は意味的なキーで管理する。
     // 旧バージョンで保存されたバンドルフォント名は新しいキーへ移行する。
     final storedFontFamily = await repo.getString(_fontFamilyKey);
-    final fontFamily = switch (storedFontFamily) {
-      fontFamilySerif || 'NotoSerifJP' => fontFamilySerif,
-      _ => fontFamilySans,
-    };
+    final fontFamily = FontFamilySetting.fromStored(storedFontFamily);
     // 保存済みの値がある場合のみ、正規化した値と異なれば永続化する
     // (新規インストール時は書き込まない)
-    if (storedFontFamily != null && storedFontFamily != fontFamily) {
-      await repo.setString(_fontFamilyKey, fontFamily);
+    if (storedFontFamily != null && storedFontFamily != fontFamily.storageKey) {
+      await repo.setString(_fontFamilyKey, fontFamily.storageKey);
     }
     final isVertical = await repo.getBool(_isVerticalKey) ?? false;
     final isIncognito = await repo.getBool(_isIncognitoKey) ?? false;
@@ -215,15 +212,15 @@ class Settings extends _$Settings {
     }
   }
 
-  /// フォントファミリーを設定するメソッド。
-  Future<void> setFontFamily(String family) async {
+  /// フォントを設定するメソッド。
+  Future<void> setFontFamily(FontFamilySetting family) async {
     if (!state.hasValue) {
       throw StateError('Settings are not loaded');
     }
 
     try {
       final repo = await _repo;
-      final success = await repo.setString(_fontFamilyKey, family);
+      final success = await repo.setString(_fontFamilyKey, family.storageKey);
       if (!success) {
         throw Exception('Failed to save font family setting');
       }

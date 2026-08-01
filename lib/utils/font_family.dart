@@ -1,12 +1,30 @@
 import 'package:flutter/foundation.dart';
 
-/// フォント設定の意味的なキー（ゴシック体）。
+/// フォント設定の意味的なキー。
 ///
-/// SharedPreferences に保存され、[resolveFontFamily] の入力となる。
-const fontFamilySans = 'sans';
+/// SharedPreferences には [storageKey] で保存され、[resolveFontFamily] の入力となる。
+enum FontFamilySetting {
+  /// ゴシック体。
+  sans,
 
-/// フォント設定の意味的なキー（明朝体）。
-const fontFamilySerif = 'serif';
+  /// 明朝体。
+  serif
+  ;
+
+  /// SharedPreferences に保存する文字列表現。
+  String get storageKey => name;
+
+  /// 保存された文字列からフォント設定へ変換する。
+  ///
+  /// 旧バージョンで保存されたバンドルフォント名 (`NotoSerifJP`) も
+  /// 新しいキーへ移行する。未知の値はゴシック体として扱う。
+  static FontFamilySetting fromStored(String? stored) {
+    return switch (stored) {
+      'serif' || 'NotoSerifJP' => FontFamilySetting.serif,
+      _ => FontFamilySetting.sans,
+    };
+  }
+}
 
 /// フォント設定を解決した結果。
 ///
@@ -24,16 +42,16 @@ class FontFamilyResolution {
   final List<String> fallbacks;
 }
 
-/// フォント設定値とプラットフォームから実際のファミリー名へ解決する。
+/// フォント設定とプラットフォームから実際のファミリー名へ解決する。
 ///
 /// バンドルフォントを廃止し、各プラットフォームに同梱されているフォントを
 /// 使用する方針のため、設定値は「ゴシック」「明朝」の意味的なキーのみを持つ。
 FontFamilyResolution resolveFontFamily(
-  String fontFamily,
+  FontFamilySetting fontFamily,
   TargetPlatform platform,
 ) {
   switch (fontFamily) {
-    case fontFamilySerif:
+    case FontFamilySetting.serif:
       // 明朝体はプラットフォーム固有のファミリー名を指定する
       switch (platform) {
         case TargetPlatform.android:
@@ -53,7 +71,7 @@ FontFamilyResolution resolveFontFamily(
         case TargetPlatform.fuchsia:
           return const FontFamilyResolution();
       }
-    default:
+    case FontFamilySetting.sans:
       // ゴシック体はプラットフォーム標準のゴシック体を使用する
       switch (platform) {
         case TargetPlatform.windows:

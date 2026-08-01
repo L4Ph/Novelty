@@ -7,6 +7,7 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/novel_page.dart';
+import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/gesture_shield.dart';
 
@@ -21,7 +22,7 @@ class VerticalSettings extends Settings {
     isVertical: true,
     themeMode: ThemeMode.system,
     lineHeight: 1.5,
-    fontFamily: 'sans',
+    fontFamily: FontFamilySetting.sans,
     isIncognito: false,
     isPageFlip: false,
     isRubyEnabled: true,
@@ -36,7 +37,7 @@ class HorizontalSettings extends Settings {
     isVertical: false,
     themeMode: ThemeMode.system,
     lineHeight: 1.5,
-    fontFamily: 'sans',
+    fontFamily: FontFamilySetting.sans,
     isIncognito: false,
     isPageFlip: false,
     isRubyEnabled: true,

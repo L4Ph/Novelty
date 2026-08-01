@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -102,7 +103,7 @@ void main() {
 
         final settings = await container.read(settingsProvider.future);
 
-        expect(settings.fontFamily, equals('sans'));
+        expect(settings.fontFamily, equals(FontFamilySetting.sans));
       },
     );
 
@@ -126,7 +127,7 @@ void main() {
 
       final settings = await container.read(settingsProvider.future);
 
-      expect(settings.fontFamily, equals('sans'));
+      expect(settings.fontFamily, equals(FontFamilySetting.sans));
 
       // 正規化した値を永続化していることを確認
       final prefs = await SharedPreferences.getInstance();
@@ -140,7 +141,7 @@ void main() {
 
       final settings = await container.read(settingsProvider.future);
 
-      expect(settings.fontFamily, equals('serif'));
+      expect(settings.fontFamily, equals(FontFamilySetting.serif));
 
       // 正規化した値を永続化していることを確認
       final prefs = await SharedPreferences.getInstance();
@@ -154,7 +155,7 @@ void main() {
 
       final settings = await container.read(settingsProvider.future);
 
-      expect(settings.fontFamily, equals('sans'));
+      expect(settings.fontFamily, equals(FontFamilySetting.sans));
 
       // 正規化した値を永続化していることを確認
       final prefs = await SharedPreferences.getInstance();
@@ -168,7 +169,7 @@ void main() {
 
       final settings = await container.read(settingsProvider.future);
 
-      expect(settings.fontFamily, equals('sans'));
+      expect(settings.fontFamily, equals(FontFamilySetting.sans));
     });
 
     test('should load saved serif fontFamily', () async {
@@ -178,7 +179,7 @@ void main() {
 
       final settings = await container.read(settingsProvider.future);
 
-      expect(settings.fontFamily, equals('serif'));
+      expect(settings.fontFamily, equals(FontFamilySetting.serif));
     });
 
     test('should load saved isRubyEnabled preference', () async {
@@ -398,7 +399,7 @@ void main() {
         isVertical: false,
         themeMode: ThemeMode.system,
         lineHeight: 1.5,
-        fontFamily: 'sans',
+        fontFamily: FontFamilySetting.sans,
         isIncognito: false,
         isPageFlip: false,
         isRubyEnabled: true,
@@ -415,7 +416,7 @@ void main() {
         isVertical: false,
         themeMode: ThemeMode.system,
         lineHeight: 1.5,
-        fontFamily: 'sans',
+        fontFamily: FontFamilySetting.sans,
         isIncognito: false,
         isPageFlip: false,
         isRubyEnabled: true,
@@ -437,7 +438,7 @@ void main() {
         isVertical: false,
         themeMode: ThemeMode.system,
         lineHeight: 1.5,
-        fontFamily: 'sans',
+        fontFamily: FontFamilySetting.sans,
         isIncognito: false,
         isPageFlip: false,
         isRubyEnabled: false,
@@ -452,7 +453,7 @@ void main() {
         isVertical: false,
         themeMode: ThemeMode.system,
         lineHeight: 1.5,
-        fontFamily: 'sans',
+        fontFamily: FontFamilySetting.sans,
         isIncognito: false,
         isPageFlip: false,
         isRubyEnabled: true,

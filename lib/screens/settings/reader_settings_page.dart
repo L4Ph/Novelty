@@ -78,17 +78,17 @@ class ReaderSettingsPage extends ConsumerWidget {
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DropdownButton<String>(
+              DropdownButton<FontFamilySetting>(
                 value: settings.fontFamily,
                 isExpanded: true,
                 underline: const SizedBox(),
                 items: const [
                   DropdownMenuItem(
-                    value: fontFamilySans,
+                    value: FontFamilySetting.sans,
                     child: Text('ゴシック'),
                   ),
                   DropdownMenuItem(
-                    value: fontFamilySerif,
+                    value: FontFamilySetting.serif,
                     child: Text('明朝'),
                   ),
                 ],
