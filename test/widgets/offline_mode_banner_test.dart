@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/providers/network_fallback_event_provider.dart';
+import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/offline_mode_banner.dart';
 
@@ -73,7 +74,7 @@ class FakeSettings extends Settings {
       isVertical: false,
       themeMode: ThemeMode.system,
       lineHeight: 1.5,
-      fontFamily: 'NotoSansJP',
+      fontFamily: FontFamilySetting.sans,
       isIncognito: false,
       isPageFlip: false,
       isRubyEnabled: true,

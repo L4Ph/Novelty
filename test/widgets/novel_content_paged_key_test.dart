@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
+import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
 import 'package:tategaki/tategaki.dart';
@@ -12,7 +13,7 @@ const pagedSettings = AppSettings(
   fontSize: 16,
   themeMode: ThemeMode.system,
   lineHeight: 1.5,
-  fontFamily: 'NotoSansJP',
+  fontFamily: FontFamilySetting.sans,
   isIncognito: false,
   isPageFlip: true,
   isRubyEnabled: true,

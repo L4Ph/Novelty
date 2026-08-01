@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
+import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
@@ -14,7 +15,7 @@ AppSettings get defaultTestSettings => const AppSettings(
   fontSize: 16,
   themeMode: ThemeMode.system,
   lineHeight: 1.5,
-  fontFamily: 'NotoSansJP',
+  fontFamily: FontFamilySetting.sans,
   isIncognito: false,
   isPageFlip: false,
   isRubyEnabled: true,
@@ -118,6 +119,35 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TategakiText), findsOneWidget);
+  });
+
+  testWidgets('ページめくり縦書きでは設定フォントがDefaultTextStyle経由で適用されること', (tester) async {
+    await pumpWidget(
+      tester,
+      contentValue: AsyncData(testContent),
+      settingsValue: AsyncData(
+        defaultTestSettings.copyWith(
+          isVertical: true,
+          isPageFlip: true,
+          fontFamily: FontFamilySetting.serif,
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(TategakiTextPaged), findsOneWidget);
+
+    // TategakiTextPaged は DefaultTextStyle を経由してフォントを継承する
+    final defaultTextStyle = tester.widget<DefaultTextStyle>(
+      find
+          .ancestor(
+            of: find.byType(TategakiTextPaged),
+            matching: find.byType(DefaultTextStyle),
+          )
+          .first,
+    );
+    expect(defaultTextStyle.style.fontFamily, 'serif');
+    expect(defaultTextStyle.style.fontFamilyFallback, isEmpty);
   });
 
   testWidgets('横書き設定でNovelContentViewがレンダリングされること', (tester) async {

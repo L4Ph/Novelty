@@ -10,6 +10,7 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/network_fallback_event_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
@@ -679,7 +680,7 @@ class FakeSettings extends Settings {
       isVertical: false,
       themeMode: ThemeMode.system,
       lineHeight: 1.5,
-      fontFamily: 'NotoSansJP',
+      fontFamily: FontFamilySetting.sans,
       isIncognito: false,
       isPageFlip: false,
       isRubyEnabled: true,
