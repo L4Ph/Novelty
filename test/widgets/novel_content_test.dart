@@ -14,7 +14,7 @@ AppSettings get defaultTestSettings => const AppSettings(
   fontSize: 16,
   themeMode: ThemeMode.system,
   lineHeight: 1.5,
-  fontFamily: 'NotoSansJP',
+  fontFamily: 'sans',
   isIncognito: false,
   isPageFlip: false,
   isRubyEnabled: true,

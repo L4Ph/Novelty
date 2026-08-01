@@ -28,11 +28,11 @@ final StateProvider<int> migrationRetryCounterProvider = StateProvider<int>(
 /// データベースの初期化（マイグレーション含む）を管理する FutureProvider。
 final FutureProvider<AppDatabase> databaseInitializationProvider =
     FutureProvider<AppDatabase>((ref) async {
-  ref.watch(migrationRetryCounterProvider);
-  final db = ref.watch(appDatabaseProvider);
-  await db.doWhenOpened((_) async {});
-  return db;
-});
+      ref.watch(migrationRetryCounterProvider);
+      final db = ref.watch(appDatabaseProvider);
+      await db.doWhenOpened((_) async {});
+      return db;
+    });
 
 /// アプリケーションのエントリーポイント。
 /// データベースの初期化状態に応じて、進捗スプラッシュ、リカバリー画面、
@@ -96,11 +96,9 @@ class _AppWithSettings extends ConsumerWidget {
             themeMode: settings.themeMode,
             theme: ThemeData(
               colorScheme: colorScheme,
-              fontFamily: settings.fontFamily,
             ),
             darkTheme: ThemeData(
               colorScheme: darkColorSchema,
-              fontFamily: settings.fontFamily,
             ),
             routerConfig: router,
             builder: (context, child) => OfflineModeBanner(child: child!),

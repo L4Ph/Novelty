@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/utils/tategaki_converter.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
@@ -115,10 +117,16 @@ class NovelContentBody extends HookWidget {
       data: (settingsData) {
         return content.when(
           data: (contentData) {
+            // 設定のフォントを現在のプラットフォームのファミリー名へ解決する
+            final fontFamilyResult = resolveFontFamily(
+              settingsData.fontFamily,
+              defaultTargetPlatform,
+            );
             final textStyle = TextStyle(
               fontSize: settingsData.fontSize,
               color: textColor,
-              fontFamily: settingsData.fontFamily,
+              fontFamily: fontFamilyResult.family,
+              fontFamilyFallback: fontFamilyResult.fallbacks,
               height: settingsData.lineHeight,
             );
 
@@ -131,8 +139,8 @@ class NovelContentBody extends HookWidget {
 
             // 縦書きモード用（横スクロール）: 左右端のバックジェスチャー領域を確保
             final verticalModePadding = EdgeInsets.only(
-              left: math.max(16.0, systemGestureInsets.left),
-              right: math.max(16.0, systemGestureInsets.right),
+              left: math.max(16, systemGestureInsets.left),
+              right: math.max(16, systemGestureInsets.right),
               top: 16,
               bottom: 16,
             );
@@ -142,7 +150,7 @@ class NovelContentBody extends HookWidget {
               left: 16,
               right: 16,
               top: 16,
-              bottom: math.max(16.0, systemGestureInsets.bottom),
+              bottom: math.max(16, systemGestureInsets.bottom),
             );
 
             if (settingsData.isVertical) {

@@ -679,7 +679,7 @@ class FakeSettings extends Settings {
       isVertical: false,
       themeMode: ThemeMode.system,
       lineHeight: 1.5,
-      fontFamily: 'NotoSansJP',
+      fontFamily: 'sans',
       isIncognito: false,
       isPageFlip: false,
       isRubyEnabled: true,

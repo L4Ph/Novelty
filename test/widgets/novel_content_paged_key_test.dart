@@ -12,7 +12,7 @@ const pagedSettings = AppSettings(
   fontSize: 16,
   themeMode: ThemeMode.system,
   lineHeight: 1.5,
-  fontFamily: 'NotoSansJP',
+  fontFamily: 'sans',
   isIncognito: false,
   isPageFlip: true,
   isRubyEnabled: true,

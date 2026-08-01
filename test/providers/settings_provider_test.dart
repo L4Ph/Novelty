@@ -95,6 +95,67 @@ void main() {
       },
     );
 
+    test(
+      'should default fontFamily to sans when no preferences exist',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+
+        final settings = await container.read(settingsProvider.future);
+
+        expect(settings.fontFamily, equals('sans'));
+      },
+    );
+
+    test('should migrate legacy NotoSansJP value to sans', () async {
+      SharedPreferences.setMockInitialValues({
+        'font_family': 'NotoSansJP',
+      });
+
+      final settings = await container.read(settingsProvider.future);
+
+      expect(settings.fontFamily, equals('sans'));
+    });
+
+    test('should migrate legacy NotoSerifJP value to serif', () async {
+      SharedPreferences.setMockInitialValues({
+        'font_family': 'NotoSerifJP',
+      });
+
+      final settings = await container.read(settingsProvider.future);
+
+      expect(settings.fontFamily, equals('serif'));
+    });
+
+    test('should fall back to sans for unknown fontFamily value', () async {
+      SharedPreferences.setMockInitialValues({
+        'font_family': 'unknown-font',
+      });
+
+      final settings = await container.read(settingsProvider.future);
+
+      expect(settings.fontFamily, equals('sans'));
+    });
+
+    test('should load saved sans fontFamily', () async {
+      SharedPreferences.setMockInitialValues({
+        'font_family': 'sans',
+      });
+
+      final settings = await container.read(settingsProvider.future);
+
+      expect(settings.fontFamily, equals('sans'));
+    });
+
+    test('should load saved serif fontFamily', () async {
+      SharedPreferences.setMockInitialValues({
+        'font_family': 'serif',
+      });
+
+      final settings = await container.read(settingsProvider.future);
+
+      expect(settings.fontFamily, equals('serif'));
+    });
+
     test('should load saved isRubyEnabled preference', () async {
       SharedPreferences.setMockInitialValues({
         'is_ruby_enabled': false,
@@ -105,13 +166,16 @@ void main() {
       expect(settings.isRubyEnabled, equals(false));
     });
 
-    test('should default to false for isOfflineMode when no preferences exist', () async {
-      SharedPreferences.setMockInitialValues({});
+    test(
+      'should default to false for isOfflineMode when no preferences exist',
+      () async {
+        SharedPreferences.setMockInitialValues({});
 
-      final settings = await container.read(settingsProvider.future);
+        final settings = await container.read(settingsProvider.future);
 
-      expect(settings.isOfflineMode, equals(false));
-    });
+        expect(settings.isOfflineMode, equals(false));
+      },
+    );
 
     test('should load saved isOfflineMode preference', () async {
       SharedPreferences.setMockInitialValues({
@@ -149,25 +213,31 @@ void main() {
       expect(prefs.getBool('is_offline_mode'), equals(true));
     });
 
-    test('isOfflineModeProvider returns default false when settings not loaded', () {
-      SharedPreferences.setMockInitialValues({});
+    test(
+      'isOfflineModeProvider returns default false when settings not loaded',
+      () {
+        SharedPreferences.setMockInitialValues({});
 
-      final isOfflineMode = container.read(isOfflineModeProvider);
+        final isOfflineMode = container.read(isOfflineModeProvider);
 
-      expect(isOfflineMode, isFalse);
-    });
+        expect(isOfflineMode, isFalse);
+      },
+    );
 
-    test('isOfflineModeProvider returns true when offline mode is enabled', () async {
-      SharedPreferences.setMockInitialValues({
-        'is_offline_mode': true,
-      });
+    test(
+      'isOfflineModeProvider returns true when offline mode is enabled',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'is_offline_mode': true,
+        });
 
-      await container.read(settingsProvider.future);
+        await container.read(settingsProvider.future);
 
-      final isOfflineMode = container.read(isOfflineModeProvider);
+        final isOfflineMode = container.read(isOfflineModeProvider);
 
-      expect(isOfflineMode, isTrue);
-    });
+        expect(isOfflineMode, isTrue);
+      },
+    );
 
     test('should update isRubyEnabled setting', () async {
       SharedPreferences.setMockInitialValues({});
@@ -303,7 +373,7 @@ void main() {
         isVertical: false,
         themeMode: ThemeMode.system,
         lineHeight: 1.5,
-        fontFamily: 'NotoSansJP',
+        fontFamily: 'sans',
         isIncognito: false,
         isPageFlip: false,
         isRubyEnabled: true,
@@ -320,7 +390,7 @@ void main() {
         isVertical: false,
         themeMode: ThemeMode.system,
         lineHeight: 1.5,
-        fontFamily: 'NotoSansJP',
+        fontFamily: 'sans',
         isIncognito: false,
         isPageFlip: false,
         isRubyEnabled: true,
@@ -342,7 +412,7 @@ void main() {
         isVertical: false,
         themeMode: ThemeMode.system,
         lineHeight: 1.5,
-        fontFamily: 'NotoSansJP',
+        fontFamily: 'sans',
         isIncognito: false,
         isPageFlip: false,
         isRubyEnabled: false,
@@ -357,7 +427,7 @@ void main() {
         isVertical: false,
         themeMode: ThemeMode.system,
         lineHeight: 1.5,
-        fontFamily: 'NotoSansJP',
+        fontFamily: 'sans',
         isIncognito: false,
         isPageFlip: false,
         isRubyEnabled: true,

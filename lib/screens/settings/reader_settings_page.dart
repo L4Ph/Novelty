@@ -73,40 +73,58 @@ class ReaderSettingsPage extends ConsumerWidget {
           ),
         ),
         ListTile(
-          title: const Text('フォントファミリー'),
-          subtitle: DropdownButton<String>(
-            value: settings.fontFamily,
-            isExpanded: true,
-            underline: const SizedBox(),
-            items: const [
-              DropdownMenuItem(
-                value: 'NotoSansJP',
-                child: Text('Noto Sans JP (ゴシック)'),
+          title: const Text('フォント'),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DropdownButton<String>(
+                value: settings.fontFamily,
+                isExpanded: true,
+                underline: const SizedBox(),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'sans',
+                    child: Text('ゴシック'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'serif',
+                    child: Text('明朝'),
+                  ),
+                ],
+                onChanged: (value) async {
+                  if (value != null) {
+                    try {
+                      await ref
+                          .read(settingsProvider.notifier)
+                          .setFontFamily(value);
+                    } on Exception catch (e, stackTrace) {
+                      debugPrint(
+                        'Failed to save font family: $e\n$stackTrace',
+                      );
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('フォントファミリー設定の保存に失敗しました'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  }
+                },
               ),
-              DropdownMenuItem(
-                value: 'NotoSerifJP',
-                child: Text('Noto Serif JP (明朝)'),
+              // OS標準フォントを使用する旨の補足説明
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '端末のフォントを使用します',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ],
-            onChanged: (value) async {
-              if (value != null) {
-                try {
-                  await ref
-                      .read(settingsProvider.notifier)
-                      .setFontFamily(value);
-                } on Exception catch (e, stackTrace) {
-                  debugPrint('Failed to save font family: $e\n$stackTrace');
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('フォントファミリー設定の保存に失敗しました'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              }
-            },
           ),
         ),
       ],

@@ -117,7 +117,13 @@ class Settings extends _$Settings {
         await repo.getInt(_themeModeKey) ?? ThemeMode.system.index;
     final fontSize = await repo.getDouble(_fontSizeKey) ?? 16.0;
     final lineHeight = await repo.getDouble(_lineHeightKey) ?? 1.5;
-    final fontFamily = await repo.getString(_fontFamilyKey) ?? 'NotoSansJP';
+    // フォント設定は意味的なキー ('sans'/'serif') で管理する。
+    // 旧バージョンで保存されたバンドルフォント名は新しいキーへ移行する。
+    final storedFontFamily = await repo.getString(_fontFamilyKey);
+    final fontFamily = switch (storedFontFamily) {
+      'serif' || 'NotoSerifJP' => 'serif',
+      _ => 'sans',
+    };
     final isVertical = await repo.getBool(_isVerticalKey) ?? false;
     final isIncognito = await repo.getBool(_isIncognitoKey) ?? false;
     final isPageFlip = await repo.getBool(_isPageFlipKey) ?? false;
