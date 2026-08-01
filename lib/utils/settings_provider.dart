@@ -124,6 +124,10 @@ class Settings extends _$Settings {
       'serif' || 'NotoSerifJP' => 'serif',
       _ => 'sans',
     };
+    // 正規化した値と保存値が異なる場合のみ、正規化した値を永続化する
+    if (storedFontFamily != fontFamily) {
+      await repo.setString(_fontFamilyKey, fontFamily);
+    }
     final isVertical = await repo.getBool(_isVerticalKey) ?? false;
     final isIncognito = await repo.getBool(_isIncognitoKey) ?? false;
     final isPageFlip = await repo.getBool(_isPageFlipKey) ?? false;

@@ -163,14 +163,17 @@ class NovelContentBody extends HookWidget {
               if (settingsData.isPageFlip) {
                 return LayoutBuilder(
                   builder: (context, constraints) {
-                    return TategakiTextPaged(
-                      key: PageStorageKey<String>(
-                        'novel_paged_${ncode}_$episode',
+                    return DefaultTextStyle(
+                      style: textStyle,
+                      child: TategakiTextPaged(
+                        key: PageStorageKey<String>(
+                          'novel_paged_${ncode}_$episode',
+                        ),
+                        tategakiElements,
+                        width: constraints.maxWidth,
+                        height: constraints.maxHeight,
+                        padding: verticalModePadding,
                       ),
-                      tategakiElements,
-                      width: constraints.maxWidth,
-                      height: constraints.maxHeight,
-                      padding: verticalModePadding,
                     );
                   },
                 );

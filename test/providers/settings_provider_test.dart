@@ -114,6 +114,10 @@ void main() {
       final settings = await container.read(settingsProvider.future);
 
       expect(settings.fontFamily, equals('sans'));
+
+      // 正規化した値を永続化していることを確認
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('font_family'), equals('sans'));
     });
 
     test('should migrate legacy NotoSerifJP value to serif', () async {
@@ -124,6 +128,10 @@ void main() {
       final settings = await container.read(settingsProvider.future);
 
       expect(settings.fontFamily, equals('serif'));
+
+      // 正規化した値を永続化していることを確認
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('font_family'), equals('serif'));
     });
 
     test('should fall back to sans for unknown fontFamily value', () async {
@@ -134,6 +142,10 @@ void main() {
       final settings = await container.read(settingsProvider.future);
 
       expect(settings.fontFamily, equals('sans'));
+
+      // 正規化した値を永続化していることを確認
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('font_family'), equals('sans'));
     });
 
     test('should load saved sans fontFamily', () async {
