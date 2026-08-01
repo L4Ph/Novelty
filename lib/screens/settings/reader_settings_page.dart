@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 /// 閲覧設定ページ
@@ -83,11 +84,11 @@ class ReaderSettingsPage extends ConsumerWidget {
                 underline: const SizedBox(),
                 items: const [
                   DropdownMenuItem(
-                    value: 'sans',
+                    value: fontFamilySans,
                     child: Text('ゴシック'),
                   ),
                   DropdownMenuItem(
-                    value: 'serif',
+                    value: fontFamilySerif,
                     child: Text('明朝'),
                   ),
                 ],

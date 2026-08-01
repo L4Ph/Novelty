@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:novelty/repositories/preferences_repository.dart';
+import 'package:novelty/utils/font_family.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'settings_provider.g.dart';
@@ -121,11 +122,12 @@ class Settings extends _$Settings {
     // 旧バージョンで保存されたバンドルフォント名は新しいキーへ移行する。
     final storedFontFamily = await repo.getString(_fontFamilyKey);
     final fontFamily = switch (storedFontFamily) {
-      'serif' || 'NotoSerifJP' => 'serif',
-      _ => 'sans',
+      fontFamilySerif || 'NotoSerifJP' => fontFamilySerif,
+      _ => fontFamilySans,
     };
-    // 正規化した値と保存値が異なる場合のみ、正規化した値を永続化する
-    if (storedFontFamily != fontFamily) {
+    // 保存済みの値がある場合のみ、正規化した値と異なれば永続化する
+    // (新規インストール時は書き込まない)
+    if (storedFontFamily != null && storedFontFamily != fontFamily) {
       await repo.setString(_fontFamilyKey, fontFamily);
     }
     final isVertical = await repo.getBool(_isVerticalKey) ?? false;

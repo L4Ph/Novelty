@@ -1,5 +1,13 @@
 import 'package:flutter/foundation.dart';
 
+/// フォント設定の意味的なキー（ゴシック体）。
+///
+/// SharedPreferences に保存され、[resolveFontFamily] の入力となる。
+const fontFamilySans = 'sans';
+
+/// フォント設定の意味的なキー（明朝体）。
+const fontFamilySerif = 'serif';
+
 /// フォント設定を解決した結果。
 ///
 /// [family] が null の場合はプラットフォーム標準のフォントを使用する。
@@ -25,7 +33,7 @@ FontFamilyResolution resolveFontFamily(
   TargetPlatform platform,
 ) {
   switch (fontFamily) {
-    case 'serif':
+    case fontFamilySerif:
       // 明朝体はプラットフォーム固有のファミリー名を指定する
       switch (platform) {
         case TargetPlatform.android:

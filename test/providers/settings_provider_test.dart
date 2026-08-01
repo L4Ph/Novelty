@@ -106,6 +106,19 @@ void main() {
       },
     );
 
+    test(
+      'should not persist fontFamily when no preference exists',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+
+        await container.read(settingsProvider.future);
+
+        // 新規インストール時は保存値が無いため、書き込みを行わないこと
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('font_family'), isNull);
+      },
+    );
+
     test('should migrate legacy NotoSansJP value to sans', () async {
       SharedPreferences.setMockInitialValues({
         'font_family': 'NotoSansJP',
