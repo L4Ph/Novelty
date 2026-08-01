@@ -19,10 +19,17 @@ enum FontFamilySetting {
   /// 旧バージョンで保存されたバンドルフォント名 (`NotoSerifJP`) も
   /// 新しいキーへ移行する。未知の値はゴシック体として扱う。
   static FontFamilySetting fromStored(String? stored) {
-    return switch (stored) {
-      'serif' || 'NotoSerifJP' => FontFamilySetting.serif,
-      _ => FontFamilySetting.sans,
-    };
+    // 保存表現は storageKey で比較し、enum 改名時も一貫して扱えるようにする
+    for (final setting in FontFamilySetting.values) {
+      if (stored == setting.storageKey) {
+        return setting;
+      }
+    }
+    // 旧バージョンで保存されたバンドルフォント名
+    if (stored == 'NotoSerifJP') {
+      return FontFamilySetting.serif;
+    }
+    return FontFamilySetting.sans;
   }
 }
 
