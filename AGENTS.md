@@ -52,3 +52,13 @@ When interacting with the user, please provide final responses, implementation p
 - **User Interaction:** Please use Japanese for all final communication, including plans, progress updates, and final answers. Ensure the Japanese is natural, polite, and easy to understand.
 - **Code Comments:** Please write code comments in Japanese.
 - **Internal Reasoning:** You may keep things that don't require user visibility, such as your own thoughts, planning drafts, and internal logs, in English to optimize token usage.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs live as GitHub issues in this repo, operated via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
