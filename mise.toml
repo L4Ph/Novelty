@@ -1,6 +1,6 @@
 [tools]
 bun = "latest"
-flutter = "3.41.5"
+flutter = "3.44.8"
 java = "temurin-21"
 node = "latest"
 "aqua:evilmartians/lefthook" = "latest"

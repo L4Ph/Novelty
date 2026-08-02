@@ -88,14 +88,14 @@ class MigrationErrorReport {
 
   /// JSON 形式のマップに変換する
   Map<String, dynamic> toJson() => {
-        'formatVersion': formatVersion,
-        'timestamp': timestamp,
-        'schemaVersionBefore': schemaVersionBefore,
-        'schemaVersionAfter': schemaVersionAfter,
-        'failedStep': failedStep,
-        'errorMessage': errorMessage,
-        if (dbFilePath != null) 'dbFilePath': dbFilePath,
-      };
+    'formatVersion': formatVersion,
+    'timestamp': timestamp,
+    'schemaVersionBefore': schemaVersionBefore,
+    'schemaVersionAfter': schemaVersionAfter,
+    'failedStep': failedStep,
+    'errorMessage': errorMessage,
+    if (dbFilePath != null) 'dbFilePath': dbFilePath,
+  };
 }
 
 /// マイグレーションエラーレポートファイル名の接頭辞。
@@ -110,9 +110,11 @@ extension MigratorHelpers on Migrator {
   ) async {
     final tableName = table.actualTableName;
     final columnName = column.name;
-    final existingColumns = await database.customSelect(
-      'PRAGMA table_info($tableName)',
-    ).get();
+    final existingColumns = await database
+        .customSelect(
+          'PRAGMA table_info($tableName)',
+        )
+        .get();
     final exists = existingColumns.any(
       (row) => row.read<String>('name') == columnName,
     );
@@ -123,10 +125,12 @@ extension MigratorHelpers on Migrator {
 
   /// 指定したテーブルが存在するかどうかを確認する。
   Future<bool> tableExists(String tableName) async {
-    final result = await database.customSelect(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-      variables: [Variable.withString(tableName)],
-    ).get();
+    final result = await database
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+          variables: [Variable.withString(tableName)],
+        )
+        .get();
     return result.isNotEmpty;
   }
 }

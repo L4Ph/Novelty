@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
+import 'package:novelty/router/router.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -111,7 +111,7 @@ class _MorePageState extends ConsumerState<MorePage> {
         ListTile(
           leading: const Icon(Icons.download),
           title: const Text('ダウンロードキュー'),
-          onTap: () => context.go('/more/downloads'),
+          onTap: () => const DownloadsRoute().go(context),
         ),
       ],
     );
@@ -125,17 +125,17 @@ class _MorePageState extends ConsumerState<MorePage> {
         ListTile(
           leading: const Icon(Icons.palette_outlined),
           title: const Text('一般設定'), // Appearance
-          onTap: () => context.go('/more/appearance'),
+          onTap: () => const AppearanceSettingsRoute().go(context),
         ),
         ListTile(
           leading: const Icon(Icons.chrome_reader_mode_outlined),
           title: const Text('閲覧設定'), // Reader
-          onTap: () => context.go('/more/reader'),
+          onTap: () => const ReaderSettingsRoute().go(context),
         ),
         ListTile(
           leading: const Icon(Icons.storage_outlined),
           title: const Text('データとストレージ'),
-          onTap: () => context.go('/more/data-storage'),
+          onTap: () => const DataStorageRoute().go(context),
         ),
       ],
     );
@@ -149,7 +149,7 @@ class _MorePageState extends ConsumerState<MorePage> {
         ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('アプリについて'),
-          onTap: () => context.go('/more/about'),
+          onTap: () => const AboutRoute().go(context),
         ),
         ListTile(
           leading: const Icon(Icons.help_outline),

@@ -543,10 +543,10 @@ void main() {
                   expect(metrics.columns.length, greaterThan(1));
 
                   // 全列の中にPaintableTcyが1つだけ存在することを確認
-                  final allItems =
-                      metrics.columns.expand((col) => col.items).toList();
-                  final tcyItems =
-                      allItems.whereType<PaintableTcy>().toList();
+                  final allItems = metrics.columns
+                      .expand((col) => col.items)
+                      .toList();
+                  final tcyItems = allItems.whereType<PaintableTcy>().toList();
                   expect(tcyItems.length, 1);
                   expect(tcyItems[0].text, '99');
 
@@ -558,8 +558,7 @@ void main() {
         );
       });
 
-      testWidgets('TCYの前後でバッファがフラッシュされ正しい順序になる（回帰テスト）',
-          (tester) async {
+      testWidgets('TCYの前後でバッファがフラッシュされ正しい順序になる（回帰テスト）', (tester) async {
         await tester.pumpWidget(
           ProviderScope(
             child: MaterialApp(

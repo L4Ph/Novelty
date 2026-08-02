@@ -42,7 +42,9 @@ class TategakiParser {
 
         if (digitCount >= 2 && digitCount <= 3) {
           // 2〜3桁は縦中横
-          final digits = String.fromCharCodes(runes.sublist(digitStart, digitEnd));
+          final digits = String.fromCharCodes(
+            runes.sublist(digitStart, digitEnd),
+          );
           elements.add(TategakiTcy(digits));
           i = digitEnd;
         } else {

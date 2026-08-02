@@ -67,7 +67,7 @@ class RankingFilterSheet extends HookWidget {
       builder: (context, scrollController) {
         return Column(
           children: [
-            // Handle
+            // ハンドル
             Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
               width: 32,
@@ -80,7 +80,7 @@ class RankingFilterSheet extends HookWidget {
               ),
             ),
 
-            // Header
+            // ヘッダー
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
@@ -114,13 +114,13 @@ class RankingFilterSheet extends HookWidget {
 
             const Divider(height: 1),
 
-            // Content
+            // コンテンツ
             Expanded(
               child: ListView(
                 controller: scrollController,
                 padding: const EdgeInsets.all(16),
                 children: [
-                  // Status Section
+                  // ステータスセクション
                   Text(
                     '連載状況',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -138,7 +138,7 @@ class RankingFilterSheet extends HookWidget {
 
                   const SizedBox(height: 24),
 
-                  // Genre Section
+                  // ジャンルセクション
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -163,7 +163,7 @@ class RankingFilterSheet extends HookWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  // Grouped Genres
+                  // グループ化されたジャンル
                   ...groupedGenres.entries.map((entry) {
                     final category = entry.key;
                     final items = entry.value;
@@ -200,7 +200,8 @@ class RankingFilterSheet extends HookWidget {
                               },
                               showCheckmark:
                                   false, // シンプルにするためチェックマークなし（色変化のみ）も選択肢
-                              // checkmarkColor: Theme.of(context).colorScheme.onPrimary,
+                              // checkmarkColor:
+                              // Theme.of(context).colorScheme.onPrimary,
                             );
                           }).toList(),
                         ),
@@ -208,7 +209,7 @@ class RankingFilterSheet extends HookWidget {
                       ],
                     );
                   }),
-                  const SizedBox(height: 48), // Bottom padding
+                  const SizedBox(height: 48), // 下部パディング
                 ],
               ),
             ),

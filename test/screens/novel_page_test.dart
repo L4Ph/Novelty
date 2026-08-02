@@ -239,10 +239,10 @@ void main() {
             novelRepositoryProvider.overrideWithValue(mockNovelRepository),
             settingsProvider.overrideWith(VerticalSettings.new),
             novelInfoWithCacheProvider.overrideWith(
-              (ref, String ncode) => Stream.value(testNovelInfo),
+              (ref, ncode) => Stream.value(testNovelInfo),
             ),
             episodeListProvider.overrideWith(
-              (ref, String key) => Stream.value(<Episode>[]),
+              (ref, key) => Stream.value(<Episode>[]),
             ),
             novelContentProvider.overrideWith(
               (ref, ({String ncode, int episode, String? revised}) arg) async =>
@@ -285,10 +285,10 @@ void main() {
             novelRepositoryProvider.overrideWithValue(mockNovelRepository),
             settingsProvider.overrideWith(HorizontalSettings.new),
             novelInfoWithCacheProvider.overrideWith(
-              (ref, String ncode) => Stream.value(testNovelInfo),
+              (ref, ncode) => Stream.value(testNovelInfo),
             ),
             episodeListProvider.overrideWith(
-              (ref, String key) => Stream.value(<Episode>[]),
+              (ref, key) => Stream.value(<Episode>[]),
             ),
             novelContentProvider.overrideWith(
               (ref, ({String ncode, int episode, String? revised}) arg) async =>

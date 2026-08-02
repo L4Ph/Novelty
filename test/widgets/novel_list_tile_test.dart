@@ -8,7 +8,7 @@ void main() {
   group('NovelListTile', () {
     group('status display', () {
       testWidgets('should display "完結" badge for novel with end == 0', (
-        WidgetTester tester,
+        tester,
       ) async {
         const item = NovelInfo(
           ncode: 'N1234AB',
@@ -34,7 +34,7 @@ void main() {
       testWidgets(
         'should display "連載" badge for serialized novel with end == 1',
         (
-          WidgetTester tester,
+          tester,
         ) async {
           const item = NovelInfo(
             ncode: 'N1234AB',
@@ -58,16 +58,17 @@ void main() {
         },
       );
 
-      // Note: '短編' is now handled by logic that might fall into '完結' or '連載中'
+      // 注: '短編' は現在、'完結' や '連載中' に分類されるロジックで処理される
       // based on typical API response, or custom logic in the tile.
-      // In the current implementation:
+      // 現在の実装では:
       // isOngoing = item.end == 1.
-      // If short story (novelType=2) usually end=0 or similar?
-      // The code uses: final isOngoing = useMemoized(() => item.end == 1, [item.end]);
-      // So checks purely based on end flag.
+      // 短編 (novelType=2) は通常 end=0 または類似の値?
+      // コードでは: final isOngoing = useMemoized(() => item.end == 1,
+      // [item.end]);
+      // つまり end フラグのみで判定している
 
       testWidgets('should display "短編" badge for short story with end == 0', (
-        WidgetTester tester,
+        tester,
       ) async {
         const item = NovelInfo(
           ncode: 'N1234AB',
@@ -92,7 +93,7 @@ void main() {
       });
 
       testWidgets('should display "短編" badge for short story with end == 1', (
-        WidgetTester tester,
+        tester,
       ) async {
         const item = NovelInfo(
           ncode: 'N1234AB',
@@ -119,7 +120,7 @@ void main() {
 
     group('widget structure', () {
       testWidgets('should display title and metadata', (
-        WidgetTester tester,
+        tester,
       ) async {
         const item = NovelInfo(
           ncode: 'N1234AB',
@@ -140,16 +141,18 @@ void main() {
         );
 
         expect(find.text('テストタイトル'), findsOneWidget);
-        // Metadata format: "${item.writer} • $genreName${item.allPoint != null ? ' • ${(item.allPoint! / 1000).toStringAsFixed(1)}k pt' : ''}"
-        // Genre 1 usually maps to something like "異世界..." dependent on app_constants.
-        // We will just check if writer name exists in the widget tree for now,
+        // メタデータ形式: "${item.writer} • $genreName${item.allPoint !=
+        // null ? ' • ${(item.allPoint! / 1000).toStringAsFixed(1)}k pt' : ''}"
+        // ジャンル 1 は通常「異世界...」などの依存する値にマッピングされる
+        // on app_constants.
+        // 現時点では著者名がウィジェットツリーに存在するかだけ確認する
         // as exact string depends on constant mapping.
         expect(find.textContaining('テスト作者'), findsOneWidget);
         expect(find.textContaining('12.3k pt'), findsOneWidget);
       });
 
       testWidgets('should display rank when rank is provided', (
-        WidgetTester tester,
+        tester,
       ) async {
         const item = NovelInfo(
           ncode: 'N1234AB',
@@ -172,7 +175,7 @@ void main() {
       });
 
       testWidgets('should not display rank when rank is null', (
-        WidgetTester tester,
+        tester,
       ) async {
         const item = NovelInfo(
           ncode: 'N1234AB',
@@ -191,7 +194,7 @@ void main() {
           ),
         );
 
-        // No InkWell/ListTile leading check easy here without specific keys,
+        // 特定キーがないため、InkWell/ListTile の先頭チェックは難しい
         // but verifying no isolated '5' or similar is enough,
         // or just ensuring the widget builds without error.
         expect(find.byType(InkWell), findsOneWidget);
@@ -201,7 +204,7 @@ void main() {
 
   group('flutter_hooks integration', () {
     testWidgets('should use HookWidget and maintain functionality', (
-      WidgetTester tester,
+      tester,
     ) async {
       const item = NovelInfo(
         ncode: 'N1234AB',

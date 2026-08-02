@@ -19,7 +19,7 @@ void main() {
       mockDatabase = MockAppDatabase();
     });
 
-    testWidgets('小説リストを正しく表示する', (WidgetTester tester) async {
+    testWidgets('小説リストを正しく表示する', (tester) async {
       final novels = [
         const NovelInfo(
           ncode: 'n1234ab',
@@ -51,7 +51,7 @@ void main() {
       expect(find.text('テスト小説1'), findsOneWidget);
     });
 
-    testWidgets('長押しでライブラリに追加処理が実行される', (WidgetTester tester) async {
+    testWidgets('長押しでライブラリに追加処理が実行される', (tester) async {
       final novels = [
         const NovelInfo(
           ncode: 'n1234ab',
@@ -67,29 +67,20 @@ void main() {
       ];
 
       // モックの設定
-      when(mockDatabase.getNovel('n1234ab')).thenAnswer((_) async => null);
+      // addNovelToLibrary は、まず isInLibrary で登録済みかどうかを確認する。
+      when(mockDatabase.isInLibrary('n1234ab')).thenAnswer((_) async => false);
 
-      // NovelList calls handleAddToLibrary, which uses novelRepository.
-      // But implementation details of handleAddToLibrary might require more mocks.
-      // However, if we just check getNovel call which happens in handleAddToLibrary...
-      // Wait, handleAddToLibrary calls repository.addNovelToLibrary(ncode), which internally might call getNovel.
-      // Or handleAddToLibrary calls isInLibrary -> which might be cached or db.
+      // NovelList は handleAddToLibrary を呼び出し、novelRepository を使用する。
+      // ただし handleAddToLibrary の実装詳細はより多くのモックを必要とする場合がある。
+      // しかし、handleAddToLibrary 内で発生する DB 呼び出しを確認すれば十分。
+      // handleAddToLibrary は repository.addNovelToLibrary(ncode) を呼び、
+      // 内部で isInLibrary を呼び出す。
+      // novelRepositoryProvider の override も必要か?
+      // 元のテストは appDatabaseProvider を override して
+      // mockDatabase の呼び出しを確認していた。
+      // handleAddToLibrary が DB とやり取りする場合、verify が正しい。
 
-      // We also need to override novelRepositoryProvider?
-      // The original test overrides appDatabaseProvider and checks mockDatabase calls.
-      // If handleAddToLibrary interacts with DB, then verify is correct.
-
-      // Note: handleAddToLibrary checks if processing, then calls repo.addNovel.
-      // We should check repo.
-
-      // However, the original test logic:
-      // when(mockDatabase.getNovel('n1234ab')).thenAnswer((_) async => null);
-      // ... verify(mockDatabase.getNovel('n1234ab')).called(1);
-      // Wait, where does `getNovel` get called?
-      // In `library_callbacks.dart`: `repository.addNovelToLibrary(item.ncode)`.
-      // `NovelRepository.addNovelToLibrary` likely calls DB methods.
-      // If `novel_repository` is NOT mocked, it uses real repo logic + mocked DB.
-      // This seems fine.
+      // handleAddToLibrary は処理中チェックを行い、その後 repo.addNovel を呼ぶ。
 
       await tester.pumpWidget(
         ProviderScope(
@@ -105,15 +96,15 @@ void main() {
       );
 
       // 最初の小説タイルを長押し
-      await tester.longPress(find.byType(ListTile).first);
+      await tester.longPress(find.byType(InkWell).first);
       await tester.pump();
 
       // データベースへのアクセスを確認
-      // Note: Implementation details of addNovelToLibrary involves checking existence first.
-      verify(mockDatabase.getNovel('n1234ab')).called(1);
+      // addNovelToLibrary の実装は存在確認を最初に行う。
+      verify(mockDatabase.isInLibrary('n1234ab')).called(1);
     });
 
-    testWidgets('すでにライブラリに登録済みの場合は警告メッセージを表示', (WidgetTester tester) async {
+    testWidgets('すでにライブラリに登録済みの場合は警告メッセージを表示', (tester) async {
       final novels = [
         const NovelInfo(
           ncode: 'n1234ab',
@@ -129,16 +120,9 @@ void main() {
       ];
 
       // 既に登録済みの小説を模擬
-      const existingNovel = Novel(
-        ncode: 'n1234ab',
-        title: 'テスト小説1',
-        writer: 'テスト作者',
-        isPrivate: false,
-      );
-
       when(
-        mockDatabase.getNovel('n1234ab'),
-      ).thenAnswer((_) async => existingNovel);
+        mockDatabase.isInLibrary('n1234ab'),
+      ).thenAnswer((_) async => true);
 
       await tester.pumpWidget(
         ProviderScope(
@@ -154,7 +138,7 @@ void main() {
       );
 
       // 最初の小説タイルを長押し
-      await tester.longPress(find.byType(ListTile).first);
+      await tester.longPress(find.byType(InkWell).first);
       await tester.pump();
 
       // 警告メッセージが表示されることを確認

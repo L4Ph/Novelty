@@ -11,7 +11,7 @@ part of 'database_providers.dart';
 /// アプリケーションデータベースのインスタンスを提供するプロバイダー。
 
 @ProviderFor(appDatabase)
-const appDatabaseProvider = AppDatabaseProvider._();
+final appDatabaseProvider = AppDatabaseProvider._();
 
 /// アプリケーションデータベースのインスタンスを提供するプロバイダー。
 
@@ -19,7 +19,7 @@ final class AppDatabaseProvider
     extends $FunctionalProvider<AppDatabase, AppDatabase, AppDatabase>
     with $Provider<AppDatabase> {
   /// アプリケーションデータベースのインスタンスを提供するプロバイダー。
-  const AppDatabaseProvider._()
+  AppDatabaseProvider._()
     : super(
         from: null,
         argument: null,
@@ -57,7 +57,7 @@ String _$appDatabaseHash() => r'98a09c6cfd43966155dfbdb0787fa18c85438e13';
 /// ライブラリに登録されている小説のリストを監視するプロバイダー。
 
 @ProviderFor(libraryNovels)
-const libraryNovelsProvider = LibraryNovelsProvider._();
+final libraryNovelsProvider = LibraryNovelsProvider._();
 
 /// ライブラリに登録されている小説のリストを監視するプロバイダー。
 
@@ -70,7 +70,7 @@ final class LibraryNovelsProvider
         >
     with $FutureModifier<List<dynamic>>, $StreamProvider<List<dynamic>> {
   /// ライブラリに登録されている小説のリストを監視するプロバイダー。
-  const LibraryNovelsProvider._()
+  LibraryNovelsProvider._()
     : super(
         from: null,
         argument: null,
@@ -101,7 +101,7 @@ String _$libraryNovelsHash() => r'9240a1adc6761ec1bb34bcb6c44a554966f61d04';
 /// 閲覧履歴のリストを監視するプロバイダー。
 
 @ProviderFor(history)
-const historyProvider = HistoryProvider._();
+final historyProvider = HistoryProvider._();
 
 /// 閲覧履歴のリストを監視するプロバイダー。
 
@@ -116,7 +116,7 @@ final class HistoryProvider
         $FutureModifier<List<HistoryData>>,
         $StreamProvider<List<HistoryData>> {
   /// 閲覧履歴のリストを監視するプロバイダー。
-  const HistoryProvider._()
+  HistoryProvider._()
     : super(
         from: null,
         argument: null,
@@ -147,7 +147,7 @@ String _$historyHash() => r'd793d980061255cbc26364bb0e20d92252403a72';
 /// 現在時刻を提供するプロバイダー。主に履歴のグループ化に使用される。
 
 @ProviderFor(currentTime)
-const currentTimeProvider = CurrentTimeProvider._();
+final currentTimeProvider = CurrentTimeProvider._();
 
 /// 現在時刻を提供するプロバイダー。主に履歴のグループ化に使用される。
 
@@ -155,7 +155,7 @@ final class CurrentTimeProvider
     extends $FunctionalProvider<DateTime, DateTime, DateTime>
     with $Provider<DateTime> {
   /// 現在時刻を提供するプロバイダー。主に履歴のグループ化に使用される。
-  const CurrentTimeProvider._()
+  CurrentTimeProvider._()
     : super(
         from: null,
         argument: null,
@@ -193,7 +193,7 @@ String _$currentTimeHash() => r'0447979bc20456d337c44a22640bc32ac172824f';
 /// 日付ごとにグループ化された閲覧履歴のリストを監視するプロバイダー。
 
 @ProviderFor(groupedHistory)
-const groupedHistoryProvider = GroupedHistoryProvider._();
+final groupedHistoryProvider = GroupedHistoryProvider._();
 
 /// 日付ごとにグループ化された閲覧履歴のリストを監視するプロバイダー。
 
@@ -208,7 +208,7 @@ final class GroupedHistoryProvider
         $FutureModifier<List<HistoryGroup>>,
         $StreamProvider<List<HistoryGroup>> {
   /// 日付ごとにグループ化された閲覧履歴のリストを監視するプロバイダー。
-  const GroupedHistoryProvider._()
+  GroupedHistoryProvider._()
     : super(
         from: null,
         argument: null,

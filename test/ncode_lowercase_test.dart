@@ -58,15 +58,15 @@ void main() {
       expect(() => NovelInfo.fromJson(json), returnsNormally);
     });
 
-    test('ncodeが文字列でない場合は変更されない', () {
+    test('ncodeがnullの場合はnullのまま保持される', () {
       final json = {
         'title': 'テスト小説',
-        'ncode': 12345,
+        'ncode': null,
         'writer': 'テスト作者',
       };
 
       final novelInfo = NovelInfo.fromJson(json);
-      expect(novelInfo.ncode, equals(12345));
+      expect(novelInfo.ncode, isNull);
     });
   });
 }

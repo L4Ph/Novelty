@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/router/router.dart';
 import 'package:novelty/utils/app_constants.dart';
 
 /// 小説リストのタイルを表示するウィジェット。
@@ -65,11 +65,21 @@ class NovelListTile extends HookWidget {
       [item.novelType, item.end],
     );
 
+    // ポイント表示の計算をメモ化
+    final pointSuffix = useMemoized(
+      () => item.allPoint != null
+          ? ' • ${(item.allPoint! / 1000).toStringAsFixed(1)}k pt'
+          : '',
+      [item.allPoint],
+    );
+
     // デフォルトのonTapハンドラーをメモ化
     final defaultOnTap = useCallback(
       () {
         if (item.ncode != null) {
-          unawaited(context.push('/novel/${item.ncode}'));
+          unawaited(
+            NovelDetailRoute(ncode: item.ncode!).push(context),
+          );
         }
       },
       [item.ncode],
@@ -158,6 +168,15 @@ class NovelListTile extends HookWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      // ライブラリ登録状態のハートアイコン
+                      if (enrichedData?.isInLibrary ?? false) ...[
+                        Icon(
+                          Icons.favorite,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       // Status Badge
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -174,7 +193,7 @@ class NovelListTile extends HookWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${item.writer} • $genreName${item.allPoint != null ? ' • ${(item.allPoint! / 1000).toStringAsFixed(1)}k pt' : ''}',
+                    '${item.writer} • $genreName$pointSuffix',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),

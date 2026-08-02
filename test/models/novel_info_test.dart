@@ -26,7 +26,7 @@ void main() {
     });
 
     test('toJsonでJSONに変換できる', () {
-      final novel = NovelInfo(
+      const novel = NovelInfo(
         title: 'Test Novel',
         ncode: 'n1234',
         novelType: 1,
@@ -39,7 +39,7 @@ void main() {
     });
 
     test('toDbCompanionが正しく動作する', () {
-      final novel = NovelInfo(
+      const novel = NovelInfo(
         ncode: 'n1234',
         title: 'Test Novel',
         writer: 'Author',

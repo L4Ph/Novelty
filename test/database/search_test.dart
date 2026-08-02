@@ -15,7 +15,7 @@ void main() {
   });
 
   test('Search novels returns correct results', () async {
-    // Arrange
+    // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
         ncode: 'n1234a',
@@ -46,29 +46,29 @@ void main() {
     );
     await db.addToLibrary('n5678b');
 
-    // Act & Assert
-    // Title search
+    // 実行と検証
+    // タイトル検索
     final results1 = await db.searchNovels('スライム');
     expect(results1.length, 1);
     expect(results1.first.title, '転生したらスライムだった件');
 
-    // Writer search
+    // 作者検索
     final results2 = await db.searchNovels('孫の手');
     expect(results2.length, 1);
     expect(results2.first.title, '無職転生');
 
-    // Story search
+    // あらすじ検索
     final results3 = await db.searchNovels('異世界');
     expect(results3.length, 1);
     expect(results3.first.title, '無職転生');
 
-    // No match
+    // 一致なし
     final results4 = await db.searchNovels('ドラゴン');
     expect(results4.isEmpty, true);
   });
 
   test('Search episodes returns correct results', () async {
-    // Arrange
+    // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
         ncode: 'n1234a',
@@ -89,7 +89,7 @@ void main() {
       ),
     ]);
 
-    // Update content (this triggers the FTS update via updateEpisodeContent)
+    // 本文を更新（updateEpisodeContent 経由で FTS も更新される）
     await db.updateEpisodeContent(
       ncode: 'n1234a',
       episodeId: 1,
@@ -112,24 +112,24 @@ void main() {
       url: 'http://example.com/2',
     );
 
-    // Act & Assert
-    // Subtitle search
+    // 実行と検証
+    // サブタイトル検索
     final results1 = await db.searchEpisodes('プロローグ');
     expect(results1.length, 1);
     expect(results1.first.subtitle, 'プロローグ');
 
-    // Content search
-    final results2 = await db.searchEpisodes('勇者は'); // Try 3 chars
+    // 本文検索
+    final results2 = await db.searchEpisodes('勇者は'); // 3文字で試す
     expect(results2.length, 1);
     expect(results2.first.subtitle, '旅立ち');
 
-    // No match
+    // 一致なし
     final results3 = await db.searchEpisodes('魔王');
     expect(results3.isEmpty, true);
   });
 
   test('サブタイトルが変更されても本文が同一でも検索インデックスが更新されること', () async {
-    // Arrange
+    // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
         ncode: 'n1234a',
@@ -180,7 +180,7 @@ void main() {
   });
 
   test('Deleting novel removes from search index', () async {
-    // Arrange
+    // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
         ncode: 'n1234a',
@@ -189,27 +189,28 @@ void main() {
     );
     await db.addToLibrary('n1234a');
 
-    // Verify it exists
+    // 存在することを確認
     expect((await db.searchNovels('Delete')).length, 1);
 
-    // Act
-    // We don't have a deleteNovel method exposed in AppDatabase yet,
-    // but we can use removeFromLibrary if it cascades?
-    // Actually removeFromLibrary only deletes from library_entries.
-    // We need to verify triggers on 'novels' table.
-    // Let's use customStatement to delete for test purpose or add deleteNovel method.
-    // Or just use deleteHistory if it was cascading? No.
+    // 実行
+    // AppDatabase にはまだ deleteNovel メソッドが無いが、
+    // removeFromLibrary がカスケード削除するか?
+    // 実際には removeFromLibrary は library_entries からしか削除しない。
+    // 'novels' テーブルのトリガーを検証する必要がある。
+    // テスト目的で customStatement を使用して削除するか、
+    // deleteNovel メソッドを追加する。
+    // カスケードするなら deleteHistory を使う? いや。
 
-    // Let's add a delete helper in test or just use customStatement.
+    // テスト用の削除ヘルパーを追加するか、customStatement を使用する。
     await db.customStatement('DELETE FROM novels WHERE ncode = ?', ['n1234a']);
 
-    // Assert
+    // 検証
     expect((await db.searchNovels('Delete')).isEmpty, true);
   });
 
   test('Search only returns novels in library', () async {
-    // Arrange
-    // Novel in library
+    // 準備
+    // ライブラリ内の小説
     await db.insertNovel(
       NovelsCompanion.insert(
         ncode: 'n1111a',
@@ -218,7 +219,7 @@ void main() {
     );
     await db.addToLibrary('n1111a');
 
-    // Novel NOT in library
+    // ライブラリ外の小説
     await db.insertNovel(
       NovelsCompanion.insert(
         ncode: 'n2222b',
@@ -226,17 +227,17 @@ void main() {
       ),
     );
 
-    // Act
+    // 実行
     final results = await db.searchNovels('Novel');
 
-    // Assert
+    // 検証
     expect(results.length, 1);
     expect(results.first.ncode, 'n1111a');
     expect(results.first.title, 'Library Novel');
   });
 
   test('Search filters out Bigram noise', () async {
-    // Arrange
+    // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
         ncode: 'n9999z',

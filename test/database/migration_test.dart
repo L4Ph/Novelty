@@ -73,7 +73,7 @@ void main() {
     for (final sql in statements) {
       db.execute(sql);
     }
-    db.dispose();
+    db.close();
   }
 
   /// 中断により中間状態が残った v15 相当の DB を作成する。
@@ -161,7 +161,7 @@ void main() {
     for (final sql in statements) {
       db.execute(sql);
     }
-    db.dispose();
+    db.close();
   }
 
   /// 中断により episode_list_entries が不完全なスキーマで存在する
@@ -207,7 +207,7 @@ void main() {
     for (final sql in statements) {
       db.execute(sql);
     }
-    db.dispose();
+    db.close();
   }
 
   /// 中断により episode_list_entries / episode_contents が不完全なデータで
@@ -277,7 +277,7 @@ void main() {
     for (final sql in statements) {
       db.execute(sql);
     }
-    db.dispose();
+    db.close();
   }
 
   test('v15マイグレーション失敗時にMigrationExceptionが投げられること', () async {
@@ -467,7 +467,7 @@ void main() {
     for (final sql in statements) {
       db.execute(sql);
     }
-    db.dispose();
+    db.close();
   }
 
   test('v14からのアップグレードでFTS再構築前にテーブル分割が完了すること', () async {

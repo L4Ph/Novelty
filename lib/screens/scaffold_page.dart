@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:novelty/router/router.dart';
 
 /// Scaffoldのウィジェット。
 class ScaffoldPage extends ConsumerWidget {
@@ -27,7 +28,7 @@ class ScaffoldPage extends ConsumerWidget {
         currentIndex: _calculateSelectedIndex(context),
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Colors.grey,
-        onTap: (int idx) => _onItemTapped(idx, context),
+        onTap: (idx) => _onItemTapped(idx, context),
         type: BottomNavigationBarType.fixed,
       ),
     );
@@ -50,13 +51,13 @@ class ScaffoldPage extends ConsumerWidget {
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
-        context.go('/');
+        const LibraryRoute().go(context);
       case 1:
-        context.go('/explore');
+        const ExploreRoute().go(context);
       case 2:
-        context.go('/history');
+        const HistoryRoute().go(context);
       case 3:
-        context.go('/more');
+        const MoreRoute().go(context);
     }
   }
 }

@@ -20,7 +20,7 @@ void main() {
       mockBackupService = MockBackupService();
     });
 
-    testWidgets('ページタイトルが正しく表示される', (WidgetTester tester) async {
+    testWidgets('ページタイトルが正しく表示される', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
@@ -32,7 +32,7 @@ void main() {
       expect(find.text('データとストレージ'), findsOneWidget);
     });
 
-    testWidgets('データベースバックアップセクションが表示される', (WidgetTester tester) async {
+    testWidgets('データベースバックアップセクションが表示される', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
@@ -46,7 +46,7 @@ void main() {
       expect(find.text('データベースをインポート'), findsOneWidget);
     });
 
-    testWidgets('データベースエクスポートボタンをタップできる', (WidgetTester tester) async {
+    testWidgets('データベースエクスポートボタンをタップできる', (tester) async {
       when(mockBackupService.exportDatabaseToFile()).thenAnswer(
         (_) async => '/test/path/novelty_backup.db',
       );
@@ -71,7 +71,7 @@ void main() {
       verify(mockBackupService.exportDatabaseToFile()).called(1);
     });
 
-    testWidgets('データベースインポート確認ダイアログが表示される', (WidgetTester tester) async {
+    testWidgets('データベースインポート確認ダイアログが表示される', (tester) async {
       when(mockBackupService.importDatabaseFromFile()).thenAnswer(
         (_) async => const ImportResult(success: true),
       );

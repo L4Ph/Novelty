@@ -11,7 +11,7 @@ part of 'api_service.dart';
 /// APIサービスのプロバイダー
 
 @ProviderFor(apiService)
-const apiServiceProvider = ApiServiceProvider._();
+final apiServiceProvider = ApiServiceProvider._();
 
 /// APIサービスのプロバイダー
 
@@ -19,7 +19,7 @@ final class ApiServiceProvider
     extends $FunctionalProvider<ApiService, ApiService, ApiService>
     with $Provider<ApiService> {
   /// APIサービスのプロバイダー
-  const ApiServiceProvider._()
+  ApiServiceProvider._()
     : super(
         from: null,
         argument: null,

@@ -57,10 +57,13 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => testHistoryData);
+      when(
+        mockDatabase.watchHistory(),
+      ).thenAnswer((_) => Stream.value(testHistoryData));
 
       await tester.pumpWidget(
         ProviderScope(
+          retry: (_, _) => null,
           overrides: [
             appDatabaseProvider.overrideWithValue(mockDatabase),
             currentTimeProvider.overrideWithValue(fixedTime),
@@ -85,24 +88,22 @@ void main() {
       expect(find.text('今日の小説2'), findsOneWidget);
       expect(find.text('昨日の小説'), findsOneWidget);
 
-      // 作者名も表示されることを確認
-      expect(find.text('作者1'), findsOneWidget);
-      expect(find.text('作者2'), findsOneWidget);
-      expect(find.text('作者3'), findsOneWidget);
-
       // エピソード情報が表示されることを確認
-      expect(find.text('最終: 5話'), findsOneWidget);
-      expect(find.text('最終: 3話'), findsOneWidget);
-      expect(find.text('最終: 10話'), findsOneWidget);
+      expect(find.text('第5章 - 12:00'), findsOneWidget);
+      expect(find.text('第3章 - 10:00'), findsOneWidget);
+      expect(find.text('第10章 - 12:00'), findsOneWidget);
     });
 
     testWidgets('should display "No history found." when no history exists', (
       tester,
     ) async {
-      when(mockDatabase.getHistory()).thenAnswer((_) async => <HistoryData>[]);
+      when(
+        mockDatabase.watchHistory(),
+      ).thenAnswer((_) => Stream.value(<HistoryData>[]));
 
       await tester.pumpWidget(
         ProviderScope(
+          retry: (_, _) => null,
           overrides: [
             appDatabaseProvider.overrideWithValue(mockDatabase),
             currentTimeProvider.overrideWithValue(fixedTime),
@@ -117,16 +118,19 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('No history found.'), findsOneWidget);
+      expect(find.text('履歴がありません。'), findsOneWidget);
     });
 
     testWidgets('should display error message when database fails', (
       tester,
     ) async {
-      when(mockDatabase.getHistory()).thenThrow(Exception('Database error'));
+      when(
+        mockDatabase.watchHistory(),
+      ).thenAnswer((_) => Stream.error(Exception('Database error')));
 
       await tester.pumpWidget(
         ProviderScope(
+          retry: (_, _) => null,
           overrides: [
             appDatabaseProvider.overrideWithValue(mockDatabase),
             currentTimeProvider.overrideWithValue(fixedTime),
@@ -163,11 +167,12 @@ void main() {
         ];
 
         when(
-          mockDatabase.getHistory(),
-        ).thenAnswer((_) async => testHistoryData);
+          mockDatabase.watchHistory(),
+        ).thenAnswer((_) => Stream.value(testHistoryData));
 
         await tester.pumpWidget(
           ProviderScope(
+            retry: (_, _) => null,
             overrides: [
               appDatabaseProvider.overrideWithValue(mockDatabase),
               currentTimeProvider.overrideWithValue(fixedTime),

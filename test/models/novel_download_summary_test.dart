@@ -196,7 +196,8 @@ void main() {
 
       expect(
         summary.toString(),
-        'NovelDownloadSummary(ncode: n1234, successCount: 5, failureCount: 1, totalEpisodes: 10)',
+        'NovelDownloadSummary(ncode: n1234, successCount: 5, '
+        'failureCount: 1, totalEpisodes: 10)',
       );
     });
   });

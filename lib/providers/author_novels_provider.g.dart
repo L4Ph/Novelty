@@ -11,7 +11,7 @@ part of 'author_novels_provider.dart';
 /// 指定したuserIdの作者の小説一覧を取得するFutureProvider
 
 @ProviderFor(authorNovels)
-const authorNovelsProvider = AuthorNovelsFamily._();
+final authorNovelsProvider = AuthorNovelsFamily._();
 
 /// 指定したuserIdの作者の小説一覧を取得するFutureProvider
 
@@ -24,7 +24,7 @@ final class AuthorNovelsProvider
         >
     with $FutureModifier<List<NovelInfo>>, $FutureProvider<List<NovelInfo>> {
   /// 指定したuserIdの作者の小説一覧を取得するFutureProvider
-  const AuthorNovelsProvider._({
+  AuthorNovelsProvider._({
     required AuthorNovelsFamily super.from,
     required int super.argument,
   }) : super(
@@ -74,7 +74,7 @@ String _$authorNovelsHash() => r'27b51fd26cce245383fb8d894cdfdda77a1d44b9';
 
 final class AuthorNovelsFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<List<NovelInfo>>, int> {
-  const AuthorNovelsFamily._()
+  AuthorNovelsFamily._()
     : super(
         retry: null,
         name: r'authorNovelsProvider',

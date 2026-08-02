@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:novelty/providers/network_fallback_event_provider.dart';
+import 'package:novelty/router/router.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 /// オフラインモードON時に全画面の上部に表示する帯。
@@ -51,7 +51,7 @@ class OfflineModeBanner extends ConsumerWidget {
             child: InkWell(
               onTap: () {
                 if (context.mounted) {
-                  context.go('/more');
+                  const MoreRoute().go(context);
                 }
               },
               child: SizedBox(
@@ -69,10 +69,11 @@ class OfflineModeBanner extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           'オフラインモード',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onErrorContainer,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: colorScheme.onErrorContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),

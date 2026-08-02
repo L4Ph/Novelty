@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/domain/search_state.dart';
 import 'package:novelty/models/novel_search_query.dart';
+import 'package:novelty/router/router.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
@@ -226,7 +226,7 @@ class _OfflineExploreBody extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           OutlinedButton(
-            onPressed: () => context.go('/'),
+            onPressed: () => const LibraryRoute().go(context),
             child: const Text('ライブラリに戻る'),
           ),
         ],

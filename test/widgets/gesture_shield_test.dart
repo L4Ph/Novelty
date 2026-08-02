@@ -208,8 +208,9 @@ void main() {
       expect(positioned.height, 140);
     });
 
-    testWidgets('GestureDetectorの子ウィジェットとしてSizedBox.expandが存在する',
-        (tester) async {
+    testWidgets('GestureDetectorの子ウィジェットとしてSizedBox.expandが存在する', (
+      tester,
+    ) async {
       // Arrange
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(400, 800);
@@ -245,8 +246,6 @@ void main() {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(400, 800);
 
-      var backgroundHorizontalDragStarted = false;
-
       await tester.pumpWidget(
         MaterialApp(
           home: MediaQuery(
@@ -257,9 +256,7 @@ void main() {
               body: Stack(
                 children: [
                   GestureDetector(
-                    onHorizontalDragStart: (_) {
-                      backgroundHorizontalDragStarted = true;
-                    },
+                    onHorizontalDragStart: (_) {},
                     child: const ColoredBox(color: Colors.white),
                   ),
                   const GestureShield(),

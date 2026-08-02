@@ -112,10 +112,13 @@ void main() {
         ),
       ];
 
-      when(mockDatabase.getHistory()).thenAnswer((_) async => testHistoryData);
+      when(
+        mockDatabase.watchHistory(),
+      ).thenAnswer((_) => Stream.value(testHistoryData));
 
       await tester.pumpWidget(
         ProviderScope(
+          retry: (_, _) => null,
           overrides: [
             appDatabaseProvider.overrideWithValue(mockDatabase),
             currentTimeProvider.overrideWithValue(fixedTime),

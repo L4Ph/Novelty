@@ -11,13 +11,13 @@ part of 'settings_provider.dart';
 /// アプリケーションの設定を提供するプロバイダー。
 
 @ProviderFor(Settings)
-const settingsProvider = SettingsProvider._();
+final settingsProvider = SettingsProvider._();
 
 /// アプリケーションの設定を提供するプロバイダー。
 final class SettingsProvider
     extends $AsyncNotifierProvider<Settings, AppSettings> {
   /// アプリケーションの設定を提供するプロバイダー。
-  const SettingsProvider._()
+  SettingsProvider._()
     : super(
         from: null,
         argument: null,
@@ -36,7 +36,7 @@ final class SettingsProvider
   Settings create() => Settings();
 }
 
-String _$settingsHash() => r'3d0387293aa25276f7cfe7bd410d57aaf372424d';
+String _$settingsHash() => r'6ad7f26502d5118f307d8d6428d1e663499654cf';
 
 /// アプリケーションの設定を提供するプロバイダー。
 
@@ -44,8 +44,7 @@ abstract class _$Settings extends $AsyncNotifier<AppSettings> {
   FutureOr<AppSettings> build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<AppSettings>, AppSettings>;
     final element =
         ref.element
@@ -55,7 +54,7 @@ abstract class _$Settings extends $AsyncNotifier<AppSettings> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }
 
@@ -64,7 +63,7 @@ abstract class _$Settings extends $AsyncNotifier<AppSettings> {
 /// [settingsProvider] の値から派生し、取得中やエラー時は `false` を返す。
 
 @ProviderFor(isOfflineMode)
-const isOfflineModeProvider = IsOfflineModeProvider._();
+final isOfflineModeProvider = IsOfflineModeProvider._();
 
 /// オフラインモードが有効かどうかを同期で取得するプロバイダー。
 ///
@@ -75,7 +74,7 @@ final class IsOfflineModeProvider extends $FunctionalProvider<bool, bool, bool>
   /// オフラインモードが有効かどうかを同期で取得するプロバイダー。
   ///
   /// [settingsProvider] の値から派生し、取得中やエラー時は `false` を返す。
-  const IsOfflineModeProvider._()
+  IsOfflineModeProvider._()
     : super(
         from: null,
         argument: null,

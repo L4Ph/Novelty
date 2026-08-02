@@ -22,7 +22,7 @@ void main() {
     });
 
     testWidgets('should display ranking list items', (
-      WidgetTester tester,
+      tester,
     ) async {
       final mockNovels = List.generate(
         5,
@@ -43,7 +43,7 @@ void main() {
         allCount: 5,
       );
 
-      // Default query match
+      // デフォルトクエリ一致
       when(
         mockApiService.searchNovels(any),
       ).thenAnswer((_) async => searchResult);
@@ -73,14 +73,14 @@ void main() {
     });
 
     testWidgets('should update query when filter changes', (
-      WidgetTester tester,
+      tester,
     ) async {
       final mockNovels = [
         const NovelInfo(
           ncode: 'n1',
           title: 'Filtered Novel',
           writer: 'Writer',
-          genre: 201, // Fantasy
+          genre: 201, // ファンタジー
         ),
       ];
 
@@ -116,7 +116,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Verify that searchNovels was called with a query including the genre
+      // searchNovels がジャンルを含むクエリで呼ばれたことを確認
       final captured = verify(mockApiService.searchNovels(captureAny)).captured;
       final query = captured.last as NovelSearchQuery;
       expect(query.genre, equals([201]));
@@ -124,21 +124,21 @@ void main() {
       expect(find.text('Filtered Novel'), findsOneWidget);
     });
     testWidgets('should filter ongoing novels locally', (
-      WidgetTester tester,
+      tester,
     ) async {
       final mockNovels = [
         const NovelInfo(
           ncode: 'n1',
           title: 'Ongoing Novel',
           writer: 'Writer',
-          novelType: 1, // Ongoing
+          novelType: 1, // 連載中
           end: 1, // 連載中
         ),
         const NovelInfo(
           ncode: 'n2',
           title: 'Short Story',
           writer: 'Writer',
-          novelType: 2, // Short
+          novelType: 2, // 短編
           end: 0, // 短編または完結
         ),
       ];
@@ -175,17 +175,17 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Verify that query does NOT have type='r' (since we removed it)
+      // クエリに type='r' が含まれないことを確認（削除したため）
       final captured = verify(mockApiService.searchNovels(captureAny)).captured;
       final query = captured.last as NovelSearchQuery;
       expect(query.type, isNull);
 
-      // Verify filtering: Only Ongoing Novel should be visible
+      // フィルタリング検証: 連載中の小説のみ表示されること
       expect(find.text('Ongoing Novel'), findsOneWidget);
       expect(find.text('Short Story'), findsNothing);
     });
     testWidgets('should refresh list when filter changes dynamically', (
-      WidgetTester tester,
+      tester,
     ) async {
       final mockNovels = [
         const NovelInfo(
@@ -230,22 +230,22 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Initial Novel'), findsOneWidget);
 
-      // Change filter
+      // フィルタを変更
       final element = tester.element(find.byType(RankingList));
       final container = ProviderScope.containerOf(element);
       container
           .read(rankingFilterStateProvider('d').notifier)
           .setShowOnlyOngoing(value: true);
 
-      // Update mock response for the new query
+      // 新しいクエリ用にモックの応答を更新
       when(mockApiService.searchNovels(any)).thenAnswer(
         (_) async => NovelSearchResult(novels: filteredNovels, allCount: 1),
       );
 
       await tester.pumpAndSettle();
 
-      // Should now show the filtered novel
-      // If reactivity is missing, this will fail as it will still show 'Initial Novel'
+      // 絞り込み後の小説が表示されるはず
+      // リアクティブ性が無い場合、'Initial Novel' が表示されたままになり失敗する
       if (find.text('Filtered Novel').evaluate().isEmpty) {}
       expect(find.text('Filtered Novel'), findsOneWidget);
     });

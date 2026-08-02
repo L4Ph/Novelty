@@ -11,7 +11,7 @@ part of 'preferences_repository.dart';
 /// SharedPreferencesをラップするRepositoryのプロバイダー
 
 @ProviderFor(preferencesRepository)
-const preferencesRepositoryProvider = PreferencesRepositoryProvider._();
+final preferencesRepositoryProvider = PreferencesRepositoryProvider._();
 
 /// SharedPreferencesをラップするRepositoryのプロバイダー
 
@@ -24,7 +24,7 @@ final class PreferencesRepositoryProvider
         >
     with $Provider<PreferencesRepository> {
   /// SharedPreferencesをラップするRepositoryのプロバイダー
-  const PreferencesRepositoryProvider._()
+  PreferencesRepositoryProvider._()
     : super(
         from: null,
         argument: null,

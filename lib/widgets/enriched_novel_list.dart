@@ -27,16 +27,17 @@ class EnrichedNovelList extends HookConsumerWidget {
     final errorMessage = useState<String?>(null);
 
     // ライブラリ追加処理のコールバック
-    final addToLibraryCallback = useCallback(
-      (EnrichedNovelData enrichedData) => handleAddToLibrary(
-        item: enrichedData.novel,
-        context: context,
-        ref: ref,
-        isProcessingMap: isProcessingMap,
-        errorMessage: errorMessage,
-      ),
-      [ref],
-    );
+    final addToLibraryCallback =
+        useCallback<Future<void> Function(EnrichedNovelData)>(
+          (enrichedData) => handleAddToLibrary(
+            item: enrichedData.novel,
+            context: context,
+            ref: ref,
+            isProcessingMap: isProcessingMap,
+            errorMessage: errorMessage,
+          ),
+          [ref],
+        );
 
     return ListView.builder(
       itemCount: enrichedNovels.length,

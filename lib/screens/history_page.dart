@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/router/router.dart';
+import 'package:novelty/utils/time_format.dart';
 
 /// "履歴"ページのウィジェット。
 class HistoryPage extends ConsumerWidget {
@@ -62,7 +62,8 @@ class HistoryPage extends ConsumerWidget {
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       subtitle: Text(
-                        '第$lastEpisode章 - ${updatedAt != null ? DateFormat('HH:mm').format(updatedAt) : ''}',
+                        '第$lastEpisode章 - '
+                        '${updatedAt != null ? formatTimeHm(updatedAt) : ''}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       trailing: IconButton(
@@ -78,10 +79,15 @@ class HistoryPage extends ConsumerWidget {
                       onTap: () {
                         if (lastEpisode != null && lastEpisode > 0) {
                           unawaited(
-                            context.push('/novel/$ncode/$lastEpisode'),
+                            NovelEpisodeRoute(
+                              ncode: ncode,
+                              episode: lastEpisode,
+                            ).push(context),
                           );
                         } else {
-                          unawaited(context.push('/novel/$ncode'));
+                          unawaited(
+                            NovelDetailRoute(ncode: ncode).push(context),
+                          );
                         }
                       },
                     );

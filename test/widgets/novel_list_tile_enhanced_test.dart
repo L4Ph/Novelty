@@ -6,9 +6,7 @@ import 'package:novelty/widgets/novel_list_tile.dart';
 
 void main() {
   group('NovelListTile Tests', () {
-    testWidgets('should show heart icon when novel is in library', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('ライブラリ登録済みの小説にはハートアイコンが表示される', (tester) async {
       // Arrange
       const testNovel = NovelInfo(
         ncode: 'n1234test',
@@ -38,9 +36,7 @@ void main() {
       expect(find.byIcon(Icons.favorite), findsOneWidget);
     });
 
-    testWidgets('should not show heart icon when novel is not in library', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('ライブラリ未登録の小説にはハートアイコンが表示されない', (tester) async {
       // Arrange
       const testNovel = NovelInfo(
         ncode: 'n1234test',
@@ -70,9 +66,7 @@ void main() {
       expect(find.byIcon(Icons.favorite), findsNothing);
     });
 
-    testWidgets('should not show heart icon when enriched data is null', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('enriched data が null の場合はハートアイコンが表示されない', (tester) async {
       // Arrange
       const testNovel = NovelInfo(
         ncode: 'n1234test',

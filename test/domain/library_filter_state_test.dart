@@ -66,7 +66,7 @@ void main() {
     });
 
     test('異なる値を持つインスタンスは非等価', () {
-      const state1 = LibraryFilterState(showOnlyOngoing: false);
+      const state1 = LibraryFilterState();
       const state2 = LibraryFilterState(showOnlyOngoing: true);
 
       expect(state1, isNot(equals(state2)));

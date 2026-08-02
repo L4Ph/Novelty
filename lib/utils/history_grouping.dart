@@ -50,7 +50,8 @@ class HistoryGrouping {
         return '1週間前';
       default:
         // 8日以上前の場合は実際の日付を表示
-        return '${viewedDateOnly.year}年${viewedDateOnly.month}月${viewedDateOnly.day}日';
+        return '${viewedDateOnly.year}年${viewedDateOnly.month}月'
+            '${viewedDateOnly.day}日';
     }
   }
 

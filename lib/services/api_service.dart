@@ -14,6 +14,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'api_service.g.dart';
 
+/// なろうAPIの小説情報取得時に指定する取得フィールド。
+const String _novelApiOfParameter =
+    't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-'
+    'gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua';
+
 /// 作品が非公開・削除されていてAPIから取得できない場合の例外。
 class NovelNotFoundException implements Exception {
   /// コンストラクタ。
@@ -94,8 +99,7 @@ class ApiService {
       'ncode': ncode.toNormalizedNcode(),
       'out': 'json',
       'gzip': '5',
-      'of':
-          't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua',
+      'of': _novelApiOfParameter,
     });
 
     final data = await _fetchData(uri.toString());
@@ -132,8 +136,8 @@ class ApiService {
     return NovelInfo.fromJson(processedData);
   }
 
-  /// Fetches multiple novels' basic information in a single API request
-  /// This is more efficient than making individual requests for each novel
+  /// 複数の小説の基本情報を1回のAPIリクエストで取得する。
+  /// 小説ごとに個別リクエストするよりも効率的。
   Future<Map<String, NovelInfo>> fetchMultipleNovelsInfo(
     List<String> ncodes,
   ) async {
@@ -158,8 +162,7 @@ class ApiService {
         'ncode': ncodesParam,
         'out': 'json',
         'gzip': '5',
-        'of':
-            't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua',
+        'of': _novelApiOfParameter,
       });
 
       try {
@@ -204,9 +207,8 @@ class ApiService {
     return result;
   }
 
-  /// Fetches basic novel information without episodes
-  /// This is a lightweight version of fetchNovelInfo that doesn't fetch episodes
-  /// Suitable for list views like history where full episode data isn't needed
+  /// エピソードなしで小説の基本情報を取得する。
+  /// エピソードを取得しない軽量版で、履歴などの一覧表示に適する。
   Future<NovelInfo> fetchBasicNovelInfo(String ncode) async {
     var info = await _fetchNovelInfoFromNarou(ncode);
 
@@ -246,7 +248,8 @@ class ApiService {
 
     if (response.statusCode != 200) {
       throw Exception(
-        'Failed to fetch episodes page $page: ${response.statusCode} ${response.statusMessage}',
+        'Failed to fetch episodes page $page: '
+        '${response.statusCode} ${response.statusMessage}',
       );
     }
 
@@ -289,7 +292,8 @@ class ApiService {
 
     if (firstPageResponse.statusCode != 200) {
       throw Exception(
-        'Failed to fetch URL: ${firstPageResponse.statusCode} ${firstPageResponse.statusMessage}',
+        'Failed to fetch URL: '
+        '${firstPageResponse.statusCode} ${firstPageResponse.statusMessage}',
       );
     }
 
@@ -393,7 +397,8 @@ class ApiService {
       subtitle: episodeTitle,
       body: document
           .querySelectorAll(
-            '.p-novel__text:not(.p-novel__text--preface):not(.p-novel__text--afterword)',
+            '.p-novel__text:not(.p-novel__text--preface):not('
+            '.p-novel__text--afterword)',
           )
           .map((el) => el.innerHtml)
           // ignore: avoid_redundant_argument_values　明示的に空文字をjoin
@@ -428,7 +433,8 @@ class ApiService {
 
     if (response.statusCode != 200) {
       throw Exception(
-        'Failed to fetch data: ${response.statusCode} ${response.statusMessage}',
+        'Failed to fetch data: '
+        '${response.statusCode} ${response.statusMessage}',
       );
     }
 
@@ -455,8 +461,7 @@ class ApiService {
       ),
       'out': 'json',
       'gzip': '5',
-      'of':
-          't-n-u-w-s-bg-g-k-gf-gl-nt-e-ga-l-ti-i-ir-ibl-igl-izk-its-iti-gp-dp-wp-mp-qp-yp-f-imp-r-a-ah-sa-ka-nu-ua',
+      'of': _novelApiOfParameter,
     });
 
     final data = await _fetchData(uri.toString());
