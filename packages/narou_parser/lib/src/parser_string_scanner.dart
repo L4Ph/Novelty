@@ -1,5 +1,5 @@
 import 'package:meta/meta.dart';
-import 'package:narou_parser/src/models/novel_content_element.dart';
+import 'package:novel_parser_core/novel_parser_core.dart';
 
 /// 文字列スキャンによる超高速パース処理。
 /// 正規表現を使用せず、インデックス操作のみで解析を行うため、理論上最速。

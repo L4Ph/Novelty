@@ -1,5 +1,5 @@
 import 'package:meta/meta.dart';
-import 'package:narou_parser/src/models/novel_content_element.dart';
+import 'package:novel_parser_core/novel_parser_core.dart';
 
 /// 状態機械による超高速パース処理。
 /// 各文字を読んで状態を遷移させることで、最小限の分岐で処理を行う。
