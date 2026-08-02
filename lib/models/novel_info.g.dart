@@ -7,6 +7,10 @@ part of 'novel_info.dart';
 // **************************************************************************
 
 _NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => _NovelInfo(
+  source:
+      $enumDecodeNullable(_$NovelSourceEnumMap, json['source']) ??
+      NovelSource.narou,
+  workId: json['workId'] as String?,
   title: const HtmlEscapeConverter().fromJson(json['title'] as String?),
   ncode: json['ncode'] as String?,
   writer: const HtmlEscapeConverter().fromJson(json['writer'] as String?),
@@ -15,7 +19,7 @@ _NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => _NovelInfo(
   novelType: const StringToIntConverter().fromJson(json['novel_type']),
   end: const StringToIntConverter().fromJson(json['end']),
   generalAllNo: const StringToIntConverter().fromJson(json['general_all_no']),
-  genre: const StringToIntConverter().fromJson(json['genre']),
+  genreId: json['genre'] as String?,
   keyword: const HtmlEscapeConverter().fromJson(json['keyword'] as String?),
   generalFirstup: json['general_firstup'] as String?,
   generalLastup: json['general_lastup'] as String?,
@@ -51,6 +55,8 @@ _NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => _NovelInfo(
 Map<String, dynamic> _$NovelInfoToJson(
   _NovelInfo instance,
 ) => <String, dynamic>{
+  'source': _$NovelSourceEnumMap[instance.source]!,
+  'workId': instance.workId,
   'title': const HtmlEscapeConverter().toJson(instance.title),
   'ncode': instance.ncode,
   'writer': const HtmlEscapeConverter().toJson(instance.writer),
@@ -59,7 +65,7 @@ Map<String, dynamic> _$NovelInfoToJson(
   'novel_type': const StringToIntConverter().toJson(instance.novelType),
   'end': const StringToIntConverter().toJson(instance.end),
   'general_all_no': const StringToIntConverter().toJson(instance.generalAllNo),
-  'genre': const StringToIntConverter().toJson(instance.genre),
+  'genre': instance.genreId,
   'keyword': const HtmlEscapeConverter().toJson(instance.keyword),
   'general_firstup': instance.generalFirstup,
   'general_lastup': instance.generalLastup,
@@ -88,4 +94,9 @@ Map<String, dynamic> _$NovelInfoToJson(
   'istensei': const StringToIntConverter().toJson(instance.istensei),
   'istenni': const StringToIntConverter().toJson(instance.istenni),
   'isPrivate': instance.isPrivate,
+};
+
+const _$NovelSourceEnumMap = {
+  NovelSource.narou: 'narou',
+  NovelSource.kakuyomu: 'kakuyomu',
 };

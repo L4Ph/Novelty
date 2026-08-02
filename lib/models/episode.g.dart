@@ -7,6 +7,9 @@ part of 'episode.dart';
 // **************************************************************************
 
 Episode _$EpisodeFromJson(Map<String, dynamic> json) => Episode(
+  source:
+      $enumDecodeNullable(_$NovelSourceEnumMap, json['source']) ??
+      NovelSource.narou,
   subtitle: const HtmlEscapeConverter().fromJson(json['subtitle'] as String?),
   url: json['url'] as String?,
   update: json['update'] as String?,
@@ -19,6 +22,7 @@ Episode _$EpisodeFromJson(Map<String, dynamic> json) => Episode(
 );
 
 Map<String, dynamic> _$EpisodeToJson(Episode instance) => <String, dynamic>{
+  'source': _$NovelSourceEnumMap[instance.source]!,
   'subtitle': const HtmlEscapeConverter().toJson(instance.subtitle),
   'url': instance.url,
   'update': instance.update,
@@ -28,4 +32,9 @@ Map<String, dynamic> _$EpisodeToJson(Episode instance) => <String, dynamic>{
   'body': instance.body,
   'novelUpdatedAt': instance.novelUpdatedAt,
   'isDownloaded': instance.isDownloaded,
+};
+
+const _$NovelSourceEnumMap = {
+  NovelSource.narou: 'narou',
+  NovelSource.kakuyomu: 'kakuyomu',
 };

@@ -44,14 +44,14 @@ class NovelListTile extends HookWidget {
 
     // ジャンル名の計算をメモ化
     final genreName = useMemoized(
-      () => item.genre != null && item.genre != -1
+      () => item.genreId != null && item.genreId != '-1'
           ? genreList.firstWhere(
-                  (g) => g['id'] == item.genre,
+                  (g) => g['id'].toString() == item.genreId,
                   orElse: () => {'name': '不明'},
                 )['name']
                 as String
           : '不明',
-      [item.genre],
+      [item.genreId],
     );
 
     // ステータスの計算をメモ化
@@ -76,9 +76,13 @@ class NovelListTile extends HookWidget {
     // デフォルトのonTapハンドラーをメモ化
     final defaultOnTap = useCallback(
       () {
-        if (item.ncode != null) {
+        final workId = item.workId ?? item.ncode;
+        if (workId != null) {
           unawaited(
-            NovelDetailRoute(ncode: item.ncode!).push(context),
+            NovelDetailRoute(
+              source: item.source.name,
+              workId: workId,
+            ).push(context),
           );
         }
       },

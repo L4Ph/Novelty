@@ -11,10 +11,12 @@ void main() {
     // プラットフォームのロケールをen_USに設定する。
     TestWidgetsFlutterBinding.ensureInitialized()
         .platformDispatcher
-        .localeTestValue = const Locale('en', 'US');
+        .localeTestValue = const Locale(
+      'en',
+      'US',
+    );
     addTearDown(() {
-      TestWidgetsFlutterBinding.ensureInitialized()
-          .platformDispatcher
+      TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher
           .clearLocaleTestValue();
     });
 

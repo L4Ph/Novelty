@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/episode.dart';
+import 'package:novelty/sites/novel_source.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +24,8 @@ void main() {
           .into(db.novels)
           .insert(
             NovelsCompanion(
-              ncode: Value(ncode),
+              source: const Value(NovelSource.narou),
+              workId: Value(ncode),
               title: const Value('dummy title'),
               writer: const Value('dummy writer'),
             ),
@@ -36,7 +38,8 @@ void main() {
 
       await db.upsertEpisodes([
         const EpisodeListEntriesCompanion(
-          ncode: Value(ncode),
+          source: Value(NovelSource.narou),
+          workId: Value(ncode),
           episodeId: Value(1),
           subtitle: Value('第1話'),
           url: Value('https://example.com/1'),
@@ -51,7 +54,12 @@ void main() {
       expect(rows.single.subtitle, '第1話');
       expect(rows.single.fetchedAt, isNotNull);
 
-      final episodes = await db.getEpisodesRange(ncode, 1, 100);
+      final episodes = await db.getEpisodesRange(
+        NovelSource.narou,
+        ncode,
+        1,
+        100,
+      );
       expect(episodes.length, 1);
       expect(episodes.single.subtitle, '第1話');
       expect(episodes.single.revised, '2024-01-02 00:00:00');
@@ -64,7 +72,8 @@ void main() {
 
       await db.upsertEpisodes([
         const EpisodeListEntriesCompanion(
-          ncode: Value(ncode),
+          source: Value(NovelSource.narou),
+          workId: Value(ncode),
           episodeId: Value(1),
           subtitle: Value('第1話'),
           url: Value('https://example.com/1'),
@@ -72,14 +81,20 @@ void main() {
       ]);
       await db.upsertEpisodes([
         const EpisodeListEntriesCompanion(
-          ncode: Value(ncode),
+          source: Value(NovelSource.narou),
+          workId: Value(ncode),
           episodeId: Value(1),
           subtitle: Value('第1話(改稿)'),
           url: Value('https://example.com/1'),
         ),
       ]);
 
-      final episodes = await db.getEpisodesRange(ncode, 1, 100);
+      final episodes = await db.getEpisodesRange(
+        NovelSource.narou,
+        ncode,
+        1,
+        100,
+      );
       expect(episodes.single.subtitle, '第1話(改稿)');
     });
 
@@ -89,7 +104,8 @@ void main() {
 
       await db.upsertEpisodes([
         const EpisodeListEntriesCompanion(
-          ncode: Value(ncode),
+          source: Value(NovelSource.narou),
+          workId: Value(ncode),
           episodeId: Value(1),
           subtitle: Value('第1話'),
           url: Value('https://example.com/1'),
@@ -97,14 +113,15 @@ void main() {
       ]);
 
       await db.updateEpisodeContent(
-        ncode: ncode,
+        source: NovelSource.narou,
+        workId: ncode,
         episodeId: 1,
         content: [NovelContentElement.plainText('本文テキスト')],
         fetchedAt: 1234567890,
         revisedAt: '2024-02-01 00:00:00',
       );
 
-      final data = await db.getEpisodeData(ncode, 1);
+      final data = await db.getEpisodeData(NovelSource.narou, ncode, 1);
       expect(data, isNotNull);
       expect(data!.subtitle, '第1話');
       expect(data.content, isNotNull);
@@ -113,7 +130,12 @@ void main() {
       expect(data.revisedAt, '2024-02-01 00:00:00');
 
       // 本文取得済みはダウンロード済み扱いになること
-      final episodes = await db.getEpisodesRange(ncode, 1, 100);
+      final episodes = await db.getEpisodesRange(
+        NovelSource.narou,
+        ncode,
+        1,
+        100,
+      );
       expect(episodes.single.isDownloaded, isTrue);
     });
 
@@ -122,7 +144,8 @@ void main() {
       await insertDummyNovel(ncode);
 
       await db.updateEpisodeContent(
-        ncode: ncode,
+        source: NovelSource.narou,
+        workId: ncode,
         episodeId: 1,
         content: [NovelContentElement.plainText('本文テキスト')],
         fetchedAt: 111,
@@ -144,13 +167,14 @@ void main() {
 
       await db.upsertEpisodes([
         const EpisodeListEntriesCompanion(
-          ncode: Value(ncode),
+          source: Value(NovelSource.narou),
+          workId: Value(ncode),
           episodeId: Value(1),
           subtitle: Value('第1話'),
         ),
       ]);
 
-      final stream = db.watchEpisodesRange(ncode, 1, 100);
+      final stream = db.watchEpisodesRange(NovelSource.narou, ncode, 1, 100);
       final expectation = expectLater(
         stream,
         emitsInOrder([
@@ -165,7 +189,8 @@ void main() {
 
       await Future<void>.delayed(Duration.zero);
       await db.updateEpisodeContent(
-        ncode: ncode,
+        source: NovelSource.narou,
+        workId: ncode,
         episodeId: 1,
         content: [NovelContentElement.plainText('本文テキスト')],
         fetchedAt: 222,
@@ -180,7 +205,8 @@ void main() {
 
       // updateEpisodeContentを直接呼ぶと、目次行は作られるがfetchedAtはNULLのまま
       await db.updateEpisodeContent(
-        ncode: ncode,
+        source: NovelSource.narou,
+        workId: ncode,
         episodeId: 1,
         content: [NovelContentElement.plainText('本文テキスト')],
         fetchedAt: 222,
@@ -191,7 +217,12 @@ void main() {
       expect(listRows.single.fetchedAt, isNull);
 
       // NULL行が含まれるため、最古取得日時はNULL（TTL切れ）として返されること
-      final oldest = await db.getEpisodeListOldestFetchedAt(ncode, 1, 100);
+      final oldest = await db.getEpisodeListOldestFetchedAt(
+        NovelSource.narou,
+        ncode,
+        1,
+        100,
+      );
       expect(oldest, isNull);
     });
 
@@ -203,7 +234,8 @@ void main() {
           .into(db.episodeListEntries)
           .insert(
             const EpisodeListEntriesCompanion(
-              ncode: Value(ncode),
+              source: Value(NovelSource.narou),
+              workId: Value(ncode),
               episodeId: Value(1),
               subtitle: Value('第1話'),
               url: Value('https://example.com/1'),
@@ -211,7 +243,12 @@ void main() {
             ),
           );
 
-      final oldest = await db.getEpisodeListOldestFetchedAt(ncode, 1, 100);
+      final oldest = await db.getEpisodeListOldestFetchedAt(
+        NovelSource.narou,
+        ncode,
+        1,
+        100,
+      );
       expect(oldest, 1000);
     });
   });

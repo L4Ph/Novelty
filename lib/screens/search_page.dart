@@ -70,9 +70,9 @@ class SearchPage extends HookConsumerWidget {
         final q = query.value;
 
         // ジャンルで絞り込み
-        if (q.genre != null && q.genre!.isNotEmpty) {
-          // DB 上の genre は nullable な int
-          if (novel.genre == null || !q.genre!.contains(novel.genre)) {
+        if (q.genreId != null && q.genreId!.isNotEmpty) {
+          // DB 上の genre_id は nullable な String
+          if (novel.genreId == null || !q.genreId!.contains(novel.genreId)) {
             return false;
           }
         }
@@ -260,7 +260,8 @@ class SearchPage extends HookConsumerWidget {
                 // エピソードビューアーへ遷移
                 unawaited(
                   NovelEpisodeRoute(
-                    ncode: episode.ncode,
+                    source: episode.source.name,
+                    workId: episode.workId,
                     episode: episode.episodeId,
                   ).push(context),
                 );

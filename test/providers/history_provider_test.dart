@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/sites/novel_source.dart';
 
 @GenerateMocks([AppDatabase])
 import 'history_provider_test.mocks.dart';
@@ -36,7 +37,8 @@ void main() {
     test('should return history data when database call succeeds', () async {
       final testHistoryData = [
         HistoryData(
-          ncode: 'N1234AB',
+          source: NovelSource.narou,
+          workId: 'N1234AB',
           title: 'テスト小説',
           writer: 'テスト作者',
           lastEpisode: 5,
@@ -44,7 +46,8 @@ void main() {
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         ),
         HistoryData(
-          ncode: 'N5678CD',
+          source: NovelSource.narou,
+          workId: 'N5678CD',
           title: 'テスト小説2',
           writer: 'テスト作者2',
           lastEpisode: 10,
@@ -62,9 +65,9 @@ void main() {
 
       expect(result, equals(testHistoryData));
       expect(result.length, equals(2));
-      expect(result[0].ncode, equals('N1234AB'));
+      expect(result[0].workId, equals('N1234AB'));
       expect(result[0].title, equals('テスト小説'));
-      expect(result[1].ncode, equals('N5678CD'));
+      expect(result[1].workId, equals('N5678CD'));
       verify(mockDatabase.watchHistory()).called(1);
     });
 
@@ -96,7 +99,8 @@ void main() {
     test('should cache results and not call database multiple times', () async {
       final testHistoryData = [
         HistoryData(
-          ncode: 'N1234AB',
+          source: NovelSource.narou,
+          workId: 'N1234AB',
           title: 'テスト小説',
           writer: 'テスト作者',
           lastEpisode: 5,
@@ -120,7 +124,8 @@ void main() {
     test('should refresh data when provider is refreshed', () async {
       final initialData = [
         HistoryData(
-          ncode: 'N1234AB',
+          source: NovelSource.narou,
+          workId: 'N1234AB',
           title: 'テスト小説',
           writer: 'テスト作者',
           lastEpisode: 5,
@@ -131,7 +136,8 @@ void main() {
 
       final refreshedData = [
         HistoryData(
-          ncode: 'N1234AB',
+          source: NovelSource.narou,
+          workId: 'N1234AB',
           title: 'テスト小説',
           writer: 'テスト作者',
           lastEpisode: 6,
@@ -139,7 +145,8 @@ void main() {
           updatedAt: DateTime.now().millisecondsSinceEpoch,
         ),
         HistoryData(
-          ncode: 'N5678CD',
+          source: NovelSource.narou,
+          workId: 'N5678CD',
           title: '新しい小説',
           writer: '新しい作者',
           lastEpisode: 1,
@@ -163,7 +170,7 @@ void main() {
       container.refresh(historyProvider);
       final refreshedResult = await container.read(historyProvider.future);
       expect(refreshedResult.length, equals(2));
-      expect(refreshedResult[1].ncode, equals('N5678CD'));
+      expect(refreshedResult[1].workId, equals('N5678CD'));
 
       verify(mockDatabase.watchHistory()).called(2);
     });

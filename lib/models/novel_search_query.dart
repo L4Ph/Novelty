@@ -45,8 +45,9 @@ abstract class NovelSearchQuery with _$NovelSearchQuery {
 
     /// ジャンル。
     ///
-    /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
-    List<int>? genre,
+    /// サイト共通のジャンルID（文字列）。
+    /// なろうは [ジャンル一覧](https://dev.syosetu.com/man/api/#genre) のID文字列。
+    @JsonKey(name: 'genre') List<String>? genreId,
 
     /// 除外ジャンル。
     ///
@@ -219,7 +220,7 @@ extension NovelSearchQueryEx on NovelSearchQuery {
       'wname': wname ? 1 : null,
       'biggenre': biggenre?.join('-'),
       'notbiggenre': notbiggenre?.join('-'),
-      'genre': genre?.join('-'),
+      'genre': genreId?.join('-'),
       'notgenre': notgenre?.join('-'),
       'userid': userid?.join('-'),
       'isr15': isr15 ? 1 : null,
