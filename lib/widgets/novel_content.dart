@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -117,16 +116,11 @@ class NovelContentBody extends HookWidget {
       data: (settingsData) {
         return content.when(
           data: (contentData) {
-            // 設定のフォントを現在のプラットフォームのファミリー名へ解決する
-            final fontFamilyResult = resolveFontFamily(
-              settingsData.fontFamily,
-              defaultTargetPlatform,
-            );
+            // 小説本文は固定のバンドルフォント(源暎こぶり明朝)を使用する
             final textStyle = TextStyle(
               fontSize: settingsData.fontSize,
               color: textColor,
-              fontFamily: fontFamilyResult.family,
-              fontFamilyFallback: fontFamilyResult.fallbacks,
+              fontFamily: novelBodyFontFamily,
               height: settingsData.lineHeight,
             );
 

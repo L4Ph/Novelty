@@ -7,8 +7,8 @@ node = "latest"
 pinact = "latest"
 
 [env]
-ANDROID_HOME = "/opt/android-sdk"
-ANDROID_SDK_ROOT = "/opt/android-sdk"
+ANDROID_HOME = "{{env.HOME}}/android-sdk"
+ANDROID_SDK_ROOT = "{{env.HOME}}/android-sdk"
 
 [tasks.setup]
 description = "Android/Flutterの開発環境をセットアップします (local.propertiesの同期など)"
