@@ -6,7 +6,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
-import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/gesture_shield.dart';
 import 'package:novelty/widgets/novel_content.dart';
@@ -15,18 +14,16 @@ import 'package:novelty/widgets/novel_content.dart';
 class NovelPage extends HookConsumerWidget {
   /// コンストラクタ。
   const NovelPage({
-    required this.source,
-    required this.workId,
+    required this.ncode,
     super.key,
     this.episode,
     this.revised,
   });
 
-  /// 提供サイト（プロバイダ）。
-  final NovelSource source;
-
-  /// サイト共通の作品ID（なろうはNコード）。
-  final String workId;
+  /// 小説のNコード。
+  ///
+  /// 常に小文字で扱う
+  final String ncode;
 
   /// 表示するエピソード番号。
   final int? episode;
@@ -36,9 +33,7 @@ class NovelPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final novelInfoAsync = ref.watch(
-      novelInfoWithCacheProvider(source, workId),
-    );
+    final novelInfoAsync = ref.watch(novelInfoWithCacheProvider(ncode));
     final initialEpisode = episode ?? 1;
 
     // 現在のエピソード番号をローカル状態で管理
@@ -84,7 +79,7 @@ class NovelPage extends HookConsumerWidget {
 
         // エピソードリストを監視
         final episodeListAsync = ref.watch(
-          episodeListProvider(source, workId, currentPage),
+          episodeListProvider('${ncode}_$currentPage'),
         );
 
         // 現在のエピソードを取得
@@ -168,8 +163,7 @@ class NovelPage extends HookConsumerWidget {
 
                       return RepaintBoundary(
                         child: NovelContent(
-                          source: source,
-                          workId: workId,
+                          ncode: ncode,
                           episode: episodeNum,
                           revised: revisedDate,
                         ),
@@ -220,8 +214,7 @@ class NovelPage extends HookConsumerWidget {
       ref
           .read(novelRepositoryProvider)
           .addToHistory(
-            source: source,
-            workId: workId,
+            ncode: ncode,
             title: novelInfo.title ?? '',
             writer: novelInfo.writer ?? '',
             lastEpisode: episode,

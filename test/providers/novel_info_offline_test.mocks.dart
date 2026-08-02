@@ -9,20 +9,19 @@ import 'package:drift/drift.dart' as _i2;
 import 'package:drift/src/runtime/executor/stream_queries.dart' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i11;
-import 'package:narou_parser/narou_parser.dart' as _i13;
+import 'package:narou_parser/narou_parser.dart' as _i12;
 import 'package:novelty/database/database.dart' as _i3;
-import 'package:novelty/models/download_progress.dart' as _i19;
+import 'package:novelty/models/download_progress.dart' as _i18;
 import 'package:novelty/models/download_result.dart' as _i10;
 import 'package:novelty/models/episode.dart' as _i7;
-import 'package:novelty/models/novel_download_summary.dart' as _i14;
+import 'package:novelty/models/novel_download_summary.dart' as _i13;
 import 'package:novelty/models/novel_info.dart' as _i6;
-import 'package:novelty/models/novel_search_query.dart' as _i15;
+import 'package:novelty/models/novel_search_query.dart' as _i14;
 import 'package:novelty/models/novel_search_result.dart' as _i8;
-import 'package:novelty/repositories/novel_repository.dart' as _i16;
+import 'package:novelty/repositories/novel_repository.dart' as _i15;
 import 'package:novelty/services/api_service.dart' as _i9;
-import 'package:novelty/sites/novel_source.dart' as _i12;
-import 'package:novelty/utils/settings_provider.dart' as _i18;
-import 'package:riverpod_annotation/riverpod_annotation.dart' as _i17;
+import 'package:novelty/utils/settings_provider.dart' as _i17;
+import 'package:riverpod_annotation/riverpod_annotation.dart' as _i16;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -399,17 +398,17 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i2.DatabaseConnectionUser);
 
   @override
-  _i5.Future<_i3.Novel?> getNovel(_i12.NovelSource? source, String? workId) =>
+  _i5.Future<_i3.Novel?> getNovel(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#getNovel, [source, workId]),
+            Invocation.method(#getNovel, [ncode]),
             returnValue: _i5.Future<_i3.Novel?>.value(),
           )
           as _i5.Future<_i3.Novel?>);
 
   @override
-  _i5.Stream<_i3.Novel?> watchNovel(_i12.NovelSource? source, String? workId) =>
+  _i5.Stream<_i3.Novel?> watchNovel(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#watchNovel, [source, workId]),
+            Invocation.method(#watchNovel, [ncode]),
             returnValue: _i5.Stream<_i3.Novel?>.empty(),
           )
           as _i5.Stream<_i3.Novel?>);
@@ -433,17 +432,17 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<List<_i3.EpisodeSearchResult>>);
 
   @override
-  _i5.Future<int> addToLibrary(_i12.NovelSource? source, String? workId) =>
+  _i5.Future<int> addToLibrary(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#addToLibrary, [source, workId]),
+            Invocation.method(#addToLibrary, [ncode]),
             returnValue: _i5.Future<int>.value(0),
           )
           as _i5.Future<int>);
 
   @override
-  _i5.Future<int> removeFromLibrary(_i12.NovelSource? source, String? workId) =>
+  _i5.Future<int> removeFromLibrary(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#removeFromLibrary, [source, workId]),
+            Invocation.method(#removeFromLibrary, [ncode]),
             returnValue: _i5.Future<int>.value(0),
           )
           as _i5.Future<int>);
@@ -465,17 +464,17 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Stream<List<_i3.Novel>>);
 
   @override
-  _i5.Future<bool> isInLibrary(_i12.NovelSource? source, String? workId) =>
+  _i5.Future<bool> isInLibrary(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#isInLibrary, [source, workId]),
+            Invocation.method(#isInLibrary, [ncode]),
             returnValue: _i5.Future<bool>.value(false),
           )
           as _i5.Future<bool>);
 
   @override
-  _i5.Stream<bool> watchIsInLibrary(_i12.NovelSource? source, String? workId) =>
+  _i5.Stream<bool> watchIsInLibrary(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#watchIsInLibrary, [source, workId]),
+            Invocation.method(#watchIsInLibrary, [ncode]),
             returnValue: _i5.Stream<bool>.empty(),
           )
           as _i5.Stream<bool>);
@@ -490,14 +489,13 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
 
   @override
   _i5.Future<int> updateNovelPrivateFlag(
-    _i12.NovelSource? source,
-    String? workId, {
+    String? ncode, {
     required bool? isPrivate,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
               #updateNovelPrivateFlag,
-              [source, workId],
+              [ncode],
               {#isPrivate: isPrivate},
             ),
             returnValue: _i5.Future<int>.value(0),
@@ -506,15 +504,14 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
 
   @override
   _i5.Future<void> ensureNovelFetchState(
-    _i12.NovelSource? source,
-    String? workId, {
+    String? ncode, {
     required int? cachedAt,
     bool? isPrivate,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
               #ensureNovelFetchState,
-              [source, workId],
+              [ncode],
               {#cachedAt: cachedAt, #isPrivate: isPrivate},
             ),
             returnValue: _i5.Future<void>.value(),
@@ -524,15 +521,13 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
 
   @override
   _i5.Future<int?> getEpisodeListOldestFetchedAt(
-    _i12.NovelSource? source,
-    String? workId,
+    String? ncode,
     int? start,
     int? end,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#getEpisodeListOldestFetchedAt, [
-              source,
-              workId,
+              ncode,
               start,
               end,
             ]),
@@ -567,9 +562,9 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Stream<List<_i3.HistoryData>>);
 
   @override
-  _i5.Future<int> deleteHistory(_i12.NovelSource? source, String? workId) =>
+  _i5.Future<int> deleteHistory(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#deleteHistory, [source, workId]),
+            Invocation.method(#deleteHistory, [ncode]),
             returnValue: _i5.Future<int>.value(0),
           )
           as _i5.Future<int>);
@@ -595,10 +590,9 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
 
   @override
   _i5.Future<void> updateEpisodeContent({
-    required _i12.NovelSource? source,
-    required String? workId,
+    required String? ncode,
     required int? episodeId,
-    required List<_i13.NovelContentElement>? content,
+    required List<_i12.NovelContentElement>? content,
     required int? fetchedAt,
     String? revisedAt,
     String? subtitle,
@@ -607,8 +601,7 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
   }) =>
       (super.noSuchMethod(
             Invocation.method(#updateEpisodeContent, [], {
-              #source: source,
-              #workId: workId,
+              #ncode: ncode,
               #episodeId: episodeId,
               #content: content,
               #fetchedAt: fetchedAt,
@@ -623,98 +616,82 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<void>);
 
   @override
-  _i5.Future<_i3.EpisodeData?> getEpisodeData(
-    _i12.NovelSource? source,
-    String? workId,
-    int? episodeId,
-  ) =>
+  _i5.Future<_i3.EpisodeData?> getEpisodeData(String? ncode, int? episodeId) =>
       (super.noSuchMethod(
-            Invocation.method(#getEpisodeData, [source, workId, episodeId]),
+            Invocation.method(#getEpisodeData, [ncode, episodeId]),
             returnValue: _i5.Future<_i3.EpisodeData?>.value(),
           )
           as _i5.Future<_i3.EpisodeData?>);
 
   @override
   _i5.Stream<_i3.EpisodeData?> watchEpisodeData(
-    _i12.NovelSource? source,
-    String? workId,
+    String? ncode,
     int? episodeId,
   ) =>
       (super.noSuchMethod(
-            Invocation.method(#watchEpisodeData, [source, workId, episodeId]),
+            Invocation.method(#watchEpisodeData, [ncode, episodeId]),
             returnValue: _i5.Stream<_i3.EpisodeData?>.empty(),
           )
           as _i5.Stream<_i3.EpisodeData?>);
 
   @override
   _i5.Stream<_i3.EpisodeData?> watchEpisodeEntity(
-    _i12.NovelSource? source,
-    String? workId,
+    String? ncode,
     int? episodeId,
   ) =>
       (super.noSuchMethod(
-            Invocation.method(#watchEpisodeEntity, [source, workId, episodeId]),
+            Invocation.method(#watchEpisodeEntity, [ncode, episodeId]),
             returnValue: _i5.Stream<_i3.EpisodeData?>.empty(),
           )
           as _i5.Stream<_i3.EpisodeData?>);
 
   @override
-  _i5.Future<List<_i7.Episode>> getEpisodes(
-    _i12.NovelSource? source,
-    String? workId,
-  ) =>
+  _i5.Future<List<_i7.Episode>> getEpisodes(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#getEpisodes, [source, workId]),
+            Invocation.method(#getEpisodes, [ncode]),
             returnValue: _i5.Future<List<_i7.Episode>>.value(<_i7.Episode>[]),
           )
           as _i5.Future<List<_i7.Episode>>);
 
   @override
   _i5.Future<List<_i7.Episode>> getEpisodesRange(
-    _i12.NovelSource? source,
-    String? workId,
+    String? ncode,
     int? start,
     int? end,
   ) =>
       (super.noSuchMethod(
-            Invocation.method(#getEpisodesRange, [source, workId, start, end]),
+            Invocation.method(#getEpisodesRange, [ncode, start, end]),
             returnValue: _i5.Future<List<_i7.Episode>>.value(<_i7.Episode>[]),
           )
           as _i5.Future<List<_i7.Episode>>);
 
   @override
   _i5.Stream<List<_i7.Episode>> watchEpisodesRange(
-    _i12.NovelSource? source,
-    String? workId,
+    String? ncode,
     int? start,
     int? end,
   ) =>
       (super.noSuchMethod(
-            Invocation.method(#watchEpisodesRange, [
-              source,
-              workId,
-              start,
-              end,
-            ]),
+            Invocation.method(#watchEpisodesRange, [ncode, start, end]),
             returnValue: _i5.Stream<List<_i7.Episode>>.empty(),
           )
           as _i5.Stream<List<_i7.Episode>>);
 
   @override
-  _i5.Stream<List<_i14.NovelDownloadSummary>> watchDownloadingNovels() =>
+  _i5.Stream<List<_i13.NovelDownloadSummary>> watchDownloadingNovels() =>
       (super.noSuchMethod(
             Invocation.method(#watchDownloadingNovels, []),
-            returnValue: _i5.Stream<List<_i14.NovelDownloadSummary>>.empty(),
+            returnValue: _i5.Stream<List<_i13.NovelDownloadSummary>>.empty(),
           )
-          as _i5.Stream<List<_i14.NovelDownloadSummary>>);
+          as _i5.Stream<List<_i13.NovelDownloadSummary>>);
 
   @override
-  _i5.Stream<List<_i14.NovelDownloadSummary>> watchCompletedDownloads() =>
+  _i5.Stream<List<_i13.NovelDownloadSummary>> watchCompletedDownloads() =>
       (super.noSuchMethod(
             Invocation.method(#watchCompletedDownloads, []),
-            returnValue: _i5.Stream<List<_i14.NovelDownloadSummary>>.empty(),
+            returnValue: _i5.Stream<List<_i13.NovelDownloadSummary>>.empty(),
           )
-          as _i5.Stream<List<_i14.NovelDownloadSummary>>);
+          as _i5.Stream<List<_i13.NovelDownloadSummary>>);
 
   @override
   _i2.Migrator createMigrator() =>
@@ -1283,7 +1260,7 @@ class MockApiService extends _i1.Mock implements _i9.ApiService {
 
   @override
   _i5.Future<_i8.NovelSearchResult> searchNovels(
-    _i15.NovelSearchQuery? query,
+    _i14.NovelSearchQuery? query,
   ) =>
       (super.noSuchMethod(
             Invocation.method(#searchNovels, [query]),
@@ -1300,21 +1277,21 @@ class MockApiService extends _i1.Mock implements _i9.ApiService {
 /// A class which mocks [NovelRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockNovelRepository extends _i1.Mock implements _i16.NovelRepository {
+class MockNovelRepository extends _i1.Mock implements _i15.NovelRepository {
   MockNovelRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i17.Ref get ref =>
+  _i16.Ref get ref =>
       (super.noSuchMethod(
             Invocation.getter(#ref),
-            returnValue: _i11.dummyValue<_i17.Ref>(
+            returnValue: _i11.dummyValue<_i16.Ref>(
               this,
               Invocation.getter(#ref),
             ),
           )
-          as _i17.Ref);
+          as _i16.Ref);
 
   @override
   _i9.ApiService get apiService =>
@@ -1328,15 +1305,15 @@ class MockNovelRepository extends _i1.Mock implements _i16.NovelRepository {
           as _i9.ApiService);
 
   @override
-  _i17.AsyncValue<_i18.AppSettings> get settings =>
+  _i16.AsyncValue<_i17.AppSettings> get settings =>
       (super.noSuchMethod(
             Invocation.getter(#settings),
-            returnValue: _i11.dummyValue<_i17.AsyncValue<_i18.AppSettings>>(
+            returnValue: _i11.dummyValue<_i16.AsyncValue<_i17.AppSettings>>(
               this,
               Invocation.getter(#settings),
             ),
           )
-          as _i17.AsyncValue<_i18.AppSettings>);
+          as _i16.AsyncValue<_i17.AppSettings>);
 
   @override
   void dispose() => super.noSuchMethod(
@@ -1345,34 +1322,25 @@ class MockNovelRepository extends _i1.Mock implements _i16.NovelRepository {
   );
 
   @override
-  _i5.Stream<_i19.DownloadProgress> watchDownloadProgress(
-    _i12.NovelSource? source,
-    String? workId,
-  ) =>
+  _i5.Stream<_i18.DownloadProgress> watchDownloadProgress(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#watchDownloadProgress, [source, workId]),
-            returnValue: _i5.Stream<_i19.DownloadProgress>.empty(),
+            Invocation.method(#watchDownloadProgress, [ncode]),
+            returnValue: _i5.Stream<_i18.DownloadProgress>.empty(),
           )
-          as _i5.Stream<_i19.DownloadProgress>);
+          as _i5.Stream<_i18.DownloadProgress>);
 
   @override
-  _i5.Future<bool> addNovelToLibrary(
-    _i12.NovelSource? source,
-    String? workId,
-  ) =>
+  _i5.Future<bool> addNovelToLibrary(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#addNovelToLibrary, [source, workId]),
+            Invocation.method(#addNovelToLibrary, [ncode]),
             returnValue: _i5.Future<bool>.value(false),
           )
           as _i5.Future<bool>);
 
   @override
-  _i5.Future<void> removeFromLibrary(
-    _i12.NovelSource? source,
-    String? workId,
-  ) =>
+  _i5.Future<void> removeFromLibrary(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#removeFromLibrary, [source, workId]),
+            Invocation.method(#removeFromLibrary, [ncode]),
             returnValue: _i5.Future<void>.value(),
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
@@ -1380,16 +1348,14 @@ class MockNovelRepository extends _i1.Mock implements _i16.NovelRepository {
 
   @override
   _i5.Future<void> addToHistory({
-    required _i12.NovelSource? source,
-    required String? workId,
+    required String? ncode,
     required String? title,
     required String? writer,
     required int? lastEpisode,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#addToHistory, [], {
-              #source: source,
-              #workId: workId,
+              #ncode: ncode,
               #title: title,
               #writer: writer,
               #lastEpisode: lastEpisode,
@@ -1400,9 +1366,9 @@ class MockNovelRepository extends _i1.Mock implements _i16.NovelRepository {
           as _i5.Future<void>);
 
   @override
-  _i5.Future<void> deleteHistory(_i12.NovelSource? source, String? workId) =>
+  _i5.Future<void> deleteHistory(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#deleteHistory, [source, workId]),
+            Invocation.method(#deleteHistory, [ncode]),
             returnValue: _i5.Future<void>.value(),
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
@@ -1410,15 +1376,14 @@ class MockNovelRepository extends _i1.Mock implements _i16.NovelRepository {
 
   @override
   _i5.Future<bool> downloadSingleEpisode(
-    _i12.NovelSource? source,
-    String? workId,
+    String? ncode,
     int? episode, {
     String? revised,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
               #downloadSingleEpisode,
-              [source, workId, episode],
+              [ncode, episode],
               {#revised: revised},
             ),
             returnValue: _i5.Future<bool>.value(false),
@@ -1426,109 +1391,79 @@ class MockNovelRepository extends _i1.Mock implements _i16.NovelRepository {
           as _i5.Future<bool>);
 
   @override
-  _i5.Future<List<_i13.NovelContentElement>> getEpisode(
-    _i12.NovelSource? source,
-    String? workId,
+  _i5.Future<List<_i12.NovelContentElement>> getEpisode(
+    String? ncode,
     int? episode, {
     String? revised,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
               #getEpisode,
-              [source, workId, episode],
+              [ncode, episode],
               {#revised: revised},
             ),
-            returnValue: _i5.Future<List<_i13.NovelContentElement>>.value(
-              <_i13.NovelContentElement>[],
+            returnValue: _i5.Future<List<_i12.NovelContentElement>>.value(
+              <_i12.NovelContentElement>[],
             ),
           )
-          as _i5.Future<List<_i13.NovelContentElement>>);
+          as _i5.Future<List<_i12.NovelContentElement>>);
 
   @override
-  _i5.Future<void> downloadEpisode(
-    _i12.NovelSource? source,
-    String? workId,
-    int? episode,
-  ) =>
+  _i5.Future<void> downloadEpisode(String? ncode, int? episode) =>
       (super.noSuchMethod(
-            Invocation.method(#downloadEpisode, [source, workId, episode]),
+            Invocation.method(#downloadEpisode, [ncode, episode]),
             returnValue: _i5.Future<void>.value(),
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
           as _i5.Future<void>);
 
   @override
-  _i5.Future<void> downloadNovel(
-    _i12.NovelSource? source,
-    String? workId,
-    int? totalEpisodes,
-  ) =>
+  _i5.Future<void> downloadNovel(String? ncode, int? totalEpisodes) =>
       (super.noSuchMethod(
-            Invocation.method(#downloadNovel, [source, workId, totalEpisodes]),
+            Invocation.method(#downloadNovel, [ncode, totalEpisodes]),
             returnValue: _i5.Future<void>.value(),
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
           as _i5.Future<void>);
 
   @override
-  _i5.Future<void> deleteDownloadedEpisode(
-    _i12.NovelSource? source,
-    String? workId,
-    int? episode,
-  ) =>
+  _i5.Future<void> deleteDownloadedEpisode(String? ncode, int? episode) =>
       (super.noSuchMethod(
-            Invocation.method(#deleteDownloadedEpisode, [
-              source,
-              workId,
-              episode,
-            ]),
+            Invocation.method(#deleteDownloadedEpisode, [ncode, episode]),
             returnValue: _i5.Future<void>.value(),
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
           as _i5.Future<void>);
 
   @override
-  _i5.Future<void> deleteDownloadedNovel(
-    _i12.NovelSource? source,
-    String? workId,
-  ) =>
+  _i5.Future<void> deleteDownloadedNovel(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#deleteDownloadedNovel, [source, workId]),
+            Invocation.method(#deleteDownloadedNovel, [ncode]),
             returnValue: _i5.Future<void>.value(),
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
           as _i5.Future<void>);
 
   @override
-  _i5.Stream<bool> isEpisodeDownloaded(
-    _i12.NovelSource? source,
-    String? workId,
-    int? episode,
-  ) =>
+  _i5.Stream<bool> isEpisodeDownloaded(String? ncode, int? episode) =>
       (super.noSuchMethod(
-            Invocation.method(#isEpisodeDownloaded, [source, workId, episode]),
+            Invocation.method(#isEpisodeDownloaded, [ncode, episode]),
             returnValue: _i5.Stream<bool>.empty(),
           )
           as _i5.Stream<bool>);
 
   @override
   _i5.Future<_i10.DownloadResult> downloadNovelWithResult(
-    _i12.NovelSource? source,
-    String? workId,
+    String? ncode,
     int? totalEpisodes,
   ) =>
       (super.noSuchMethod(
-            Invocation.method(#downloadNovelWithResult, [
-              source,
-              workId,
-              totalEpisodes,
-            ]),
+            Invocation.method(#downloadNovelWithResult, [ncode, totalEpisodes]),
             returnValue: _i5.Future<_i10.DownloadResult>.value(
               _FakeDownloadResult_28(
                 this,
                 Invocation.method(#downloadNovelWithResult, [
-                  source,
-                  workId,
+                  ncode,
                   totalEpisodes,
                 ]),
               ),
@@ -1537,69 +1472,51 @@ class MockNovelRepository extends _i1.Mock implements _i16.NovelRepository {
           as _i5.Future<_i10.DownloadResult>);
 
   @override
-  _i5.Future<List<_i7.Episode>> fetchEpisodeList(
-    _i12.NovelSource? source,
-    String? workId,
-    int? page,
-  ) =>
+  _i5.Future<List<_i7.Episode>> fetchEpisodeList(String? ncode, int? page) =>
       (super.noSuchMethod(
-            Invocation.method(#fetchEpisodeList, [source, workId, page]),
+            Invocation.method(#fetchEpisodeList, [ncode, page]),
             returnValue: _i5.Future<List<_i7.Episode>>.value(<_i7.Episode>[]),
           )
           as _i5.Future<List<_i7.Episode>>);
 
   @override
-  _i5.Stream<_i6.NovelInfo> watchNovelInfo(
-    _i12.NovelSource? source,
-    String? workId,
-  ) =>
+  _i5.Stream<_i6.NovelInfo> watchNovelInfo(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#watchNovelInfo, [source, workId]),
+            Invocation.method(#watchNovelInfo, [ncode]),
             returnValue: _i5.Stream<_i6.NovelInfo>.empty(),
           )
           as _i5.Stream<_i6.NovelInfo>);
 
   @override
-  _i5.Future<void> refreshNovelInfo(_i12.NovelSource? source, String? workId) =>
+  _i5.Future<void> refreshNovelInfo(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#refreshNovelInfo, [source, workId]),
+            Invocation.method(#refreshNovelInfo, [ncode]),
             returnValue: _i5.Future<void>.value(),
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
           as _i5.Future<void>);
 
   @override
-  _i5.Stream<List<_i7.Episode>> watchEpisodeList(
-    _i12.NovelSource? source,
-    String? workId,
-    int? page,
-  ) =>
+  _i5.Stream<List<_i7.Episode>> watchEpisodeList(String? ncode, int? page) =>
       (super.noSuchMethod(
-            Invocation.method(#watchEpisodeList, [source, workId, page]),
+            Invocation.method(#watchEpisodeList, [ncode, page]),
             returnValue: _i5.Stream<List<_i7.Episode>>.empty(),
           )
           as _i5.Stream<List<_i7.Episode>>);
 
   @override
-  _i5.Future<void> refreshEpisodeList(
-    _i12.NovelSource? source,
-    String? workId,
-    int? page,
-  ) =>
+  _i5.Future<void> refreshEpisodeList(String? ncode, int? page) =>
       (super.noSuchMethod(
-            Invocation.method(#refreshEpisodeList, [source, workId, page]),
+            Invocation.method(#refreshEpisodeList, [ncode, page]),
             returnValue: _i5.Future<void>.value(),
             returnValueForMissingStub: _i5.Future<void>.value(),
           )
           as _i5.Future<void>);
 
   @override
-  _i5.Stream<int?> watchLastReadEpisode(
-    _i12.NovelSource? source,
-    String? workId,
-  ) =>
+  _i5.Stream<int?> watchLastReadEpisode(String? ncode) =>
       (super.noSuchMethod(
-            Invocation.method(#watchLastReadEpisode, [source, workId]),
+            Invocation.method(#watchLastReadEpisode, [ncode]),
             returnValue: _i5.Stream<int?>.empty(),
           )
           as _i5.Stream<int?>);

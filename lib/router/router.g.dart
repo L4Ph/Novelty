@@ -272,7 +272,7 @@ mixin $DownloadsRoute on GoRouteData {
 }
 
 RouteBase get $novelDetailRoute => GoRouteData.$route(
-  path: '/novel/:source/:workId',
+  path: '/novel/:ncode',
   hasOverriddenOnExit: false,
   parentNavigatorKey: NovelDetailRoute.$parentNavigatorKey,
   factory: $NovelDetailRoute._fromState,
@@ -286,17 +286,14 @@ RouteBase get $novelDetailRoute => GoRouteData.$route(
 );
 
 mixin $NovelDetailRoute on GoRouteData {
-  static NovelDetailRoute _fromState(GoRouterState state) => NovelDetailRoute(
-    source: state.pathParameters['source']!,
-    workId: state.pathParameters['workId']!,
-  );
+  static NovelDetailRoute _fromState(GoRouterState state) =>
+      NovelDetailRoute(ncode: state.pathParameters['ncode']!);
 
   NovelDetailRoute get _self => this as NovelDetailRoute;
 
   @override
-  String get location => GoRouteData.$location(
-    '/novel/${Uri.encodeComponent(_self.source)}/${Uri.encodeComponent(_self.workId)}',
-  );
+  String get location =>
+      GoRouteData.$location('/novel/${Uri.encodeComponent(_self.ncode)}');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -314,8 +311,7 @@ mixin $NovelDetailRoute on GoRouteData {
 
 mixin $NovelEpisodeRoute on GoRouteData {
   static NovelEpisodeRoute _fromState(GoRouterState state) => NovelEpisodeRoute(
-    source: state.pathParameters['source']!,
-    workId: state.pathParameters['workId']!,
+    ncode: state.pathParameters['ncode']!,
     episode: int.parse(state.pathParameters['episode']!),
     revised: state.uri.queryParameters['revised'],
   );
@@ -324,7 +320,7 @@ mixin $NovelEpisodeRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location(
-    '/novel/${Uri.encodeComponent(_self.source)}/${Uri.encodeComponent(_self.workId)}/${Uri.encodeComponent(_self.episode.toString())}',
+    '/novel/${Uri.encodeComponent(_self.ncode)}/${Uri.encodeComponent(_self.episode.toString())}',
     queryParams: {if (_self.revised != null) 'revised': _self.revised},
   );
 

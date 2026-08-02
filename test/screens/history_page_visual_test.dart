@@ -5,7 +5,6 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/screens/history_page.dart';
-import 'package:novelty/sites/novel_source.dart';
 
 @GenerateMocks([AppDatabase])
 import 'history_page_visual_test.mocks.dart';
@@ -27,8 +26,7 @@ void main() {
       final testHistoryData = [
         // 今日
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'n1234ab',
+          ncode: 'n1234ab',
           title: '今日読んだ素晴らしい小説',
           writer: '今日の作者',
           lastEpisode: 25,
@@ -36,8 +34,7 @@ void main() {
           updatedAt: fixedTime.millisecondsSinceEpoch,
         ),
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'n5678cd',
+          ncode: 'n5678cd',
           title: '今日の2番目の小説',
           writer: '別の作者',
           lastEpisode: 10,
@@ -50,8 +47,7 @@ void main() {
         ),
         // 1日前
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'n9999ef',
+          ncode: 'n9999ef',
           title: '昨日読んだ面白い物語',
           writer: '昨日の作者',
           lastEpisode: 45,
@@ -64,8 +60,7 @@ void main() {
         ),
         // 3日前
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'n1111gh',
+          ncode: 'n1111gh',
           title: '3日前の冒険小説',
           writer: '冒険作家',
           lastEpisode: 12,
@@ -78,8 +73,7 @@ void main() {
         ),
         // 1週間前
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'n2222ij',
+          ncode: 'n2222ij',
           title: '1週間前の恋愛小説',
           writer: '恋愛作家',
           lastEpisode: 33,
@@ -92,8 +86,7 @@ void main() {
         ),
         // 10日前（実際の日付表示）
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'n3333kl',
+          ncode: 'n3333kl',
           title: '古い時代の歴史小説',
           writer: '歴史作家',
           lastEpisode: 100,
@@ -106,8 +99,7 @@ void main() {
         ),
         // 30日前（実際の日付表示）
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'n4444mn',
+          ncode: 'n4444mn',
           title: '1ヶ月前のファンタジー',
           writer: 'ファンタジー作家',
           lastEpisode: 200,

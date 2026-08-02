@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
-import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
 import 'package:tategaki/tategaki.dart';
@@ -31,8 +30,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: NovelContentBody(
-              source: NovelSource.narou,
-              workId: 'n1234',
+              ncode: 'n1234',
               episode: 1,
               content: AsyncData(testContent),
               settings: const AsyncData(pagedSettings),
@@ -52,8 +50,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: NovelContentBody(
-              source: NovelSource.narou,
-              workId: 'n1234',
+              ncode: 'n1234',
               episode: 2,
               content: AsyncData(testContent),
               settings: const AsyncData(pagedSettings),

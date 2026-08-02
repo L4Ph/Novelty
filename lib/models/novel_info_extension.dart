@@ -1,23 +1,19 @@
 import 'package:novelty/database/database.dart' as db;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/sites/novel_source.dart';
 
 /// [db.Novel] (DB Entity) から [NovelInfo] (Domain Model) への変換を行う拡張
 extension NovelInfoFromDb on db.Novel {
   /// [db.Novel] を [NovelInfo] に変換する
   NovelInfo toModel({List<Episode>? episodes}) {
     return NovelInfo(
-      source: source,
-      workId: workId,
-      // ncodeはなろうの作品ID。なろう以外ではnull
-      ncode: source == NovelSource.narou ? workId : null,
+      ncode: ncode,
       title: title,
       writer: writer,
       story: story,
       novelType: novelType,
       end: end,
-      genreId: genreId,
+      genre: genre,
       generalAllNo: generalAllNo,
       keyword: keyword,
       // DB定義はIntColumnだが、NovelInfoはString期待。

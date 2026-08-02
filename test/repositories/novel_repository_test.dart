@@ -10,7 +10,6 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/network_fallback_event_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
@@ -44,21 +43,14 @@ void main() {
       container.dispose();
     });
 
-    const testNcode = 'n1234ab';
+    const testNcode = 'N1234AB';
     final normalizedNcode = testNcode.toNormalizedNcode();
     const page = 1;
 
     test('should return cached episodes when offline', () async {
       container = createContainer(isOffline: true); // Offline
 
-      when(
-        mockDatabase.getEpisodesRange(
-          NovelSource.narou,
-          normalizedNcode,
-          1,
-          100,
-        ),
-      ).thenAnswer(
+      when(mockDatabase.getEpisodesRange(normalizedNcode, 1, 100)).thenAnswer(
         (_) async => [
           const Episode(
             ncode: 'n1234ab',
@@ -70,22 +62,11 @@ void main() {
       );
 
       final repository = container.read(novelRepositoryProvider);
-      final result = await repository.fetchEpisodeList(
-        NovelSource.narou,
-        testNcode,
-        page,
-      );
+      final result = await repository.fetchEpisodeList(testNcode, page);
 
       expect(result.length, 1);
       expect(result.first.subtitle, 'Ep 1');
-      verify(
-        mockDatabase.getEpisodesRange(
-          NovelSource.narou,
-          normalizedNcode,
-          1,
-          100,
-        ),
-      ).called(1);
+      verify(mockDatabase.getEpisodesRange(normalizedNcode, 1, 100)).called(1);
       verifyNever(mockApiService.fetchEpisodeList(any, any));
     });
 
@@ -108,11 +89,7 @@ void main() {
       when(mockDatabase.upsertEpisodes(any)).thenAnswer((_) async => {});
 
       final repository = container.read(novelRepositoryProvider);
-      final result = await repository.fetchEpisodeList(
-        NovelSource.narou,
-        testNcode,
-        page,
-      );
+      final result = await repository.fetchEpisodeList(testNcode, page);
 
       expect(result.length, 1);
       expect(result.first.subtitle, 'Ep 1');
@@ -127,14 +104,7 @@ void main() {
         mockApiService.fetchEpisodeList(normalizedNcode, page),
       ).thenThrow(Exception('Network Error'));
 
-      when(
-        mockDatabase.getEpisodesRange(
-          NovelSource.narou,
-          normalizedNcode,
-          1,
-          100,
-        ),
-      ).thenAnswer(
+      when(mockDatabase.getEpisodesRange(normalizedNcode, 1, 100)).thenAnswer(
         (_) async => [
           const Episode(
             ncode: 'n1234ab',
@@ -146,28 +116,17 @@ void main() {
       );
 
       final repository = container.read(novelRepositoryProvider);
-      final result = await repository.fetchEpisodeList(
-        NovelSource.narou,
-        testNcode,
-        page,
-      );
+      final result = await repository.fetchEpisodeList(testNcode, page);
 
       expect(result.length, 1);
       expect(result.first.subtitle, 'Ep 1');
       verify(mockApiService.fetchEpisodeList(normalizedNcode, page)).called(1);
-      verify(
-        mockDatabase.getEpisodesRange(
-          NovelSource.narou,
-          normalizedNcode,
-          1,
-          100,
-        ),
-      ).called(1);
+      verify(mockDatabase.getEpisodesRange(normalizedNcode, 1, 100)).called(1);
     });
   });
 
   group('NovelRepository watchNovelInfo', () {
-    const testNcode = 'n1234ab';
+    const testNcode = 'N1234AB';
     final normalizedNcode = testNcode.toNormalizedNcode();
 
     late db.AppDatabase database;
@@ -228,7 +187,7 @@ void main() {
       );
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
+      final stream = repository.watchNovelInfo(testNcode);
 
       await expectLater(
         stream,
@@ -248,7 +207,7 @@ void main() {
       ).thenThrow(Exception('network error'));
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
+      final stream = repository.watchNovelInfo(testNcode);
 
       await expectLater(
         stream,
@@ -271,7 +230,7 @@ void main() {
       ).thenThrow(const NovelNotFoundException());
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
+      final stream = repository.watchNovelInfo(testNcode);
 
       await expectLater(
         stream,
@@ -280,7 +239,7 @@ void main() {
         ),
       );
 
-      final novel = await database.getNovel(NovelSource.narou, normalizedNcode);
+      final novel = await database.getNovel(normalizedNcode);
       expect(novel?.isPrivate, isTrue);
     });
 
@@ -293,7 +252,7 @@ void main() {
       );
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
+      final stream = repository.watchNovelInfo(testNcode);
 
       await expectLater(
         stream,
@@ -310,21 +269,21 @@ void main() {
       ).thenThrow(const NovelNotFoundException());
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
+      final stream = repository.watchNovelInfo(testNcode);
 
       await expectLater(
         stream,
         emits(
           predicate<NovelInfo>(
             (info) =>
-                info.workId == normalizedNcode &&
+                info.ncode == normalizedNcode &&
                 info.title == null &&
                 info.isPrivate,
           ),
         ),
       );
 
-      final novel = await database.getNovel(NovelSource.narou, normalizedNcode);
+      final novel = await database.getNovel(normalizedNcode);
       expect(novel, isNotNull);
       expect(novel!.isPrivate, isTrue);
       expect(novel.cachedAt, isNotNull);
@@ -336,7 +295,7 @@ void main() {
       ).thenThrow(Exception('network error'));
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
+      final stream = repository.watchNovelInfo(testNcode);
 
       await expectLater(
         stream,
@@ -345,7 +304,7 @@ void main() {
         ),
       );
 
-      final novel = await database.getNovel(NovelSource.narou, normalizedNcode);
+      final novel = await database.getNovel(normalizedNcode);
       expect(novel, isNull);
     });
 
@@ -365,7 +324,7 @@ void main() {
           );
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
+      final stream = repository.watchNovelInfo(testNcode);
 
       await expectLater(
         stream,
@@ -376,7 +335,7 @@ void main() {
   });
 
   group('NovelRepository downloadSingleEpisode', () {
-    const testNcode = 'n1234ab';
+    const testNcode = 'N1234AB';
     final normalizedNcode = testNcode.toNormalizedNcode();
     const episodeId = 1;
 
@@ -408,8 +367,7 @@ void main() {
       );
       await database.upsertEpisodes([
         db.EpisodeListEntriesCompanion(
-          source: const drift.Value(NovelSource.narou),
-          workId: drift.Value(normalizedNcode),
+          ncode: drift.Value(normalizedNcode),
           episodeId: const drift.Value(episodeId),
           subtitle: const drift.Value('元のサブタイトル'),
           url: const drift.Value('https://example.com/1/'),
@@ -422,25 +380,20 @@ void main() {
 
       final repository = container.read(novelRepositoryProvider);
       final result = await repository.downloadSingleEpisode(
-        NovelSource.narou,
         testNcode,
         episodeId,
       );
 
       expect(result, isFalse);
 
-      final data = await database.getEpisodeData(
-        NovelSource.narou,
-        normalizedNcode,
-        episodeId,
-      );
+      final data = await database.getEpisodeData(normalizedNcode, episodeId);
       expect(data?.subtitle, '元のサブタイトル');
       expect(data?.content, isEmpty);
     });
   });
 
   group('NovelRepository watchEpisodeList', () {
-    const testNcode = 'n1234ab';
+    const testNcode = 'N1234AB';
     final normalizedNcode = testNcode.toNormalizedNcode();
     const page = 1;
 
@@ -481,8 +434,7 @@ void main() {
           .into(database.episodeListEntries)
           .insert(
             db.EpisodeListEntriesCompanion(
-              source: const drift.Value(NovelSource.narou),
-              workId: drift.Value(normalizedNcode),
+              ncode: drift.Value(normalizedNcode),
               episodeId: const drift.Value(1),
               subtitle: const drift.Value('cached ep'),
               url: const drift.Value('http://example.com/1/'),
@@ -511,11 +463,7 @@ void main() {
       );
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchEpisodeList(
-        NovelSource.narou,
-        testNcode,
-        page,
-      );
+      final stream = repository.watchEpisodeList(testNcode, page);
 
       await expectLater(
         stream,
@@ -539,11 +487,7 @@ void main() {
       ).thenThrow(Exception('network error'));
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchEpisodeList(
-        NovelSource.narou,
-        testNcode,
-        page,
-      );
+      final stream = repository.watchEpisodeList(testNcode, page);
 
       await expectLater(
         stream,
@@ -579,11 +523,7 @@ void main() {
       );
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchEpisodeList(
-        NovelSource.narou,
-        testNcode,
-        page,
-      );
+      final stream = repository.watchEpisodeList(testNcode, page);
 
       await expectLater(
         stream,
@@ -605,11 +545,7 @@ void main() {
       ).thenThrow(Exception('network error'));
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchEpisodeList(
-        NovelSource.narou,
-        testNcode,
-        page,
-      );
+      final stream = repository.watchEpisodeList(testNcode, page);
 
       await expectLater(
         stream,
@@ -638,11 +574,7 @@ void main() {
       );
 
       final repository = container.read(novelRepositoryProvider);
-      final stream = repository.watchEpisodeList(
-        NovelSource.narou,
-        testNcode,
-        page,
-      );
+      final stream = repository.watchEpisodeList(testNcode, page);
 
       await expectLater(
         stream,
@@ -653,7 +585,7 @@ void main() {
   });
 
   group('NovelRepository getEpisode', () {
-    const testNcode = 'n1234ab';
+    const testNcode = 'N1234AB';
     final normalizedNcode = testNcode.toNormalizedNcode();
     const episodeId = 1;
 
@@ -691,8 +623,7 @@ void main() {
         NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
       );
       await database.updateEpisodeContent(
-        source: NovelSource.narou,
-        workId: normalizedNcode,
+        ncode: normalizedNcode,
         episodeId: episodeId,
         content: [NovelContentElement.plainText('cached body')],
         fetchedAt: DateTime.now().millisecondsSinceEpoch,
@@ -705,7 +636,6 @@ void main() {
 
       final repository = container.read(novelRepositoryProvider);
       final content = await repository.getEpisode(
-        NovelSource.narou,
         normalizedNcode,
         episodeId,
         revised: '2024-01-01',
@@ -725,7 +655,6 @@ void main() {
 
       final repository = container.read(novelRepositoryProvider);
       final content = await repository.getEpisode(
-        NovelSource.narou,
         normalizedNcode,
         episodeId,
         revised: '2024-02-01',

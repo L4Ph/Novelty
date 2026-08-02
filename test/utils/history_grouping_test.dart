@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/history_grouping.dart';
 
 void main() {
@@ -14,8 +13,7 @@ void main() {
 
     test('should generate correct date label for today', () {
       final historyData = HistoryData(
-        source: NovelSource.narou,
-        workId: 'test',
+        ncode: 'test',
         title: 'Test Novel',
         writer: 'Test Author',
         lastEpisode: 1,
@@ -30,8 +28,7 @@ void main() {
     test('should generate correct date label for 1 day ago', () {
       final oneDayAgo = today.subtract(const Duration(days: 1));
       final historyData = HistoryData(
-        source: NovelSource.narou,
-        workId: 'test',
+        ncode: 'test',
         title: 'Test Novel',
         writer: 'Test Author',
         lastEpisode: 1,
@@ -46,8 +43,7 @@ void main() {
     test('should generate correct date label for 6 days ago', () {
       final sixDaysAgo = today.subtract(const Duration(days: 6));
       final historyData = HistoryData(
-        source: NovelSource.narou,
-        workId: 'test',
+        ncode: 'test',
         title: 'Test Novel',
         writer: 'Test Author',
         lastEpisode: 1,
@@ -62,8 +58,7 @@ void main() {
     test('should generate "1週間前" for 7 days ago', () {
       final sevenDaysAgo = today.subtract(const Duration(days: 7));
       final historyData = HistoryData(
-        source: NovelSource.narou,
-        workId: 'test',
+        ncode: 'test',
         title: 'Test Novel',
         writer: 'Test Author',
         lastEpisode: 1,
@@ -78,8 +73,7 @@ void main() {
     test('should generate actual date for 8+ days ago', () {
       final eightDaysAgo = today.subtract(const Duration(days: 8));
       final historyData = HistoryData(
-        source: NovelSource.narou,
-        workId: 'test',
+        ncode: 'test',
         title: 'Test Novel',
         writer: 'Test Author',
         lastEpisode: 1,
@@ -94,8 +88,7 @@ void main() {
     test('should group history items by date label', () {
       final historyItems = [
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'test1',
+          ncode: 'test1',
           title: 'Test Novel 1',
           writer: 'Test Author 1',
           lastEpisode: 1,
@@ -103,8 +96,7 @@ void main() {
           updatedAt: today.millisecondsSinceEpoch,
         ),
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'test2',
+          ncode: 'test2',
           title: 'Test Novel 2',
           writer: 'Test Author 2',
           lastEpisode: 2,
@@ -116,8 +108,7 @@ void main() {
               .millisecondsSinceEpoch,
         ),
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'test3',
+          ncode: 'test3',
           title: 'Test Novel 3',
           writer: 'Test Author 3',
           lastEpisode: 3,
@@ -152,8 +143,7 @@ void main() {
 
       final historyItems = [
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'test1',
+          ncode: 'test1',
           title: 'Test Novel 1',
           writer: 'Test Author 1',
           lastEpisode: 1,
@@ -161,8 +151,7 @@ void main() {
           updatedAt: todayEvening.millisecondsSinceEpoch, // 夜
         ),
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'test2',
+          ncode: 'test2',
           title: 'Test Novel 2',
           writer: 'Test Author 2',
           lastEpisode: 2,
@@ -175,8 +164,8 @@ void main() {
 
       expect(groupedItems.length, 1);
       expect(groupedItems[0].items.length, 2);
-      expect(groupedItems[0].items[0].workId, 'test1'); // 新しい順（夜）
-      expect(groupedItems[0].items[1].workId, 'test2'); // 古い順（朝）
+      expect(groupedItems[0].items[0].ncode, 'test1'); // 新しい順（夜）
+      expect(groupedItems[0].items[1].ncode, 'test2'); // 古い順（朝）
     });
   });
 }

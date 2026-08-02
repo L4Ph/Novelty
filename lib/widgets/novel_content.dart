@@ -7,7 +7,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/repositories/novel_repository.dart';
-import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/utils/tategaki_converter.dart';
@@ -18,18 +17,14 @@ import 'package:tategaki/tategaki.dart';
 class NovelContent extends HookConsumerWidget {
   /// コンストラクタ。
   const NovelContent({
-    required this.source,
-    required this.workId,
+    required this.ncode,
     required this.episode,
     this.revised,
     super.key,
   });
 
-  /// 提供サイト（プロバイダ）。
-  final NovelSource source;
-
-  /// サイト共通の作品ID（なろうはNコード）。
-  final String workId;
+  /// 小説のncode
+  final String ncode;
 
   /// 小説のエピソード番号
   final int episode;
@@ -41,19 +36,13 @@ class NovelContent extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final contentAsync = ref.watch(
-      novelContentProvider(
-        source: source,
-        workId: workId,
-        episode: episode,
-        revised: revised,
-      ),
+      novelContentProvider(ncode: ncode, episode: episode, revised: revised),
     );
 
     return SafeArea(
       top: false, // AppBarがあるので上は不要
       child: NovelContentBody(
-        source: source,
-        workId: workId,
+        ncode: ncode,
         episode: episode,
         settings: settings,
         content: contentAsync,
@@ -67,19 +56,15 @@ class NovelContent extends HookConsumerWidget {
 class NovelContentBody extends HookWidget {
   /// コンストラクタ
   const NovelContentBody({
-    required this.source,
-    required this.workId,
+    required this.ncode,
     required this.episode,
     required this.settings,
     required this.content,
     super.key,
   });
 
-  /// 提供サイト（プロバイダ）。
-  final NovelSource source;
-
-  /// サイト共通の作品ID（なろうはNコード）。
-  final String workId;
+  /// 小説のncode
+  final String ncode;
 
   /// 小説のエピソード番号
   final int episode;
@@ -176,7 +161,7 @@ class NovelContentBody extends HookWidget {
                       style: textStyle,
                       child: TategakiTextPaged(
                         key: PageStorageKey<String>(
-                          'novel_paged_${workId}_$episode',
+                          'novel_paged_${ncode}_$episode',
                         ),
                         tategakiElements,
                         width: constraints.maxWidth,
@@ -192,7 +177,7 @@ class NovelContentBody extends HookWidget {
                 textDirection: TextDirection.rtl,
                 child: SingleChildScrollView(
                   key: PageStorageKey<String>(
-                    'novel_vertical_${workId}_$episode',
+                    'novel_vertical_${ncode}_$episode',
                   ),
                   scrollDirection: Axis.horizontal,
                   padding: verticalModePadding,
@@ -214,9 +199,7 @@ class NovelContentBody extends HookWidget {
             }
 
             return SingleChildScrollView(
-              key: PageStorageKey<String>(
-                'novel_horizontal_${workId}_$episode',
-              ),
+              key: PageStorageKey<String>('novel_horizontal_${ncode}_$episode'),
               padding: horizontalModePadding,
               child: RepaintBoundary(
                 child: DefaultTextStyle(

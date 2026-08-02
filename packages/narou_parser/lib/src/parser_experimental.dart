@@ -1,5 +1,5 @@
 import 'package:meta/meta.dart';
-import 'package:novel_parser_core/novel_parser_core.dart';
+import 'package:narou_parser/src/models/novel_content_element.dart';
 
 /// HonoのRegExp Routerに着想を得た、単一正規表現による高速パース処理。
 /// DOMツリーを構築せず、HTMLをフラットなトークン列として処理する。

@@ -1,7 +1,6 @@
 name: narou_parser
 description: なろう小説パーサー
 version: 0.1.0
-publish_to: "none" # 内部パッケージ（path 依存を持つ）のため公開しない
 
 environment:
   sdk: ^3.8.1
@@ -13,8 +12,6 @@ dependencies:
   html:
   json_annotation:
   meta: ^1.12.0
-  novel_parser_core:
-    path: ../novel_parser_core
 
 dev_dependencies:
   build_runner:

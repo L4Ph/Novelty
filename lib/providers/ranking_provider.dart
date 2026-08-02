@@ -213,8 +213,8 @@ class RankingNotifier extends _$RankingNotifier {
     return NovelSearchQuery(
       order: order,
       st: (page - 1) * 20 + 1, // 1-based start
-      genreId: filter.selectedGenre != 0 && filter.selectedGenre != null
-          ? [filter.selectedGenre!.toString()]
+      genre: filter.selectedGenre != 0 && filter.selectedGenre != null
+          ? [filter.selectedGenre!]
           : null,
     );
   }

@@ -3,7 +3,6 @@ import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/sites/novel_source.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'novel_enrichment.g.dart';
@@ -24,7 +23,7 @@ class EnrichedNovelData {
 
   /// 小説の画像URLを取得する。
   String get imageUrl {
-    // ncodeから数字部分を抽出（なろう専用）
+    // ncodeから数字部分を抽出
     final ncode = novel.ncode;
     if (ncode == null || ncode.length < 2) return '';
     final ncodeNumber = ncode.substring(1);
@@ -42,11 +41,11 @@ Future<List<EnrichedNovelData>> enrichedSearchData(
 
   // すべてのライブラリ小説を一度に取得して効率的に検索
   final libraryNovels = await db.getLibraryNovels();
-  final libraryWorkIds = libraryNovels.map((novel) => novel.workId).toSet();
+  final libraryNcodes = libraryNovels.map((novel) => novel.ncode).toSet();
 
   // 検索結果の各小説をライブラリ状態で強化
   final enrichedData = searchResults.map((novel) {
-    final isInLibrary = libraryWorkIds.contains(novel.workId);
+    final isInLibrary = libraryNcodes.contains(novel.ncode);
     return EnrichedNovelData(
       novel: novel,
       isInLibrary: isInLibrary,
@@ -57,42 +56,37 @@ Future<List<EnrichedNovelData>> enrichedSearchData(
 }
 
 /// 小説のライブラリ状態を取得するヘルパー関数
-Future<bool> getNovelLibraryStatus(
-  WidgetRef ref,
-  NovelSource source,
-  String workId,
-) async {
+Future<bool> getNovelLibraryStatus(WidgetRef ref, String ncode) async {
   final db = ref.read(appDatabaseProvider);
-  return db.isInLibrary(source, workId);
+  return db.isInLibrary(ncode);
 }
 
-/// すべてのライブラリ小説の作品IDを取得するヘルパー関数
-Future<Set<String>> getLibraryWorkIds(WidgetRef ref) async {
+/// すべてのライブラリ小説のNコードを取得するヘルパー関数
+Future<Set<String>> getLibraryNcodes(WidgetRef ref) async {
   final db = ref.read(appDatabaseProvider);
   final libraryNovels = await db.getLibraryNovels();
-  return libraryNovels.map((novel) => novel.workId).toSet();
+  return libraryNovels.map((novel) => novel.ncode).toSet();
 }
 
 @riverpod
-/// 作品IDから単一の豊富な小説データを取得するプロバイダー
+/// ncodeから単一の豊富な小説データを取得するプロバイダー
 Future<EnrichedNovelData> enrichedNovel(
   Ref ref,
-  NovelSource source,
-  String workId,
+  String ncode,
 ) async {
   final apiService = ref.watch(apiServiceProvider);
   final db = ref.watch(appDatabaseProvider);
 
-  // APIから小説データを取得（P1時点ではなろうのみ対応）
-  final query = NovelSearchQuery(ncode: [workId], lim: 1);
+  // APIから小説データを取得
+  final query = NovelSearchQuery(ncode: [ncode], lim: 1);
   final searchResult = await apiService.searchNovels(query);
   if (searchResult.novels.isEmpty) {
-    throw Exception('Novel not found: $source $workId');
+    throw Exception('Novel not found for ncode: $ncode');
   }
   final novel = searchResult.novels.first;
 
   // ライブラリ状態を確認
-  final isInLibrary = await db.isInLibrary(source, workId);
+  final isInLibrary = await db.isInLibrary(ncode);
 
   return EnrichedNovelData(
     novel: novel,

@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/sites/novel_source.dart';
 
 @GenerateMocks([AppDatabase])
 import 'grouped_history_provider_test.mocks.dart';
@@ -40,8 +39,7 @@ void main() {
     test('should group history items by date labels', () async {
       final testHistoryData = [
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'today1',
+          ncode: 'today1',
           title: '今日の小説1',
           writer: '作者1',
           lastEpisode: 5,
@@ -49,8 +47,7 @@ void main() {
           updatedAt: fixedTime.millisecondsSinceEpoch,
         ),
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'today2',
+          ncode: 'today2',
           title: '今日の小説2',
           writer: '作者2',
           lastEpisode: 3,
@@ -62,8 +59,7 @@ void main() {
               .millisecondsSinceEpoch,
         ),
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'yesterday1',
+          ncode: 'yesterday1',
           title: '昨日の小説',
           writer: '作者3',
           lastEpisode: 10,
@@ -75,8 +71,7 @@ void main() {
               .millisecondsSinceEpoch,
         ),
         HistoryData(
-          source: NovelSource.narou,
-          workId: 'old1',
+          ncode: 'old1',
           title: '古い小説',
           writer: '作者4',
           lastEpisode: 15,
@@ -101,18 +96,18 @@ void main() {
       // 今日のグループ
       expect(result[0].dateLabel, '今日');
       expect(result[0].items.length, 2);
-      expect(result[0].items[0].workId, 'today1'); // 新しい順
-      expect(result[0].items[1].workId, 'today2');
+      expect(result[0].items[0].ncode, 'today1'); // 新しい順
+      expect(result[0].items[1].ncode, 'today2');
 
       // 1日前のグループ
       expect(result[1].dateLabel, '1日前');
       expect(result[1].items.length, 1);
-      expect(result[1].items[0].workId, 'yesterday1');
+      expect(result[1].items[0].ncode, 'yesterday1');
 
       // 古い日付のグループ（実際の日付が表示される）
       expect(result[2].dateLabel, '2024年1月5日');
       expect(result[2].items.length, 1);
-      expect(result[2].items[0].workId, 'old1');
+      expect(result[2].items[0].ncode, 'old1');
 
       verify(mockDatabase.watchHistory()).called(1);
     });

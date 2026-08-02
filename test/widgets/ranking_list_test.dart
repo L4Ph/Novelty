@@ -31,7 +31,7 @@ void main() {
           title: 'Novel $index',
           writer: 'Writer $index',
           story: 'Story $index',
-          genreId: '101',
+          genre: 101,
           novelType: 1,
           end: 1,
           allPoint: 1000 - index,
@@ -80,7 +80,7 @@ void main() {
           ncode: 'n1',
           title: 'Filtered Novel',
           writer: 'Writer',
-          genreId: '201', // ファンタジー
+          genre: 201, // ファンタジー
         ),
       ];
 
@@ -119,7 +119,7 @@ void main() {
       // searchNovels がジャンルを含むクエリで呼ばれたことを確認
       final captured = verify(mockApiService.searchNovels(captureAny)).captured;
       final query = captured.last as NovelSearchQuery;
-      expect(query.genreId, equals(['201']));
+      expect(query.genre, equals([201]));
 
       expect(find.text('Filtered Novel'), findsOneWidget);
     });

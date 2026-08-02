@@ -272,14 +272,14 @@ class _EnrichedSearchResults extends HookConsumerWidget {
             // データベースからライブラリ状態を取得
             final db = ref.read(appDatabaseProvider);
             final libraryNovels = await db.getLibraryNovels();
-            final libraryWorkIds = libraryNovels
-                .map((novel) => novel.workId)
+            final libraryNcodes = libraryNovels
+                .map((novel) => novel.ncode)
                 .toSet();
 
             // 新しい結果のみを強化
             final newResults = results.sublist(alreadyEnriched);
             final newEnrichedData = newResults.map((novel) {
-              final isInLibrary = libraryWorkIds.contains(novel.workId);
+              final isInLibrary = libraryNcodes.contains(novel.ncode);
               return EnrichedNovelData(
                 novel: novel,
                 isInLibrary: isInLibrary,

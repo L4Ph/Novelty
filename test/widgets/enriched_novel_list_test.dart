@@ -7,7 +7,6 @@ import 'package:novelty/database/database.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/enriched_novel_list.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
@@ -21,11 +20,10 @@ void main() {
   // テスト用のダミーデータ
   const testNovel = NovelInfo(
     ncode: 'n1111a',
-    workId: 'n1111a',
     title: 'Test Novel 1',
     writer: 'Test Writer 1',
     story: 'Story 1',
-    genreId: '1',
+    genre: 1,
     keyword: 'keyword1',
     novelType: 1,
     end: 0,
@@ -41,10 +39,9 @@ void main() {
   const testFullNovelInfo = NovelInfo(
     title: 'Test Novel 1',
     ncode: 'n1111a',
-    workId: 'n1111a',
     writer: 'Test Writer 1',
     story: 'Story 1',
-    genreId: '1',
+    genre: 1,
     keyword: 'keyword1',
     generalFirstup: '2025-01-01 00:00:00',
     generalLastup: '2025-01-01 00:00:00',
@@ -101,16 +98,12 @@ void main() {
       tester,
     ) async {
       // --- Arrange ---
-      when(
-        mockDb.isInLibrary(NovelSource.narou, any),
-      ).thenAnswer((_) async => false);
+      when(mockDb.isInLibrary(any)).thenAnswer((_) async => false);
       when(
         mockApiService.fetchNovelInfo(any),
       ).thenAnswer((_) async => testFullNovelInfo);
       when(mockDb.insertNovel(any)).thenAnswer((_) async => 1);
-      when(
-        mockDb.addToLibrary(NovelSource.narou, any),
-      ).thenAnswer((_) async => 1);
+      when(mockDb.addToLibrary(any)).thenAnswer((_) async => 1);
 
       await tester.pumpWidget(createTestWidget([testEnrichedNovel]));
 
@@ -120,7 +113,7 @@ void main() {
 
       // --- Assert ---
       verify(
-        mockApiService.fetchNovelInfo(any),
+        mockApiService.fetchNovelInfo(testNovel.ncode),
       ).called(1);
 
       // `cachedAt`が動的なため、argThatで他のフィールドを検証
@@ -129,9 +122,9 @@ void main() {
           argThat(
             isA<NovelsCompanion>()
                 .having(
-                  (c) => c.workId.value,
+                  (c) => c.ncode.value,
                   'ncode',
-                  testFullNovelInfo.workId,
+                  testFullNovelInfo.ncode,
                 )
                 .having(
                   (c) => c.title.value,
@@ -143,7 +136,7 @@ void main() {
       ).called(1);
 
       verify(
-        mockDb.addToLibrary(NovelSource.narou, testNovel.workId),
+        mockDb.addToLibrary(testNovel.ncode),
       ).called(1);
 
       expect(find.text('ライブラリに追加しました'), findsOneWidget);

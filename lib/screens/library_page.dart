@@ -35,7 +35,7 @@ class LibraryPage extends ConsumerWidget {
 
         // ジャンルフィルタ
         if (filter.selectedGenre != null) {
-          if (novel.genreId != filter.selectedGenre.toString()) {
+          if (novel.genre != filter.selectedGenre) {
             return false;
           }
         }
@@ -139,10 +139,7 @@ class LibraryPage extends ConsumerWidget {
                             onPressed: () async {
                               await ref
                                   .read(novelRepositoryProvider)
-                                  .removeFromLibrary(
-                                    novel.source,
-                                    novel.workId,
-                                  );
+                                  .removeFromLibrary(novel.ncode);
                               if (context.mounted) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(

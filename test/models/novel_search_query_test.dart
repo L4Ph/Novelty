@@ -7,7 +7,7 @@ void main() {
       final json = {
         'word': 'fantasy',
         'title': true,
-        'genre': ['1', '2'],
+        'genre': [1, 2],
         'order': 'popular',
         'lim': 50,
       };
@@ -16,7 +16,7 @@ void main() {
 
       expect(query.word, equals('fantasy'));
       expect(query.title, isTrue);
-      expect(query.genreId, equals(['1', '2']));
+      expect(query.genre, equals([1, 2]));
       expect(query.order, equals('popular'));
       expect(query.lim, equals(50));
     });
@@ -39,7 +39,7 @@ void main() {
       const query = NovelSearchQuery(
         word: 'fantasy',
         title: true,
-        genreId: ['1', '2'],
+        genre: [1, 2],
         isr15: true,
         order: 'popular',
         lim: 50,

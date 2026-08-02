@@ -84,7 +84,7 @@ void main() {
         );
 
         final info = await service.fetchBasicNovelInfo('N1234AB');
-        expect(info.workId, 'n1234ab');
+        expect(info.ncode, 'n1234ab');
         expect(info.title, 'テスト');
       });
     });

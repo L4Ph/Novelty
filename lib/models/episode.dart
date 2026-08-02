@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/html_escape_converter.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/value_wrapper.dart';
@@ -15,7 +14,6 @@ part 'episode.g.dart';
 class Episode {
   /// [Episode]のコンストラクタ
   const Episode({
-    this.source = NovelSource.narou,
     this.subtitle,
     this.url,
     this.update,
@@ -33,10 +31,6 @@ class Episode {
     if (json['ncode'] is String)
       'ncode': (json['ncode'] as String).toNormalizedNcode(),
   });
-
-  /// 提供サイト（プロバイダ）。
-  @JsonKey(defaultValue: NovelSource.narou)
-  final NovelSource source;
 
   /// サブタイトル。
   @HtmlEscapeConverter()
@@ -91,10 +85,8 @@ class Episode {
     Value<String?>? body,
     Value<String?>? novelUpdatedAt,
     bool? isDownloaded,
-    NovelSource? source,
   }) {
     return Episode(
-      source: source ?? this.source,
       subtitle: subtitle != null ? subtitle.value : this.subtitle,
       url: url != null ? url.value : this.url,
       update: update != null ? update.value : this.update,
@@ -114,7 +106,6 @@ class Episode {
       identical(this, other) ||
       other is Episode &&
           runtimeType == other.runtimeType &&
-          source == other.source &&
           subtitle == other.subtitle &&
           url == other.url &&
           update == other.update &&
@@ -127,7 +118,6 @@ class Episode {
 
   @override
   int get hashCode => Object.hash(
-    source,
     subtitle,
     url,
     update,

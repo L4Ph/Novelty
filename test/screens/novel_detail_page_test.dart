@@ -5,7 +5,6 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/novel_detail_page.dart';
-import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 import '../helpers/clipboard.dart';
@@ -13,7 +12,7 @@ import '../helpers/clipboard.dart';
 /// テスト用のライブラリ状態Notifier
 class FakeLibraryStatus extends LibraryStatus {
   @override
-  Stream<bool> build(NovelSource source, String workId) => Stream.value(false);
+  Stream<bool> build(String ncode) => Stream.value(false);
 }
 
 void main() {
@@ -28,29 +27,27 @@ void main() {
           overrides: [
             isOfflineModeProvider.overrideWithValue(false),
             novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
+              (ref, ncode) => Stream.value(
                 NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
+                  ncode: ncode,
                   title: '非公開作品のタイトル',
                   isPrivate: true,
                 ),
               ),
             ),
             episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
+              (ref, key) => Stream.value(<Episode>[]),
             ),
             downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
+              (ref, ncode) => Stream.value(null),
             ),
             libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
             lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
+              (ref, ncode) => Stream.value(null),
             ),
           ],
           child: const MaterialApp(
-            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
+            home: NovelDetailPage(ncode: testNcode),
           ),
         ),
       );
@@ -73,28 +70,26 @@ void main() {
           overrides: [
             isOfflineModeProvider.overrideWithValue(false),
             novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
+              (ref, ncode) => Stream.value(
                 NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
+                  ncode: ncode,
                   title: '公開作品のタイトル',
                 ),
               ),
             ),
             episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
+              (ref, key) => Stream.value(<Episode>[]),
             ),
             downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
+              (ref, ncode) => Stream.value(null),
             ),
             libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
             lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
+              (ref, ncode) => Stream.value(null),
             ),
           ],
           child: const MaterialApp(
-            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
+            home: NovelDetailPage(ncode: testNcode),
           ),
         ),
       );
@@ -117,28 +112,26 @@ void main() {
           overrides: [
             isOfflineModeProvider.overrideWithValue(true),
             novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
+              (ref, ncode) => Stream.value(
                 NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
+                  ncode: ncode,
                   title: 'オフライン小説',
                 ),
               ),
             ),
             episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
+              (ref, key) => Stream.value(<Episode>[]),
             ),
             downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
+              (ref, ncode) => Stream.value(null),
             ),
             libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
             lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
+              (ref, ncode) => Stream.value(null),
             ),
           ],
           child: const MaterialApp(
-            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
+            home: NovelDetailPage(ncode: testNcode),
           ),
         ),
       );
@@ -167,28 +160,26 @@ void main() {
           overrides: [
             isOfflineModeProvider.overrideWithValue(true),
             novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
+              (ref, ncode) => Stream.value(
                 NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
+                  ncode: ncode,
                   title: 'オフライン小説',
                 ),
               ),
             ),
             episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
+              (ref, key) => Stream.value(<Episode>[]),
             ),
             downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
+              (ref, ncode) => Stream.value(null),
             ),
             libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
             lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
+              (ref, ncode) => Stream.value(null),
             ),
           ],
           child: const MaterialApp(
-            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
+            home: NovelDetailPage(ncode: testNcode),
           ),
         ),
       );
@@ -212,28 +203,26 @@ void main() {
           overrides: [
             isOfflineModeProvider.overrideWithValue(false),
             novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
+              (ref, ncode) => Stream.value(
                 NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
+                  ncode: ncode,
                   title: '共有テスト小説',
                 ),
               ),
             ),
             episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
+              (ref, key) => Stream.value(<Episode>[]),
             ),
             downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
+              (ref, ncode) => Stream.value(null),
             ),
             libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
             lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
+              (ref, ncode) => Stream.value(null),
             ),
           ],
           child: const MaterialApp(
-            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
+            home: NovelDetailPage(ncode: testNcode),
           ),
         ),
       );

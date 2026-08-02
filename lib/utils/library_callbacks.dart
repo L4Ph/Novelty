@@ -16,10 +16,10 @@ Future<void> handleAddToLibrary({
   required ValueNotifier<Map<String, bool>> isProcessingMap,
   required ValueNotifier<String?> errorMessage,
 }) async {
-  final workId = item.workId ?? item.ncode;
-  if (workId == null) return;
+  final ncode = item.ncode;
+  if (ncode == null) return;
 
-  if (isProcessingMap.value[workId] ?? false) {
+  if (isProcessingMap.value[ncode] ?? false) {
     return; // 処理中の場合は何もしない
   }
 
@@ -30,10 +30,10 @@ Future<void> handleAddToLibrary({
 
   try {
     // 処理開始をマーク
-    isProcessingMap.value = {...isProcessingMap.value, workId: true};
+    isProcessingMap.value = {...isProcessingMap.value, ncode: true};
 
     final repository = ref.read(novelRepositoryProvider);
-    final added = await repository.addNovelToLibrary(item.source, workId);
+    final added = await repository.addNovelToLibrary(ncode);
 
     if (!added) {
       if (context.mounted) {
@@ -58,6 +58,6 @@ Future<void> handleAddToLibrary({
     }
   } finally {
     // 処理完了をマーク
-    isProcessingMap.value = {...isProcessingMap.value, workId: false};
+    isProcessingMap.value = {...isProcessingMap.value, ncode: false};
   }
 }

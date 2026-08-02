@@ -4,7 +4,6 @@ import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/sites/novel_source.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 /// スキーマバージョン15 → 16 のマイグレーションテスト。
@@ -33,42 +32,7 @@ void main() {
     final db = sqlite3.open(file.path);
 
     const statements = <String>[
-      '''
-      CREATE TABLE novels (
-        ncode TEXT NOT NULL PRIMARY KEY,
-        title TEXT,
-        writer TEXT,
-        user_id INTEGER,
-        story TEXT,
-        novel_type INTEGER,
-        "end" INTEGER,
-        genre INTEGER,
-        isr15 INTEGER,
-        isbl INTEGER,
-        isgl INTEGER,
-        iszankoku INTEGER,
-        istensei INTEGER,
-        istenni INTEGER,
-        keyword TEXT,
-        general_firstup INTEGER,
-        general_lastup INTEGER,
-        global_point INTEGER,
-        fav INTEGER,
-        review_count INTEGER,
-        rate_count INTEGER,
-        all_point INTEGER,
-        point_count INTEGER,
-        daily_point INTEGER,
-        weekly_point INTEGER,
-        monthly_point INTEGER,
-        quarter_point INTEGER,
-        yearly_point INTEGER,
-        general_all_no INTEGER,
-        novel_updated_at TEXT,
-        cached_at INTEGER,
-        is_private INTEGER NOT NULL DEFAULT 0
-      )
-      ''',
+      'CREATE TABLE novels (ncode TEXT NOT NULL PRIMARY KEY, title TEXT)',
       '''
       CREATE TABLE episodes (
         ncode TEXT NOT NULL REFERENCES novels(ncode),
@@ -119,42 +83,7 @@ void main() {
     final db = sqlite3.open(file.path);
 
     const statements = <String>[
-      '''
-      CREATE TABLE novels (
-        ncode TEXT NOT NULL PRIMARY KEY,
-        title TEXT,
-        writer TEXT,
-        user_id INTEGER,
-        story TEXT,
-        novel_type INTEGER,
-        "end" INTEGER,
-        genre INTEGER,
-        isr15 INTEGER,
-        isbl INTEGER,
-        isgl INTEGER,
-        iszankoku INTEGER,
-        istensei INTEGER,
-        istenni INTEGER,
-        keyword TEXT,
-        general_firstup INTEGER,
-        general_lastup INTEGER,
-        global_point INTEGER,
-        fav INTEGER,
-        review_count INTEGER,
-        rate_count INTEGER,
-        all_point INTEGER,
-        point_count INTEGER,
-        daily_point INTEGER,
-        weekly_point INTEGER,
-        monthly_point INTEGER,
-        quarter_point INTEGER,
-        yearly_point INTEGER,
-        general_all_no INTEGER,
-        novel_updated_at TEXT,
-        cached_at INTEGER,
-        is_private INTEGER NOT NULL DEFAULT 0
-      )
-      ''',
+      'CREATE TABLE novels (ncode TEXT NOT NULL PRIMARY KEY, title TEXT)',
       '''
       CREATE TABLE episodes (
         ncode TEXT NOT NULL REFERENCES novels(ncode),
@@ -241,42 +170,7 @@ void main() {
     final db = sqlite3.open(file.path);
 
     const statements = <String>[
-      '''
-      CREATE TABLE novels (
-        ncode TEXT NOT NULL PRIMARY KEY,
-        title TEXT,
-        writer TEXT,
-        user_id INTEGER,
-        story TEXT,
-        novel_type INTEGER,
-        "end" INTEGER,
-        genre INTEGER,
-        isr15 INTEGER,
-        isbl INTEGER,
-        isgl INTEGER,
-        iszankoku INTEGER,
-        istensei INTEGER,
-        istenni INTEGER,
-        keyword TEXT,
-        general_firstup INTEGER,
-        general_lastup INTEGER,
-        global_point INTEGER,
-        fav INTEGER,
-        review_count INTEGER,
-        rate_count INTEGER,
-        all_point INTEGER,
-        point_count INTEGER,
-        daily_point INTEGER,
-        weekly_point INTEGER,
-        monthly_point INTEGER,
-        quarter_point INTEGER,
-        yearly_point INTEGER,
-        general_all_no INTEGER,
-        novel_updated_at TEXT,
-        cached_at INTEGER,
-        is_private INTEGER NOT NULL DEFAULT 0
-      )
-      ''',
+      'CREATE TABLE novels (ncode TEXT NOT NULL PRIMARY KEY, title TEXT)',
       '''
       CREATE TABLE episodes (
         ncode TEXT NOT NULL REFERENCES novels(ncode),
@@ -322,42 +216,7 @@ void main() {
     final db = sqlite3.open(file.path);
 
     const statements = <String>[
-      '''
-      CREATE TABLE novels (
-        ncode TEXT NOT NULL PRIMARY KEY,
-        title TEXT,
-        writer TEXT,
-        user_id INTEGER,
-        story TEXT,
-        novel_type INTEGER,
-        "end" INTEGER,
-        genre INTEGER,
-        isr15 INTEGER,
-        isbl INTEGER,
-        isgl INTEGER,
-        iszankoku INTEGER,
-        istensei INTEGER,
-        istenni INTEGER,
-        keyword TEXT,
-        general_firstup INTEGER,
-        general_lastup INTEGER,
-        global_point INTEGER,
-        fav INTEGER,
-        review_count INTEGER,
-        rate_count INTEGER,
-        all_point INTEGER,
-        point_count INTEGER,
-        daily_point INTEGER,
-        weekly_point INTEGER,
-        monthly_point INTEGER,
-        quarter_point INTEGER,
-        yearly_point INTEGER,
-        general_all_no INTEGER,
-        novel_updated_at TEXT,
-        cached_at INTEGER,
-        is_private INTEGER NOT NULL DEFAULT 0
-      )
-      ''',
+      'CREATE TABLE novels (ncode TEXT NOT NULL PRIMARY KEY, title TEXT)',
       '''
       CREATE TABLE episodes (
         ncode TEXT NOT NULL REFERENCES novels(ncode),
@@ -435,7 +294,7 @@ void main() {
         isA<MigrationException>().having(
           (e) => e.toVersion,
           'toVersion',
-          17,
+          16,
         ),
       ),
     );
@@ -464,14 +323,14 @@ void main() {
         .get();
     expect(oldTables, isEmpty);
 
-    // スキーマバージョンが17に更新されていること
+    // スキーマバージョンが16に更新されていること
     final versionResult = await db
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(versionResult.read<int>('user_version'), 17);
+    expect(versionResult.read<int>('user_version'), 16);
 
     // novelsに非公開フラグが追加されていること
-    final novel = await db.getNovel(NovelSource.narou, 'n1234ab');
+    final novel = await db.getNovel('n1234ab');
     expect(novel, isNotNull);
     expect(novel!.isPrivate, isFalse);
   });
@@ -523,7 +382,7 @@ void main() {
     expect(contentRows.map((r) => r.episodeId), containsAll([1, 2]));
 
     // 本文の内容と取得日時が保持されていること
-    final ep1 = await db.getEpisodeData(NovelSource.narou, 'n1234ab', 1);
+    final ep1 = await db.getEpisodeData('n1234ab', 1);
     expect(ep1, isNotNull);
     expect(ep1!.content, isNotNull);
     expect(ep1.content!.length, 1);
@@ -532,12 +391,7 @@ void main() {
     expect(ep1.subtitle, '第1話');
 
     // 公開インターフェース越しの確認(空配列は未ダウンロード扱い)
-    final episodes = await db.getEpisodesRange(
-      NovelSource.narou,
-      'n1234ab',
-      1,
-      100,
-    );
+    final episodes = await db.getEpisodesRange('n1234ab', 1, 100);
     expect(episodes.length, 3);
     expect(episodes[0].isDownloaded, isTrue);
     expect(episodes[1].isDownloaded, isFalse);
@@ -553,7 +407,7 @@ void main() {
     expect(oldTables, isEmpty);
 
     // novelsテーブルに非公開フラグが追加され、デフォルトfalseであること
-    final novel = await db.getNovel(NovelSource.narou, 'n1234ab');
+    final novel = await db.getNovel('n1234ab');
     expect(novel, isNotNull);
     expect(novel!.isPrivate, isFalse);
   });
@@ -566,37 +420,7 @@ void main() {
       CREATE TABLE novels (
         ncode TEXT NOT NULL PRIMARY KEY,
         title TEXT,
-        writer TEXT,
-        user_id INTEGER,
-        story TEXT,
-        novel_type INTEGER,
-        "end" INTEGER,
-        genre INTEGER,
-        isr15 INTEGER,
-        isbl INTEGER,
-        isgl INTEGER,
-        iszankoku INTEGER,
-        istensei INTEGER,
-        istenni INTEGER,
-        keyword TEXT,
-        general_firstup INTEGER,
-        general_lastup INTEGER,
-        global_point INTEGER,
-        fav INTEGER,
-        review_count INTEGER,
-        rate_count INTEGER,
-        all_point INTEGER,
-        point_count INTEGER,
-        daily_point INTEGER,
-        weekly_point INTEGER,
-        monthly_point INTEGER,
-        quarter_point INTEGER,
-        yearly_point INTEGER,
-        general_all_no INTEGER,
-        novel_updated_at TEXT,
-        cached_at INTEGER,
-        is_private INTEGER NOT NULL DEFAULT 0
-      )
+        cached_at INTEGER)
     ''';
     const createLibraryEntriesV14 = '''
       CREATE TABLE library_entries (
@@ -672,7 +496,7 @@ void main() {
     expect(oldTables, isEmpty);
 
     // novelsテーブルに非公開フラグが追加されること
-    final novel = await db.getNovel(NovelSource.narou, 'n1234ab');
+    final novel = await db.getNovel('n1234ab');
     expect(novel, isNotNull);
     expect(novel!.isPrivate, isFalse);
   });
@@ -682,14 +506,10 @@ void main() {
     addTearDown(db.close);
 
     await db.insertNovel(
-      NovelsCompanion.insert(
-        source: NovelSource.narou,
-        workId: 'n1234ab',
-        title: const Value('テスト'),
-      ),
+      NovelsCompanion.insert(ncode: 'n1234ab', title: const Value('テスト')),
     );
 
-    final novel = await db.getNovel(NovelSource.narou, 'n1234ab');
+    final novel = await db.getNovel('n1234ab');
     expect(novel!.isPrivate, isFalse);
   });
 }

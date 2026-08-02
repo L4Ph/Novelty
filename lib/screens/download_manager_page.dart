@@ -5,7 +5,6 @@ import 'package:novelty/models/novel_download_summary.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/repositories/novel_repository.dart';
-import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 /// ダウンロード管理画面
@@ -139,21 +138,17 @@ class _DownloadListItem extends ConsumerWidget {
     final db = ref.watch(appDatabaseProvider);
 
     return FutureBuilder<Novel?>(
-      future: db.getNovel(NovelSource.narou, summary.ncode),
+      future: db.getNovel(summary.ncode),
       builder: (context, snapshot) {
         final novelInfo = snapshot.data;
 
         // NovelListTileを使用するため、NovelInfoに変換
         final novelData =
             novelInfo?.toModel() ??
-            NovelInfo(
-              workId: summary.ncode,
-              ncode: summary.ncode,
-              title: summary.ncode,
-            );
+            NovelInfo(ncode: summary.ncode, title: summary.ncode);
 
         final progressAsync = ref.watch(
-          downloadProgressProvider(NovelSource.narou, summary.ncode),
+          downloadProgressProvider(summary.ncode),
         );
 
         return Column(
@@ -248,18 +243,14 @@ class _CompletedListItem extends ConsumerWidget {
     final db = ref.watch(appDatabaseProvider);
 
     return FutureBuilder<Novel?>(
-      future: db.getNovel(NovelSource.narou, summary.ncode),
+      future: db.getNovel(summary.ncode),
       builder: (context, snapshot) {
         final novelInfo = snapshot.data;
 
         // NovelListTileを使用するため、NovelInfoに変換
         final novelData =
             novelInfo?.toModel() ??
-            NovelInfo(
-              workId: summary.ncode,
-              ncode: summary.ncode,
-              title: summary.ncode,
-            );
+            NovelInfo(ncode: summary.ncode, title: summary.ncode);
 
         return NovelListTile(item: novelData);
       },

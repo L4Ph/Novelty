@@ -14,7 +14,7 @@ void main() {
       };
 
       final novelInfo = NovelInfo.fromJson(json);
-      expect(novelInfo.workId, equals('n1234ab'));
+      expect(novelInfo.ncode, equals('n1234ab'));
     });
 
     test('RankingResponse.fromJsonでncodeが小文字化される', () {
@@ -66,7 +66,7 @@ void main() {
       };
 
       final novelInfo = NovelInfo.fromJson(json);
-      expect(novelInfo.workId, isNull);
+      expect(novelInfo.ncode, isNull);
     });
   });
 }

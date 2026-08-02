@@ -9,7 +9,7 @@ import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/migration_helper.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_download_summary.dart';
-import 'package:novelty/sites/novel_source.dart';
+import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/search_tokenizer.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -18,103 +18,6 @@ export 'database_providers.dart';
 export 'migration_helper.dart';
 
 part 'database.g.dart';
-
-/// [NovelSource] と DB の TEXT カラムを相互変換するコンバータ。
-class NovelSourceConverter extends TypeConverter<NovelSource, String> {
-  /// コンストラクタ
-  const NovelSourceConverter();
-
-  @override
-  NovelSource fromSql(String fromDb) => NovelSource.values.byName(fromDb);
-
-  @override
-  String toSql(NovelSource value) => value.dbId;
-}
-
-/// v16 形状（ncode 主キー）の novels テーブルを作成する SQL。
-///
-/// レガシーバージョン（v12 未満）からのマイグレーションで使用する。
-/// v17 への再構築は onUpgrade 末尾の _migrateToV17 で行う。
-const String _v16CreateNovelsSql = '''
-CREATE TABLE IF NOT EXISTS novels (
-  ncode TEXT NOT NULL PRIMARY KEY,
-  title TEXT,
-  writer TEXT,
-  user_id INTEGER,
-  story TEXT,
-  novel_type INTEGER,
-  "end" INTEGER,
-  genre INTEGER,
-  isr15 INTEGER,
-  isbl INTEGER,
-  isgl INTEGER,
-  iszankoku INTEGER,
-  istensei INTEGER,
-  istenni INTEGER,
-  keyword TEXT,
-  general_firstup INTEGER,
-  general_lastup INTEGER,
-  global_point INTEGER,
-  fav INTEGER,
-  review_count INTEGER,
-  rate_count INTEGER,
-  all_point INTEGER,
-  point_count INTEGER,
-  daily_point INTEGER,
-  weekly_point INTEGER,
-  monthly_point INTEGER,
-  quarter_point INTEGER,
-  yearly_point INTEGER,
-  general_all_no INTEGER,
-  novel_updated_at TEXT,
-  cached_at INTEGER,
-  is_private INTEGER NOT NULL DEFAULT 0
-)
-''';
-
-/// v16 形状の library_entries テーブルを作成する SQL。
-const String _v16CreateLibraryEntriesSql = '''
-CREATE TABLE IF NOT EXISTS library_entries (
-  ncode TEXT NOT NULL PRIMARY KEY REFERENCES novels(ncode),
-  added_at INTEGER NOT NULL
-)
-''';
-
-/// v16 形状の reading_history テーブルを作成する SQL。
-const String _v16CreateReadingHistorySql = '''
-CREATE TABLE IF NOT EXISTS reading_history (
-  ncode TEXT NOT NULL PRIMARY KEY REFERENCES novels(ncode),
-  last_episode_id INTEGER,
-  viewed_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL DEFAULT 0
-)
-''';
-
-/// v16 形状の episode_list_entries テーブルを作成する SQL。
-const String _v16CreateEpisodeListEntriesSql = '''
-CREATE TABLE IF NOT EXISTS episode_list_entries (
-  ncode TEXT NOT NULL REFERENCES novels(ncode),
-  episode_id INTEGER NOT NULL,
-  subtitle TEXT,
-  url TEXT,
-  published_at TEXT,
-  revised_at TEXT,
-  fetched_at INTEGER,
-  PRIMARY KEY (ncode, episode_id)
-)
-''';
-
-/// v16 形状の episode_contents テーブルを作成する SQL。
-const String _v16CreateEpisodeContentsSql = '''
-CREATE TABLE IF NOT EXISTS episode_contents (
-  ncode TEXT NOT NULL REFERENCES novels(ncode),
-  episode_id INTEGER NOT NULL,
-  content TEXT,
-  fetched_at INTEGER,
-  revised_at TEXT,
-  PRIMARY KEY (ncode, episode_id)
-)
-''';
 
 /// 小説のコンテンツをデータベースに保存するための変換クラス
 class ContentConverter
@@ -148,8 +51,7 @@ class ContentConverter
 class HistoryData {
   /// コンストラクタ
   const HistoryData({
-    required this.source,
-    required this.workId,
+    required this.ncode,
     required this.viewedAt,
     required this.updatedAt,
     this.title,
@@ -157,11 +59,8 @@ class HistoryData {
     this.lastEpisode,
   });
 
-  /// 提供サイト（プロバイダ）
-  final NovelSource source;
-
-  /// サイト共通の作品ID
-  final String workId;
+  /// 小説のNコード
+  final String ncode;
 
   /// タイトル
   final String? title;
@@ -183,8 +82,7 @@ class HistoryData {
       identical(this, other) ||
       other is HistoryData &&
           runtimeType == other.runtimeType &&
-          source == other.source &&
-          workId == other.workId &&
+          ncode == other.ncode &&
           title == other.title &&
           writer == other.writer &&
           lastEpisode == other.lastEpisode &&
@@ -193,8 +91,7 @@ class HistoryData {
 
   @override
   int get hashCode =>
-      source.hashCode ^
-      workId.hashCode ^
+      ncode.hashCode ^
       title.hashCode ^
       writer.hashCode ^
       lastEpisode.hashCode ^
@@ -204,7 +101,7 @@ class HistoryData {
   @override
   String toString() {
     return 'HistoryData('
-        'workId: $workId, title: $title, writer: $writer, '
+        'ncode: $ncode, title: $title, writer: $writer, '
         'lastEpisode: $lastEpisode, viewedAt: $viewedAt, '
         'updatedAt: $updatedAt)';
   }
@@ -213,11 +110,8 @@ class HistoryData {
 // テーブル定義
 /// 小説情報を格納するテーブル（マスターテーブル）
 class Novels extends Table {
-  /// 提供サイト（プロバイダ）
-  TextColumn get source => text().map(const NovelSourceConverter())();
-
-  /// サイト共通の作品ID（なろうはNコード）
-  TextColumn get workId => text()();
+  /// 小説のncode
+  TextColumn get ncode => text()();
 
   /// 小説のタイトル
   TextColumn get title => text().nullable()();
@@ -240,8 +134,7 @@ class Novels extends Table {
   IntColumn get end => integer().nullable()();
 
   /// ジャンル
-  /// サイト共通のジャンルID（文字列）
-  TextColumn get genreId => text().nullable()();
+  IntColumn get genre => integer().nullable()();
 
   /// 作品に含まれる要素に「R15」が含まれる場合は1、それ以外は0
   IntColumn get isr15 => integer().nullable()();
@@ -319,32 +212,26 @@ class Novels extends Table {
   BoolColumn get isPrivate => boolean().withDefault(const Constant(false))();
 
   @override
-  Set<Column> get primaryKey => {source, workId};
+  Set<Column> get primaryKey => {ncode};
 }
 
 /// ライブラリ登録情報を格納するテーブル（正規化済み）
 class LibraryEntries extends Table {
-  /// 提供サイト（プロバイダ）
-  TextColumn get source => text().map(const NovelSourceConverter())();
-
-  /// 小説の作品ID（参照整合性はアプリ層で担保）
-  TextColumn get workId => text()();
+  /// 小説のncode (外部キー)
+  TextColumn get ncode => text().references(Novels, #ncode)();
 
   /// ライブラリに追加された日時
   /// UNIXタイムスタンプ形式で保存される
   IntColumn get addedAt => integer()();
 
   @override
-  Set<Column> get primaryKey => {source, workId};
+  Set<Column> get primaryKey => {ncode};
 }
 
 /// 閲覧履歴を格納するテーブル（正規化済み）
 class ReadingHistory extends Table {
-  /// 提供サイト（プロバイダ）
-  TextColumn get source => text().map(const NovelSourceConverter())();
-
-  /// 小説の作品ID（参照整合性はアプリ層で担保）
-  TextColumn get workId => text()();
+  /// 小説のncode (外部キー)
+  TextColumn get ncode => text().references(Novels, #ncode)();
 
   /// 最後に閲覧したエピソード番号
   IntColumn get lastEpisodeId => integer().nullable()();
@@ -356,17 +243,14 @@ class ReadingHistory extends Table {
   IntColumn get updatedAt => integer().withDefault(const Constant(0))();
 
   @override
-  Set<Column> get primaryKey => {source, workId};
+  Set<Column> get primaryKey => {ncode};
 }
 
 /// エピソード目次(メタデータ)を格納するテーブル
 /// 旧EpisodeEntitiesテーブルから目次情報を分離したもの
 class EpisodeListEntries extends Table {
-  /// 提供サイト（プロバイダ）
-  TextColumn get source => text().map(const NovelSourceConverter())();
-
-  /// 小説の作品ID（参照整合性はアプリ層で担保）
-  TextColumn get workId => text()();
+  /// 小説のncode (外部キー)
+  TextColumn get ncode => text().references(Novels, #ncode)();
 
   /// エピソード番号
   IntColumn get episodeId => integer()();
@@ -387,17 +271,14 @@ class EpisodeListEntries extends Table {
   IntColumn get fetchedAt => integer().nullable()();
 
   @override
-  Set<Column> get primaryKey => {source, workId, episodeId};
+  Set<Column> get primaryKey => {ncode, episodeId};
 }
 
 /// エピソード本文(キャッシュ)を格納するテーブル
 /// 旧EpisodeEntitiesテーブルから本文キャッシュを分離したもの
 class EpisodeContents extends Table {
-  /// 提供サイト（プロバイダ）
-  TextColumn get source => text().map(const NovelSourceConverter())();
-
-  /// 小説の作品ID（参照整合性はアプリ層で担保）
-  TextColumn get workId => text()();
+  /// 小説のncode (外部キー)
+  TextColumn get ncode => text().references(Novels, #ncode)();
 
   /// エピソード番号
   IntColumn get episodeId => integer()();
@@ -413,7 +294,7 @@ class EpisodeContents extends Table {
   TextColumn get revisedAt => text().nullable()();
 
   @override
-  Set<Column> get primaryKey => {source, workId, episodeId};
+  Set<Column> get primaryKey => {ncode, episodeId};
 }
 
 /// 目次と本文を結合したエピソード情報のDTO
@@ -421,8 +302,7 @@ class EpisodeContents extends Table {
 class EpisodeData {
   /// コンストラクタ
   const EpisodeData({
-    required this.source,
-    required this.workId,
+    required this.ncode,
     required this.episodeId,
     this.subtitle,
     this.url,
@@ -432,11 +312,8 @@ class EpisodeData {
     this.fetchedAt,
   });
 
-  /// 提供サイト（プロバイダ）
-  final NovelSource source;
-
-  /// サイト共通の作品ID
-  final String workId;
+  /// 小説のncode
+  final String ncode;
 
   /// エピソード番号
   final int episodeId;
@@ -481,7 +358,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.test(super.e);
 
   /// 現在のデータベーススキーマバージョン
-  static const int currentSchemaVersion = 17;
+  static const int currentSchemaVersion = 16;
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -498,13 +375,11 @@ class AppDatabase extends _$AppDatabase {
           if (from < 12) {
             // 以前のマイグレーション失敗などでテーブルが中途半端に存在する可能性があるため、
             // 既存の新規テーブルはそのまま残し、不足データを補填する形で移行する。
-            // なお、これらのテーブルは v16 形状（ncode 主キー）で作成する。
-            // v17 への再構築はこの onUpgrade の末尾（from < 17 ブランチ）で行う。
 
-            // 1. 新規テーブルが存在しない場合のみ作成する（v16形状）
-            await customStatement(_v16CreateNovelsSql);
-            await customStatement(_v16CreateLibraryEntriesSql);
-            await customStatement(_v16CreateReadingHistorySql);
+            // 1. 新規テーブルが存在しない場合のみ作成する
+            await m.createTable(novels);
+            await m.createTable(libraryEntries);
+            await m.createTable(readingHistory);
             // 旧episodesテーブル(v12〜v15で使用)を作成する
             // v16マイグレーションで目次・本文テーブルへ分割される
             await customStatement('''
@@ -608,9 +483,8 @@ class AppDatabase extends _$AppDatabase {
             // 旧episodesテーブルを目次・本文の2テーブルに分割する
             // v14のFTS再構築より前に実行し、_populateFtsTables()で
             // episode_list_entries / episode_contents を参照できるようにする
-            // ここでは v16 形状（ncode 主キー）で作成する（v17再構築は末尾）
-            await customStatement(_v16CreateEpisodeListEntriesSql);
-            await customStatement(_v16CreateEpisodeContentsSql);
+            await m.createTable(episodeListEntries);
+            await m.createTable(episodeContents);
 
             // episodes テーブルが存在する場合のみデータを引き継ぐ
             // （マイグレーション中断により episodes が既に削除されている可能性もあるため）
@@ -701,15 +575,6 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumnIfNotExists(novels, novels.userId);
           }
 
-          if (from < 17) {
-            // v17: 複数プロバイダ対応（カクヨム対応 #240）
-            // 全テーブルの主キーを (source, work_id)（エピソード系は
-            // (source, work_id, episode_id)）に移行する。
-            // 既存データは source='narou' として100%維持する。
-            // ジャンルは INTEGER → TEXT（genre_id）に変換する。
-            await _migrateToV17();
-          }
-
           if (from < 14) {
             // トリグラムトークナイザーからデフォルトトークナイザー(simple)へ切り替え、
             // トリガーを削除したためFTSテーブルを手動で再構築・再投入する
@@ -773,219 +638,11 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
-  /// v16 → v17 マイグレーションを実行する。
-  ///
-  /// 複数プロバイダ対応（カクヨム対応 #240）の一環で、全テーブルの主キーを
-  /// `(source, work_id)`（エピソード系は `(source, work_id, episode_id)`）に
-  /// 移行する。既存データは `source='narou'` として100%維持する。
-  /// ジャンルは INTEGER → TEXT（genre_id）に変換する。
-  Future<void> _migrateToV17() async {
-    // 外部キー制約を一時的に無効化してテーブル再構築を行う
-    await customStatement('PRAGMA foreign_keys = OFF');
-
-    /// テーブルの存在確認（旧バージョンでは存在しないテーブルがあるため）
-    Future<bool> tableExists(String name) async {
-      final result = await customSelect(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
-        variables: [Variable.withString(name)],
-      ).get();
-      return result.isNotEmpty;
-    }
-
-    // デバッグ用: 各ステップの失敗箇所を特定する
-    Future<void> step(String name, Future<void> Function() body) async {
-      try {
-        await body();
-      } on Object catch (e) {
-        debugPrint('MIGRATE_V17_STEP_FAILED: $name -> $e');
-        rethrow;
-      }
-    }
-
-    // ---- novels ----
-    await step('novels', () async {
-      await customStatement('''
-      CREATE TABLE novels_v17 (
-        source TEXT NOT NULL,
-        work_id TEXT NOT NULL,
-        title TEXT,
-        writer TEXT,
-        user_id INTEGER,
-        story TEXT,
-        novel_type INTEGER,
-        "end" INTEGER,
-        genre_id TEXT,
-        isr15 INTEGER,
-        isbl INTEGER,
-        isgl INTEGER,
-        iszankoku INTEGER,
-        istensei INTEGER,
-        istenni INTEGER,
-        keyword TEXT,
-        general_firstup INTEGER,
-        general_lastup INTEGER,
-        global_point INTEGER,
-        fav INTEGER,
-        review_count INTEGER,
-        rate_count INTEGER,
-        all_point INTEGER,
-        point_count INTEGER,
-        daily_point INTEGER,
-        weekly_point INTEGER,
-        monthly_point INTEGER,
-        quarter_point INTEGER,
-        yearly_point INTEGER,
-        general_all_no INTEGER,
-        novel_updated_at TEXT,
-        cached_at INTEGER,
-        is_private INTEGER NOT NULL DEFAULT 0,
-        PRIMARY KEY (source, work_id)
-      )
-    ''');
-      await customStatement('''
-      INSERT INTO novels_v17 (
-        source, work_id, title, writer, user_id, story, novel_type, "end",
-        genre_id, isr15, isbl, isgl, iszankoku, istensei, istenni, keyword,
-        general_firstup, general_lastup, global_point, fav, review_count,
-        rate_count, all_point, point_count, daily_point, weekly_point,
-        monthly_point, quarter_point, yearly_point, general_all_no,
-        novel_updated_at, cached_at, is_private
-      )
-      SELECT 'narou', ncode, title, writer, user_id, story, novel_type, "end",
-        CAST(genre AS TEXT), isr15, isbl, isgl, iszankoku, istensei, istenni,
-        keyword, general_firstup, general_lastup, global_point, fav,
-        review_count, rate_count, all_point, point_count, daily_point,
-        weekly_point, monthly_point, quarter_point, yearly_point,
-        general_all_no, novel_updated_at, cached_at, is_private
-      FROM novels
-    ''');
-      await customStatement('DROP TABLE novels');
-      await customStatement('ALTER TABLE novels_v17 RENAME TO novels');
-    });
-
-    // ---- library_entries ----
-    await step('library_entries', () async {
-      if (!await tableExists('library_entries')) return;
-      await customStatement('''
-      CREATE TABLE library_entries_v17 (
-        source TEXT NOT NULL,
-        work_id TEXT NOT NULL,
-        added_at INTEGER NOT NULL,
-        PRIMARY KEY (source, work_id)
-      )
-    ''');
-      await customStatement('''
-      INSERT INTO library_entries_v17 (source, work_id, added_at)
-      SELECT 'narou', ncode, added_at FROM library_entries
-    ''');
-      await customStatement('DROP TABLE library_entries');
-      await customStatement(
-        'ALTER TABLE library_entries_v17 RENAME TO library_entries',
-      );
-    });
-
-    // ---- reading_history ----
-    await step('reading_history', () async {
-      if (!await tableExists('reading_history')) return;
-      await customStatement('''
-      CREATE TABLE reading_history_v17 (
-        source TEXT NOT NULL,
-        work_id TEXT NOT NULL,
-        last_episode_id INTEGER,
-        viewed_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL DEFAULT 0,
-        PRIMARY KEY (source, work_id)
-      )
-    ''');
-      await customStatement('''
-      INSERT INTO reading_history_v17 (
-        source, work_id, last_episode_id, viewed_at, updated_at
-      )
-      SELECT 'narou', ncode, last_episode_id, viewed_at, updated_at
-      FROM reading_history
-    ''');
-      await customStatement('DROP TABLE reading_history');
-      await customStatement(
-        'ALTER TABLE reading_history_v17 RENAME TO reading_history',
-      );
-    });
-
-    // ---- episode_list_entries ----
-    await step('episode_list_entries', () async {
-      if (!await tableExists('episode_list_entries')) return;
-      await customStatement('''
-      CREATE TABLE episode_list_entries_v17 (
-        source TEXT NOT NULL,
-        work_id TEXT NOT NULL,
-        episode_id INTEGER NOT NULL,
-        subtitle TEXT,
-        url TEXT,
-        published_at TEXT,
-        revised_at TEXT,
-        fetched_at INTEGER,
-        PRIMARY KEY (source, work_id, episode_id)
-      )
-    ''');
-      await customStatement('''
-      INSERT INTO episode_list_entries_v17 (
-        source, work_id, episode_id, subtitle, url, published_at, revised_at,
-        fetched_at
-      )
-      SELECT 'narou', ncode, episode_id, subtitle, url, published_at,
-        revised_at, fetched_at
-      FROM episode_list_entries
-    ''');
-      await customStatement('DROP TABLE episode_list_entries');
-      await customStatement(
-        'ALTER TABLE episode_list_entries_v17 RENAME TO episode_list_entries',
-      );
-    });
-
-    // ---- episode_contents ----
-    await step('episode_contents', () async {
-      if (!await tableExists('episode_contents')) return;
-      await customStatement('''
-      CREATE TABLE episode_contents_v17 (
-        source TEXT NOT NULL,
-        work_id TEXT NOT NULL,
-        episode_id INTEGER NOT NULL,
-        content TEXT,
-        fetched_at INTEGER,
-        revised_at TEXT,
-        PRIMARY KEY (source, work_id, episode_id)
-      )
-    ''');
-      await customStatement('''
-      INSERT INTO episode_contents_v17 (
-        source, work_id, episode_id, content, fetched_at, revised_at
-      )
-      SELECT 'narou', ncode, episode_id, content, fetched_at, revised_at
-      FROM episode_contents
-    ''');
-      await customStatement('DROP TABLE episode_contents');
-      await customStatement(
-        'ALTER TABLE episode_contents_v17 RENAME TO episode_contents',
-      );
-    });
-
-    // ---- FTS 再構築 ----
-    await step('fts', () async {
-      await customStatement('DROP TABLE IF EXISTS novels_search');
-      await customStatement('DROP TABLE IF EXISTS episodes_search');
-
-      await _createFtsTables();
-      await step('fts_populate', _populateFtsTables);
-    });
-
-    await customStatement('PRAGMA foreign_keys = ON');
-  }
-
   Future<void> _createFtsTables() async {
     // Novels用FTSテーブル（デフォルトトークナイザー）
     await customStatement('''
       CREATE VIRTUAL TABLE IF NOT EXISTS novels_search USING fts5(
-        source UNINDEXED,
-        work_id UNINDEXED,
+        ncode UNINDEXED,
         title,
         writer,
         story
@@ -995,8 +652,7 @@ class AppDatabase extends _$AppDatabase {
     // Episodes用FTSテーブル（デフォルトトークナイザー）
     await customStatement('''
       CREATE VIRTUAL TABLE IF NOT EXISTS episodes_search USING fts5(
-        source UNINDEXED,
-        work_id UNINDEXED,
+        ncode UNINDEXED,
         episode_id UNINDEXED,
         subtitle,
         content
@@ -1015,11 +671,10 @@ class AppDatabase extends _$AppDatabase {
 
     // Episodes検索インデックスを再構築
     final episodeRows = await customSelect(
-      'SELECT l.source, l.work_id, l.episode_id, l.subtitle, c.content '
+      'SELECT l.ncode, l.episode_id, l.subtitle, c.content '
       'FROM episode_list_entries l '
       'JOIN episode_contents c '
-      'ON c.source = l.source AND c.work_id = l.work_id '
-      'AND c.episode_id = l.episode_id '
+      'ON c.ncode = l.ncode AND c.episode_id = l.episode_id '
       'WHERE c.content IS NOT NULL',
       readsFrom: {episodeListEntries, episodeContents},
     ).get();
@@ -1027,8 +682,7 @@ class AppDatabase extends _$AppDatabase {
       final contentJson = row.read<String?>('content');
       if (contentJson == null) continue;
       await _updateEpisodeSearchIndex(
-        source: NovelSource.values.byName(row.read<String>('source')),
-        workId: row.read<String>('work_id'),
+        ncode: row.read<String>('ncode'),
         episodeId: row.read<int>('episode_id'),
         subtitle: row.read<String?>('subtitle'),
         content: const ContentConverter().fromSql(contentJson),
@@ -1044,17 +698,15 @@ class AppDatabase extends _$AppDatabase {
 
     await customStatement(
       '''
-      INSERT OR REPLACE INTO novels_search(rowid, source, work_id, title, writer, story)
+      INSERT OR REPLACE INTO novels_search(rowid, ncode, title, writer, story)
       VALUES (
-        (SELECT rowid FROM novels_search WHERE source = ? AND work_id = ?),
-        ?, ?, ?, ?, ?
+        (SELECT rowid FROM novels_search WHERE ncode = ?),
+        ?, ?, ?, ?
       )
       ''',
       [
-        novel.source.dbId,
-        novel.workId,
-        novel.source.dbId,
-        novel.workId,
+        novel.ncode,
+        novel.ncode,
         tokenizedTitle,
         tokenizedWriter,
         tokenizedStory,
@@ -1064,8 +716,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// エピソードの検索インデックスを更新
   Future<void> _updateEpisodeSearchIndex({
-    required NovelSource source,
-    required String workId,
+    required String ncode,
     required int episodeId,
     required String? subtitle,
     required List<NovelContentElement>? content,
@@ -1087,18 +738,16 @@ class AppDatabase extends _$AppDatabase {
 
     await customStatement(
       '''
-      INSERT OR REPLACE INTO episodes_search(rowid, source, work_id, episode_id, subtitle, content)
+      INSERT OR REPLACE INTO episodes_search(rowid, ncode, episode_id, subtitle, content)
       VALUES (
-        (SELECT rowid FROM episodes_search WHERE source = ? AND work_id = ? AND episode_id = ?),
-        ?, ?, ?, ?, ?
+        (SELECT rowid FROM episodes_search WHERE ncode = ? AND episode_id = ?),
+        ?, ?, ?, ?
       )
       ''',
       [
-        source.dbId,
-        workId,
+        ncode,
         episodeId,
-        source.dbId,
-        workId,
+        ncode,
         episodeId,
         tokenizedSubtitle,
         tokenizedContent,
@@ -1108,43 +757,33 @@ class AppDatabase extends _$AppDatabase {
 
   /// 小説の検索インデックスから削除
   // ignore: unused_element
-  Future<void> _deleteNovelSearchIndex(
-    NovelSource source,
-    String workId,
-  ) async {
+  Future<void> _deleteNovelSearchIndex(String ncode) async {
     await customStatement(
-      'DELETE FROM novels_search WHERE source = ? AND work_id = ?',
-      [source.dbId, workId],
+      'DELETE FROM novels_search WHERE ncode = ?',
+      [ncode],
     );
   }
 
   /// エピソードの検索インデックスから削除
   // ignore: unused_element
-  Future<void> _deleteEpisodeSearchIndex(
-    NovelSource source,
-    String workId,
-    int episodeId,
-  ) async {
+  Future<void> _deleteEpisodeSearchIndex(String ncode, int episodeId) async {
     await customStatement(
-      'DELETE FROM episodes_search WHERE source = ? AND work_id = ? '
-      'AND episode_id = ?',
-      [source.dbId, workId, episodeId],
+      'DELETE FROM episodes_search WHERE ncode = ? AND episode_id = ?',
+      [ncode, episodeId],
     );
   }
 
   /// 小説情報の取得
-  Future<Novel?> getNovel(NovelSource source, String workId) {
-    return (select(novels)..where(
-          (t) => t.source.equalsValue(source) & t.workId.equals(workId),
-        ))
+  Future<Novel?> getNovel(String ncode) {
+    return (select(novels)
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .getSingleOrNull();
   }
 
   /// 小説情報の監視
-  Stream<Novel?> watchNovel(NovelSource source, String workId) {
-    return (select(novels)..where(
-          (t) => t.source.equalsValue(source) & t.workId.equals(workId),
-        ))
+  Stream<Novel?> watchNovel(String ncode) {
+    return (select(novels)
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .watchSingleOrNull();
   }
 
@@ -1156,9 +795,8 @@ class AppDatabase extends _$AppDatabase {
     final results = await customSelect(
       '''
       SELECT n.* FROM novels n
-      JOIN novels_search ns ON n.source = ns.source AND n.work_id = ns.work_id
-      JOIN library_entries le
-        ON n.source = le.source AND n.work_id = le.work_id
+      JOIN novels_search ns ON n.ncode = ns.ncode
+      JOIN library_entries le ON n.ncode = le.ncode
       WHERE ns.novels_search MATCH ?
       ORDER BY ns.rank
       ''',
@@ -1181,22 +819,16 @@ class AppDatabase extends _$AppDatabase {
     final results = await customSelect(
       '''
       SELECT 
-        l.source,
-        l.work_id,
+        l.ncode,
         l.episode_id,
         l.subtitle,
         c.content,
         n.title as novel_title
       FROM episode_list_entries l
-      LEFT JOIN episode_contents c
-        ON c.source = l.source AND c.work_id = l.work_id
-        AND c.episode_id = l.episode_id
-      JOIN novels n ON l.source = n.source AND l.work_id = n.work_id
-      JOIN library_entries le
-        ON l.source = le.source AND l.work_id = le.work_id
-      JOIN episodes_search es
-        ON l.source = es.source AND l.work_id = es.work_id
-        AND l.episode_id = es.episode_id
+      LEFT JOIN episode_contents c ON c.ncode = l.ncode AND c.episode_id = l.episode_id
+      JOIN novels n ON l.ncode = n.ncode
+      JOIN library_entries le ON l.ncode = le.ncode
+      JOIN episodes_search es ON l.ncode = es.ncode AND l.episode_id = es.episode_id
       WHERE es.episodes_search MATCH ?
       ORDER BY es.rank
       LIMIT 100
@@ -1230,8 +862,7 @@ class AppDatabase extends _$AppDatabase {
         })
         .map((row) {
           return EpisodeSearchResult(
-            source: NovelSource.values.byName(row.read<String>('source')),
-            workId: row.read<String>('work_id'),
+            ncode: row.read<String>('ncode'),
             episodeId: row.read<int>('episode_id'),
             subtitle: row.read<String?>('subtitle') ?? '',
             novelTitle: row.read<String?>('novel_title') ?? '',
@@ -1241,33 +872,28 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// ライブラリに小説を追加
-  Future<int> addToLibrary(NovelSource source, String workId) {
+  Future<int> addToLibrary(String ncode) {
+    final normalized = ncode.toNormalizedNcode();
     return into(libraryEntries).insert(
       LibraryEntriesCompanion(
-        source: Value(source),
-        workId: Value(workId),
-        addedAt: Value(DateTime.now().millisecondsSinceEpoch),
+        ncode: drift.Value(normalized),
+        addedAt: drift.Value(DateTime.now().millisecondsSinceEpoch),
       ),
       mode: InsertMode.insertOrIgnore,
     );
   }
 
   /// ライブラリから小説を削除
-  Future<int> removeFromLibrary(NovelSource source, String workId) {
+  Future<int> removeFromLibrary(String ncode) {
     return (delete(
-          libraryEntries,
-        )..where((t) => t.source.equalsValue(source) & t.workId.equals(workId)))
-        .go();
+      libraryEntries,
+    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).go();
   }
 
   /// ライブラリの小説リストを取得（追加日時の降順）
   Future<List<Novel>> getLibraryNovels() async {
     final query = select(libraryEntries).join([
-      innerJoin(
-        novels,
-        novels.source.equalsExp(libraryEntries.source) &
-            novels.workId.equalsExp(libraryEntries.workId),
-      ),
+      innerJoin(novels, novels.ncode.equalsExp(libraryEntries.ncode)),
     ])..orderBy([OrderingTerm.desc(libraryEntries.addedAt)]);
 
     final results = await query.get();
@@ -1277,11 +903,7 @@ class AppDatabase extends _$AppDatabase {
   /// ライブラリの小説リストを監視（JOIN）
   Stream<List<Novel>> watchLibraryNovels() {
     final query = select(libraryEntries).join([
-      innerJoin(
-        novels,
-        novels.source.equalsExp(libraryEntries.source) &
-            novels.workId.equalsExp(libraryEntries.workId),
-      ),
+      innerJoin(novels, novels.ncode.equalsExp(libraryEntries.ncode)),
     ])..orderBy([OrderingTerm.desc(libraryEntries.addedAt)]);
 
     return query.watch().map(
@@ -1290,20 +912,18 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// 小説がライブラリに追加されているかを確認
-  Future<bool> isInLibrary(NovelSource source, String workId) async {
+  Future<bool> isInLibrary(String ncode) async {
     final result =
-        await (select(libraryEntries)..where(
-              (t) => t.source.equalsValue(source) & t.workId.equals(workId),
-            ))
+        await (select(libraryEntries)
+              ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
             .getSingleOrNull();
     return result != null;
   }
 
   /// ライブラリ登録状態の監視
-  Stream<bool> watchIsInLibrary(NovelSource source, String workId) {
-    return (select(
-          libraryEntries,
-        )..where((t) => t.source.equalsValue(source) & t.workId.equals(workId)))
+  Stream<bool> watchIsInLibrary(String ncode) {
+    return (select(libraryEntries)
+          ..where((t) => t.ncode.equals(ncode.toNormalizedNcode())))
         .watchSingleOrNull()
         .map((entry) => entry != null);
   }
@@ -1311,13 +931,10 @@ class AppDatabase extends _$AppDatabase {
   /// 小説情報の保存
   Future<int> insertNovel(NovelsCompanion novel) async {
     // FTS更新が必要かどうかを判定するために既存データを取得
-    final existingNovel = await getNovel(
-      novel.source.value,
-      novel.workId.value,
-    );
+    final existingNovel = await getNovel(novel.ncode.value);
 
     final id = await into(novels).insert(
-      novel,
+      novel.copyWith(ncode: drift.Value(novel.ncode.value.toLowerCase())),
       mode: InsertMode.insertOrReplace,
     );
 
@@ -1333,10 +950,7 @@ class AppDatabase extends _$AppDatabase {
     }
 
     if (shouldUpdateIndex) {
-      final insertedNovel = await getNovel(
-        novel.source.value,
-        novel.workId.value,
-      );
+      final insertedNovel = await getNovel(novel.ncode.value);
       if (insertedNovel != null) {
         await _updateNovelSearchIndex(insertedNovel);
       }
@@ -1347,55 +961,49 @@ class AppDatabase extends _$AppDatabase {
 
   /// 小説の非公開フラグを更新する
   Future<int> updateNovelPrivateFlag(
-    NovelSource source,
-    String workId, {
+    String ncode, {
     required bool isPrivate,
   }) {
     return (update(
-          novels,
-        )..where((t) => t.source.equalsValue(source) & t.workId.equals(workId)))
-        .write(
-          NovelsCompanion(
-            isPrivate: Value(isPrivate),
-          ),
-        );
+      novels,
+    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).write(
+      NovelsCompanion(
+        isPrivate: Value(isPrivate),
+      ),
+    );
   }
 
   /// 小説の取得状態を確保する
   ///
-  /// 指定したsource/workIdの行が存在しない場合はプレースホルダー行を挿入し、
+  /// 指定したncodeの行が存在しない場合はプレースホルダー行を挿入し、
   /// 存在する場合はcachedAtを更新する。
   /// [isPrivate]を指定した場合は非公開フラグも更新する。
   Future<void> ensureNovelFetchState(
-    NovelSource source,
-    String workId, {
+    String ncode, {
     required int cachedAt,
     bool? isPrivate,
   }) async {
-    final existing = await getNovel(source, workId);
+    final normalizedNcode = ncode.toNormalizedNcode();
+    final existing = await getNovel(normalizedNcode);
     if (existing == null) {
       await insertNovel(
         NovelsCompanion(
-          source: Value(source),
-          workId: Value(workId),
+          ncode: Value(normalizedNcode),
           isPrivate: Value(isPrivate ?? false),
           cachedAt: Value(cachedAt),
         ),
       );
     } else {
       await (update(
-            novels,
-          )..where(
-            (t) => t.source.equalsValue(source) & t.workId.equals(workId),
-          ))
-          .write(
-            NovelsCompanion(
-              isPrivate: isPrivate != null
-                  ? Value(isPrivate)
-                  : const Value.absent(),
-              cachedAt: Value(cachedAt),
-            ),
-          );
+        novels,
+      )..where((t) => t.ncode.equals(normalizedNcode))).write(
+        NovelsCompanion(
+          isPrivate: isPrivate != null
+              ? Value(isPrivate)
+              : const Value.absent(),
+          cachedAt: Value(cachedAt),
+        ),
+      );
     }
   }
 
@@ -1404,8 +1012,7 @@ class AppDatabase extends _$AppDatabase {
   /// 対象範囲に取得日時が未設定(fetched_at IS NULL)の行が含まれる場合は
   /// 期限切れとして扱えるようNULLを返す。
   Future<int?> getEpisodeListOldestFetchedAt(
-    NovelSource source,
-    String workId,
+    String ncode,
     int start,
     int end,
   ) async {
@@ -1416,10 +1023,9 @@ class AppDatabase extends _$AppDatabase {
       'ELSE NULL '
       'END as oldest '
       'FROM episode_list_entries '
-      'WHERE source = ? AND work_id = ? AND episode_id BETWEEN ? AND ?',
+      'WHERE ncode = ? AND episode_id BETWEEN ? AND ?',
       variables: [
-        Variable.withString(source.dbId),
-        Variable.withString(workId),
+        Variable.withString(ncode.toNormalizedNcode()),
         Variable.withInt(start),
         Variable.withInt(end),
       ],
@@ -1433,6 +1039,7 @@ class AppDatabase extends _$AppDatabase {
     final now = DateTime.now().millisecondsSinceEpoch;
     return into(readingHistory).insert(
       history.copyWith(
+        ncode: drift.Value(history.ncode.value.toLowerCase()),
         viewedAt: drift.Value(now),
         updatedAt: drift.Value(now),
       ),
@@ -1443,11 +1050,7 @@ class AppDatabase extends _$AppDatabase {
   /// 履歴の取得（JOIN）
   Future<List<HistoryData>> getHistory() async {
     final query = select(readingHistory).join([
-      innerJoin(
-        novels,
-        novels.source.equalsExp(readingHistory.source) &
-            novels.workId.equalsExp(readingHistory.workId),
-      ),
+      innerJoin(novels, novels.ncode.equalsExp(readingHistory.ncode)),
     ])..orderBy([OrderingTerm.desc(readingHistory.viewedAt)]);
 
     final results = await query.get();
@@ -1457,8 +1060,7 @@ class AppDatabase extends _$AppDatabase {
       final history = row.readTable(readingHistory);
 
       return HistoryData(
-        source: novel.source,
-        workId: novel.workId,
+        ncode: novel.ncode,
         title: novel.title,
         writer: novel.writer,
         lastEpisode: history.lastEpisodeId,
@@ -1471,11 +1073,7 @@ class AppDatabase extends _$AppDatabase {
   /// 履歴の監視（JOIN）
   Stream<List<HistoryData>> watchHistory() {
     final query = select(readingHistory).join([
-      innerJoin(
-        novels,
-        novels.source.equalsExp(readingHistory.source) &
-            novels.workId.equalsExp(readingHistory.workId),
-      ),
+      innerJoin(novels, novels.ncode.equalsExp(readingHistory.ncode)),
     ])..orderBy([OrderingTerm.desc(readingHistory.viewedAt)]);
 
     return query.watch().map((rows) {
@@ -1483,8 +1081,7 @@ class AppDatabase extends _$AppDatabase {
         final novel = row.readTable(novels);
         final history = row.readTable(readingHistory);
         return HistoryData(
-          source: novel.source,
-          workId: novel.workId,
+          ncode: novel.ncode,
           title: novel.title,
           writer: novel.writer,
           lastEpisode: history.lastEpisodeId,
@@ -1496,11 +1093,10 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// 履歴の削除
-  Future<int> deleteHistory(NovelSource source, String workId) {
+  Future<int> deleteHistory(String ncode) {
     return (delete(
-          readingHistory,
-        )..where((t) => t.source.equalsValue(source) & t.workId.equals(workId)))
-        .go();
+      readingHistory,
+    )..where((t) => t.ncode.equals(ncode.toNormalizedNcode()))).go();
   }
 
   /// 履歴の全削除
@@ -1517,15 +1113,10 @@ class AppDatabase extends _$AppDatabase {
     // 最適化: 不要なFTS更新を避けるため、既存のサブタイトルを事前に取得する。
     // このメソッドは通常、単一の小説のエピソードリストに対して呼び出されるため、
     // 既存データを効率的に取得できる。
-    final source = newEpisodes.first.source.value;
-    final workId = newEpisodes.first.workId.value;
-    final existingRows =
-        await (select(
-              episodeListEntries,
-            )..where(
-              (t) => t.source.equalsValue(source) & t.workId.equals(workId),
-            ))
-            .get();
+    final ncode = newEpisodes.first.ncode.value;
+    final existingRows = await (select(
+      episodeListEntries,
+    )..where((t) => t.ncode.equals(ncode))).get();
 
     final existingSubtitles = {
       for (final row in existingRows) row.episodeId: row.subtitle,
@@ -1560,14 +1151,12 @@ class AppDatabase extends _$AppDatabase {
           final contentRow =
               await (select(episodeContents)..where(
                     (t) =>
-                        t.source.equalsValue(episode.source.value) &
-                        t.workId.equals(episode.workId.value) &
+                        t.ncode.equals(episode.ncode.value) &
                         t.episodeId.equals(epId),
                   ))
                   .getSingleOrNull();
           await _updateEpisodeSearchIndex(
-            source: episode.source.value,
-            workId: episode.workId.value,
+            ncode: episode.ncode.value,
             episodeId: epId,
             subtitle: newSubtitle,
             content: contentRow?.content,
@@ -1579,8 +1168,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// エピソード本文の保存
   Future<void> updateEpisodeContent({
-    required NovelSource source,
-    required String workId,
+    required String ncode,
     required int episodeId,
     required List<NovelContentElement> content,
     required int fetchedAt,
@@ -1589,20 +1177,20 @@ class AppDatabase extends _$AppDatabase {
     String? url,
     String? publishedAt,
   }) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+
     // FTS更新が必要かどうかを判定するために既存データを取得
     final existingContentRow =
         await (select(episodeContents)..where(
               (t) =>
-                  t.source.equalsValue(source) &
-                  t.workId.equals(workId) &
+                  t.ncode.equals(normalizedNcode) &
                   t.episodeId.equals(episodeId),
             ))
             .getSingleOrNull();
     final existingListRow =
         await (select(episodeListEntries)..where(
               (t) =>
-                  t.source.equalsValue(source) &
-                  t.workId.equals(workId) &
+                  t.ncode.equals(normalizedNcode) &
                   t.episodeId.equals(episodeId),
             ))
             .getSingleOrNull();
@@ -1612,9 +1200,9 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       '''
       INSERT INTO episode_list_entries
-        (source, work_id, episode_id, subtitle, url, published_at, revised_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(source, work_id, episode_id) DO UPDATE SET
+        (ncode, episode_id, subtitle, url, published_at, revised_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(ncode, episode_id) DO UPDATE SET
         subtitle = COALESCE(excluded.subtitle, episode_list_entries.subtitle),
         url = COALESCE(excluded.url, episode_list_entries.url),
         published_at =
@@ -1622,14 +1210,13 @@ class AppDatabase extends _$AppDatabase {
         revised_at =
           COALESCE(excluded.revised_at, episode_list_entries.revised_at);
     ''',
-      [source.dbId, workId, episodeId, subtitle, url, publishedAt, revisedAt],
+      [normalizedNcode, episodeId, subtitle, url, publishedAt, revisedAt],
     );
 
     // 本文テーブルを更新する
     await into(episodeContents).insertOnConflictUpdate(
       EpisodeContentsCompanion(
-        source: Value(source),
-        workId: Value(workId),
+        ncode: Value(normalizedNcode),
         episodeId: Value(episodeId),
         content: Value(content),
         fetchedAt: Value(fetchedAt),
@@ -1651,8 +1238,7 @@ class AppDatabase extends _$AppDatabase {
 
     if (shouldUpdateIndex) {
       await _updateEpisodeSearchIndex(
-        source: source,
-        workId: workId,
+        ncode: normalizedNcode,
         episodeId: episodeId,
         subtitle: subtitle ?? existingListRow?.subtitle,
         content: content,
@@ -1663,64 +1249,43 @@ class AppDatabase extends _$AppDatabase {
   // ...
 
   /// 特定エピソードのデータ（目次 + 本文）を取得
-  Future<EpisodeData?> getEpisodeData(
-    NovelSource source,
-    String workId,
-    int episodeId,
-  ) {
-    return _episodeDataSelect(source, workId, episodeId).getSingleOrNull();
+  Future<EpisodeData?> getEpisodeData(String ncode, int episodeId) {
+    return _episodeDataSelect(
+      ncode.toNormalizedNcode(),
+      episodeId,
+    ).getSingleOrNull();
   }
 
   /// 特定エピソードのデータ（目次 + 本文）を監視
-  Stream<EpisodeData?> watchEpisodeData(
-    NovelSource source,
-    String workId,
-    int episodeId,
-  ) {
+  Stream<EpisodeData?> watchEpisodeData(String ncode, int episodeId) {
     return _episodeDataSelect(
-      source,
-      workId,
+      ncode.toNormalizedNcode(),
       episodeId,
     ).watchSingleOrNull();
   }
 
   /// 特定エピソードのデータ（目次 + 本文）を監視
   @Deprecated('watchEpisodeDataを使用してください')
-  Stream<EpisodeData?> watchEpisodeEntity(
-    NovelSource source,
-    String workId,
-    int episodeId,
-  ) {
-    return watchEpisodeData(source, workId, episodeId);
+  Stream<EpisodeData?> watchEpisodeEntity(String ncode, int episodeId) {
+    return watchEpisodeData(ncode, episodeId);
   }
 
   /// 目次と本文を結合したエピソードデータを取得するSELECT
-  Selectable<EpisodeData> _episodeDataSelect(
-    NovelSource source,
-    String workId,
-    int episodeId,
-  ) {
+  Selectable<EpisodeData> _episodeDataSelect(String ncode, int episodeId) {
     return customSelect(
-      'SELECT l.source, l.work_id, l.episode_id, l.subtitle, l.url, '
-      'l.published_at, '
+      'SELECT l.ncode, l.episode_id, l.subtitle, l.url, l.published_at, '
       'COALESCE(c.revised_at, l.revised_at) AS revised_at, '
       'c.content AS content, c.fetched_at AS fetched_at '
       'FROM episode_list_entries l '
       'LEFT JOIN episode_contents c '
-      'ON c.source = l.source AND c.work_id = l.work_id '
-      'AND c.episode_id = l.episode_id '
-      'WHERE l.source = ? AND l.work_id = ? AND l.episode_id = ?',
-      variables: [
-        Variable.withString(source.dbId),
-        Variable.withString(workId),
-        Variable.withInt(episodeId),
-      ],
+      'ON c.ncode = l.ncode AND c.episode_id = l.episode_id '
+      'WHERE l.ncode = ? AND l.episode_id = ?',
+      variables: [Variable.withString(ncode), Variable.withInt(episodeId)],
       readsFrom: {episodeListEntries, episodeContents},
     ).map((row) {
       final contentJson = row.read<String?>('content');
       return EpisodeData(
-        source: NovelSource.values.byName(row.read<String>('source')),
-        workId: row.read<String>('work_id'),
+        ncode: row.read<String>('ncode'),
         episodeId: row.read<int>('episode_id'),
         subtitle: row.read<String?>('subtitle'),
         url: row.read<String?>('url'),
@@ -1735,20 +1300,20 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// エピソード一覧を取得
-  Future<List<Episode>> getEpisodes(NovelSource source, String workId) {
-    return _episodeListSelect(source, workId).get();
+  Future<List<Episode>> getEpisodes(String ncode) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
+    return _episodeListSelect(normalizedNcode).get();
   }
 
   /// 指定範囲のエピソード一覧を取得 (Optimized)
   Future<List<Episode>> getEpisodesRange(
-    NovelSource source,
-    String workId,
+    String ncode,
     int start,
     int end,
-  ) {
+  ) async {
+    final normalizedNcode = ncode.toNormalizedNcode();
     return _episodeListSelect(
-      source,
-      workId,
+      normalizedNcode,
       start: start,
       end: end,
     ).get();
@@ -1756,14 +1321,13 @@ class AppDatabase extends _$AppDatabase {
 
   /// 指定範囲のエピソード一覧を監視 (Optimized)
   Stream<List<Episode>> watchEpisodesRange(
-    NovelSource source,
-    String workId,
+    String ncode,
     int start,
     int end,
   ) {
+    final normalizedNcode = ncode.toNormalizedNcode();
     return _episodeListSelect(
-      source,
-      workId,
+      normalizedNcode,
       start: start,
       end: end,
     ).watch();
@@ -1771,28 +1335,24 @@ class AppDatabase extends _$AppDatabase {
 
   /// 目次と本文を結合したエピソード一覧のSELECT
   Selectable<Episode> _episodeListSelect(
-    NovelSource source,
-    String workId, {
+    String ncode, {
     int? start,
     int? end,
   }) {
     final hasRange = start != null && end != null;
     return customSelect(
       'SELECT '
-      'l.source, l.work_id, l.episode_id, l.subtitle, l.url, l.published_at, '
-      'l.revised_at, '
+      'l.ncode, l.episode_id, l.subtitle, l.url, l.published_at, l.revised_at, '
       "CASE WHEN c.content IS NOT NULL AND c.content != '[]' "
       'THEN 1 ELSE 0 END as is_downloaded '
       'FROM episode_list_entries l '
       'LEFT JOIN episode_contents c '
-      'ON c.source = l.source AND c.work_id = l.work_id '
-      'AND c.episode_id = l.episode_id '
-      'WHERE l.source = ? AND l.work_id = ? '
+      'ON c.ncode = l.ncode AND c.episode_id = l.episode_id '
+      'WHERE l.ncode = ? '
       '${hasRange ? 'AND l.episode_id BETWEEN ? AND ? ' : ''}'
       'ORDER BY l.episode_id',
       variables: [
-        Variable.withString(source.dbId),
-        Variable.withString(workId),
+        Variable.withString(ncode),
         if (hasRange) Variable.withInt(start),
         if (hasRange) Variable.withInt(end),
       ],
@@ -1801,12 +1361,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   static Episode _mapEpisodeRow(QueryRow row) {
-    final source = NovelSource.values.byName(row.read<String>('source'));
-    final workId = row.read<String>('work_id');
     return Episode(
-      source: source,
-      // ncodeはなろうの作品ID。なろう以外ではnull
-      ncode: source == NovelSource.narou ? workId : null,
+      ncode: row.read<String>('ncode'),
       index: row.read<int>('episode_id'),
       subtitle: row.read<String?>('subtitle'),
       url: row.read<String?>('url'),
@@ -1818,41 +1374,26 @@ class AppDatabase extends _$AppDatabase {
 
   /// ダウンロード中の小説を監視
   Stream<List<NovelDownloadSummary>> watchDownloadingNovels() {
-    return _watchDownloadSummaries(downloadStatus: 1);
-  }
-
-  /// 完了済みダウンロード小説を監視
-  Stream<List<NovelDownloadSummary>> watchCompletedDownloads() {
-    return _watchDownloadSummaries(downloadStatus: 2);
-  }
-
-  /// ダウンロード状態ごとの小説集計を監視する共通処理。
-  ///
-  /// 全エピソードの集計（GROUP BY）と、全ノベル情報を結合してストリーム化する。
-  /// [downloadStatus] は [NovelDownloadSummary.downloadStatus] の値
-  /// （1=ダウンロード中, 2=完了）。
-  Stream<List<NovelDownloadSummary>> _watchDownloadSummaries({
-    required int downloadStatus,
-  }) {
-    // GROUP BY source, work_id
+    // 全エピソードの集計（GROUP BY）と、全ノベル情報を結合してストリーム化
+    // GROUP BY ncode
     final query = customSelect(
       'SELECT '
-      'e.source, e.work_id, '
+      'e.ncode, '
       "COUNT(CASE WHEN e.content IS NOT NULL AND e.content != '[]' "
       'THEN 1 END) as success_count, '
       "COUNT(CASE WHEN e.content = '[]' THEN 1 END) as failure_count, "
       'n.general_all_no '
       'FROM episode_contents e '
-      'JOIN novels n ON e.source = n.source AND e.work_id = n.work_id '
+      'JOIN novels n ON e.ncode = n.ncode '
       'WHERE e.content IS NOT NULL '
-      'GROUP BY e.source, e.work_id',
+      'GROUP BY e.ncode',
       readsFrom: {episodeContents, novels},
     ).watch();
 
     return query.map((rows) {
       final summaries = <NovelDownloadSummary>[];
       for (final row in rows) {
-        final workId = row.read<String>('work_id');
+        final ncode = row.read<String>('ncode');
         final successCount = row.read<int>('success_count');
         final failureCount = row.read<int>('failure_count');
         final totalEpisodes = row.read<int?>('general_all_no');
@@ -1860,14 +1401,56 @@ class AppDatabase extends _$AppDatabase {
         if (totalEpisodes == null) continue;
 
         final summary = NovelDownloadSummary(
-          // P1時点ではなろうのみのため ncode = workId（カクヨム対応はP2）
-          ncode: workId,
+          ncode: ncode,
           successCount: successCount,
           failureCount: failureCount,
           totalEpisodes: totalEpisodes,
         );
 
-        if (summary.downloadStatus == downloadStatus) {
+        if (summary.downloadStatus == 1) {
+          summaries.add(summary);
+        }
+      }
+      return summaries;
+    });
+  }
+
+  /// 完了済みダウンロード小説を監視
+  Stream<List<NovelDownloadSummary>> watchCompletedDownloads() {
+    // 全エピソードの集計（GROUP BY）と、全ノベル情報を結合してストリーム化
+    // 処理自体はwatchDownloadingNovelsと同じだが、フィルタ条件のみ異なる
+    final query = customSelect(
+      'SELECT '
+      'e.ncode, '
+      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content != '[]' "
+      'THEN 1 END) as success_count, '
+      "COUNT(CASE WHEN e.content = '[]' THEN 1 END) as failure_count, "
+      'n.general_all_no '
+      'FROM episode_contents e '
+      'JOIN novels n ON e.ncode = n.ncode '
+      'WHERE e.content IS NOT NULL '
+      'GROUP BY e.ncode',
+      readsFrom: {episodeContents, novels},
+    ).watch();
+
+    return query.map((rows) {
+      final summaries = <NovelDownloadSummary>[];
+      for (final row in rows) {
+        final ncode = row.read<String>('ncode');
+        final successCount = row.read<int>('success_count');
+        final failureCount = row.read<int>('failure_count');
+        final totalEpisodes = row.read<int?>('general_all_no');
+
+        if (totalEpisodes == null) continue;
+
+        final summary = NovelDownloadSummary(
+          ncode: ncode,
+          successCount: successCount,
+          failureCount: failureCount,
+          totalEpisodes: totalEpisodes,
+        );
+
+        if (summary.downloadStatus == 2) {
           summaries.add(summary);
         }
       }
@@ -1880,18 +1463,14 @@ class AppDatabase extends _$AppDatabase {
 class EpisodeSearchResult {
   /// コンストラクタ
   EpisodeSearchResult({
-    required this.source,
-    required this.workId,
+    required this.ncode,
     required this.episodeId,
     required this.subtitle,
     required this.novelTitle,
   });
 
-  /// 提供サイト（プロバイダ）
-  final NovelSource source;
-
-  /// サイト共通の作品ID
-  final String workId;
+  /// 小説のNコード
+  final String ncode;
 
   /// エピソード番号
   final int episodeId;

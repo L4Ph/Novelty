@@ -8,21 +8,13 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
   final drift.GeneratedDatabase attachedDatabase;
   final String? _alias;
   $NovelsTable(this.attachedDatabase, [this._alias]);
+  static const drift.VerificationMeta _ncodeMeta = const drift.VerificationMeta(
+    'ncode',
+  );
   @override
-  late final drift.GeneratedColumnWithTypeConverter<NovelSource, String>
-  source = drift.GeneratedColumn<String>(
-    'source',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  ).withConverter<NovelSource>($NovelsTable.$convertersource);
-  static const drift.VerificationMeta _workIdMeta =
-      const drift.VerificationMeta('workId');
-  @override
-  late final drift.GeneratedColumn<String> workId =
+  late final drift.GeneratedColumn<String> ncode =
       drift.GeneratedColumn<String>(
-        'work_id',
+        'ncode',
         aliasedName,
         false,
         type: DriftSqlType.string,
@@ -94,17 +86,17 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
-  static const drift.VerificationMeta _genreIdMeta =
-      const drift.VerificationMeta('genreId');
+  static const drift.VerificationMeta _genreMeta = const drift.VerificationMeta(
+    'genre',
+  );
   @override
-  late final drift.GeneratedColumn<String> genreId =
-      drift.GeneratedColumn<String>(
-        'genre_id',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
+  late final drift.GeneratedColumn<int> genre = drift.GeneratedColumn<int>(
+    'genre',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const drift.VerificationMeta _isr15Meta = const drift.VerificationMeta(
     'isr15',
   );
@@ -367,15 +359,14 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
       );
   @override
   List<drift.GeneratedColumn> get $columns => [
-    source,
-    workId,
+    ncode,
     title,
     writer,
     userId,
     story,
     novelType,
     end,
-    genreId,
+    genre,
     isr15,
     isbl,
     isgl,
@@ -413,13 +404,13 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
   }) {
     final context = drift.VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('work_id')) {
+    if (data.containsKey('ncode')) {
       context.handle(
-        _workIdMeta,
-        workId.isAcceptableOrUnknown(data['work_id']!, _workIdMeta),
+        _ncodeMeta,
+        ncode.isAcceptableOrUnknown(data['ncode']!, _ncodeMeta),
       );
     } else if (isInserting) {
-      context.missing(_workIdMeta);
+      context.missing(_ncodeMeta);
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -457,10 +448,10 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
         end.isAcceptableOrUnknown(data['end']!, _endMeta),
       );
     }
-    if (data.containsKey('genre_id')) {
+    if (data.containsKey('genre')) {
       context.handle(
-        _genreIdMeta,
-        genreId.isAcceptableOrUnknown(data['genre_id']!, _genreIdMeta),
+        _genreMeta,
+        genre.isAcceptableOrUnknown(data['genre']!, _genreMeta),
       );
     }
     if (data.containsKey('isr15')) {
@@ -641,20 +632,14 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
   }
 
   @override
-  Set<drift.GeneratedColumn> get $primaryKey => {source, workId};
+  Set<drift.GeneratedColumn> get $primaryKey => {ncode};
   @override
   Novel map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Novel(
-      source: $NovelsTable.$convertersource.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}source'],
-        )!,
-      ),
-      workId: attachedDatabase.typeMapping.read(
+      ncode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}work_id'],
+        data['${effectivePrefix}ncode'],
       )!,
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -680,9 +665,9 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
         DriftSqlType.int,
         data['${effectivePrefix}end'],
       ),
-      genreId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}genre_id'],
+      genre: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}genre'],
       ),
       isr15: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -787,17 +772,11 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
   $NovelsTable createAlias(String alias) {
     return $NovelsTable(attachedDatabase, alias);
   }
-
-  static drift.TypeConverter<NovelSource, String> $convertersource =
-      const NovelSourceConverter();
 }
 
 class Novel extends drift.DataClass implements drift.Insertable<Novel> {
-  /// 提供サイト（プロバイダ）
-  final NovelSource source;
-
-  /// サイト共通の作品ID（なろうはNコード）
-  final String workId;
+  /// 小説のncode
+  final String ncode;
 
   /// 小説のタイトル
   final String? title;
@@ -820,8 +799,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   final int? end;
 
   /// ジャンル
-  /// サイト共通のジャンルID（文字列）
-  final String? genreId;
+  final int? genre;
 
   /// 作品に含まれる要素に「R15」が含まれる場合は1、それ以外は0
   final int? isr15;
@@ -898,15 +876,14 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   /// true: 非公開、false: 公開中
   final bool isPrivate;
   const Novel({
-    required this.source,
-    required this.workId,
+    required this.ncode,
     this.title,
     this.writer,
     this.userId,
     this.story,
     this.novelType,
     this.end,
-    this.genreId,
+    this.genre,
     this.isr15,
     this.isbl,
     this.isgl,
@@ -935,12 +912,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    {
-      map['source'] = drift.Variable<String>(
-        $NovelsTable.$convertersource.toSql(source),
-      );
-    }
-    map['work_id'] = drift.Variable<String>(workId);
+    map['ncode'] = drift.Variable<String>(ncode);
     if (!nullToAbsent || title != null) {
       map['title'] = drift.Variable<String>(title);
     }
@@ -959,8 +931,8 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     if (!nullToAbsent || end != null) {
       map['end'] = drift.Variable<int>(end);
     }
-    if (!nullToAbsent || genreId != null) {
-      map['genre_id'] = drift.Variable<String>(genreId);
+    if (!nullToAbsent || genre != null) {
+      map['genre'] = drift.Variable<int>(genre);
     }
     if (!nullToAbsent || isr15 != null) {
       map['isr15'] = drift.Variable<int>(isr15);
@@ -1037,8 +1009,7 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
 
   NovelsCompanion toCompanion(bool nullToAbsent) {
     return NovelsCompanion(
-      source: drift.Value(source),
-      workId: drift.Value(workId),
+      ncode: drift.Value(ncode),
       title: title == null && nullToAbsent
           ? const drift.Value.absent()
           : drift.Value(title),
@@ -1057,9 +1028,9 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       end: end == null && nullToAbsent
           ? const drift.Value.absent()
           : drift.Value(end),
-      genreId: genreId == null && nullToAbsent
+      genre: genre == null && nullToAbsent
           ? const drift.Value.absent()
-          : drift.Value(genreId),
+          : drift.Value(genre),
       isr15: isr15 == null && nullToAbsent
           ? const drift.Value.absent()
           : drift.Value(isr15),
@@ -1139,15 +1110,14 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   }) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
     return Novel(
-      source: serializer.fromJson<NovelSource>(json['source']),
-      workId: serializer.fromJson<String>(json['workId']),
+      ncode: serializer.fromJson<String>(json['ncode']),
       title: serializer.fromJson<String?>(json['title']),
       writer: serializer.fromJson<String?>(json['writer']),
       userId: serializer.fromJson<int?>(json['userId']),
       story: serializer.fromJson<String?>(json['story']),
       novelType: serializer.fromJson<int?>(json['novelType']),
       end: serializer.fromJson<int?>(json['end']),
-      genreId: serializer.fromJson<String?>(json['genreId']),
+      genre: serializer.fromJson<int?>(json['genre']),
       isr15: serializer.fromJson<int?>(json['isr15']),
       isbl: serializer.fromJson<int?>(json['isbl']),
       isgl: serializer.fromJson<int?>(json['isgl']),
@@ -1178,15 +1148,14 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'source': serializer.toJson<NovelSource>(source),
-      'workId': serializer.toJson<String>(workId),
+      'ncode': serializer.toJson<String>(ncode),
       'title': serializer.toJson<String?>(title),
       'writer': serializer.toJson<String?>(writer),
       'userId': serializer.toJson<int?>(userId),
       'story': serializer.toJson<String?>(story),
       'novelType': serializer.toJson<int?>(novelType),
       'end': serializer.toJson<int?>(end),
-      'genreId': serializer.toJson<String?>(genreId),
+      'genre': serializer.toJson<int?>(genre),
       'isr15': serializer.toJson<int?>(isr15),
       'isbl': serializer.toJson<int?>(isbl),
       'isgl': serializer.toJson<int?>(isgl),
@@ -1215,15 +1184,14 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   }
 
   Novel copyWith({
-    NovelSource? source,
-    String? workId,
+    String? ncode,
     drift.Value<String?> title = const drift.Value.absent(),
     drift.Value<String?> writer = const drift.Value.absent(),
     drift.Value<int?> userId = const drift.Value.absent(),
     drift.Value<String?> story = const drift.Value.absent(),
     drift.Value<int?> novelType = const drift.Value.absent(),
     drift.Value<int?> end = const drift.Value.absent(),
-    drift.Value<String?> genreId = const drift.Value.absent(),
+    drift.Value<int?> genre = const drift.Value.absent(),
     drift.Value<int?> isr15 = const drift.Value.absent(),
     drift.Value<int?> isbl = const drift.Value.absent(),
     drift.Value<int?> isgl = const drift.Value.absent(),
@@ -1249,15 +1217,14 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     drift.Value<int?> cachedAt = const drift.Value.absent(),
     bool? isPrivate,
   }) => Novel(
-    source: source ?? this.source,
-    workId: workId ?? this.workId,
+    ncode: ncode ?? this.ncode,
     title: title.present ? title.value : this.title,
     writer: writer.present ? writer.value : this.writer,
     userId: userId.present ? userId.value : this.userId,
     story: story.present ? story.value : this.story,
     novelType: novelType.present ? novelType.value : this.novelType,
     end: end.present ? end.value : this.end,
-    genreId: genreId.present ? genreId.value : this.genreId,
+    genre: genre.present ? genre.value : this.genre,
     isr15: isr15.present ? isr15.value : this.isr15,
     isbl: isbl.present ? isbl.value : this.isbl,
     isgl: isgl.present ? isgl.value : this.isgl,
@@ -1291,15 +1258,14 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   );
   Novel copyWithCompanion(NovelsCompanion data) {
     return Novel(
-      source: data.source.present ? data.source.value : this.source,
-      workId: data.workId.present ? data.workId.value : this.workId,
+      ncode: data.ncode.present ? data.ncode.value : this.ncode,
       title: data.title.present ? data.title.value : this.title,
       writer: data.writer.present ? data.writer.value : this.writer,
       userId: data.userId.present ? data.userId.value : this.userId,
       story: data.story.present ? data.story.value : this.story,
       novelType: data.novelType.present ? data.novelType.value : this.novelType,
       end: data.end.present ? data.end.value : this.end,
-      genreId: data.genreId.present ? data.genreId.value : this.genreId,
+      genre: data.genre.present ? data.genre.value : this.genre,
       isr15: data.isr15.present ? data.isr15.value : this.isr15,
       isbl: data.isbl.present ? data.isbl.value : this.isbl,
       isgl: data.isgl.present ? data.isgl.value : this.isgl,
@@ -1354,15 +1320,14 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   @override
   String toString() {
     return (StringBuffer('Novel(')
-          ..write('source: $source, ')
-          ..write('workId: $workId, ')
+          ..write('ncode: $ncode, ')
           ..write('title: $title, ')
           ..write('writer: $writer, ')
           ..write('userId: $userId, ')
           ..write('story: $story, ')
           ..write('novelType: $novelType, ')
           ..write('end: $end, ')
-          ..write('genreId: $genreId, ')
+          ..write('genre: $genre, ')
           ..write('isr15: $isr15, ')
           ..write('isbl: $isbl, ')
           ..write('isgl: $isgl, ')
@@ -1393,15 +1358,14 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
 
   @override
   int get hashCode => Object.hashAll([
-    source,
-    workId,
+    ncode,
     title,
     writer,
     userId,
     story,
     novelType,
     end,
-    genreId,
+    genre,
     isr15,
     isbl,
     isgl,
@@ -1431,15 +1395,14 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Novel &&
-          other.source == this.source &&
-          other.workId == this.workId &&
+          other.ncode == this.ncode &&
           other.title == this.title &&
           other.writer == this.writer &&
           other.userId == this.userId &&
           other.story == this.story &&
           other.novelType == this.novelType &&
           other.end == this.end &&
-          other.genreId == this.genreId &&
+          other.genre == this.genre &&
           other.isr15 == this.isr15 &&
           other.isbl == this.isbl &&
           other.isgl == this.isgl &&
@@ -1467,15 +1430,14 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
 }
 
 class NovelsCompanion extends drift.UpdateCompanion<Novel> {
-  final drift.Value<NovelSource> source;
-  final drift.Value<String> workId;
+  final drift.Value<String> ncode;
   final drift.Value<String?> title;
   final drift.Value<String?> writer;
   final drift.Value<int?> userId;
   final drift.Value<String?> story;
   final drift.Value<int?> novelType;
   final drift.Value<int?> end;
-  final drift.Value<String?> genreId;
+  final drift.Value<int?> genre;
   final drift.Value<int?> isr15;
   final drift.Value<int?> isbl;
   final drift.Value<int?> isgl;
@@ -1502,15 +1464,14 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
   final drift.Value<bool> isPrivate;
   final drift.Value<int> rowid;
   const NovelsCompanion({
-    this.source = const drift.Value.absent(),
-    this.workId = const drift.Value.absent(),
+    this.ncode = const drift.Value.absent(),
     this.title = const drift.Value.absent(),
     this.writer = const drift.Value.absent(),
     this.userId = const drift.Value.absent(),
     this.story = const drift.Value.absent(),
     this.novelType = const drift.Value.absent(),
     this.end = const drift.Value.absent(),
-    this.genreId = const drift.Value.absent(),
+    this.genre = const drift.Value.absent(),
     this.isr15 = const drift.Value.absent(),
     this.isbl = const drift.Value.absent(),
     this.isgl = const drift.Value.absent(),
@@ -1538,15 +1499,14 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     this.rowid = const drift.Value.absent(),
   });
   NovelsCompanion.insert({
-    required NovelSource source,
-    required String workId,
+    required String ncode,
     this.title = const drift.Value.absent(),
     this.writer = const drift.Value.absent(),
     this.userId = const drift.Value.absent(),
     this.story = const drift.Value.absent(),
     this.novelType = const drift.Value.absent(),
     this.end = const drift.Value.absent(),
-    this.genreId = const drift.Value.absent(),
+    this.genre = const drift.Value.absent(),
     this.isr15 = const drift.Value.absent(),
     this.isbl = const drift.Value.absent(),
     this.isgl = const drift.Value.absent(),
@@ -1572,18 +1532,16 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     this.cachedAt = const drift.Value.absent(),
     this.isPrivate = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
-  }) : source = drift.Value(source),
-       workId = drift.Value(workId);
+  }) : ncode = drift.Value(ncode);
   static drift.Insertable<Novel> custom({
-    drift.Expression<String>? source,
-    drift.Expression<String>? workId,
+    drift.Expression<String>? ncode,
     drift.Expression<String>? title,
     drift.Expression<String>? writer,
     drift.Expression<int>? userId,
     drift.Expression<String>? story,
     drift.Expression<int>? novelType,
     drift.Expression<int>? end,
-    drift.Expression<String>? genreId,
+    drift.Expression<int>? genre,
     drift.Expression<int>? isr15,
     drift.Expression<int>? isbl,
     drift.Expression<int>? isgl,
@@ -1611,15 +1569,14 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     drift.Expression<int>? rowid,
   }) {
     return drift.RawValuesInsertable({
-      if (source != null) 'source': source,
-      if (workId != null) 'work_id': workId,
+      if (ncode != null) 'ncode': ncode,
       if (title != null) 'title': title,
       if (writer != null) 'writer': writer,
       if (userId != null) 'user_id': userId,
       if (story != null) 'story': story,
       if (novelType != null) 'novel_type': novelType,
       if (end != null) 'end': end,
-      if (genreId != null) 'genre_id': genreId,
+      if (genre != null) 'genre': genre,
       if (isr15 != null) 'isr15': isr15,
       if (isbl != null) 'isbl': isbl,
       if (isgl != null) 'isgl': isgl,
@@ -1649,15 +1606,14 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
   }
 
   NovelsCompanion copyWith({
-    drift.Value<NovelSource>? source,
-    drift.Value<String>? workId,
+    drift.Value<String>? ncode,
     drift.Value<String?>? title,
     drift.Value<String?>? writer,
     drift.Value<int?>? userId,
     drift.Value<String?>? story,
     drift.Value<int?>? novelType,
     drift.Value<int?>? end,
-    drift.Value<String?>? genreId,
+    drift.Value<int?>? genre,
     drift.Value<int?>? isr15,
     drift.Value<int?>? isbl,
     drift.Value<int?>? isgl,
@@ -1685,15 +1641,14 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     drift.Value<int>? rowid,
   }) {
     return NovelsCompanion(
-      source: source ?? this.source,
-      workId: workId ?? this.workId,
+      ncode: ncode ?? this.ncode,
       title: title ?? this.title,
       writer: writer ?? this.writer,
       userId: userId ?? this.userId,
       story: story ?? this.story,
       novelType: novelType ?? this.novelType,
       end: end ?? this.end,
-      genreId: genreId ?? this.genreId,
+      genre: genre ?? this.genre,
       isr15: isr15 ?? this.isr15,
       isbl: isbl ?? this.isbl,
       isgl: isgl ?? this.isgl,
@@ -1725,13 +1680,8 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    if (source.present) {
-      map['source'] = drift.Variable<String>(
-        $NovelsTable.$convertersource.toSql(source.value),
-      );
-    }
-    if (workId.present) {
-      map['work_id'] = drift.Variable<String>(workId.value);
+    if (ncode.present) {
+      map['ncode'] = drift.Variable<String>(ncode.value);
     }
     if (title.present) {
       map['title'] = drift.Variable<String>(title.value);
@@ -1751,8 +1701,8 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     if (end.present) {
       map['end'] = drift.Variable<int>(end.value);
     }
-    if (genreId.present) {
-      map['genre_id'] = drift.Variable<String>(genreId.value);
+    if (genre.present) {
+      map['genre'] = drift.Variable<int>(genre.value);
     }
     if (isr15.present) {
       map['isr15'] = drift.Variable<int>(isr15.value);
@@ -1835,15 +1785,14 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
   @override
   String toString() {
     return (StringBuffer('NovelsCompanion(')
-          ..write('source: $source, ')
-          ..write('workId: $workId, ')
+          ..write('ncode: $ncode, ')
           ..write('title: $title, ')
           ..write('writer: $writer, ')
           ..write('userId: $userId, ')
           ..write('story: $story, ')
           ..write('novelType: $novelType, ')
           ..write('end: $end, ')
-          ..write('genreId: $genreId, ')
+          ..write('genre: $genre, ')
           ..write('isr15: $isr15, ')
           ..write('isbl: $isbl, ')
           ..write('isgl: $isgl, ')
@@ -1880,25 +1829,20 @@ class $LibraryEntriesTable extends LibraryEntries
   final drift.GeneratedDatabase attachedDatabase;
   final String? _alias;
   $LibraryEntriesTable(this.attachedDatabase, [this._alias]);
+  static const drift.VerificationMeta _ncodeMeta = const drift.VerificationMeta(
+    'ncode',
+  );
   @override
-  late final drift.GeneratedColumnWithTypeConverter<NovelSource, String>
-  source = drift.GeneratedColumn<String>(
-    'source',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  ).withConverter<NovelSource>($LibraryEntriesTable.$convertersource);
-  static const drift.VerificationMeta _workIdMeta =
-      const drift.VerificationMeta('workId');
-  @override
-  late final drift.GeneratedColumn<String> workId =
+  late final drift.GeneratedColumn<String> ncode =
       drift.GeneratedColumn<String>(
-        'work_id',
+        'ncode',
         aliasedName,
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES novels (ncode)',
+        ),
       );
   static const drift.VerificationMeta _addedAtMeta =
       const drift.VerificationMeta('addedAt');
@@ -1911,7 +1855,7 @@ class $LibraryEntriesTable extends LibraryEntries
     requiredDuringInsert: true,
   );
   @override
-  List<drift.GeneratedColumn> get $columns => [source, workId, addedAt];
+  List<drift.GeneratedColumn> get $columns => [ncode, addedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1924,13 +1868,13 @@ class $LibraryEntriesTable extends LibraryEntries
   }) {
     final context = drift.VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('work_id')) {
+    if (data.containsKey('ncode')) {
       context.handle(
-        _workIdMeta,
-        workId.isAcceptableOrUnknown(data['work_id']!, _workIdMeta),
+        _ncodeMeta,
+        ncode.isAcceptableOrUnknown(data['ncode']!, _ncodeMeta),
       );
     } else if (isInserting) {
-      context.missing(_workIdMeta);
+      context.missing(_ncodeMeta);
     }
     if (data.containsKey('added_at')) {
       context.handle(
@@ -1944,20 +1888,14 @@ class $LibraryEntriesTable extends LibraryEntries
   }
 
   @override
-  Set<drift.GeneratedColumn> get $primaryKey => {source, workId};
+  Set<drift.GeneratedColumn> get $primaryKey => {ncode};
   @override
   LibraryEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return LibraryEntry(
-      source: $LibraryEntriesTable.$convertersource.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}source'],
-        )!,
-      ),
-      workId: attachedDatabase.typeMapping.read(
+      ncode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}work_id'],
+        data['${effectivePrefix}ncode'],
       )!,
       addedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -1970,44 +1908,28 @@ class $LibraryEntriesTable extends LibraryEntries
   $LibraryEntriesTable createAlias(String alias) {
     return $LibraryEntriesTable(attachedDatabase, alias);
   }
-
-  static drift.TypeConverter<NovelSource, String> $convertersource =
-      const NovelSourceConverter();
 }
 
 class LibraryEntry extends drift.DataClass
     implements drift.Insertable<LibraryEntry> {
-  /// 提供サイト（プロバイダ）
-  final NovelSource source;
-
-  /// 小説の作品ID（参照整合性はアプリ層で担保）
-  final String workId;
+  /// 小説のncode (外部キー)
+  final String ncode;
 
   /// ライブラリに追加された日時
   /// UNIXタイムスタンプ形式で保存される
   final int addedAt;
-  const LibraryEntry({
-    required this.source,
-    required this.workId,
-    required this.addedAt,
-  });
+  const LibraryEntry({required this.ncode, required this.addedAt});
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    {
-      map['source'] = drift.Variable<String>(
-        $LibraryEntriesTable.$convertersource.toSql(source),
-      );
-    }
-    map['work_id'] = drift.Variable<String>(workId);
+    map['ncode'] = drift.Variable<String>(ncode);
     map['added_at'] = drift.Variable<int>(addedAt);
     return map;
   }
 
   LibraryEntriesCompanion toCompanion(bool nullToAbsent) {
     return LibraryEntriesCompanion(
-      source: drift.Value(source),
-      workId: drift.Value(workId),
+      ncode: drift.Value(ncode),
       addedAt: drift.Value(addedAt),
     );
   }
@@ -2018,8 +1940,7 @@ class LibraryEntry extends drift.DataClass
   }) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
     return LibraryEntry(
-      source: serializer.fromJson<NovelSource>(json['source']),
-      workId: serializer.fromJson<String>(json['workId']),
+      ncode: serializer.fromJson<String>(json['ncode']),
       addedAt: serializer.fromJson<int>(json['addedAt']),
     );
   }
@@ -2027,22 +1948,18 @@ class LibraryEntry extends drift.DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'source': serializer.toJson<NovelSource>(source),
-      'workId': serializer.toJson<String>(workId),
+      'ncode': serializer.toJson<String>(ncode),
       'addedAt': serializer.toJson<int>(addedAt),
     };
   }
 
-  LibraryEntry copyWith({NovelSource? source, String? workId, int? addedAt}) =>
-      LibraryEntry(
-        source: source ?? this.source,
-        workId: workId ?? this.workId,
-        addedAt: addedAt ?? this.addedAt,
-      );
+  LibraryEntry copyWith({String? ncode, int? addedAt}) => LibraryEntry(
+    ncode: ncode ?? this.ncode,
+    addedAt: addedAt ?? this.addedAt,
+  );
   LibraryEntry copyWithCompanion(LibraryEntriesCompanion data) {
     return LibraryEntry(
-      source: data.source.present ? data.source.value : this.source,
-      workId: data.workId.present ? data.workId.value : this.workId,
+      ncode: data.ncode.present ? data.ncode.value : this.ncode,
       addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
     );
   }
@@ -2050,66 +1967,56 @@ class LibraryEntry extends drift.DataClass
   @override
   String toString() {
     return (StringBuffer('LibraryEntry(')
-          ..write('source: $source, ')
-          ..write('workId: $workId, ')
+          ..write('ncode: $ncode, ')
           ..write('addedAt: $addedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(source, workId, addedAt);
+  int get hashCode => Object.hash(ncode, addedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is LibraryEntry &&
-          other.source == this.source &&
-          other.workId == this.workId &&
+          other.ncode == this.ncode &&
           other.addedAt == this.addedAt);
 }
 
 class LibraryEntriesCompanion extends drift.UpdateCompanion<LibraryEntry> {
-  final drift.Value<NovelSource> source;
-  final drift.Value<String> workId;
+  final drift.Value<String> ncode;
   final drift.Value<int> addedAt;
   final drift.Value<int> rowid;
   const LibraryEntriesCompanion({
-    this.source = const drift.Value.absent(),
-    this.workId = const drift.Value.absent(),
+    this.ncode = const drift.Value.absent(),
     this.addedAt = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
   });
   LibraryEntriesCompanion.insert({
-    required NovelSource source,
-    required String workId,
+    required String ncode,
     required int addedAt,
     this.rowid = const drift.Value.absent(),
-  }) : source = drift.Value(source),
-       workId = drift.Value(workId),
+  }) : ncode = drift.Value(ncode),
        addedAt = drift.Value(addedAt);
   static drift.Insertable<LibraryEntry> custom({
-    drift.Expression<String>? source,
-    drift.Expression<String>? workId,
+    drift.Expression<String>? ncode,
     drift.Expression<int>? addedAt,
     drift.Expression<int>? rowid,
   }) {
     return drift.RawValuesInsertable({
-      if (source != null) 'source': source,
-      if (workId != null) 'work_id': workId,
+      if (ncode != null) 'ncode': ncode,
       if (addedAt != null) 'added_at': addedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
   LibraryEntriesCompanion copyWith({
-    drift.Value<NovelSource>? source,
-    drift.Value<String>? workId,
+    drift.Value<String>? ncode,
     drift.Value<int>? addedAt,
     drift.Value<int>? rowid,
   }) {
     return LibraryEntriesCompanion(
-      source: source ?? this.source,
-      workId: workId ?? this.workId,
+      ncode: ncode ?? this.ncode,
       addedAt: addedAt ?? this.addedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -2118,13 +2025,8 @@ class LibraryEntriesCompanion extends drift.UpdateCompanion<LibraryEntry> {
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    if (source.present) {
-      map['source'] = drift.Variable<String>(
-        $LibraryEntriesTable.$convertersource.toSql(source.value),
-      );
-    }
-    if (workId.present) {
-      map['work_id'] = drift.Variable<String>(workId.value);
+    if (ncode.present) {
+      map['ncode'] = drift.Variable<String>(ncode.value);
     }
     if (addedAt.present) {
       map['added_at'] = drift.Variable<int>(addedAt.value);
@@ -2138,8 +2040,7 @@ class LibraryEntriesCompanion extends drift.UpdateCompanion<LibraryEntry> {
   @override
   String toString() {
     return (StringBuffer('LibraryEntriesCompanion(')
-          ..write('source: $source, ')
-          ..write('workId: $workId, ')
+          ..write('ncode: $ncode, ')
           ..write('addedAt: $addedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2153,25 +2054,20 @@ class $ReadingHistoryTable extends ReadingHistory
   final drift.GeneratedDatabase attachedDatabase;
   final String? _alias;
   $ReadingHistoryTable(this.attachedDatabase, [this._alias]);
+  static const drift.VerificationMeta _ncodeMeta = const drift.VerificationMeta(
+    'ncode',
+  );
   @override
-  late final drift.GeneratedColumnWithTypeConverter<NovelSource, String>
-  source = drift.GeneratedColumn<String>(
-    'source',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  ).withConverter<NovelSource>($ReadingHistoryTable.$convertersource);
-  static const drift.VerificationMeta _workIdMeta =
-      const drift.VerificationMeta('workId');
-  @override
-  late final drift.GeneratedColumn<String> workId =
+  late final drift.GeneratedColumn<String> ncode =
       drift.GeneratedColumn<String>(
-        'work_id',
+        'ncode',
         aliasedName,
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES novels (ncode)',
+        ),
       );
   static const drift.VerificationMeta _lastEpisodeIdMeta =
       const drift.VerificationMeta('lastEpisodeId');
@@ -2207,8 +2103,7 @@ class $ReadingHistoryTable extends ReadingHistory
   );
   @override
   List<drift.GeneratedColumn> get $columns => [
-    source,
-    workId,
+    ncode,
     lastEpisodeId,
     viewedAt,
     updatedAt,
@@ -2225,13 +2120,13 @@ class $ReadingHistoryTable extends ReadingHistory
   }) {
     final context = drift.VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('work_id')) {
+    if (data.containsKey('ncode')) {
       context.handle(
-        _workIdMeta,
-        workId.isAcceptableOrUnknown(data['work_id']!, _workIdMeta),
+        _ncodeMeta,
+        ncode.isAcceptableOrUnknown(data['ncode']!, _ncodeMeta),
       );
     } else if (isInserting) {
-      context.missing(_workIdMeta);
+      context.missing(_ncodeMeta);
     }
     if (data.containsKey('last_episode_id')) {
       context.handle(
@@ -2260,20 +2155,14 @@ class $ReadingHistoryTable extends ReadingHistory
   }
 
   @override
-  Set<drift.GeneratedColumn> get $primaryKey => {source, workId};
+  Set<drift.GeneratedColumn> get $primaryKey => {ncode};
   @override
   ReadingHistoryData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return ReadingHistoryData(
-      source: $ReadingHistoryTable.$convertersource.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}source'],
-        )!,
-      ),
-      workId: attachedDatabase.typeMapping.read(
+      ncode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}work_id'],
+        data['${effectivePrefix}ncode'],
       )!,
       lastEpisodeId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -2294,18 +2183,12 @@ class $ReadingHistoryTable extends ReadingHistory
   $ReadingHistoryTable createAlias(String alias) {
     return $ReadingHistoryTable(attachedDatabase, alias);
   }
-
-  static drift.TypeConverter<NovelSource, String> $convertersource =
-      const NovelSourceConverter();
 }
 
 class ReadingHistoryData extends drift.DataClass
     implements drift.Insertable<ReadingHistoryData> {
-  /// 提供サイト（プロバイダ）
-  final NovelSource source;
-
-  /// 小説の作品ID（参照整合性はアプリ層で担保）
-  final String workId;
+  /// 小説のncode (外部キー)
+  final String ncode;
 
   /// 最後に閲覧したエピソード番号
   final int? lastEpisodeId;
@@ -2316,8 +2199,7 @@ class ReadingHistoryData extends drift.DataClass
   /// 更新日時
   final int updatedAt;
   const ReadingHistoryData({
-    required this.source,
-    required this.workId,
+    required this.ncode,
     this.lastEpisodeId,
     required this.viewedAt,
     required this.updatedAt,
@@ -2325,12 +2207,7 @@ class ReadingHistoryData extends drift.DataClass
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    {
-      map['source'] = drift.Variable<String>(
-        $ReadingHistoryTable.$convertersource.toSql(source),
-      );
-    }
-    map['work_id'] = drift.Variable<String>(workId);
+    map['ncode'] = drift.Variable<String>(ncode);
     if (!nullToAbsent || lastEpisodeId != null) {
       map['last_episode_id'] = drift.Variable<int>(lastEpisodeId);
     }
@@ -2341,8 +2218,7 @@ class ReadingHistoryData extends drift.DataClass
 
   ReadingHistoryCompanion toCompanion(bool nullToAbsent) {
     return ReadingHistoryCompanion(
-      source: drift.Value(source),
-      workId: drift.Value(workId),
+      ncode: drift.Value(ncode),
       lastEpisodeId: lastEpisodeId == null && nullToAbsent
           ? const drift.Value.absent()
           : drift.Value(lastEpisodeId),
@@ -2357,8 +2233,7 @@ class ReadingHistoryData extends drift.DataClass
   }) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
     return ReadingHistoryData(
-      source: serializer.fromJson<NovelSource>(json['source']),
-      workId: serializer.fromJson<String>(json['workId']),
+      ncode: serializer.fromJson<String>(json['ncode']),
       lastEpisodeId: serializer.fromJson<int?>(json['lastEpisodeId']),
       viewedAt: serializer.fromJson<int>(json['viewedAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
@@ -2368,8 +2243,7 @@ class ReadingHistoryData extends drift.DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'source': serializer.toJson<NovelSource>(source),
-      'workId': serializer.toJson<String>(workId),
+      'ncode': serializer.toJson<String>(ncode),
       'lastEpisodeId': serializer.toJson<int?>(lastEpisodeId),
       'viewedAt': serializer.toJson<int>(viewedAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
@@ -2377,14 +2251,12 @@ class ReadingHistoryData extends drift.DataClass
   }
 
   ReadingHistoryData copyWith({
-    NovelSource? source,
-    String? workId,
+    String? ncode,
     drift.Value<int?> lastEpisodeId = const drift.Value.absent(),
     int? viewedAt,
     int? updatedAt,
   }) => ReadingHistoryData(
-    source: source ?? this.source,
-    workId: workId ?? this.workId,
+    ncode: ncode ?? this.ncode,
     lastEpisodeId: lastEpisodeId.present
         ? lastEpisodeId.value
         : this.lastEpisodeId,
@@ -2393,8 +2265,7 @@ class ReadingHistoryData extends drift.DataClass
   );
   ReadingHistoryData copyWithCompanion(ReadingHistoryCompanion data) {
     return ReadingHistoryData(
-      source: data.source.present ? data.source.value : this.source,
-      workId: data.workId.present ? data.workId.value : this.workId,
+      ncode: data.ncode.present ? data.ncode.value : this.ncode,
       lastEpisodeId: data.lastEpisodeId.present
           ? data.lastEpisodeId.value
           : this.lastEpisodeId,
@@ -2406,8 +2277,7 @@ class ReadingHistoryData extends drift.DataClass
   @override
   String toString() {
     return (StringBuffer('ReadingHistoryData(')
-          ..write('source: $source, ')
-          ..write('workId: $workId, ')
+          ..write('ncode: $ncode, ')
           ..write('lastEpisodeId: $lastEpisodeId, ')
           ..write('viewedAt: $viewedAt, ')
           ..write('updatedAt: $updatedAt')
@@ -2416,14 +2286,12 @@ class ReadingHistoryData extends drift.DataClass
   }
 
   @override
-  int get hashCode =>
-      Object.hash(source, workId, lastEpisodeId, viewedAt, updatedAt);
+  int get hashCode => Object.hash(ncode, lastEpisodeId, viewedAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ReadingHistoryData &&
-          other.source == this.source &&
-          other.workId == this.workId &&
+          other.ncode == this.ncode &&
           other.lastEpisodeId == this.lastEpisodeId &&
           other.viewedAt == this.viewedAt &&
           other.updatedAt == this.updatedAt);
@@ -2431,41 +2299,35 @@ class ReadingHistoryData extends drift.DataClass
 
 class ReadingHistoryCompanion
     extends drift.UpdateCompanion<ReadingHistoryData> {
-  final drift.Value<NovelSource> source;
-  final drift.Value<String> workId;
+  final drift.Value<String> ncode;
   final drift.Value<int?> lastEpisodeId;
   final drift.Value<int> viewedAt;
   final drift.Value<int> updatedAt;
   final drift.Value<int> rowid;
   const ReadingHistoryCompanion({
-    this.source = const drift.Value.absent(),
-    this.workId = const drift.Value.absent(),
+    this.ncode = const drift.Value.absent(),
     this.lastEpisodeId = const drift.Value.absent(),
     this.viewedAt = const drift.Value.absent(),
     this.updatedAt = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
   });
   ReadingHistoryCompanion.insert({
-    required NovelSource source,
-    required String workId,
+    required String ncode,
     this.lastEpisodeId = const drift.Value.absent(),
     required int viewedAt,
     this.updatedAt = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
-  }) : source = drift.Value(source),
-       workId = drift.Value(workId),
+  }) : ncode = drift.Value(ncode),
        viewedAt = drift.Value(viewedAt);
   static drift.Insertable<ReadingHistoryData> custom({
-    drift.Expression<String>? source,
-    drift.Expression<String>? workId,
+    drift.Expression<String>? ncode,
     drift.Expression<int>? lastEpisodeId,
     drift.Expression<int>? viewedAt,
     drift.Expression<int>? updatedAt,
     drift.Expression<int>? rowid,
   }) {
     return drift.RawValuesInsertable({
-      if (source != null) 'source': source,
-      if (workId != null) 'work_id': workId,
+      if (ncode != null) 'ncode': ncode,
       if (lastEpisodeId != null) 'last_episode_id': lastEpisodeId,
       if (viewedAt != null) 'viewed_at': viewedAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -2474,16 +2336,14 @@ class ReadingHistoryCompanion
   }
 
   ReadingHistoryCompanion copyWith({
-    drift.Value<NovelSource>? source,
-    drift.Value<String>? workId,
+    drift.Value<String>? ncode,
     drift.Value<int?>? lastEpisodeId,
     drift.Value<int>? viewedAt,
     drift.Value<int>? updatedAt,
     drift.Value<int>? rowid,
   }) {
     return ReadingHistoryCompanion(
-      source: source ?? this.source,
-      workId: workId ?? this.workId,
+      ncode: ncode ?? this.ncode,
       lastEpisodeId: lastEpisodeId ?? this.lastEpisodeId,
       viewedAt: viewedAt ?? this.viewedAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -2494,13 +2354,8 @@ class ReadingHistoryCompanion
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    if (source.present) {
-      map['source'] = drift.Variable<String>(
-        $ReadingHistoryTable.$convertersource.toSql(source.value),
-      );
-    }
-    if (workId.present) {
-      map['work_id'] = drift.Variable<String>(workId.value);
+    if (ncode.present) {
+      map['ncode'] = drift.Variable<String>(ncode.value);
     }
     if (lastEpisodeId.present) {
       map['last_episode_id'] = drift.Variable<int>(lastEpisodeId.value);
@@ -2520,8 +2375,7 @@ class ReadingHistoryCompanion
   @override
   String toString() {
     return (StringBuffer('ReadingHistoryCompanion(')
-          ..write('source: $source, ')
-          ..write('workId: $workId, ')
+          ..write('ncode: $ncode, ')
           ..write('lastEpisodeId: $lastEpisodeId, ')
           ..write('viewedAt: $viewedAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -2537,25 +2391,20 @@ class $EpisodeListEntriesTable extends EpisodeListEntries
   final drift.GeneratedDatabase attachedDatabase;
   final String? _alias;
   $EpisodeListEntriesTable(this.attachedDatabase, [this._alias]);
+  static const drift.VerificationMeta _ncodeMeta = const drift.VerificationMeta(
+    'ncode',
+  );
   @override
-  late final drift.GeneratedColumnWithTypeConverter<NovelSource, String>
-  source = drift.GeneratedColumn<String>(
-    'source',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  ).withConverter<NovelSource>($EpisodeListEntriesTable.$convertersource);
-  static const drift.VerificationMeta _workIdMeta =
-      const drift.VerificationMeta('workId');
-  @override
-  late final drift.GeneratedColumn<String> workId =
+  late final drift.GeneratedColumn<String> ncode =
       drift.GeneratedColumn<String>(
-        'work_id',
+        'ncode',
         aliasedName,
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES novels (ncode)',
+        ),
       );
   static const drift.VerificationMeta _episodeIdMeta =
       const drift.VerificationMeta('episodeId');
@@ -2623,8 +2472,7 @@ class $EpisodeListEntriesTable extends EpisodeListEntries
   );
   @override
   List<drift.GeneratedColumn> get $columns => [
-    source,
-    workId,
+    ncode,
     episodeId,
     subtitle,
     url,
@@ -2644,13 +2492,13 @@ class $EpisodeListEntriesTable extends EpisodeListEntries
   }) {
     final context = drift.VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('work_id')) {
+    if (data.containsKey('ncode')) {
       context.handle(
-        _workIdMeta,
-        workId.isAcceptableOrUnknown(data['work_id']!, _workIdMeta),
+        _ncodeMeta,
+        ncode.isAcceptableOrUnknown(data['ncode']!, _ncodeMeta),
       );
     } else if (isInserting) {
-      context.missing(_workIdMeta);
+      context.missing(_ncodeMeta);
     }
     if (data.containsKey('episode_id')) {
       context.handle(
@@ -2697,20 +2545,14 @@ class $EpisodeListEntriesTable extends EpisodeListEntries
   }
 
   @override
-  Set<drift.GeneratedColumn> get $primaryKey => {source, workId, episodeId};
+  Set<drift.GeneratedColumn> get $primaryKey => {ncode, episodeId};
   @override
   EpisodeListEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return EpisodeListEntry(
-      source: $EpisodeListEntriesTable.$convertersource.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}source'],
-        )!,
-      ),
-      workId: attachedDatabase.typeMapping.read(
+      ncode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}work_id'],
+        data['${effectivePrefix}ncode'],
       )!,
       episodeId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -2743,18 +2585,12 @@ class $EpisodeListEntriesTable extends EpisodeListEntries
   $EpisodeListEntriesTable createAlias(String alias) {
     return $EpisodeListEntriesTable(attachedDatabase, alias);
   }
-
-  static drift.TypeConverter<NovelSource, String> $convertersource =
-      const NovelSourceConverter();
 }
 
 class EpisodeListEntry extends drift.DataClass
     implements drift.Insertable<EpisodeListEntry> {
-  /// 提供サイト（プロバイダ）
-  final NovelSource source;
-
-  /// 小説の作品ID（参照整合性はアプリ層で担保）
-  final String workId;
+  /// 小説のncode (外部キー)
+  final String ncode;
 
   /// エピソード番号
   final int episodeId;
@@ -2774,8 +2610,7 @@ class EpisodeListEntry extends drift.DataClass
   /// 目次の最終取得日時（UNIXタイムスタンプ・ミリ秒）
   final int? fetchedAt;
   const EpisodeListEntry({
-    required this.source,
-    required this.workId,
+    required this.ncode,
     required this.episodeId,
     this.subtitle,
     this.url,
@@ -2786,12 +2621,7 @@ class EpisodeListEntry extends drift.DataClass
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    {
-      map['source'] = drift.Variable<String>(
-        $EpisodeListEntriesTable.$convertersource.toSql(source),
-      );
-    }
-    map['work_id'] = drift.Variable<String>(workId);
+    map['ncode'] = drift.Variable<String>(ncode);
     map['episode_id'] = drift.Variable<int>(episodeId);
     if (!nullToAbsent || subtitle != null) {
       map['subtitle'] = drift.Variable<String>(subtitle);
@@ -2813,8 +2643,7 @@ class EpisodeListEntry extends drift.DataClass
 
   EpisodeListEntriesCompanion toCompanion(bool nullToAbsent) {
     return EpisodeListEntriesCompanion(
-      source: drift.Value(source),
-      workId: drift.Value(workId),
+      ncode: drift.Value(ncode),
       episodeId: drift.Value(episodeId),
       subtitle: subtitle == null && nullToAbsent
           ? const drift.Value.absent()
@@ -2840,8 +2669,7 @@ class EpisodeListEntry extends drift.DataClass
   }) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
     return EpisodeListEntry(
-      source: serializer.fromJson<NovelSource>(json['source']),
-      workId: serializer.fromJson<String>(json['workId']),
+      ncode: serializer.fromJson<String>(json['ncode']),
       episodeId: serializer.fromJson<int>(json['episodeId']),
       subtitle: serializer.fromJson<String?>(json['subtitle']),
       url: serializer.fromJson<String?>(json['url']),
@@ -2854,8 +2682,7 @@ class EpisodeListEntry extends drift.DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'source': serializer.toJson<NovelSource>(source),
-      'workId': serializer.toJson<String>(workId),
+      'ncode': serializer.toJson<String>(ncode),
       'episodeId': serializer.toJson<int>(episodeId),
       'subtitle': serializer.toJson<String?>(subtitle),
       'url': serializer.toJson<String?>(url),
@@ -2866,8 +2693,7 @@ class EpisodeListEntry extends drift.DataClass
   }
 
   EpisodeListEntry copyWith({
-    NovelSource? source,
-    String? workId,
+    String? ncode,
     int? episodeId,
     drift.Value<String?> subtitle = const drift.Value.absent(),
     drift.Value<String?> url = const drift.Value.absent(),
@@ -2875,8 +2701,7 @@ class EpisodeListEntry extends drift.DataClass
     drift.Value<String?> revisedAt = const drift.Value.absent(),
     drift.Value<int?> fetchedAt = const drift.Value.absent(),
   }) => EpisodeListEntry(
-    source: source ?? this.source,
-    workId: workId ?? this.workId,
+    ncode: ncode ?? this.ncode,
     episodeId: episodeId ?? this.episodeId,
     subtitle: subtitle.present ? subtitle.value : this.subtitle,
     url: url.present ? url.value : this.url,
@@ -2886,8 +2711,7 @@ class EpisodeListEntry extends drift.DataClass
   );
   EpisodeListEntry copyWithCompanion(EpisodeListEntriesCompanion data) {
     return EpisodeListEntry(
-      source: data.source.present ? data.source.value : this.source,
-      workId: data.workId.present ? data.workId.value : this.workId,
+      ncode: data.ncode.present ? data.ncode.value : this.ncode,
       episodeId: data.episodeId.present ? data.episodeId.value : this.episodeId,
       subtitle: data.subtitle.present ? data.subtitle.value : this.subtitle,
       url: data.url.present ? data.url.value : this.url,
@@ -2902,8 +2726,7 @@ class EpisodeListEntry extends drift.DataClass
   @override
   String toString() {
     return (StringBuffer('EpisodeListEntry(')
-          ..write('source: $source, ')
-          ..write('workId: $workId, ')
+          ..write('ncode: $ncode, ')
           ..write('episodeId: $episodeId, ')
           ..write('subtitle: $subtitle, ')
           ..write('url: $url, ')
@@ -2916,8 +2739,7 @@ class EpisodeListEntry extends drift.DataClass
 
   @override
   int get hashCode => Object.hash(
-    source,
-    workId,
+    ncode,
     episodeId,
     subtitle,
     url,
@@ -2929,8 +2751,7 @@ class EpisodeListEntry extends drift.DataClass
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is EpisodeListEntry &&
-          other.source == this.source &&
-          other.workId == this.workId &&
+          other.ncode == this.ncode &&
           other.episodeId == this.episodeId &&
           other.subtitle == this.subtitle &&
           other.url == this.url &&
@@ -2941,8 +2762,7 @@ class EpisodeListEntry extends drift.DataClass
 
 class EpisodeListEntriesCompanion
     extends drift.UpdateCompanion<EpisodeListEntry> {
-  final drift.Value<NovelSource> source;
-  final drift.Value<String> workId;
+  final drift.Value<String> ncode;
   final drift.Value<int> episodeId;
   final drift.Value<String?> subtitle;
   final drift.Value<String?> url;
@@ -2951,8 +2771,7 @@ class EpisodeListEntriesCompanion
   final drift.Value<int?> fetchedAt;
   final drift.Value<int> rowid;
   const EpisodeListEntriesCompanion({
-    this.source = const drift.Value.absent(),
-    this.workId = const drift.Value.absent(),
+    this.ncode = const drift.Value.absent(),
     this.episodeId = const drift.Value.absent(),
     this.subtitle = const drift.Value.absent(),
     this.url = const drift.Value.absent(),
@@ -2962,8 +2781,7 @@ class EpisodeListEntriesCompanion
     this.rowid = const drift.Value.absent(),
   });
   EpisodeListEntriesCompanion.insert({
-    required NovelSource source,
-    required String workId,
+    required String ncode,
     required int episodeId,
     this.subtitle = const drift.Value.absent(),
     this.url = const drift.Value.absent(),
@@ -2971,12 +2789,10 @@ class EpisodeListEntriesCompanion
     this.revisedAt = const drift.Value.absent(),
     this.fetchedAt = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
-  }) : source = drift.Value(source),
-       workId = drift.Value(workId),
+  }) : ncode = drift.Value(ncode),
        episodeId = drift.Value(episodeId);
   static drift.Insertable<EpisodeListEntry> custom({
-    drift.Expression<String>? source,
-    drift.Expression<String>? workId,
+    drift.Expression<String>? ncode,
     drift.Expression<int>? episodeId,
     drift.Expression<String>? subtitle,
     drift.Expression<String>? url,
@@ -2986,8 +2802,7 @@ class EpisodeListEntriesCompanion
     drift.Expression<int>? rowid,
   }) {
     return drift.RawValuesInsertable({
-      if (source != null) 'source': source,
-      if (workId != null) 'work_id': workId,
+      if (ncode != null) 'ncode': ncode,
       if (episodeId != null) 'episode_id': episodeId,
       if (subtitle != null) 'subtitle': subtitle,
       if (url != null) 'url': url,
@@ -2999,8 +2814,7 @@ class EpisodeListEntriesCompanion
   }
 
   EpisodeListEntriesCompanion copyWith({
-    drift.Value<NovelSource>? source,
-    drift.Value<String>? workId,
+    drift.Value<String>? ncode,
     drift.Value<int>? episodeId,
     drift.Value<String?>? subtitle,
     drift.Value<String?>? url,
@@ -3010,8 +2824,7 @@ class EpisodeListEntriesCompanion
     drift.Value<int>? rowid,
   }) {
     return EpisodeListEntriesCompanion(
-      source: source ?? this.source,
-      workId: workId ?? this.workId,
+      ncode: ncode ?? this.ncode,
       episodeId: episodeId ?? this.episodeId,
       subtitle: subtitle ?? this.subtitle,
       url: url ?? this.url,
@@ -3025,13 +2838,8 @@ class EpisodeListEntriesCompanion
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    if (source.present) {
-      map['source'] = drift.Variable<String>(
-        $EpisodeListEntriesTable.$convertersource.toSql(source.value),
-      );
-    }
-    if (workId.present) {
-      map['work_id'] = drift.Variable<String>(workId.value);
+    if (ncode.present) {
+      map['ncode'] = drift.Variable<String>(ncode.value);
     }
     if (episodeId.present) {
       map['episode_id'] = drift.Variable<int>(episodeId.value);
@@ -3060,8 +2868,7 @@ class EpisodeListEntriesCompanion
   @override
   String toString() {
     return (StringBuffer('EpisodeListEntriesCompanion(')
-          ..write('source: $source, ')
-          ..write('workId: $workId, ')
+          ..write('ncode: $ncode, ')
           ..write('episodeId: $episodeId, ')
           ..write('subtitle: $subtitle, ')
           ..write('url: $url, ')
@@ -3080,25 +2887,20 @@ class $EpisodeContentsTable extends EpisodeContents
   final drift.GeneratedDatabase attachedDatabase;
   final String? _alias;
   $EpisodeContentsTable(this.attachedDatabase, [this._alias]);
+  static const drift.VerificationMeta _ncodeMeta = const drift.VerificationMeta(
+    'ncode',
+  );
   @override
-  late final drift.GeneratedColumnWithTypeConverter<NovelSource, String>
-  source = drift.GeneratedColumn<String>(
-    'source',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  ).withConverter<NovelSource>($EpisodeContentsTable.$convertersource);
-  static const drift.VerificationMeta _workIdMeta =
-      const drift.VerificationMeta('workId');
-  @override
-  late final drift.GeneratedColumn<String> workId =
+  late final drift.GeneratedColumn<String> ncode =
       drift.GeneratedColumn<String>(
-        'work_id',
+        'ncode',
         aliasedName,
         false,
         type: DriftSqlType.string,
         requiredDuringInsert: true,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES novels (ncode)',
+        ),
       );
   static const drift.VerificationMeta _episodeIdMeta =
       const drift.VerificationMeta('episodeId');
@@ -3148,8 +2950,7 @@ class $EpisodeContentsTable extends EpisodeContents
       );
   @override
   List<drift.GeneratedColumn> get $columns => [
-    source,
-    workId,
+    ncode,
     episodeId,
     content,
     fetchedAt,
@@ -3167,13 +2968,13 @@ class $EpisodeContentsTable extends EpisodeContents
   }) {
     final context = drift.VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('work_id')) {
+    if (data.containsKey('ncode')) {
       context.handle(
-        _workIdMeta,
-        workId.isAcceptableOrUnknown(data['work_id']!, _workIdMeta),
+        _ncodeMeta,
+        ncode.isAcceptableOrUnknown(data['ncode']!, _ncodeMeta),
       );
     } else if (isInserting) {
-      context.missing(_workIdMeta);
+      context.missing(_ncodeMeta);
     }
     if (data.containsKey('episode_id')) {
       context.handle(
@@ -3199,20 +3000,14 @@ class $EpisodeContentsTable extends EpisodeContents
   }
 
   @override
-  Set<drift.GeneratedColumn> get $primaryKey => {source, workId, episodeId};
+  Set<drift.GeneratedColumn> get $primaryKey => {ncode, episodeId};
   @override
   EpisodeContent map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return EpisodeContent(
-      source: $EpisodeContentsTable.$convertersource.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}source'],
-        )!,
-      ),
-      workId: attachedDatabase.typeMapping.read(
+      ncode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}work_id'],
+        data['${effectivePrefix}ncode'],
       )!,
       episodeId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -3240,8 +3035,6 @@ class $EpisodeContentsTable extends EpisodeContents
     return $EpisodeContentsTable(attachedDatabase, alias);
   }
 
-  static drift.TypeConverter<NovelSource, String> $convertersource =
-      const NovelSourceConverter();
   static drift.TypeConverter<List<NovelContentElement>, String>
   $convertercontent = const ContentConverter();
   static drift.TypeConverter<List<NovelContentElement>?, String?>
@@ -3250,11 +3043,8 @@ class $EpisodeContentsTable extends EpisodeContents
 
 class EpisodeContent extends drift.DataClass
     implements drift.Insertable<EpisodeContent> {
-  /// 提供サイト（プロバイダ）
-  final NovelSource source;
-
-  /// 小説の作品ID（参照整合性はアプリ層で担保）
-  final String workId;
+  /// 小説のncode (外部キー)
+  final String ncode;
 
   /// エピソード番号
   final int episodeId;
@@ -3269,8 +3059,7 @@ class EpisodeContent extends drift.DataClass
   /// 本文改訂判定用の改稿日
   final String? revisedAt;
   const EpisodeContent({
-    required this.source,
-    required this.workId,
+    required this.ncode,
     required this.episodeId,
     this.content,
     this.fetchedAt,
@@ -3279,12 +3068,7 @@ class EpisodeContent extends drift.DataClass
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    {
-      map['source'] = drift.Variable<String>(
-        $EpisodeContentsTable.$convertersource.toSql(source),
-      );
-    }
-    map['work_id'] = drift.Variable<String>(workId);
+    map['ncode'] = drift.Variable<String>(ncode);
     map['episode_id'] = drift.Variable<int>(episodeId);
     if (!nullToAbsent || content != null) {
       map['content'] = drift.Variable<String>(
@@ -3302,8 +3086,7 @@ class EpisodeContent extends drift.DataClass
 
   EpisodeContentsCompanion toCompanion(bool nullToAbsent) {
     return EpisodeContentsCompanion(
-      source: drift.Value(source),
-      workId: drift.Value(workId),
+      ncode: drift.Value(ncode),
       episodeId: drift.Value(episodeId),
       content: content == null && nullToAbsent
           ? const drift.Value.absent()
@@ -3323,8 +3106,7 @@ class EpisodeContent extends drift.DataClass
   }) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
     return EpisodeContent(
-      source: serializer.fromJson<NovelSource>(json['source']),
-      workId: serializer.fromJson<String>(json['workId']),
+      ncode: serializer.fromJson<String>(json['ncode']),
       episodeId: serializer.fromJson<int>(json['episodeId']),
       content: serializer.fromJson<List<NovelContentElement>?>(json['content']),
       fetchedAt: serializer.fromJson<int?>(json['fetchedAt']),
@@ -3335,8 +3117,7 @@ class EpisodeContent extends drift.DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= drift.driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'source': serializer.toJson<NovelSource>(source),
-      'workId': serializer.toJson<String>(workId),
+      'ncode': serializer.toJson<String>(ncode),
       'episodeId': serializer.toJson<int>(episodeId),
       'content': serializer.toJson<List<NovelContentElement>?>(content),
       'fetchedAt': serializer.toJson<int?>(fetchedAt),
@@ -3345,16 +3126,14 @@ class EpisodeContent extends drift.DataClass
   }
 
   EpisodeContent copyWith({
-    NovelSource? source,
-    String? workId,
+    String? ncode,
     int? episodeId,
     drift.Value<List<NovelContentElement>?> content =
         const drift.Value.absent(),
     drift.Value<int?> fetchedAt = const drift.Value.absent(),
     drift.Value<String?> revisedAt = const drift.Value.absent(),
   }) => EpisodeContent(
-    source: source ?? this.source,
-    workId: workId ?? this.workId,
+    ncode: ncode ?? this.ncode,
     episodeId: episodeId ?? this.episodeId,
     content: content.present ? content.value : this.content,
     fetchedAt: fetchedAt.present ? fetchedAt.value : this.fetchedAt,
@@ -3362,8 +3141,7 @@ class EpisodeContent extends drift.DataClass
   );
   EpisodeContent copyWithCompanion(EpisodeContentsCompanion data) {
     return EpisodeContent(
-      source: data.source.present ? data.source.value : this.source,
-      workId: data.workId.present ? data.workId.value : this.workId,
+      ncode: data.ncode.present ? data.ncode.value : this.ncode,
       episodeId: data.episodeId.present ? data.episodeId.value : this.episodeId,
       content: data.content.present ? data.content.value : this.content,
       fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
@@ -3374,8 +3152,7 @@ class EpisodeContent extends drift.DataClass
   @override
   String toString() {
     return (StringBuffer('EpisodeContent(')
-          ..write('source: $source, ')
-          ..write('workId: $workId, ')
+          ..write('ncode: $ncode, ')
           ..write('episodeId: $episodeId, ')
           ..write('content: $content, ')
           ..write('fetchedAt: $fetchedAt, ')
@@ -3386,13 +3163,12 @@ class EpisodeContent extends drift.DataClass
 
   @override
   int get hashCode =>
-      Object.hash(source, workId, episodeId, content, fetchedAt, revisedAt);
+      Object.hash(ncode, episodeId, content, fetchedAt, revisedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is EpisodeContent &&
-          other.source == this.source &&
-          other.workId == this.workId &&
+          other.ncode == this.ncode &&
           other.episodeId == this.episodeId &&
           other.content == this.content &&
           other.fetchedAt == this.fetchedAt &&
@@ -3400,16 +3176,14 @@ class EpisodeContent extends drift.DataClass
 }
 
 class EpisodeContentsCompanion extends drift.UpdateCompanion<EpisodeContent> {
-  final drift.Value<NovelSource> source;
-  final drift.Value<String> workId;
+  final drift.Value<String> ncode;
   final drift.Value<int> episodeId;
   final drift.Value<List<NovelContentElement>?> content;
   final drift.Value<int?> fetchedAt;
   final drift.Value<String?> revisedAt;
   final drift.Value<int> rowid;
   const EpisodeContentsCompanion({
-    this.source = const drift.Value.absent(),
-    this.workId = const drift.Value.absent(),
+    this.ncode = const drift.Value.absent(),
     this.episodeId = const drift.Value.absent(),
     this.content = const drift.Value.absent(),
     this.fetchedAt = const drift.Value.absent(),
@@ -3417,19 +3191,16 @@ class EpisodeContentsCompanion extends drift.UpdateCompanion<EpisodeContent> {
     this.rowid = const drift.Value.absent(),
   });
   EpisodeContentsCompanion.insert({
-    required NovelSource source,
-    required String workId,
+    required String ncode,
     required int episodeId,
     this.content = const drift.Value.absent(),
     this.fetchedAt = const drift.Value.absent(),
     this.revisedAt = const drift.Value.absent(),
     this.rowid = const drift.Value.absent(),
-  }) : source = drift.Value(source),
-       workId = drift.Value(workId),
+  }) : ncode = drift.Value(ncode),
        episodeId = drift.Value(episodeId);
   static drift.Insertable<EpisodeContent> custom({
-    drift.Expression<String>? source,
-    drift.Expression<String>? workId,
+    drift.Expression<String>? ncode,
     drift.Expression<int>? episodeId,
     drift.Expression<String>? content,
     drift.Expression<int>? fetchedAt,
@@ -3437,8 +3208,7 @@ class EpisodeContentsCompanion extends drift.UpdateCompanion<EpisodeContent> {
     drift.Expression<int>? rowid,
   }) {
     return drift.RawValuesInsertable({
-      if (source != null) 'source': source,
-      if (workId != null) 'work_id': workId,
+      if (ncode != null) 'ncode': ncode,
       if (episodeId != null) 'episode_id': episodeId,
       if (content != null) 'content': content,
       if (fetchedAt != null) 'fetched_at': fetchedAt,
@@ -3448,8 +3218,7 @@ class EpisodeContentsCompanion extends drift.UpdateCompanion<EpisodeContent> {
   }
 
   EpisodeContentsCompanion copyWith({
-    drift.Value<NovelSource>? source,
-    drift.Value<String>? workId,
+    drift.Value<String>? ncode,
     drift.Value<int>? episodeId,
     drift.Value<List<NovelContentElement>?>? content,
     drift.Value<int?>? fetchedAt,
@@ -3457,8 +3226,7 @@ class EpisodeContentsCompanion extends drift.UpdateCompanion<EpisodeContent> {
     drift.Value<int>? rowid,
   }) {
     return EpisodeContentsCompanion(
-      source: source ?? this.source,
-      workId: workId ?? this.workId,
+      ncode: ncode ?? this.ncode,
       episodeId: episodeId ?? this.episodeId,
       content: content ?? this.content,
       fetchedAt: fetchedAt ?? this.fetchedAt,
@@ -3470,13 +3238,8 @@ class EpisodeContentsCompanion extends drift.UpdateCompanion<EpisodeContent> {
   @override
   Map<String, drift.Expression> toColumns(bool nullToAbsent) {
     final map = <String, drift.Expression>{};
-    if (source.present) {
-      map['source'] = drift.Variable<String>(
-        $EpisodeContentsTable.$convertersource.toSql(source.value),
-      );
-    }
-    if (workId.present) {
-      map['work_id'] = drift.Variable<String>(workId.value);
+    if (ncode.present) {
+      map['ncode'] = drift.Variable<String>(ncode.value);
     }
     if (episodeId.present) {
       map['episode_id'] = drift.Variable<int>(episodeId.value);
@@ -3501,8 +3264,7 @@ class EpisodeContentsCompanion extends drift.UpdateCompanion<EpisodeContent> {
   @override
   String toString() {
     return (StringBuffer('EpisodeContentsCompanion(')
-          ..write('source: $source, ')
-          ..write('workId: $workId, ')
+          ..write('ncode: $ncode, ')
           ..write('episodeId: $episodeId, ')
           ..write('content: $content, ')
           ..write('fetchedAt: $fetchedAt, ')
@@ -3539,15 +3301,14 @@ abstract class _$AppDatabase extends drift.GeneratedDatabase {
 
 typedef $$NovelsTableCreateCompanionBuilder =
     NovelsCompanion Function({
-      required NovelSource source,
-      required String workId,
+      required String ncode,
       drift.Value<String?> title,
       drift.Value<String?> writer,
       drift.Value<int?> userId,
       drift.Value<String?> story,
       drift.Value<int?> novelType,
       drift.Value<int?> end,
-      drift.Value<String?> genreId,
+      drift.Value<int?> genre,
       drift.Value<int?> isr15,
       drift.Value<int?> isbl,
       drift.Value<int?> isgl,
@@ -3576,15 +3337,14 @@ typedef $$NovelsTableCreateCompanionBuilder =
     });
 typedef $$NovelsTableUpdateCompanionBuilder =
     NovelsCompanion Function({
-      drift.Value<NovelSource> source,
-      drift.Value<String> workId,
+      drift.Value<String> ncode,
       drift.Value<String?> title,
       drift.Value<String?> writer,
       drift.Value<int?> userId,
       drift.Value<String?> story,
       drift.Value<int?> novelType,
       drift.Value<int?> end,
-      drift.Value<String?> genreId,
+      drift.Value<int?> genre,
       drift.Value<int?> isr15,
       drift.Value<int?> isbl,
       drift.Value<int?> isgl,
@@ -3612,6 +3372,97 @@ typedef $$NovelsTableUpdateCompanionBuilder =
       drift.Value<int> rowid,
     });
 
+final class $$NovelsTableReferences
+    extends drift.BaseReferences<_$AppDatabase, $NovelsTable, Novel> {
+  $$NovelsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static drift.MultiTypedResultKey<$LibraryEntriesTable, List<LibraryEntry>>
+  _libraryEntriesRefsTable(_$AppDatabase db) =>
+      drift.MultiTypedResultKey.fromTable(
+        db.libraryEntries,
+        aliasName: 'novels__ncode__library_entries__ncode',
+      );
+
+  $$LibraryEntriesTableProcessedTableManager get libraryEntriesRefs {
+    final manager = $$LibraryEntriesTableTableManager(
+      $_db,
+      $_db.libraryEntries,
+    ).filter((f) => f.ncode.ncode.sqlEquals($_itemColumn<String>('ncode')!));
+
+    final cache = $_typedResult.readTableOrNull(_libraryEntriesRefsTable($_db));
+    return drift.ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static drift.MultiTypedResultKey<
+    $ReadingHistoryTable,
+    List<ReadingHistoryData>
+  >
+  _readingHistoryRefsTable(_$AppDatabase db) =>
+      drift.MultiTypedResultKey.fromTable(
+        db.readingHistory,
+        aliasName: 'novels__ncode__reading_history__ncode',
+      );
+
+  $$ReadingHistoryTableProcessedTableManager get readingHistoryRefs {
+    final manager = $$ReadingHistoryTableTableManager(
+      $_db,
+      $_db.readingHistory,
+    ).filter((f) => f.ncode.ncode.sqlEquals($_itemColumn<String>('ncode')!));
+
+    final cache = $_typedResult.readTableOrNull(_readingHistoryRefsTable($_db));
+    return drift.ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static drift.MultiTypedResultKey<
+    $EpisodeListEntriesTable,
+    List<EpisodeListEntry>
+  >
+  _episodeListEntriesRefsTable(_$AppDatabase db) =>
+      drift.MultiTypedResultKey.fromTable(
+        db.episodeListEntries,
+        aliasName: 'novels__ncode__episode_list_entries__ncode',
+      );
+
+  $$EpisodeListEntriesTableProcessedTableManager get episodeListEntriesRefs {
+    final manager = $$EpisodeListEntriesTableTableManager(
+      $_db,
+      $_db.episodeListEntries,
+    ).filter((f) => f.ncode.ncode.sqlEquals($_itemColumn<String>('ncode')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _episodeListEntriesRefsTable($_db),
+    );
+    return drift.ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static drift.MultiTypedResultKey<$EpisodeContentsTable, List<EpisodeContent>>
+  _episodeContentsRefsTable(_$AppDatabase db) =>
+      drift.MultiTypedResultKey.fromTable(
+        db.episodeContents,
+        aliasName: 'novels__ncode__episode_contents__ncode',
+      );
+
+  $$EpisodeContentsTableProcessedTableManager get episodeContentsRefs {
+    final manager = $$EpisodeContentsTableTableManager(
+      $_db,
+      $_db.episodeContents,
+    ).filter((f) => f.ncode.ncode.sqlEquals($_itemColumn<String>('ncode')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _episodeContentsRefsTable($_db),
+    );
+    return drift.ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
 class $$NovelsTableFilterComposer
     extends drift.Composer<_$AppDatabase, $NovelsTable> {
   $$NovelsTableFilterComposer({
@@ -3621,14 +3472,8 @@ class $$NovelsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.ColumnWithTypeConverterFilters<NovelSource, NovelSource, String>
-  get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => drift.ColumnWithTypeConverterFilters(column),
-  );
-
-  drift.ColumnFilters<String> get workId => $composableBuilder(
-    column: $table.workId,
+  drift.ColumnFilters<String> get ncode => $composableBuilder(
+    column: $table.ncode,
     builder: (column) => drift.ColumnFilters(column),
   );
 
@@ -3662,8 +3507,8 @@ class $$NovelsTableFilterComposer
     builder: (column) => drift.ColumnFilters(column),
   );
 
-  drift.ColumnFilters<String> get genreId => $composableBuilder(
-    column: $table.genreId,
+  drift.ColumnFilters<int> get genre => $composableBuilder(
+    column: $table.genre,
     builder: (column) => drift.ColumnFilters(column),
   );
 
@@ -3786,6 +3631,107 @@ class $$NovelsTableFilterComposer
     column: $table.isPrivate,
     builder: (column) => drift.ColumnFilters(column),
   );
+
+  drift.Expression<bool> libraryEntriesRefs(
+    drift.Expression<bool> Function($$LibraryEntriesTableFilterComposer f) f,
+  ) {
+    final $$LibraryEntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.libraryEntries,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LibraryEntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.libraryEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  drift.Expression<bool> readingHistoryRefs(
+    drift.Expression<bool> Function($$ReadingHistoryTableFilterComposer f) f,
+  ) {
+    final $$ReadingHistoryTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.readingHistory,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReadingHistoryTableFilterComposer(
+            $db: $db,
+            $table: $db.readingHistory,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  drift.Expression<bool> episodeListEntriesRefs(
+    drift.Expression<bool> Function($$EpisodeListEntriesTableFilterComposer f)
+    f,
+  ) {
+    final $$EpisodeListEntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.episodeListEntries,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EpisodeListEntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.episodeListEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  drift.Expression<bool> episodeContentsRefs(
+    drift.Expression<bool> Function($$EpisodeContentsTableFilterComposer f) f,
+  ) {
+    final $$EpisodeContentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.episodeContents,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EpisodeContentsTableFilterComposer(
+            $db: $db,
+            $table: $db.episodeContents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$NovelsTableOrderingComposer
@@ -3797,13 +3743,8 @@ class $$NovelsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.ColumnOrderings<String> get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<String> get workId => $composableBuilder(
-    column: $table.workId,
+  drift.ColumnOrderings<String> get ncode => $composableBuilder(
+    column: $table.ncode,
     builder: (column) => drift.ColumnOrderings(column),
   );
 
@@ -3837,8 +3778,8 @@ class $$NovelsTableOrderingComposer
     builder: (column) => drift.ColumnOrderings(column),
   );
 
-  drift.ColumnOrderings<String> get genreId => $composableBuilder(
-    column: $table.genreId,
+  drift.ColumnOrderings<int> get genre => $composableBuilder(
+    column: $table.genre,
     builder: (column) => drift.ColumnOrderings(column),
   );
 
@@ -3972,11 +3913,8 @@ class $$NovelsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.GeneratedColumnWithTypeConverter<NovelSource, String> get source =>
-      $composableBuilder(column: $table.source, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get workId =>
-      $composableBuilder(column: $table.workId, builder: (column) => column);
+  drift.GeneratedColumn<String> get ncode =>
+      $composableBuilder(column: $table.ncode, builder: (column) => column);
 
   drift.GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
@@ -3996,8 +3934,8 @@ class $$NovelsTableAnnotationComposer
   drift.GeneratedColumn<int> get end =>
       $composableBuilder(column: $table.end, builder: (column) => column);
 
-  drift.GeneratedColumn<String> get genreId =>
-      $composableBuilder(column: $table.genreId, builder: (column) => column);
+  drift.GeneratedColumn<int> get genre =>
+      $composableBuilder(column: $table.genre, builder: (column) => column);
 
   drift.GeneratedColumn<int> get isr15 =>
       $composableBuilder(column: $table.isr15, builder: (column) => column);
@@ -4094,6 +4032,108 @@ class $$NovelsTableAnnotationComposer
 
   drift.GeneratedColumn<bool> get isPrivate =>
       $composableBuilder(column: $table.isPrivate, builder: (column) => column);
+
+  drift.Expression<T> libraryEntriesRefs<T extends Object>(
+    drift.Expression<T> Function($$LibraryEntriesTableAnnotationComposer a) f,
+  ) {
+    final $$LibraryEntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.libraryEntries,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LibraryEntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.libraryEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  drift.Expression<T> readingHistoryRefs<T extends Object>(
+    drift.Expression<T> Function($$ReadingHistoryTableAnnotationComposer a) f,
+  ) {
+    final $$ReadingHistoryTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.readingHistory,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReadingHistoryTableAnnotationComposer(
+            $db: $db,
+            $table: $db.readingHistory,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  drift.Expression<T> episodeListEntriesRefs<T extends Object>(
+    drift.Expression<T> Function($$EpisodeListEntriesTableAnnotationComposer a)
+    f,
+  ) {
+    final $$EpisodeListEntriesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.ncode,
+          referencedTable: $db.episodeListEntries,
+          getReferencedColumn: (t) => t.ncode,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$EpisodeListEntriesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.episodeListEntries,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
+  drift.Expression<T> episodeContentsRefs<T extends Object>(
+    drift.Expression<T> Function($$EpisodeContentsTableAnnotationComposer a) f,
+  ) {
+    final $$EpisodeContentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.episodeContents,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$EpisodeContentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.episodeContents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$NovelsTableTableManager
@@ -4107,9 +4147,14 @@ class $$NovelsTableTableManager
           $$NovelsTableAnnotationComposer,
           $$NovelsTableCreateCompanionBuilder,
           $$NovelsTableUpdateCompanionBuilder,
-          (Novel, drift.BaseReferences<_$AppDatabase, $NovelsTable, Novel>),
+          (Novel, $$NovelsTableReferences),
           Novel,
-          drift.PrefetchHooks Function()
+          drift.PrefetchHooks Function({
+            bool libraryEntriesRefs,
+            bool readingHistoryRefs,
+            bool episodeListEntriesRefs,
+            bool episodeContentsRefs,
+          })
         > {
   $$NovelsTableTableManager(_$AppDatabase db, $NovelsTable table)
     : super(
@@ -4124,15 +4169,14 @@ class $$NovelsTableTableManager
               $$NovelsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                drift.Value<NovelSource> source = const drift.Value.absent(),
-                drift.Value<String> workId = const drift.Value.absent(),
+                drift.Value<String> ncode = const drift.Value.absent(),
                 drift.Value<String?> title = const drift.Value.absent(),
                 drift.Value<String?> writer = const drift.Value.absent(),
                 drift.Value<int?> userId = const drift.Value.absent(),
                 drift.Value<String?> story = const drift.Value.absent(),
                 drift.Value<int?> novelType = const drift.Value.absent(),
                 drift.Value<int?> end = const drift.Value.absent(),
-                drift.Value<String?> genreId = const drift.Value.absent(),
+                drift.Value<int?> genre = const drift.Value.absent(),
                 drift.Value<int?> isr15 = const drift.Value.absent(),
                 drift.Value<int?> isbl = const drift.Value.absent(),
                 drift.Value<int?> isgl = const drift.Value.absent(),
@@ -4160,15 +4204,14 @@ class $$NovelsTableTableManager
                 drift.Value<bool> isPrivate = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => NovelsCompanion(
-                source: source,
-                workId: workId,
+                ncode: ncode,
                 title: title,
                 writer: writer,
                 userId: userId,
                 story: story,
                 novelType: novelType,
                 end: end,
-                genreId: genreId,
+                genre: genre,
                 isr15: isr15,
                 isbl: isbl,
                 isgl: isgl,
@@ -4197,15 +4240,14 @@ class $$NovelsTableTableManager
               ),
           createCompanionCallback:
               ({
-                required NovelSource source,
-                required String workId,
+                required String ncode,
                 drift.Value<String?> title = const drift.Value.absent(),
                 drift.Value<String?> writer = const drift.Value.absent(),
                 drift.Value<int?> userId = const drift.Value.absent(),
                 drift.Value<String?> story = const drift.Value.absent(),
                 drift.Value<int?> novelType = const drift.Value.absent(),
                 drift.Value<int?> end = const drift.Value.absent(),
-                drift.Value<String?> genreId = const drift.Value.absent(),
+                drift.Value<int?> genre = const drift.Value.absent(),
                 drift.Value<int?> isr15 = const drift.Value.absent(),
                 drift.Value<int?> isbl = const drift.Value.absent(),
                 drift.Value<int?> isgl = const drift.Value.absent(),
@@ -4233,15 +4275,14 @@ class $$NovelsTableTableManager
                 drift.Value<bool> isPrivate = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => NovelsCompanion.insert(
-                source: source,
-                workId: workId,
+                ncode: ncode,
                 title: title,
                 writer: writer,
                 userId: userId,
                 story: story,
                 novelType: novelType,
                 end: end,
-                genreId: genreId,
+                genre: genre,
                 isr15: isr15,
                 isbl: isbl,
                 isgl: isgl,
@@ -4270,10 +4311,116 @@ class $$NovelsTableTableManager
               ),
           withReferenceMapper: (p0) => p0
               .map(
-                (e) => (e.readTable(table), drift.BaseReferences(db, table, e)),
+                (e) =>
+                    (e.readTable(table), $$NovelsTableReferences(db, table, e)),
               )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback:
+              ({
+                libraryEntriesRefs = false,
+                readingHistoryRefs = false,
+                episodeListEntriesRefs = false,
+                episodeContentsRefs = false,
+              }) {
+                return drift.PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (libraryEntriesRefs) db.libraryEntries,
+                    if (readingHistoryRefs) db.readingHistory,
+                    if (episodeListEntriesRefs) db.episodeListEntries,
+                    if (episodeContentsRefs) db.episodeContents,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (libraryEntriesRefs)
+                        await drift.$_getPrefetchedData<
+                          Novel,
+                          $NovelsTable,
+                          LibraryEntry
+                        >(
+                          currentTable: table,
+                          referencedTable: $$NovelsTableReferences
+                              ._libraryEntriesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$NovelsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).libraryEntriesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.ncode == item.ncode,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (readingHistoryRefs)
+                        await drift.$_getPrefetchedData<
+                          Novel,
+                          $NovelsTable,
+                          ReadingHistoryData
+                        >(
+                          currentTable: table,
+                          referencedTable: $$NovelsTableReferences
+                              ._readingHistoryRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$NovelsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).readingHistoryRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.ncode == item.ncode,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (episodeListEntriesRefs)
+                        await drift.$_getPrefetchedData<
+                          Novel,
+                          $NovelsTable,
+                          EpisodeListEntry
+                        >(
+                          currentTable: table,
+                          referencedTable: $$NovelsTableReferences
+                              ._episodeListEntriesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$NovelsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).episodeListEntriesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.ncode == item.ncode,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (episodeContentsRefs)
+                        await drift.$_getPrefetchedData<
+                          Novel,
+                          $NovelsTable,
+                          EpisodeContent
+                        >(
+                          currentTable: table,
+                          referencedTable: $$NovelsTableReferences
+                              ._episodeContentsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$NovelsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).episodeContentsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.ncode == item.ncode,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
         ),
       );
 }
@@ -4288,24 +4435,58 @@ typedef $$NovelsTableProcessedTableManager =
       $$NovelsTableAnnotationComposer,
       $$NovelsTableCreateCompanionBuilder,
       $$NovelsTableUpdateCompanionBuilder,
-      (Novel, drift.BaseReferences<_$AppDatabase, $NovelsTable, Novel>),
+      (Novel, $$NovelsTableReferences),
       Novel,
-      drift.PrefetchHooks Function()
+      drift.PrefetchHooks Function({
+        bool libraryEntriesRefs,
+        bool readingHistoryRefs,
+        bool episodeListEntriesRefs,
+        bool episodeContentsRefs,
+      })
     >;
 typedef $$LibraryEntriesTableCreateCompanionBuilder =
     LibraryEntriesCompanion Function({
-      required NovelSource source,
-      required String workId,
+      required String ncode,
       required int addedAt,
       drift.Value<int> rowid,
     });
 typedef $$LibraryEntriesTableUpdateCompanionBuilder =
     LibraryEntriesCompanion Function({
-      drift.Value<NovelSource> source,
-      drift.Value<String> workId,
+      drift.Value<String> ncode,
       drift.Value<int> addedAt,
       drift.Value<int> rowid,
     });
+
+final class $$LibraryEntriesTableReferences
+    extends
+        drift.BaseReferences<
+          _$AppDatabase,
+          $LibraryEntriesTable,
+          LibraryEntry
+        > {
+  $$LibraryEntriesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $NovelsTable _ncodeTable(_$AppDatabase db) =>
+      db.novels.createAlias('library_entries__ncode__novels__ncode');
+
+  $$NovelsTableProcessedTableManager get ncode {
+    final $_column = $_itemColumn<String>('ncode')!;
+
+    final manager = $$NovelsTableTableManager(
+      $_db,
+      $_db.novels,
+    ).filter((f) => f.ncode.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_ncodeTable($_db));
+    if (item == null) return manager;
+    return drift.ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
 
 class $$LibraryEntriesTableFilterComposer
     extends drift.Composer<_$AppDatabase, $LibraryEntriesTable> {
@@ -4316,21 +4497,33 @@ class $$LibraryEntriesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.ColumnWithTypeConverterFilters<NovelSource, NovelSource, String>
-  get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => drift.ColumnWithTypeConverterFilters(column),
-  );
-
-  drift.ColumnFilters<String> get workId => $composableBuilder(
-    column: $table.workId,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
   drift.ColumnFilters<int> get addedAt => $composableBuilder(
     column: $table.addedAt,
     builder: (column) => drift.ColumnFilters(column),
   );
+
+  $$NovelsTableFilterComposer get ncode {
+    final $$NovelsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableFilterComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$LibraryEntriesTableOrderingComposer
@@ -4342,20 +4535,33 @@ class $$LibraryEntriesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.ColumnOrderings<String> get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<String> get workId => $composableBuilder(
-    column: $table.workId,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
   drift.ColumnOrderings<int> get addedAt => $composableBuilder(
     column: $table.addedAt,
     builder: (column) => drift.ColumnOrderings(column),
   );
+
+  $$NovelsTableOrderingComposer get ncode {
+    final $$NovelsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableOrderingComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$LibraryEntriesTableAnnotationComposer
@@ -4367,14 +4573,31 @@ class $$LibraryEntriesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.GeneratedColumnWithTypeConverter<NovelSource, String> get source =>
-      $composableBuilder(column: $table.source, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get workId =>
-      $composableBuilder(column: $table.workId, builder: (column) => column);
-
   drift.GeneratedColumn<int> get addedAt =>
       $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  $$NovelsTableAnnotationComposer get ncode {
+    final $$NovelsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$LibraryEntriesTableTableManager
@@ -4388,16 +4611,9 @@ class $$LibraryEntriesTableTableManager
           $$LibraryEntriesTableAnnotationComposer,
           $$LibraryEntriesTableCreateCompanionBuilder,
           $$LibraryEntriesTableUpdateCompanionBuilder,
-          (
-            LibraryEntry,
-            drift.BaseReferences<
-              _$AppDatabase,
-              $LibraryEntriesTable,
-              LibraryEntry
-            >,
-          ),
+          (LibraryEntry, $$LibraryEntriesTableReferences),
           LibraryEntry,
-          drift.PrefetchHooks Function()
+          drift.PrefetchHooks Function({bool ncode})
         > {
   $$LibraryEntriesTableTableManager(
     _$AppDatabase db,
@@ -4414,34 +4630,74 @@ class $$LibraryEntriesTableTableManager
               $$LibraryEntriesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                drift.Value<NovelSource> source = const drift.Value.absent(),
-                drift.Value<String> workId = const drift.Value.absent(),
+                drift.Value<String> ncode = const drift.Value.absent(),
                 drift.Value<int> addedAt = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => LibraryEntriesCompanion(
-                source: source,
-                workId: workId,
+                ncode: ncode,
                 addedAt: addedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required NovelSource source,
-                required String workId,
+                required String ncode,
                 required int addedAt,
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => LibraryEntriesCompanion.insert(
-                source: source,
-                workId: workId,
+                ncode: ncode,
                 addedAt: addedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map(
-                (e) => (e.readTable(table), drift.BaseReferences(db, table, e)),
+                (e) => (
+                  e.readTable(table),
+                  $$LibraryEntriesTableReferences(db, table, e),
+                ),
               )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({ncode = false}) {
+            return drift.PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends drift.TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (ncode) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.ncode,
+                                referencedTable: $$LibraryEntriesTableReferences
+                                    ._ncodeTable(db),
+                                referencedColumn:
+                                    $$LibraryEntriesTableReferences
+                                        ._ncodeTable(db)
+                                        .ncode,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -4456,17 +4712,13 @@ typedef $$LibraryEntriesTableProcessedTableManager =
       $$LibraryEntriesTableAnnotationComposer,
       $$LibraryEntriesTableCreateCompanionBuilder,
       $$LibraryEntriesTableUpdateCompanionBuilder,
-      (
-        LibraryEntry,
-        drift.BaseReferences<_$AppDatabase, $LibraryEntriesTable, LibraryEntry>,
-      ),
+      (LibraryEntry, $$LibraryEntriesTableReferences),
       LibraryEntry,
-      drift.PrefetchHooks Function()
+      drift.PrefetchHooks Function({bool ncode})
     >;
 typedef $$ReadingHistoryTableCreateCompanionBuilder =
     ReadingHistoryCompanion Function({
-      required NovelSource source,
-      required String workId,
+      required String ncode,
       drift.Value<int?> lastEpisodeId,
       required int viewedAt,
       drift.Value<int> updatedAt,
@@ -4474,13 +4726,43 @@ typedef $$ReadingHistoryTableCreateCompanionBuilder =
     });
 typedef $$ReadingHistoryTableUpdateCompanionBuilder =
     ReadingHistoryCompanion Function({
-      drift.Value<NovelSource> source,
-      drift.Value<String> workId,
+      drift.Value<String> ncode,
       drift.Value<int?> lastEpisodeId,
       drift.Value<int> viewedAt,
       drift.Value<int> updatedAt,
       drift.Value<int> rowid,
     });
+
+final class $$ReadingHistoryTableReferences
+    extends
+        drift.BaseReferences<
+          _$AppDatabase,
+          $ReadingHistoryTable,
+          ReadingHistoryData
+        > {
+  $$ReadingHistoryTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $NovelsTable _ncodeTable(_$AppDatabase db) =>
+      db.novels.createAlias('reading_history__ncode__novels__ncode');
+
+  $$NovelsTableProcessedTableManager get ncode {
+    final $_column = $_itemColumn<String>('ncode')!;
+
+    final manager = $$NovelsTableTableManager(
+      $_db,
+      $_db.novels,
+    ).filter((f) => f.ncode.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_ncodeTable($_db));
+    if (item == null) return manager;
+    return drift.ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
 
 class $$ReadingHistoryTableFilterComposer
     extends drift.Composer<_$AppDatabase, $ReadingHistoryTable> {
@@ -4491,17 +4773,6 @@ class $$ReadingHistoryTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.ColumnWithTypeConverterFilters<NovelSource, NovelSource, String>
-  get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => drift.ColumnWithTypeConverterFilters(column),
-  );
-
-  drift.ColumnFilters<String> get workId => $composableBuilder(
-    column: $table.workId,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
   drift.ColumnFilters<int> get lastEpisodeId => $composableBuilder(
     column: $table.lastEpisodeId,
     builder: (column) => drift.ColumnFilters(column),
@@ -4516,6 +4787,29 @@ class $$ReadingHistoryTableFilterComposer
     column: $table.updatedAt,
     builder: (column) => drift.ColumnFilters(column),
   );
+
+  $$NovelsTableFilterComposer get ncode {
+    final $$NovelsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableFilterComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ReadingHistoryTableOrderingComposer
@@ -4527,16 +4821,6 @@ class $$ReadingHistoryTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.ColumnOrderings<String> get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<String> get workId => $composableBuilder(
-    column: $table.workId,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
   drift.ColumnOrderings<int> get lastEpisodeId => $composableBuilder(
     column: $table.lastEpisodeId,
     builder: (column) => drift.ColumnOrderings(column),
@@ -4551,6 +4835,29 @@ class $$ReadingHistoryTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => drift.ColumnOrderings(column),
   );
+
+  $$NovelsTableOrderingComposer get ncode {
+    final $$NovelsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableOrderingComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ReadingHistoryTableAnnotationComposer
@@ -4562,12 +4869,6 @@ class $$ReadingHistoryTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.GeneratedColumnWithTypeConverter<NovelSource, String> get source =>
-      $composableBuilder(column: $table.source, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get workId =>
-      $composableBuilder(column: $table.workId, builder: (column) => column);
-
   drift.GeneratedColumn<int> get lastEpisodeId => $composableBuilder(
     column: $table.lastEpisodeId,
     builder: (column) => column,
@@ -4578,6 +4879,29 @@ class $$ReadingHistoryTableAnnotationComposer
 
   drift.GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$NovelsTableAnnotationComposer get ncode {
+    final $$NovelsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$ReadingHistoryTableTableManager
@@ -4591,16 +4915,9 @@ class $$ReadingHistoryTableTableManager
           $$ReadingHistoryTableAnnotationComposer,
           $$ReadingHistoryTableCreateCompanionBuilder,
           $$ReadingHistoryTableUpdateCompanionBuilder,
-          (
-            ReadingHistoryData,
-            drift.BaseReferences<
-              _$AppDatabase,
-              $ReadingHistoryTable,
-              ReadingHistoryData
-            >,
-          ),
+          (ReadingHistoryData, $$ReadingHistoryTableReferences),
           ReadingHistoryData,
-          drift.PrefetchHooks Function()
+          drift.PrefetchHooks Function({bool ncode})
         > {
   $$ReadingHistoryTableTableManager(
     _$AppDatabase db,
@@ -4617,15 +4934,13 @@ class $$ReadingHistoryTableTableManager
               $$ReadingHistoryTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                drift.Value<NovelSource> source = const drift.Value.absent(),
-                drift.Value<String> workId = const drift.Value.absent(),
+                drift.Value<String> ncode = const drift.Value.absent(),
                 drift.Value<int?> lastEpisodeId = const drift.Value.absent(),
                 drift.Value<int> viewedAt = const drift.Value.absent(),
                 drift.Value<int> updatedAt = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => ReadingHistoryCompanion(
-                source: source,
-                workId: workId,
+                ncode: ncode,
                 lastEpisodeId: lastEpisodeId,
                 viewedAt: viewedAt,
                 updatedAt: updatedAt,
@@ -4633,15 +4948,13 @@ class $$ReadingHistoryTableTableManager
               ),
           createCompanionCallback:
               ({
-                required NovelSource source,
-                required String workId,
+                required String ncode,
                 drift.Value<int?> lastEpisodeId = const drift.Value.absent(),
                 required int viewedAt,
                 drift.Value<int> updatedAt = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => ReadingHistoryCompanion.insert(
-                source: source,
-                workId: workId,
+                ncode: ncode,
                 lastEpisodeId: lastEpisodeId,
                 viewedAt: viewedAt,
                 updatedAt: updatedAt,
@@ -4649,10 +4962,54 @@ class $$ReadingHistoryTableTableManager
               ),
           withReferenceMapper: (p0) => p0
               .map(
-                (e) => (e.readTable(table), drift.BaseReferences(db, table, e)),
+                (e) => (
+                  e.readTable(table),
+                  $$ReadingHistoryTableReferences(db, table, e),
+                ),
               )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({ncode = false}) {
+            return drift.PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends drift.TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (ncode) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.ncode,
+                                referencedTable: $$ReadingHistoryTableReferences
+                                    ._ncodeTable(db),
+                                referencedColumn:
+                                    $$ReadingHistoryTableReferences
+                                        ._ncodeTable(db)
+                                        .ncode,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -4667,21 +5024,13 @@ typedef $$ReadingHistoryTableProcessedTableManager =
       $$ReadingHistoryTableAnnotationComposer,
       $$ReadingHistoryTableCreateCompanionBuilder,
       $$ReadingHistoryTableUpdateCompanionBuilder,
-      (
-        ReadingHistoryData,
-        drift.BaseReferences<
-          _$AppDatabase,
-          $ReadingHistoryTable,
-          ReadingHistoryData
-        >,
-      ),
+      (ReadingHistoryData, $$ReadingHistoryTableReferences),
       ReadingHistoryData,
-      drift.PrefetchHooks Function()
+      drift.PrefetchHooks Function({bool ncode})
     >;
 typedef $$EpisodeListEntriesTableCreateCompanionBuilder =
     EpisodeListEntriesCompanion Function({
-      required NovelSource source,
-      required String workId,
+      required String ncode,
       required int episodeId,
       drift.Value<String?> subtitle,
       drift.Value<String?> url,
@@ -4692,8 +5041,7 @@ typedef $$EpisodeListEntriesTableCreateCompanionBuilder =
     });
 typedef $$EpisodeListEntriesTableUpdateCompanionBuilder =
     EpisodeListEntriesCompanion Function({
-      drift.Value<NovelSource> source,
-      drift.Value<String> workId,
+      drift.Value<String> ncode,
       drift.Value<int> episodeId,
       drift.Value<String?> subtitle,
       drift.Value<String?> url,
@@ -4702,6 +5050,37 @@ typedef $$EpisodeListEntriesTableUpdateCompanionBuilder =
       drift.Value<int?> fetchedAt,
       drift.Value<int> rowid,
     });
+
+final class $$EpisodeListEntriesTableReferences
+    extends
+        drift.BaseReferences<
+          _$AppDatabase,
+          $EpisodeListEntriesTable,
+          EpisodeListEntry
+        > {
+  $$EpisodeListEntriesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $NovelsTable _ncodeTable(_$AppDatabase db) =>
+      db.novels.createAlias('episode_list_entries__ncode__novels__ncode');
+
+  $$NovelsTableProcessedTableManager get ncode {
+    final $_column = $_itemColumn<String>('ncode')!;
+
+    final manager = $$NovelsTableTableManager(
+      $_db,
+      $_db.novels,
+    ).filter((f) => f.ncode.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_ncodeTable($_db));
+    if (item == null) return manager;
+    return drift.ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
 
 class $$EpisodeListEntriesTableFilterComposer
     extends drift.Composer<_$AppDatabase, $EpisodeListEntriesTable> {
@@ -4712,17 +5091,6 @@ class $$EpisodeListEntriesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.ColumnWithTypeConverterFilters<NovelSource, NovelSource, String>
-  get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => drift.ColumnWithTypeConverterFilters(column),
-  );
-
-  drift.ColumnFilters<String> get workId => $composableBuilder(
-    column: $table.workId,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
   drift.ColumnFilters<int> get episodeId => $composableBuilder(
     column: $table.episodeId,
     builder: (column) => drift.ColumnFilters(column),
@@ -4752,6 +5120,29 @@ class $$EpisodeListEntriesTableFilterComposer
     column: $table.fetchedAt,
     builder: (column) => drift.ColumnFilters(column),
   );
+
+  $$NovelsTableFilterComposer get ncode {
+    final $$NovelsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableFilterComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$EpisodeListEntriesTableOrderingComposer
@@ -4763,16 +5154,6 @@ class $$EpisodeListEntriesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.ColumnOrderings<String> get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<String> get workId => $composableBuilder(
-    column: $table.workId,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
   drift.ColumnOrderings<int> get episodeId => $composableBuilder(
     column: $table.episodeId,
     builder: (column) => drift.ColumnOrderings(column),
@@ -4802,6 +5183,29 @@ class $$EpisodeListEntriesTableOrderingComposer
     column: $table.fetchedAt,
     builder: (column) => drift.ColumnOrderings(column),
   );
+
+  $$NovelsTableOrderingComposer get ncode {
+    final $$NovelsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableOrderingComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$EpisodeListEntriesTableAnnotationComposer
@@ -4813,12 +5217,6 @@ class $$EpisodeListEntriesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.GeneratedColumnWithTypeConverter<NovelSource, String> get source =>
-      $composableBuilder(column: $table.source, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get workId =>
-      $composableBuilder(column: $table.workId, builder: (column) => column);
-
   drift.GeneratedColumn<int> get episodeId =>
       $composableBuilder(column: $table.episodeId, builder: (column) => column);
 
@@ -4838,6 +5236,29 @@ class $$EpisodeListEntriesTableAnnotationComposer
 
   drift.GeneratedColumn<int> get fetchedAt =>
       $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+
+  $$NovelsTableAnnotationComposer get ncode {
+    final $$NovelsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$EpisodeListEntriesTableTableManager
@@ -4851,16 +5272,9 @@ class $$EpisodeListEntriesTableTableManager
           $$EpisodeListEntriesTableAnnotationComposer,
           $$EpisodeListEntriesTableCreateCompanionBuilder,
           $$EpisodeListEntriesTableUpdateCompanionBuilder,
-          (
-            EpisodeListEntry,
-            drift.BaseReferences<
-              _$AppDatabase,
-              $EpisodeListEntriesTable,
-              EpisodeListEntry
-            >,
-          ),
+          (EpisodeListEntry, $$EpisodeListEntriesTableReferences),
           EpisodeListEntry,
-          drift.PrefetchHooks Function()
+          drift.PrefetchHooks Function({bool ncode})
         > {
   $$EpisodeListEntriesTableTableManager(
     _$AppDatabase db,
@@ -4880,8 +5294,7 @@ class $$EpisodeListEntriesTableTableManager
               ),
           updateCompanionCallback:
               ({
-                drift.Value<NovelSource> source = const drift.Value.absent(),
-                drift.Value<String> workId = const drift.Value.absent(),
+                drift.Value<String> ncode = const drift.Value.absent(),
                 drift.Value<int> episodeId = const drift.Value.absent(),
                 drift.Value<String?> subtitle = const drift.Value.absent(),
                 drift.Value<String?> url = const drift.Value.absent(),
@@ -4890,8 +5303,7 @@ class $$EpisodeListEntriesTableTableManager
                 drift.Value<int?> fetchedAt = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => EpisodeListEntriesCompanion(
-                source: source,
-                workId: workId,
+                ncode: ncode,
                 episodeId: episodeId,
                 subtitle: subtitle,
                 url: url,
@@ -4902,8 +5314,7 @@ class $$EpisodeListEntriesTableTableManager
               ),
           createCompanionCallback:
               ({
-                required NovelSource source,
-                required String workId,
+                required String ncode,
                 required int episodeId,
                 drift.Value<String?> subtitle = const drift.Value.absent(),
                 drift.Value<String?> url = const drift.Value.absent(),
@@ -4912,8 +5323,7 @@ class $$EpisodeListEntriesTableTableManager
                 drift.Value<int?> fetchedAt = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => EpisodeListEntriesCompanion.insert(
-                source: source,
-                workId: workId,
+                ncode: ncode,
                 episodeId: episodeId,
                 subtitle: subtitle,
                 url: url,
@@ -4924,10 +5334,55 @@ class $$EpisodeListEntriesTableTableManager
               ),
           withReferenceMapper: (p0) => p0
               .map(
-                (e) => (e.readTable(table), drift.BaseReferences(db, table, e)),
+                (e) => (
+                  e.readTable(table),
+                  $$EpisodeListEntriesTableReferences(db, table, e),
+                ),
               )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({ncode = false}) {
+            return drift.PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends drift.TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (ncode) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.ncode,
+                                referencedTable:
+                                    $$EpisodeListEntriesTableReferences
+                                        ._ncodeTable(db),
+                                referencedColumn:
+                                    $$EpisodeListEntriesTableReferences
+                                        ._ncodeTable(db)
+                                        .ncode,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -4942,21 +5397,13 @@ typedef $$EpisodeListEntriesTableProcessedTableManager =
       $$EpisodeListEntriesTableAnnotationComposer,
       $$EpisodeListEntriesTableCreateCompanionBuilder,
       $$EpisodeListEntriesTableUpdateCompanionBuilder,
-      (
-        EpisodeListEntry,
-        drift.BaseReferences<
-          _$AppDatabase,
-          $EpisodeListEntriesTable,
-          EpisodeListEntry
-        >,
-      ),
+      (EpisodeListEntry, $$EpisodeListEntriesTableReferences),
       EpisodeListEntry,
-      drift.PrefetchHooks Function()
+      drift.PrefetchHooks Function({bool ncode})
     >;
 typedef $$EpisodeContentsTableCreateCompanionBuilder =
     EpisodeContentsCompanion Function({
-      required NovelSource source,
-      required String workId,
+      required String ncode,
       required int episodeId,
       drift.Value<List<NovelContentElement>?> content,
       drift.Value<int?> fetchedAt,
@@ -4965,14 +5412,44 @@ typedef $$EpisodeContentsTableCreateCompanionBuilder =
     });
 typedef $$EpisodeContentsTableUpdateCompanionBuilder =
     EpisodeContentsCompanion Function({
-      drift.Value<NovelSource> source,
-      drift.Value<String> workId,
+      drift.Value<String> ncode,
       drift.Value<int> episodeId,
       drift.Value<List<NovelContentElement>?> content,
       drift.Value<int?> fetchedAt,
       drift.Value<String?> revisedAt,
       drift.Value<int> rowid,
     });
+
+final class $$EpisodeContentsTableReferences
+    extends
+        drift.BaseReferences<
+          _$AppDatabase,
+          $EpisodeContentsTable,
+          EpisodeContent
+        > {
+  $$EpisodeContentsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $NovelsTable _ncodeTable(_$AppDatabase db) =>
+      db.novels.createAlias('episode_contents__ncode__novels__ncode');
+
+  $$NovelsTableProcessedTableManager get ncode {
+    final $_column = $_itemColumn<String>('ncode')!;
+
+    final manager = $$NovelsTableTableManager(
+      $_db,
+      $_db.novels,
+    ).filter((f) => f.ncode.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_ncodeTable($_db));
+    if (item == null) return manager;
+    return drift.ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
 
 class $$EpisodeContentsTableFilterComposer
     extends drift.Composer<_$AppDatabase, $EpisodeContentsTable> {
@@ -4983,17 +5460,6 @@ class $$EpisodeContentsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.ColumnWithTypeConverterFilters<NovelSource, NovelSource, String>
-  get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => drift.ColumnWithTypeConverterFilters(column),
-  );
-
-  drift.ColumnFilters<String> get workId => $composableBuilder(
-    column: $table.workId,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
   drift.ColumnFilters<int> get episodeId => $composableBuilder(
     column: $table.episodeId,
     builder: (column) => drift.ColumnFilters(column),
@@ -5018,6 +5484,29 @@ class $$EpisodeContentsTableFilterComposer
     column: $table.revisedAt,
     builder: (column) => drift.ColumnFilters(column),
   );
+
+  $$NovelsTableFilterComposer get ncode {
+    final $$NovelsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableFilterComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$EpisodeContentsTableOrderingComposer
@@ -5029,16 +5518,6 @@ class $$EpisodeContentsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.ColumnOrderings<String> get source => $composableBuilder(
-    column: $table.source,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<String> get workId => $composableBuilder(
-    column: $table.workId,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
   drift.ColumnOrderings<int> get episodeId => $composableBuilder(
     column: $table.episodeId,
     builder: (column) => drift.ColumnOrderings(column),
@@ -5058,6 +5537,29 @@ class $$EpisodeContentsTableOrderingComposer
     column: $table.revisedAt,
     builder: (column) => drift.ColumnOrderings(column),
   );
+
+  $$NovelsTableOrderingComposer get ncode {
+    final $$NovelsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableOrderingComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$EpisodeContentsTableAnnotationComposer
@@ -5069,12 +5571,6 @@ class $$EpisodeContentsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  drift.GeneratedColumnWithTypeConverter<NovelSource, String> get source =>
-      $composableBuilder(column: $table.source, builder: (column) => column);
-
-  drift.GeneratedColumn<String> get workId =>
-      $composableBuilder(column: $table.workId, builder: (column) => column);
-
   drift.GeneratedColumn<int> get episodeId =>
       $composableBuilder(column: $table.episodeId, builder: (column) => column);
 
@@ -5087,6 +5583,29 @@ class $$EpisodeContentsTableAnnotationComposer
 
   drift.GeneratedColumn<String> get revisedAt =>
       $composableBuilder(column: $table.revisedAt, builder: (column) => column);
+
+  $$NovelsTableAnnotationComposer get ncode {
+    final $$NovelsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.ncode,
+      referencedTable: $db.novels,
+      getReferencedColumn: (t) => t.ncode,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$NovelsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.novels,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$EpisodeContentsTableTableManager
@@ -5100,16 +5619,9 @@ class $$EpisodeContentsTableTableManager
           $$EpisodeContentsTableAnnotationComposer,
           $$EpisodeContentsTableCreateCompanionBuilder,
           $$EpisodeContentsTableUpdateCompanionBuilder,
-          (
-            EpisodeContent,
-            drift.BaseReferences<
-              _$AppDatabase,
-              $EpisodeContentsTable,
-              EpisodeContent
-            >,
-          ),
+          (EpisodeContent, $$EpisodeContentsTableReferences),
           EpisodeContent,
-          drift.PrefetchHooks Function()
+          drift.PrefetchHooks Function({bool ncode})
         > {
   $$EpisodeContentsTableTableManager(
     _$AppDatabase db,
@@ -5126,8 +5638,7 @@ class $$EpisodeContentsTableTableManager
               $$EpisodeContentsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
-                drift.Value<NovelSource> source = const drift.Value.absent(),
-                drift.Value<String> workId = const drift.Value.absent(),
+                drift.Value<String> ncode = const drift.Value.absent(),
                 drift.Value<int> episodeId = const drift.Value.absent(),
                 drift.Value<List<NovelContentElement>?> content =
                     const drift.Value.absent(),
@@ -5135,8 +5646,7 @@ class $$EpisodeContentsTableTableManager
                 drift.Value<String?> revisedAt = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => EpisodeContentsCompanion(
-                source: source,
-                workId: workId,
+                ncode: ncode,
                 episodeId: episodeId,
                 content: content,
                 fetchedAt: fetchedAt,
@@ -5145,8 +5655,7 @@ class $$EpisodeContentsTableTableManager
               ),
           createCompanionCallback:
               ({
-                required NovelSource source,
-                required String workId,
+                required String ncode,
                 required int episodeId,
                 drift.Value<List<NovelContentElement>?> content =
                     const drift.Value.absent(),
@@ -5154,8 +5663,7 @@ class $$EpisodeContentsTableTableManager
                 drift.Value<String?> revisedAt = const drift.Value.absent(),
                 drift.Value<int> rowid = const drift.Value.absent(),
               }) => EpisodeContentsCompanion.insert(
-                source: source,
-                workId: workId,
+                ncode: ncode,
                 episodeId: episodeId,
                 content: content,
                 fetchedAt: fetchedAt,
@@ -5164,10 +5672,55 @@ class $$EpisodeContentsTableTableManager
               ),
           withReferenceMapper: (p0) => p0
               .map(
-                (e) => (e.readTable(table), drift.BaseReferences(db, table, e)),
+                (e) => (
+                  e.readTable(table),
+                  $$EpisodeContentsTableReferences(db, table, e),
+                ),
               )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({ncode = false}) {
+            return drift.PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends drift.TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (ncode) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.ncode,
+                                referencedTable:
+                                    $$EpisodeContentsTableReferences
+                                        ._ncodeTable(db),
+                                referencedColumn:
+                                    $$EpisodeContentsTableReferences
+                                        ._ncodeTable(db)
+                                        .ncode,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -5182,16 +5735,9 @@ typedef $$EpisodeContentsTableProcessedTableManager =
       $$EpisodeContentsTableAnnotationComposer,
       $$EpisodeContentsTableCreateCompanionBuilder,
       $$EpisodeContentsTableUpdateCompanionBuilder,
-      (
-        EpisodeContent,
-        drift.BaseReferences<
-          _$AppDatabase,
-          $EpisodeContentsTable,
-          EpisodeContent
-        >,
-      ),
+      (EpisodeContent, $$EpisodeContentsTableReferences),
       EpisodeContent,
-      drift.PrefetchHooks Function()
+      drift.PrefetchHooks Function({bool ncode})
     >;
 
 class $AppDatabaseManager {
