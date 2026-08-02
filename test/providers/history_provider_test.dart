@@ -15,6 +15,7 @@ void main() {
     setUp(() {
       mockDatabase = MockAppDatabase();
       container = ProviderContainer(
+        retry: (_, _) => null,
         overrides: [
           appDatabaseProvider.overrideWithValue(mockDatabase),
         ],
@@ -24,6 +25,13 @@ void main() {
     tearDown(() {
       container.dispose();
     });
+
+    // riverpod 3.x では `read(provider.future)` の直後に購読が閉じられ、
+    // プロバイダーがローディング中に破棄されてしまう。
+    // 値を確定させるまで購読を維持するためのヘルパー。
+    void keepAlive() {
+      container.listen(historyProvider, (_, _) {});
+    }
 
     test('should return history data when database call succeeds', () async {
       final testHistoryData = [
@@ -49,6 +57,7 @@ void main() {
         mockDatabase.watchHistory(),
       ).thenAnswer((_) => Stream.value(testHistoryData));
 
+      keepAlive();
       final result = await container.read(historyProvider.future);
 
       expect(result, equals(testHistoryData));
@@ -64,6 +73,7 @@ void main() {
         mockDatabase.watchHistory(),
       ).thenAnswer((_) => Stream.value(<HistoryData>[]));
 
+      keepAlive();
       final result = await container.read(historyProvider.future);
 
       expect(result, isEmpty);
@@ -75,8 +85,9 @@ void main() {
         (_) => Stream.error(Exception('Database error')),
       );
 
-      expect(
-        () => container.read(historyProvider.future),
+      keepAlive();
+      await expectLater(
+        container.read(historyProvider.future),
         throwsA(isA<Exception>()),
       );
       verify(mockDatabase.watchHistory()).called(1);
@@ -98,6 +109,7 @@ void main() {
         mockDatabase.watchHistory(),
       ).thenAnswer((_) => Stream.value(testHistoryData));
 
+      keepAlive();
       final result1 = await container.read(historyProvider.future);
       final result2 = await container.read(historyProvider.future);
 
@@ -140,6 +152,7 @@ void main() {
         mockDatabase.watchHistory(),
       ).thenAnswer((_) => Stream.value(initialData));
 
+      keepAlive();
       final initialResult = await container.read(historyProvider.future);
       expect(initialResult.length, equals(1));
 

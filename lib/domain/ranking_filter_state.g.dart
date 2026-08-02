@@ -11,13 +11,13 @@ part of 'ranking_filter_state.dart';
 /// ランキングタイプごとのフィルタ状態を管理するNotifier。
 
 @ProviderFor(RankingFilterStateNotifier)
-const rankingFilterStateProvider = RankingFilterStateNotifierFamily._();
+final rankingFilterStateProvider = RankingFilterStateNotifierFamily._();
 
 /// ランキングタイプごとのフィルタ状態を管理するNotifier。
 final class RankingFilterStateNotifierProvider
     extends $NotifierProvider<RankingFilterStateNotifier, RankingFilterState> {
   /// ランキングタイプごとのフィルタ状態を管理するNotifier。
-  const RankingFilterStateNotifierProvider._({
+  RankingFilterStateNotifierProvider._({
     required RankingFilterStateNotifierFamily super.from,
     required String super.argument,
   }) : super(
@@ -76,7 +76,7 @@ final class RankingFilterStateNotifierFamily extends $Family
           RankingFilterState,
           String
         > {
-  const RankingFilterStateNotifierFamily._()
+  RankingFilterStateNotifierFamily._()
     : super(
         retry: null,
         name: r'rankingFilterStateProvider',
@@ -104,8 +104,7 @@ abstract class _$RankingFilterStateNotifier
   RankingFilterState build(String rankingType);
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build(_$args);
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<RankingFilterState, RankingFilterState>;
     final element =
         ref.element
@@ -115,6 +114,6 @@ abstract class _$RankingFilterStateNotifier
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, () => build(_$args));
   }
 }

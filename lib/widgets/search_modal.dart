@@ -39,7 +39,7 @@ class SearchModal extends HookConsumerWidget {
       builder: (context, scrollController) {
         return Column(
           children: [
-            // Handle for the sheet
+            // シートのハンドル
             const SizedBox(height: 12),
             Container(
               width: 32,
@@ -63,7 +63,7 @@ class SearchModal extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Keywords
+                  // キーワード
                   TextField(
                     controller: searchController,
 
@@ -84,7 +84,7 @@ class SearchModal extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Search Targets (Chips)
+                  // 検索対象（チップ）
                   Text(
                     '検索対象',
                     style: Theme.of(context).textTheme.titleSmall,
@@ -126,7 +126,7 @@ class SearchModal extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Genre
+                  // ジャンル
                   Text(
                     'ジャンル',
                     style: Theme.of(context).textTheme.titleSmall,
@@ -168,7 +168,7 @@ class SearchModal extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Type
+                  // 種別
                   Text(
                     '種別',
                     style: Theme.of(context).textTheme.titleSmall,
@@ -196,7 +196,7 @@ class SearchModal extends HookConsumerWidget {
                                 type: entry.key,
                               );
                             } else if (query.value.type == entry.key) {
-                              // Optional: Deselect to go back to "All"
+                              // 任意: 選択解除で「すべて」に戻る
                               query.value = query.value.copyWith(type: null);
                             }
                           },
@@ -206,7 +206,7 @@ class SearchModal extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Order
+                  // 並び順
                   Text(
                     '並び順',
                     style: Theme.of(context).textTheme.titleSmall,
@@ -259,7 +259,7 @@ class SearchModal extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Advanced
+                  // 詳細設定
                   ExpansionTile(
                     title: const Text('詳細設定'),
                     initiallyExpanded: showAdvanced.value,
@@ -286,13 +286,14 @@ class SearchModal extends HookConsumerWidget {
                     ],
                   ),
 
-                  // Spacing provided by SafeArea in Scaffold usually, but good to have some padding at bottom of scroll
+                  // 通常 Scaffold の SafeArea が余白を確保するが、念のため
+                  // to have some padding at bottom of scroll
                   const SizedBox(height: 100),
                 ],
               ),
             ),
 
-            // Fixed Search Button
+            // 固定検索ボタン
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),

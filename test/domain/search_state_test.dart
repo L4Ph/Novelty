@@ -16,8 +16,8 @@ void main() {
     });
 
     test('コンストラクタでフィールドを設定できる', () {
-      final state = SearchState(
-        query: const NovelSearchQuery(word: 'test'),
+      const state = SearchState(
+        query: NovelSearchQuery(word: 'test'),
         results: [
           NovelInfo(title: 'Test', ncode: 'n1234'),
         ],
@@ -50,7 +50,7 @@ void main() {
       const state = SearchState();
 
       final newResults = [
-        NovelInfo(title: 'Test', ncode: 'n1234'),
+        const NovelInfo(title: 'Test', ncode: 'n1234'),
       ];
       final updated = state.copyWith(results: newResults);
 
@@ -58,13 +58,13 @@ void main() {
     });
 
     test('同じ値を持つインスタンスは等価', () {
-      final state1 = SearchState(
-        query: const NovelSearchQuery(word: 'test'),
+      const state1 = SearchState(
+        query: NovelSearchQuery(word: 'test'),
         allCount: 100,
         isLoading: true,
       );
-      final state2 = SearchState(
-        query: const NovelSearchQuery(word: 'test'),
+      const state2 = SearchState(
+        query: NovelSearchQuery(word: 'test'),
         allCount: 100,
         isLoading: true,
       );
@@ -82,14 +82,14 @@ void main() {
 
     test('hasMoreが正しく計算される', () {
       // results.length < allCount の場合
-      final state1 = SearchState(
+      const state1 = SearchState(
         results: [NovelInfo(title: 'Test', ncode: 'n1')],
         allCount: 10,
       );
       expect(state1.hasMore, isTrue);
 
       // results.length >= allCount の場合
-      final state2 = SearchState(
+      const state2 = SearchState(
         results: [NovelInfo(title: 'Test', ncode: 'n1')],
         allCount: 1,
       );

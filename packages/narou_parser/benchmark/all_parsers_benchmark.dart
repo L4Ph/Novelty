@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print, deprecated_member_use_from_same_package, cascade_invocations // benchmark logic
+// ignore_for_file: avoid_print, cascade_invocations // benchmark logic
 
 import 'package:narou_parser/experimental.dart';
 import 'package:narou_parser/narou_parser.dart';
@@ -9,10 +9,9 @@ void main() {
 
   print('=== Narou Parser Ultimate Benchmark ===\n');
   print('Parsers to test:');
-  print('1. Legacy (DOM Chunked)   - package:html with chunk optimization');
-  print('2. New Default (Lookup)   - Optimized Lookup Integrated Scanner');
-  print('3. StringScanner          - Raw string scanning');
-  print('4. StateMachine           - State machine based parser\n');
+  print('1. New Default (Lookup)   - Optimized Lookup Integrated Scanner');
+  print('2. StringScanner          - Raw string scanning');
+  print('3. StateMachine           - State machine based parser\n');
 
   scenarios.forEach(_runScenario);
 }
@@ -29,25 +28,19 @@ void _runScenario(int lines) {
   print('  HTML Generation: ${stopwatchGen.elapsedMilliseconds}ms');
   print('  Data Size:       ${html.length} chars ($sizeMb MB)\n');
 
-  // 1. Legacy (DOM)
-  final swLegacy = Stopwatch()..start();
-  final resLegacy = parseNovelContentLegacy(html);
-  swLegacy.stop();
-  final timeLegacy = swLegacy.elapsedMilliseconds;
-
-  // 2. New Default (Lookup)
+  // 1. New Default (Lookup)
   final swNew = Stopwatch()..start();
   final resNew = parseNovelContent(html);
   swNew.stop();
   final timeNew = swNew.elapsedMilliseconds;
 
-  // 3. StringScanner
+  // 2. StringScanner
   final swStringScanner = Stopwatch()..start();
   final resStringScanner = parseNovelContentStringScanner(html);
   swStringScanner.stop();
   final timeStringScanner = swStringScanner.elapsedMilliseconds;
 
-  // 4. StateMachine
+  // 3. StateMachine
   final swStateMachine = Stopwatch()..start();
   final resStateMachine = parseNovelContentStateMachine(html);
   swStateMachine.stop();
@@ -56,26 +49,22 @@ void _runScenario(int lines) {
   // 結果出力
   print('  [Performance]');
   print(
-    '  Legacy:        ${timeLegacy.toString().padLeft(5)} ms (${_calcSpeed(timeLegacy, lines)} ms/1k)',
+    '  New Default:   ${timeNew.toString().padLeft(5)} ms (${_calcSpeed(timeNew, lines)} ms/1k)',
   );
   print(
-    '  New Default:   ${timeNew.toString().padLeft(5)} ms (${_calcSpeed(timeNew, lines)} ms/1k) - ${hasSpeedup(timeLegacy, timeNew)}x faster',
+    '  StringScanner: ${timeStringScanner.toString().padLeft(5)} ms (${_calcSpeed(timeStringScanner, lines)} ms/1k) - ${hasSpeedup(timeNew, timeStringScanner)}x faster',
   );
   print(
-    '  StringScanner: ${timeStringScanner.toString().padLeft(5)} ms (${_calcSpeed(timeStringScanner, lines)} ms/1k) - ${hasSpeedup(timeLegacy, timeStringScanner)}x faster',
-  );
-  print(
-    '  StateMachine:  ${timeStateMachine.toString().padLeft(5)} ms (${_calcSpeed(timeStateMachine, lines)} ms/1k) - ${hasSpeedup(timeLegacy, timeStateMachine)}x faster',
+    '  StateMachine:  ${timeStateMachine.toString().padLeft(5)} ms (${_calcSpeed(timeStateMachine, lines)} ms/1k) - ${hasSpeedup(timeNew, timeStateMachine)}x faster',
   );
 
   // 整合性チェック
   print('\n  [Validation]');
   final countMatch =
-      resLegacy.length == resNew.length &&
-      resLegacy.length == resStringScanner.length &&
-      resLegacy.length == resStateMachine.length;
+      resNew.length == resStringScanner.length &&
+      resNew.length == resStateMachine.length;
   print(
-    '  Element Counts: Legacy=${resLegacy.length}, New=${resNew.length}, StringScanner=${resStringScanner.length}, StateMachine=${resStateMachine.length}',
+    '  Element Counts: New=${resNew.length}, StringScanner=${resStringScanner.length}, StateMachine=${resStateMachine.length}',
   );
   print(
     '  Status:         ${countMatch ? "OK (All match)" : "WARNING (Count mismatch)"}',

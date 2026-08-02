@@ -18,7 +18,7 @@ void main() {
     });
 
     testWidgets('should be a HookConsumerWidget and render successfully', (
-      WidgetTester tester,
+      tester,
     ) async {
       // ダミーデータの準備
       const testNovel = NovelInfo(
@@ -66,7 +66,7 @@ void main() {
     });
 
     testWidgets('should handle empty data gracefully', (
-      WidgetTester tester,
+      tester,
     ) async {
       const searchResult = NovelSearchResult(
         novels: [],

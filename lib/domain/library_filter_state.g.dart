@@ -11,13 +11,13 @@ part of 'library_filter_state.dart';
 /// ライブラリのフィルタ状態を管理するNotifier。
 
 @ProviderFor(LibraryFilterStateNotifier)
-const libraryFilterStateProvider = LibraryFilterStateNotifierProvider._();
+final libraryFilterStateProvider = LibraryFilterStateNotifierProvider._();
 
 /// ライブラリのフィルタ状態を管理するNotifier。
 final class LibraryFilterStateNotifierProvider
     extends $NotifierProvider<LibraryFilterStateNotifier, LibraryFilterState> {
   /// ライブラリのフィルタ状態を管理するNotifier。
-  const LibraryFilterStateNotifierProvider._()
+  LibraryFilterStateNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -54,8 +54,7 @@ abstract class _$LibraryFilterStateNotifier
   LibraryFilterState build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<LibraryFilterState, LibraryFilterState>;
     final element =
         ref.element
@@ -65,6 +64,6 @@ abstract class _$LibraryFilterStateNotifier
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }

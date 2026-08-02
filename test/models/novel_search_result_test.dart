@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_search_result.dart';
 
 void main() {
   group('NovelSearchResult', () {
@@ -23,7 +23,7 @@ void main() {
       );
 
       final newNovels = [
-        NovelInfo(
+        const NovelInfo(
           title: 'Test Novel',
           ncode: 'n1234',
         ),

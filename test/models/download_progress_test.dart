@@ -186,7 +186,8 @@ void main() {
 
         expect(
           progress.toString(),
-          'DownloadProgress(currentEpisode: 5, totalEpisodes: 10, isDownloading: true, errorMessage: error)',
+          'DownloadProgress(currentEpisode: 5, totalEpisodes: 10, '
+          'isDownloading: true, errorMessage: error)',
         );
       });
     });

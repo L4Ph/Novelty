@@ -95,7 +95,7 @@ void main() {
 
   group('EnrichedNovelList', () {
     testWidgets('should add novel to library on long press', (
-      WidgetTester tester,
+      tester,
     ) async {
       // --- Arrange ---
       when(mockDb.isInLibrary(any)).thenAnswer((_) async => false);

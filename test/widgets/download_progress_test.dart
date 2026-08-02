@@ -54,7 +54,7 @@ class DownloadProgressTestWidget extends StatelessWidget {
 
 void main() {
   group('ダウンロード進捗UI', () {
-    testWidgets('ダウンロード中は円形プログレスを表示すること', (WidgetTester tester) async {
+    testWidgets('ダウンロード中は円形プログレスを表示すること', (tester) async {
       const progress = DownloadProgress(
         currentEpisode: 3,
         totalEpisodes: 10,
@@ -82,7 +82,7 @@ void main() {
       expect(find.text('ダウンロード中'), findsOneWidget);
     });
 
-    testWidgets('エラー時はエラーアイコンを表示すること', (WidgetTester tester) async {
+    testWidgets('エラー時はエラーアイコンを表示すること', (tester) async {
       const progress = DownloadProgress(
         currentEpisode: 0,
         totalEpisodes: 10,
@@ -103,7 +103,7 @@ void main() {
       expect(find.text('エラー'), findsOneWidget);
     });
 
-    testWidgets('通常状態ではダウンロードアイコンを表示すること', (WidgetTester tester) async {
+    testWidgets('通常状態ではダウンロードアイコンを表示すること', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -117,7 +117,7 @@ void main() {
       expect(find.text('ダウンロード'), findsOneWidget);
     });
 
-    testWidgets('短編小説のダウンロード完了状態を正しく表示すること', (WidgetTester tester) async {
+    testWidgets('短編小説のダウンロード完了状態を正しく表示すること', (tester) async {
       const progress = DownloadProgress(
         currentEpisode: 1,
         totalEpisodes: 1,

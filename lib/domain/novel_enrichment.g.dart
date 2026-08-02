@@ -11,7 +11,7 @@ part of 'novel_enrichment.dart';
 /// 検索結果をデータベースのライブラリ状態で強化するプロバイダー
 
 @ProviderFor(enrichedSearchData)
-const enrichedSearchDataProvider = EnrichedSearchDataFamily._();
+final enrichedSearchDataProvider = EnrichedSearchDataFamily._();
 
 /// 検索結果をデータベースのライブラリ状態で強化するプロバイダー
 
@@ -26,7 +26,7 @@ final class EnrichedSearchDataProvider
         $FutureModifier<List<EnrichedNovelData>>,
         $FutureProvider<List<EnrichedNovelData>> {
   /// 検索結果をデータベースのライブラリ状態で強化するプロバイダー
-  const EnrichedSearchDataProvider._({
+  EnrichedSearchDataProvider._({
     required EnrichedSearchDataFamily super.from,
     required List<NovelInfo> super.argument,
   }) : super(
@@ -81,7 +81,7 @@ final class EnrichedSearchDataFamily extends $Family
           FutureOr<List<EnrichedNovelData>>,
           List<NovelInfo>
         > {
-  const EnrichedSearchDataFamily._()
+  EnrichedSearchDataFamily._()
     : super(
         retry: null,
         name: r'enrichedSearchDataProvider',
@@ -102,7 +102,7 @@ final class EnrichedSearchDataFamily extends $Family
 /// ncodeから単一の豊富な小説データを取得するプロバイダー
 
 @ProviderFor(enrichedNovel)
-const enrichedNovelProvider = EnrichedNovelFamily._();
+final enrichedNovelProvider = EnrichedNovelFamily._();
 
 /// ncodeから単一の豊富な小説データを取得するプロバイダー
 
@@ -117,7 +117,7 @@ final class EnrichedNovelProvider
         $FutureModifier<EnrichedNovelData>,
         $FutureProvider<EnrichedNovelData> {
   /// ncodeから単一の豊富な小説データを取得するプロバイダー
-  const EnrichedNovelProvider._({
+  EnrichedNovelProvider._({
     required EnrichedNovelFamily super.from,
     required String super.argument,
   }) : super(
@@ -167,7 +167,7 @@ String _$enrichedNovelHash() => r'4c5408924b9b046662f7709784685f107d29d0a5';
 
 final class EnrichedNovelFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<EnrichedNovelData>, String> {
-  const EnrichedNovelFamily._()
+  EnrichedNovelFamily._()
     : super(
         retry: null,
         name: r'enrichedNovelProvider',

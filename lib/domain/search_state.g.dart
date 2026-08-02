@@ -11,13 +11,13 @@ part of 'search_state.dart';
 /// 検索状態を管理するNotifierプロバイダー。
 
 @ProviderFor(SearchStateNotifier)
-const searchStateProvider = SearchStateNotifierProvider._();
+final searchStateProvider = SearchStateNotifierProvider._();
 
 /// 検索状態を管理するNotifierプロバイダー。
 final class SearchStateNotifierProvider
     extends $NotifierProvider<SearchStateNotifier, SearchState> {
   /// 検索状態を管理するNotifierプロバイダー。
-  const SearchStateNotifierProvider._()
+  SearchStateNotifierProvider._()
     : super(
         from: null,
         argument: null,
@@ -45,7 +45,7 @@ final class SearchStateNotifierProvider
 }
 
 String _$searchStateNotifierHash() =>
-    r'6b81472a785aadfac25576628d9c0196143eb1b7';
+    r'83f5323d8eafee7f83e9ac2d7f47bca0099ab126';
 
 /// 検索状態を管理するNotifierプロバイダー。
 
@@ -53,8 +53,7 @@ abstract class _$SearchStateNotifier extends $Notifier<SearchState> {
   SearchState build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<SearchState, SearchState>;
     final element =
         ref.element
@@ -64,6 +63,6 @@ abstract class _$SearchStateNotifier extends $Notifier<SearchState> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }

@@ -3380,10 +3380,7 @@ final class $$NovelsTableReferences
   _libraryEntriesRefsTable(_$AppDatabase db) =>
       drift.MultiTypedResultKey.fromTable(
         db.libraryEntries,
-        aliasName: drift.$_aliasNameGenerator(
-          db.novels.ncode,
-          db.libraryEntries.ncode,
-        ),
+        aliasName: 'novels__ncode__library_entries__ncode',
       );
 
   $$LibraryEntriesTableProcessedTableManager get libraryEntriesRefs {
@@ -3405,10 +3402,7 @@ final class $$NovelsTableReferences
   _readingHistoryRefsTable(_$AppDatabase db) =>
       drift.MultiTypedResultKey.fromTable(
         db.readingHistory,
-        aliasName: drift.$_aliasNameGenerator(
-          db.novels.ncode,
-          db.readingHistory.ncode,
-        ),
+        aliasName: 'novels__ncode__reading_history__ncode',
       );
 
   $$ReadingHistoryTableProcessedTableManager get readingHistoryRefs {
@@ -3430,10 +3424,7 @@ final class $$NovelsTableReferences
   _episodeListEntriesRefsTable(_$AppDatabase db) =>
       drift.MultiTypedResultKey.fromTable(
         db.episodeListEntries,
-        aliasName: drift.$_aliasNameGenerator(
-          db.novels.ncode,
-          db.episodeListEntries.ncode,
-        ),
+        aliasName: 'novels__ncode__episode_list_entries__ncode',
       );
 
   $$EpisodeListEntriesTableProcessedTableManager get episodeListEntriesRefs {
@@ -3454,10 +3445,7 @@ final class $$NovelsTableReferences
   _episodeContentsRefsTable(_$AppDatabase db) =>
       drift.MultiTypedResultKey.fromTable(
         db.episodeContents,
-        aliasName: drift.$_aliasNameGenerator(
-          db.novels.ncode,
-          db.episodeContents.ncode,
-        ),
+        aliasName: 'novels__ncode__episode_contents__ncode',
       );
 
   $$EpisodeContentsTableProcessedTableManager get episodeContentsRefs {
@@ -4482,9 +4470,8 @@ final class $$LibraryEntriesTableReferences
     super.$_typedResult,
   );
 
-  static $NovelsTable _ncodeTable(_$AppDatabase db) => db.novels.createAlias(
-    drift.$_aliasNameGenerator(db.libraryEntries.ncode, db.novels.ncode),
-  );
+  static $NovelsTable _ncodeTable(_$AppDatabase db) =>
+      db.novels.createAlias('library_entries__ncode__novels__ncode');
 
   $$NovelsTableProcessedTableManager get ncode {
     final $_column = $_itemColumn<String>('ncode')!;
@@ -4759,9 +4746,8 @@ final class $$ReadingHistoryTableReferences
     super.$_typedResult,
   );
 
-  static $NovelsTable _ncodeTable(_$AppDatabase db) => db.novels.createAlias(
-    drift.$_aliasNameGenerator(db.readingHistory.ncode, db.novels.ncode),
-  );
+  static $NovelsTable _ncodeTable(_$AppDatabase db) =>
+      db.novels.createAlias('reading_history__ncode__novels__ncode');
 
   $$NovelsTableProcessedTableManager get ncode {
     final $_column = $_itemColumn<String>('ncode')!;
@@ -5078,9 +5064,8 @@ final class $$EpisodeListEntriesTableReferences
     super.$_typedResult,
   );
 
-  static $NovelsTable _ncodeTable(_$AppDatabase db) => db.novels.createAlias(
-    drift.$_aliasNameGenerator(db.episodeListEntries.ncode, db.novels.ncode),
-  );
+  static $NovelsTable _ncodeTable(_$AppDatabase db) =>
+      db.novels.createAlias('episode_list_entries__ncode__novels__ncode');
 
   $$NovelsTableProcessedTableManager get ncode {
     final $_column = $_itemColumn<String>('ncode')!;
@@ -5448,9 +5433,8 @@ final class $$EpisodeContentsTableReferences
     super.$_typedResult,
   );
 
-  static $NovelsTable _ncodeTable(_$AppDatabase db) => db.novels.createAlias(
-    drift.$_aliasNameGenerator(db.episodeContents.ncode, db.novels.ncode),
-  );
+  static $NovelsTable _ncodeTable(_$AppDatabase db) =>
+      db.novels.createAlias('episode_contents__ncode__novels__ncode');
 
   $$NovelsTableProcessedTableManager get ncode {
     final $_column = $_itemColumn<String>('ncode')!;

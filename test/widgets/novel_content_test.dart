@@ -191,7 +191,7 @@ void main() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(
             SystemChannels.platform,
-            (MethodCall methodCall) async {
+            (methodCall) async {
               uiModeCalls.add(methodCall);
               return null;
             },

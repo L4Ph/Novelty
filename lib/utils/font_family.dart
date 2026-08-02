@@ -8,8 +8,7 @@ enum FontFamilySetting {
   sans,
 
   /// 明朝体。
-  serif
-  ;
+  serif;
 
   /// SharedPreferences に保存する文字列表現。
   String get storageKey => name;

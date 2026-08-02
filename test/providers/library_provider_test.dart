@@ -46,6 +46,7 @@ void main() {
     setUp(() {
       mockDatabase = MockAppDatabase();
       container = ProviderContainer(
+        retry: (_, _) => null,
         overrides: [
           appDatabaseProvider.overrideWithValue(mockDatabase),
         ],
@@ -56,11 +57,24 @@ void main() {
       container.dispose();
     });
 
+    // riverpod 3.x では `read(provider.future)` の直後に購読が閉じられ、
+    // プロバイダーがローディング中に破棄されてしまう。
+    // 値を確定させるまで購読を維持するためのヘルパー。
+    // 戻り値の購読はテスト終了時に close する。
+    ProviderSubscription<Object?> keepAlive() {
+      return container.listen(
+            libraryNovelsProvider,
+            (_, _) {},
+          )
+          as ProviderSubscription<Object?>;
+    }
+
     test('should return Future<List<Novel>>', () async {
       when(
         mockDatabase.watchLibraryNovels(),
       ).thenAnswer((_) => Stream.fromIterable([testNovels]));
 
+      keepAlive();
       final result = await container.read(libraryNovelsProvider.future);
 
       expect(result, equals(testNovels));
@@ -72,6 +86,7 @@ void main() {
         mockDatabase.watchLibraryNovels(),
       ).thenAnswer((_) => Stream.error(Exception('Database error')));
 
+      keepAlive();
       await expectLater(
         container.read(libraryNovelsProvider.future),
         throwsA(isA<Exception>()),
@@ -79,30 +94,26 @@ void main() {
     });
 
     test('should be auto-disposed and re-fetched when not in use', () async {
-      when(
-        mockDatabase.watchLibraryNovels(),
-      ).thenAnswer((_) => Stream.fromIterable([testNovels]));
-
-      await container.read(libraryNovelsProvider.future);
-      container.dispose();
-
-      // Create a new container and mock
+      // 新しい container と mock を作成して再取得を検証する。
+      // riverpod 3.x では、read 完了後に購読が閉じられると
+      // ローディング中の破棄エラーになるため、購読を維持してから検証する。
       final newMockDatabase = MockAppDatabase();
       final newContainer = ProviderContainer(
+        retry: (_, _) => null,
         overrides: [
           appDatabaseProvider.overrideWithValue(newMockDatabase),
         ],
       );
+      addTearDown(newContainer.dispose);
 
       when(
         newMockDatabase.watchLibraryNovels(),
       ).thenAnswer((_) => Stream.fromIterable([testNovels]));
 
+      newContainer.listen(libraryNovelsProvider, (_, _) {});
       final result = await newContainer.read(libraryNovelsProvider.future);
       expect(result, testNovels);
       verify(newMockDatabase.watchLibraryNovels()).called(1);
-
-      newContainer.dispose();
     });
 
     test('should handle refresh correctly', () async {
@@ -111,6 +122,7 @@ void main() {
         mockDatabase.watchLibraryNovels(),
       ).thenAnswer((_) => Stream.fromIterable([testNovels.sublist(0, 1)]));
 
+      keepAlive();
       final firstResult = await container.read(libraryNovelsProvider.future);
       expect(firstResult, equals(testNovels.sublist(0, 1)));
 

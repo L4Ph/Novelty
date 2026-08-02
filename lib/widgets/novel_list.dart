@@ -23,8 +23,8 @@ class NovelList extends HookConsumerWidget {
     final errorMessage = useState<String?>(null);
 
     // ライブラリ追加処理のコールバック
-    final addToLibraryCallback = useCallback(
-      (NovelInfo item) => handleAddToLibrary(
+    final addToLibraryCallback = useCallback<Future<void> Function(NovelInfo)>(
+      (item) => handleAddToLibrary(
         item: item,
         context: context,
         ref: ref,

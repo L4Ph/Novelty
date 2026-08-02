@@ -17,6 +17,7 @@ void main() {
       mockDatabase = MockAppDatabase();
       fixedTime = DateTime(2024, 1, 15, 12);
       container = ProviderContainer(
+        retry: (_, _) => null,
         overrides: [
           appDatabaseProvider.overrideWithValue(mockDatabase),
           currentTimeProvider.overrideWithValue(fixedTime),
@@ -27,6 +28,13 @@ void main() {
     tearDown(() {
       container.dispose();
     });
+
+    // riverpod 3.x では `read(provider.future)` の直後に購読が閉じられ、
+    // プロバイダーがローディング中に破棄されてしまう。
+    // 値を確定させるまで購読を維持するためのヘルパー。
+    void keepAlive() {
+      container.listen(groupedHistoryProvider, (_, _) {});
+    }
 
     test('should group history items by date labels', () async {
       final testHistoryData = [
@@ -80,6 +88,7 @@ void main() {
         mockDatabase.watchHistory(),
       ).thenAnswer((_) => Stream.value(testHistoryData));
 
+      keepAlive();
       final result = await container.read(groupedHistoryProvider.future);
 
       expect(result.length, 3); // 今日、1日前、古い日付の3グループ
@@ -108,6 +117,7 @@ void main() {
         mockDatabase.watchHistory(),
       ).thenAnswer((_) => Stream.value(<HistoryData>[]));
 
+      keepAlive();
       final result = await container.read(groupedHistoryProvider.future);
 
       expect(result, isEmpty);
@@ -119,8 +129,9 @@ void main() {
         (_) => Stream.error(Exception('Database error')),
       );
 
-      expect(
-        () => container.read(groupedHistoryProvider.future),
+      keepAlive();
+      await expectLater(
+        container.read(groupedHistoryProvider.future),
         throwsA(isA<Exception>()),
       );
       verify(mockDatabase.watchHistory()).called(1);

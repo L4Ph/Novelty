@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/widgets/ruby_text_widget.dart';
 
 void main() {
-  testWidgets('RubyTextWidgetが正しく表示されるか', (WidgetTester tester) async {
+  testWidgets('RubyTextWidgetが正しく表示されるか', (tester) async {
     const base = '漢字';
     const ruby = 'かんじ';
     const style = TextStyle(fontSize: 20, fontFamily: 'Roboto');

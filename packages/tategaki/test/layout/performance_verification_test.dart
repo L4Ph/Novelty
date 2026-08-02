@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('Compare per-character rendering vs newline-based rendering', (tester) async {
+  testWidgets('Compare per-character rendering vs newline-based rendering', (
+    tester,
+  ) async {
     const text = '吾輩は猫である。';
-    const style = TextStyle(fontSize: 20, height: 1, fontFamily: 'Courier'); // Use a generic mono font
+    const style = TextStyle(
+      fontSize: 20,
+      height: 1,
+      fontFamily: 'Courier',
+    ); // Use a generic mono font
 
     // 1. Per-character rendering logic (Control)
     final perCharPositions = <Offset>[];
@@ -27,8 +33,11 @@ void main() {
     )..layout();
 
     // Basic height comparison
-    expect(newlinePainter.height, closeTo(perCharTotalHeight, 0.001), 
-      reason: 'Total height should match');
+    expect(
+      newlinePainter.height,
+      closeTo(perCharTotalHeight, 0.001),
+      reason: 'Total height should match',
+    );
 
     // Box-by-box comparison would be better but we can use getOffsetForCaret to check internal positions
     for (var i = 0; i < text.length; i++) {
@@ -38,8 +47,11 @@ void main() {
         Rect.zero,
       );
       // We expect the Y positions to match
-      expect(offset.dy, closeTo(perCharPositions[i].dy, 0.001),
-        reason: 'Character at index $i should have same Y position');
+      expect(
+        offset.dy,
+        closeTo(perCharPositions[i].dy, 0.001),
+        reason: 'Character at index $i should have same Y position',
+      );
     }
   });
 }

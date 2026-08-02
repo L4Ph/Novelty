@@ -11,7 +11,7 @@ part of 'novel_repository.dart';
 /// 小説のダウンロードと管理を行うリポジトリ。
 
 @ProviderFor(novelRepository)
-const novelRepositoryProvider = NovelRepositoryProvider._();
+final novelRepositoryProvider = NovelRepositoryProvider._();
 
 /// 小説のダウンロードと管理を行うリポジトリ。
 
@@ -20,7 +20,7 @@ final class NovelRepositoryProvider
         $FunctionalProvider<NovelRepository, NovelRepository, NovelRepository>
     with $Provider<NovelRepository> {
   /// 小説のダウンロードと管理を行うリポジトリ。
-  const NovelRepositoryProvider._()
+  NovelRepositoryProvider._()
     : super(
         from: null,
         argument: null,
@@ -58,7 +58,7 @@ String _$novelRepositoryHash() => r'2e5398c23a6f338f7d37b8928e2cce71860f7f06';
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 
 @ProviderFor(novelInfoWithCache)
-const novelInfoWithCacheProvider = NovelInfoWithCacheFamily._();
+final novelInfoWithCacheProvider = NovelInfoWithCacheFamily._();
 
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 
@@ -67,7 +67,7 @@ final class NovelInfoWithCacheProvider
         $FunctionalProvider<AsyncValue<NovelInfo>, NovelInfo, Stream<NovelInfo>>
     with $FutureModifier<NovelInfo>, $StreamProvider<NovelInfo> {
   /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
-  const NovelInfoWithCacheProvider._({
+  NovelInfoWithCacheProvider._({
     required NovelInfoWithCacheFamily super.from,
     required String super.argument,
   }) : super(
@@ -117,7 +117,7 @@ String _$novelInfoWithCacheHash() =>
 
 final class NovelInfoWithCacheFamily extends $Family
     with $FunctionalFamilyOverride<Stream<NovelInfo>, String> {
-  const NovelInfoWithCacheFamily._()
+  NovelInfoWithCacheFamily._()
     : super(
         retry: null,
         name: r'novelInfoWithCacheProvider',
@@ -138,7 +138,7 @@ final class NovelInfoWithCacheFamily extends $Family
 /// 小説のコンテンツを取得するプロバイダー。
 
 @ProviderFor(novelContent)
-const novelContentProvider = NovelContentFamily._();
+final novelContentProvider = NovelContentFamily._();
 
 /// 小説のコンテンツを取得するプロバイダー。
 
@@ -153,7 +153,7 @@ final class NovelContentProvider
         $FutureModifier<List<NovelContentElement>>,
         $FutureProvider<List<NovelContentElement>> {
   /// 小説のコンテンツを取得するプロバイダー。
-  const NovelContentProvider._({
+  NovelContentProvider._({
     required NovelContentFamily super.from,
     required ({String ncode, int episode, String? revised}) super.argument,
   }) : super(
@@ -213,7 +213,7 @@ final class NovelContentFamily extends $Family
           FutureOr<List<NovelContentElement>>,
           ({String ncode, int episode, String? revised})
         > {
-  const NovelContentFamily._()
+  NovelContentFamily._()
     : super(
         retry: null,
         name: r'novelContentProvider',
@@ -240,13 +240,13 @@ final class NovelContentFamily extends $Family
 /// 小説のライブラリ状態を管理するプロバイダー。
 
 @ProviderFor(LibraryStatus)
-const libraryStatusProvider = LibraryStatusFamily._();
+final libraryStatusProvider = LibraryStatusFamily._();
 
 /// 小説のライブラリ状態を管理するプロバイダー。
 final class LibraryStatusProvider
     extends $StreamNotifierProvider<LibraryStatus, bool> {
   /// 小説のライブラリ状態を管理するプロバイダー。
-  const LibraryStatusProvider._({
+  LibraryStatusProvider._({
     required LibraryStatusFamily super.from,
     required String super.argument,
   }) : super(
@@ -295,7 +295,7 @@ final class LibraryStatusFamily extends $Family
           Stream<bool>,
           String
         > {
-  const LibraryStatusFamily._()
+  LibraryStatusFamily._()
     : super(
         retry: null,
         name: r'libraryStatusProvider',
@@ -322,8 +322,7 @@ abstract class _$LibraryStatus extends $StreamNotifier<bool> {
   Stream<bool> build(String ncode);
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build(_$args);
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<bool>, bool>;
     final element =
         ref.element
@@ -333,14 +332,14 @@ abstract class _$LibraryStatus extends $StreamNotifier<bool> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
 /// 小説のダウンロード進捗を監視するプロバイダー。
 
 @ProviderFor(downloadProgress)
-const downloadProgressProvider = DownloadProgressFamily._();
+final downloadProgressProvider = DownloadProgressFamily._();
 
 /// 小説のダウンロード進捗を監視するプロバイダー。
 
@@ -355,7 +354,7 @@ final class DownloadProgressProvider
         $FutureModifier<DownloadProgress?>,
         $StreamProvider<DownloadProgress?> {
   /// 小説のダウンロード進捗を監視するプロバイダー。
-  const DownloadProgressProvider._({
+  DownloadProgressProvider._({
     required DownloadProgressFamily super.from,
     required String super.argument,
   }) : super(
@@ -405,7 +404,7 @@ String _$downloadProgressHash() => r'c336d2d44503f03a40ba05cdff963fdeeab7d305';
 
 final class DownloadProgressFamily extends $Family
     with $FunctionalFamilyOverride<Stream<DownloadProgress?>, String> {
-  const DownloadProgressFamily._()
+  DownloadProgressFamily._()
     : super(
         retry: null,
         name: r'downloadProgressProvider',
@@ -428,7 +427,7 @@ final class DownloadProgressFamily extends $Family
 /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
 
 @ProviderFor(DownloadStatus)
-const downloadStatusProvider = DownloadStatusFamily._();
+final downloadStatusProvider = DownloadStatusFamily._();
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
@@ -438,7 +437,7 @@ final class DownloadStatusProvider
   /// 小説のダウンロード状態を管理するプロバイダー。
   ///
   /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
-  const DownloadStatusProvider._({
+  DownloadStatusProvider._({
     required DownloadStatusFamily super.from,
     required NovelInfo super.argument,
   }) : super(
@@ -489,7 +488,7 @@ final class DownloadStatusFamily extends $Family
           Stream<bool>,
           NovelInfo
         > {
-  const DownloadStatusFamily._()
+  DownloadStatusFamily._()
     : super(
         retry: null,
         name: r'downloadStatusProvider',
@@ -520,8 +519,7 @@ abstract class _$DownloadStatus extends $StreamNotifier<bool> {
   Stream<bool> build(NovelInfo novelInfo);
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build(_$args);
+  WhenComplete runBuild() {
     final ref = this.ref as $Ref<AsyncValue<bool>, bool>;
     final element =
         ref.element
@@ -531,14 +529,14 @@ abstract class _$DownloadStatus extends $StreamNotifier<bool> {
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, () => build(_$args));
   }
 }
 
 /// エピソードリストをページ単位で取得するプロバイダー。
 
 @ProviderFor(episodeList)
-const episodeListProvider = EpisodeListFamily._();
+final episodeListProvider = EpisodeListFamily._();
 
 /// エピソードリストをページ単位で取得するプロバイダー。
 
@@ -551,7 +549,7 @@ final class EpisodeListProvider
         >
     with $FutureModifier<List<Episode>>, $StreamProvider<List<Episode>> {
   /// エピソードリストをページ単位で取得するプロバイダー。
-  const EpisodeListProvider._({
+  EpisodeListProvider._({
     required EpisodeListFamily super.from,
     required String super.argument,
   }) : super(
@@ -601,7 +599,7 @@ String _$episodeListHash() => r'729c91da200730b7686dc58033503a05891e5a32';
 
 final class EpisodeListFamily extends $Family
     with $FunctionalFamilyOverride<Stream<List<Episode>>, String> {
-  const EpisodeListFamily._()
+  EpisodeListFamily._()
     : super(
         retry: null,
         name: r'episodeListProvider',
@@ -622,7 +620,7 @@ final class EpisodeListFamily extends $Family
 /// 最後に読んだエピソード番号を取得するプロバイダー
 
 @ProviderFor(lastReadEpisode)
-const lastReadEpisodeProvider = LastReadEpisodeFamily._();
+final lastReadEpisodeProvider = LastReadEpisodeFamily._();
 
 /// 最後に読んだエピソード番号を取得するプロバイダー
 
@@ -630,7 +628,7 @@ final class LastReadEpisodeProvider
     extends $FunctionalProvider<AsyncValue<int?>, int?, Stream<int?>>
     with $FutureModifier<int?>, $StreamProvider<int?> {
   /// 最後に読んだエピソード番号を取得するプロバイダー
-  const LastReadEpisodeProvider._({
+  LastReadEpisodeProvider._({
     required LastReadEpisodeFamily super.from,
     required String super.argument,
   }) : super(
@@ -679,7 +677,7 @@ String _$lastReadEpisodeHash() => r'7af911f1a41e9fe29eb6db2205f8178a5fce803a';
 
 final class LastReadEpisodeFamily extends $Family
     with $FunctionalFamilyOverride<Stream<int?>, String> {
-  const LastReadEpisodeFamily._()
+  LastReadEpisodeFamily._()
     : super(
         retry: null,
         name: r'lastReadEpisodeProvider',

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/main.dart';
 
 void main() {
-  testWidgets('App should start without crashing', (WidgetTester tester) async {
+  testWidgets('App should start without crashing', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MyApp(),
@@ -19,7 +19,7 @@ void main() {
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 
-  testWidgets('App should have provider scope', (WidgetTester tester) async {
+  testWidgets('App should have provider scope', (tester) async {
     await tester.pumpWidget(
       const ProviderScope(
         child: MyApp(),

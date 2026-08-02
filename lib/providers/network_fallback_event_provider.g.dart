@@ -14,7 +14,7 @@ part of 'network_fallback_event_provider.dart';
 /// 表示中のデータが最新でない可能性があることをユーザーに伝える。
 
 @ProviderFor(NetworkFallbackEvent)
-const networkFallbackEventProvider = NetworkFallbackEventProvider._();
+final networkFallbackEventProvider = NetworkFallbackEventProvider._();
 
 /// キャッシュフォールバックイベントを提供するプロバイダー。
 ///
@@ -26,7 +26,7 @@ final class NetworkFallbackEventProvider
   ///
   /// UI側はこのプロバイダーを購読し、イベント発生時にスナックバー等を表示して、
   /// 表示中のデータが最新でない可能性があることをユーザーに伝える。
-  const NetworkFallbackEventProvider._()
+  NetworkFallbackEventProvider._()
     : super(
         from: null,
         argument: null,
@@ -66,8 +66,7 @@ abstract class _$NetworkFallbackEvent
   NetworkFallbackEventData? build();
   @$mustCallSuper
   @override
-  void runBuild() {
-    final created = build();
+  WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<NetworkFallbackEventData?, NetworkFallbackEventData?>;
     final element =
@@ -78,6 +77,6 @@ abstract class _$NetworkFallbackEvent
               Object?,
               Object?
             >;
-    element.handleValue(ref, created);
+    return element.handleCreate(ref, build);
   }
 }

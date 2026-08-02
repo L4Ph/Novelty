@@ -18,7 +18,7 @@ void main() {
 
     test('コンストラクタでフィールドを設定できる', () {
       final state = RankingState(
-        novels: [NovelInfo(title: 'Test', ncode: 'n1234')],
+        novels: const [NovelInfo(title: 'Test', ncode: 'n1234')],
         isLoading: true,
         isLoadingMore: true,
         hasMore: false,
@@ -60,7 +60,7 @@ void main() {
       const state = RankingState();
 
       final newNovels = [
-        NovelInfo(title: 'Test', ncode: 'n1234'),
+        const NovelInfo(title: 'Test', ncode: 'n1234'),
       ];
       final updated = state.copyWith(novels: newNovels);
 
@@ -83,7 +83,7 @@ void main() {
     });
 
     test('異なる値を持つインスタンスは非等価', () {
-      const state1 = RankingState(page: 1);
+      const state1 = RankingState();
       const state2 = RankingState(page: 2);
 
       expect(state1, isNot(equals(state2)));
