@@ -759,22 +759,13 @@ class _EpisodeListTile extends ConsumerWidget {
   final NovelSource source;
   final String workId;
 
-  int? extractEpisodeNumber(String? url) {
-    if (url == null) return null;
-    final match = RegExp(r'/(\d+)/').firstMatch(url);
-    if (match != null) {
-      final episodeNumber = match.group(1);
-      if (episodeNumber != null) {
-        return int.tryParse(episodeNumber);
-      }
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final episodeNumber = extractEpisodeNumber(episode.url);
+    // 話数は目次順の連番（episode.index）を使用する。
+    // URLからの抽出はカクヨムのURL（/works/{workId}/episodes/{episodeId}）で
+    // 作品IDを拾ってしまうため行わない。
+    final episodeNumber = episode.index;
     final episodeTitle = episode.subtitle ?? 'No Title';
 
     if (episodeNumber == null) {
