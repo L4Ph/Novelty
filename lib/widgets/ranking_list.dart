@@ -4,15 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/providers/ranking_provider.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 /// ランキングリストを表示するウィジェット。
 class RankingList extends HookConsumerWidget {
   /// コンストラクタ。
   const RankingList({
+    required this.source,
     required this.rankingType,
     super.key,
   });
+
+  /// 提供サイト（プロバイダ）。
+  final NovelSource source;
 
   /// ランキングの種類。
   final String rankingType;
@@ -20,7 +25,7 @@ class RankingList extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // RankingNotifierから状態を取得
-    final rankingState = ref.watch(rankingProvider(rankingType));
+    final rankingState = ref.watch(rankingProvider(source, rankingType));
 
     // スクロール通知を監視するためのリスナー
     final scrollController = useScrollController();
@@ -37,7 +42,9 @@ class RankingList extends HookConsumerWidget {
         // 画面の高さの0.8倍手前で読み込み開始
         if (currentScroll >= (maxScroll * 0.8)) {
           unawaited(
-            ref.read(rankingProvider(rankingType).notifier).fetchNextPage(),
+            ref
+                .read(rankingProvider(source, rankingType).notifier)
+                .fetchNextPage(),
           );
         }
       }
@@ -57,7 +64,9 @@ class RankingList extends HookConsumerWidget {
             ElevatedButton(
               onPressed: () {
                 unawaited(
-                  ref.read(rankingProvider(rankingType).notifier).refresh(),
+                  ref
+                      .read(rankingProvider(source, rankingType).notifier)
+                      .refresh(),
                 );
               },
               child: const Text('リトライ'),
@@ -73,7 +82,7 @@ class RankingList extends HookConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () async {
-        await ref.read(rankingProvider(rankingType).notifier).refresh();
+        await ref.read(rankingProvider(source, rankingType).notifier).refresh();
       },
       child: ListView.builder(
         controller: scrollController,

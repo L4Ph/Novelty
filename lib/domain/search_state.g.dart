@@ -45,7 +45,7 @@ final class SearchStateNotifierProvider
 }
 
 String _$searchStateNotifierHash() =>
-    r'83f5323d8eafee7f83e9ac2d7f47bca0099ab126';
+    r'2b905380f750e500241c3b755010ea998a31178f';
 
 /// 検索状態を管理するNotifierプロバイダー。
 

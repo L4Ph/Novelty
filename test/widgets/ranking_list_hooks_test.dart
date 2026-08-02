@@ -5,6 +5,7 @@ import 'package:mockito/mockito.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
 import 'ranking_list_test.mocks.dart';
@@ -49,7 +50,7 @@ void main() {
           ],
           child: const MaterialApp(
             home: Scaffold(
-              body: RankingList(rankingType: 'test'),
+              body: RankingList(source: NovelSource.narou, rankingType: 'test'),
             ),
           ),
         ),
@@ -84,7 +85,7 @@ void main() {
           ],
           child: const MaterialApp(
             home: Scaffold(
-              body: RankingList(rankingType: 'test'),
+              body: RankingList(source: NovelSource.narou, rankingType: 'test'),
             ),
           ),
         ),

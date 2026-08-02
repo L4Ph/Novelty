@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_search_query.dart';
+import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_source.dart';
 
@@ -171,6 +173,48 @@ class KakuyomuSite implements NovelSite {
     return episode!.url!;
   }
 
+  /// キーワード検索を実行する。
+  ///
+  /// `/search?q=` のNext.jsページから `searchWorks` の結果をパースする。
+  /// [NovelSearchQuery.word] とページング（[NovelSearchQuery.st]）のみ使用する。
+  @override
+  Future<NovelSearchResult> searchNovels(NovelSearchQuery query) async {
+    final word = query.word?.trim() ?? '';
+    final page = query.lim > 0 ? ((query.st - 1) ~/ query.lim) + 1 : 1;
+    final offset = (page - 1) * query.lim;
+    final url = Uri.https(
+      'kakuyomu.jp',
+      '/search',
+      <String, String>{
+        if (word.isNotEmpty) 'q': word,
+        if (offset > 0) 'offset': '$offset',
+      },
+    ).toString();
+    final html = await _fetch(url);
+    return _parseSearchResults(html);
+  }
+
+  /// ランキングを取得する。
+  ///
+  /// `/rankings/all/<period>?work_variation=long` のHTMLをパースする。
+  /// ランキングページは302リダイレクトするため、フォローして取得する。
+  @override
+  Future<List<NovelInfo>> fetchRanking(
+    String rankingType, {
+    int page = 1,
+  }) async {
+    final uri = Uri.parse(
+      '${source.baseUrl}/rankings/all/$rankingType',
+    ).replace(
+      queryParameters: <String, String>{
+        'work_variation': 'long',
+        if (page > 1) 'page': '$page',
+      },
+    );
+    final html = await _fetch(uri.toString());
+    return _parseRanking(html);
+  }
+
   /// パスがrobots.txtで取得禁止でないことを検証する。
   void _assertAllowed(String path) {
     for (final pattern in _disallowedPathPatterns) {
@@ -209,19 +253,27 @@ class KakuyomuSite implements NovelSite {
     if (work == null) {
       throw const FormatException('Work データが見つかりません');
     }
+    return _workToNovelInfo(work, apollo);
+  }
 
+  /// Apollo ステートのWorkエンティティを [NovelInfo] へ変換する。
+  ///
+  /// 作品ページ・検索結果の両方で使用する共通変換。
+  NovelInfo _workToNovelInfo(
+    Map<String, dynamic> work,
+    Map<String, dynamic> apollo,
+  ) {
     final authorRef = (work['author'] as Map<String, dynamic>?)?['__ref']
         as String?;
     final author = authorRef == null
         ? null
         : apollo[authorRef] as Map<String, dynamic>?;
     final writerName = author?['activityName'] ?? author?['name'];
-
     final publicEpisodeCount = work['publicEpisodeCount'] as int?;
 
     return NovelInfo(
       source: NovelSource.kakuyomu,
-      workId: workId,
+      workId: work['id'] as String?,
       title: work['title'] as String?,
       writer: writerName as String?,
       story: work['introduction'] as String?,
@@ -244,6 +296,81 @@ class KakuyomuSite implements NovelSite {
       generalFirstup: work['publishedAt'] as String?,
       generalLastup: work['lastEpisodePublishedAt'] as String?,
     );
+  }
+
+  /// 検索結果ページの `searchWorks` から [NovelSearchResult] を組み立てる。
+  NovelSearchResult _parseSearchResults(String html) {
+    final apollo = _parseApolloState(html);
+    final rootQuery = apollo['ROOT_QUERY'] as Map<String, dynamic>?;
+    final searchKey = rootQuery
+        ?.keys
+        .where((k) => k.startsWith('searchWorks('))
+        .firstOrNull;
+    final connection = searchKey == null
+        ? null
+        : rootQuery?[searchKey] as Map<String, dynamic>?;
+    final totalCount = (connection?['totalCount'] as int?) ?? 0;
+
+    final nodes =
+        (connection?['nodes'] as List<dynamic>?) ?? const <dynamic>[];
+    final novels = <NovelInfo>[];
+    for (final node in nodes) {
+      final ref = (node as Map<String, dynamic>)['__ref'] as String?;
+      final work = ref == null ? null : apollo[ref] as Map<String, dynamic>?;
+      if (work == null) {
+        continue;
+      }
+      novels.add(_workToNovelInfo(work, apollo));
+    }
+    return NovelSearchResult(novels: novels, allCount: totalCount);
+  }
+
+  /// ランキングページのHTMLから [NovelInfo] のリストを組み立てる。
+  List<NovelInfo> _parseRanking(String html) {
+    final document = html_parser.parse(html);
+    final items = document.querySelectorAll('div.widget-work');
+    final novels = <NovelInfo>[];
+    for (final item in items) {
+      final titleEl = item.querySelector('.widget-workCard-titleLabel');
+      final href = titleEl?.attributes['href'];
+      if (href == null) {
+        continue;
+      }
+      final workId = Uri.parse(href).pathSegments.last;
+      final authorEl = item.querySelector('.widget-workCard-authorLabel');
+      final storyEl = item.querySelector('.widget-workCard-introduction');
+      final genreEl = item.querySelector('.widget-workCard-genre a');
+      final genreHref = genreEl?.attributes['href'];
+      // /genres/fantasy/recent_works → FANTASY
+      final genreId = genreHref == null
+          ? null
+          : Uri.parse(genreHref).pathSegments[1].toUpperCase();
+      final status = item
+          .querySelector('.widget-workCard-statusLabel')
+          ?.text
+          .trim();
+      final episodeCountText = item
+          .querySelector('.widget-workCard-episodeCount')
+          ?.text;
+      final episodeCount = int.tryParse(
+        RegExp(r'\d+').firstMatch(episodeCountText ?? '')?.group(0) ?? '',
+      );
+
+      novels.add(
+        NovelInfo(
+          source: NovelSource.kakuyomu,
+          workId: workId,
+          title: titleEl!.text.trim(),
+          writer: authorEl?.text.trim(),
+          story: storyEl?.text.trim(),
+          genreId: genreId,
+          // なろうのendと同義: 1=連載中, 0=完結
+          end: (status?.contains('連載中') ?? false) ? 1 : 0,
+          generalAllNo: episodeCount,
+        ),
+      );
+    }
+    return novels;
   }
 
   /// 作品ページの `__NEXT_DATA__` から初回エピソードIDを取得する。

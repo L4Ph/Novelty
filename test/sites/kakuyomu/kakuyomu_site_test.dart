@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/sites/kakuyomu/kakuyomu_site.dart';
 import 'package:novelty/sites/novel_source.dart';
 
@@ -15,20 +16,67 @@ class _FixtureAdapter implements HttpClientAdapter {
 
   final List<String> requestedPaths = <String>[];
 
+  /// リクエストされた完全なURI（クエリ含む）の一覧。
+  final List<String> requestedUris = <String>[];
+
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
-    final path = Uri.parse(options.path).path;
-    requestedPaths.add(path);
-    final html = _fixtures[path];
+    final uri = Uri.parse(options.path);
+    requestedPaths.add(uri.path);
+    requestedUris.add(options.path);
+    final html = _fixtures[uri.path];
     if (html == null) {
       return ResponseBody.fromString('not found', 404);
     }
     return ResponseBody.fromString(
       html,
+      200,
+      headers: <String, List<String>>{
+        Headers.contentTypeHeader: <String>['text/html; charset=utf-8'],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// 指定URLへの初回アクセスで302を返し、リダイレクト先ではHTMLを返すアダプタ。
+class _RedirectAdapter implements HttpClientAdapter {
+  _RedirectAdapter({
+    required this.redirectFrom,
+    required this.redirectTo,
+    required this.targetHtml,
+  });
+
+  final String redirectFrom;
+  final String redirectTo;
+  final String targetHtml;
+
+  final List<String> requestedUris = <String>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    requestedUris.add(options.path);
+    if (options.path == redirectFrom) {
+      return ResponseBody.fromString(
+        '',
+        302,
+        headers: <String, List<String>>{
+          'location': <String>[redirectTo],
+        },
+      );
+    }
+    return ResponseBody.fromString(
+      targetHtml,
       200,
       headers: <String, List<String>>{
         Headers.contentTypeHeader: <String>['text/html; charset=utf-8'],
@@ -179,8 +227,9 @@ void main() {
       });
 
       test('レートリミッターがリクエスト間隔を保証する', () async {
+        // タイマー解像度の影響を考慮し、間隔300msに対して250ms以上を検証する
         final limiter = KakuyomuRateLimiter(
-          interval: const Duration(milliseconds: 50),
+          interval: const Duration(milliseconds: 300),
         );
         final stopwatch = Stopwatch()..start();
 
@@ -190,7 +239,109 @@ void main() {
         stopwatch.stop();
         expect(
           stopwatch.elapsed,
-          greaterThanOrEqualTo(const Duration(milliseconds: 50)),
+          greaterThanOrEqualTo(const Duration(milliseconds: 250)),
+        );
+      });
+    });
+
+    group('searchNovels', () {
+      test('検索結果ページのsearchWorksから作品一覧と総件数をパースできる', () async {
+        final adapter = _FixtureAdapter(<String, String>{
+          '/search': _fixture('search_page.html'),
+        });
+        final site = _createSite(adapter);
+
+        final result = await site.searchNovels(
+          const NovelSearchQuery(word: 'test'),
+        );
+
+        expect(result.allCount, 83);
+        expect(result.novels, hasLength(5));
+        final first = result.novels.first;
+        expect(first.source, NovelSource.kakuyomu);
+        expect(first.workId, isNotNull);
+        expect(first.title, isNotEmpty);
+        expect(first.writer, isNotEmpty);
+        expect(first.genreId, isNotNull);
+      });
+
+      test('ページング（offset）をURLクエリに反映する', () async {
+        final adapter = _FixtureAdapter(<String, String>{
+          '/search': _fixture('search_page.html'),
+        });
+        final site = _createSite(adapter);
+
+        // 3ページ目（st=41, limはデフォルト20）
+        await site.searchNovels(
+          const NovelSearchQuery(word: 'test', st: 41),
+        );
+
+        final requested = adapter.requestedPaths.first;
+        expect(requested, '/search');
+        // offset=40 が付与されている（クエリはpathに含まれないため別途確認）
+        expect(
+          adapter.requestedUris,
+          anyElement(contains('offset=40')),
+        );
+      });
+    });
+
+    group('fetchRanking', () {
+      test('302リダイレクトをフォローしてランキングを取得できる', () async {
+        final redirectAdapter = _RedirectAdapter(
+          redirectFrom: 'https://kakuyomu.jp/rankings/all/daily',
+          redirectTo:
+              'https://kakuyomu.jp/rankings/all/daily?work_variation=long',
+          targetHtml: _fixture('ranking_page.html'),
+        );
+        final dio = Dio()..httpClientAdapter = redirectAdapter;
+        final site = KakuyomuSite(
+          dio: dio,
+          rateLimiter: KakuyomuRateLimiter(interval: Duration.zero),
+        );
+
+        final novels = await site.fetchRanking('daily');
+
+        expect(novels, isNotEmpty);
+        // リダイレクト先が1回リクエストされている
+        expect(
+          redirectAdapter.requestedUris,
+          anyElement(contains('work_variation=long')),
+        );
+      });
+
+      test('ランキングページのHTMLから作品一覧をパースできる', () async {
+        final adapter = _FixtureAdapter(<String, String>{
+          '/rankings/all/daily': _fixture('ranking_page.html'),
+        });
+        final site = _createSite(adapter);
+
+        final novels = await site.fetchRanking('daily');
+
+        expect(novels, isNotEmpty);
+        expect(novels, hasLength(10));
+        final first = novels.first;
+        expect(first.source, NovelSource.kakuyomu);
+        expect(first.workId, '2912051603474311296');
+        expect(first.title, '宮廷魔導師選抜試験を記念受験した田舎者');
+        expect(first.writer, '古野ジョン');
+        expect(first.genreId, 'FANTASY');
+        expect(first.generalAllNo, 23);
+        expect(first.end, 1); // 連載中
+      });
+
+      test('ページング（page）をURLクエリに反映する', () async {
+        final adapter = _FixtureAdapter(<String, String>{
+          '/rankings/all/daily': _fixture('ranking_page.html'),
+        });
+        final site = _createSite(adapter);
+
+        await site.fetchRanking('daily', page: 2);
+
+        expect(adapter.requestedUris, anyElement(contains('page=2')));
+        expect(
+          adapter.requestedUris,
+          anyElement(contains('work_variation=long')),
         );
       });
     });

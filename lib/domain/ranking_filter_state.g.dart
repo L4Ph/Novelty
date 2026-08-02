@@ -9,17 +9,23 @@ part of 'ranking_filter_state.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// ランキングタイプごとのフィルタ状態を管理するNotifier。
+///
+/// familyキーは `(source, rankingType)`。
 
 @ProviderFor(RankingFilterStateNotifier)
 final rankingFilterStateProvider = RankingFilterStateNotifierFamily._();
 
 /// ランキングタイプごとのフィルタ状態を管理するNotifier。
+///
+/// familyキーは `(source, rankingType)`。
 final class RankingFilterStateNotifierProvider
     extends $NotifierProvider<RankingFilterStateNotifier, RankingFilterState> {
   /// ランキングタイプごとのフィルタ状態を管理するNotifier。
+  ///
+  /// familyキーは `(source, rankingType)`。
   RankingFilterStateNotifierProvider._({
     required RankingFilterStateNotifierFamily super.from,
-    required String super.argument,
+    required (NovelSource, String) super.argument,
   }) : super(
          retry: null,
          name: r'rankingFilterStateProvider',
@@ -35,7 +41,7 @@ final class RankingFilterStateNotifierProvider
   String toString() {
     return r'rankingFilterStateProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -63,9 +69,11 @@ final class RankingFilterStateNotifierProvider
 }
 
 String _$rankingFilterStateNotifierHash() =>
-    r'4c58b206be77d66545b2a996af79df7627a5b096';
+    r'17eef1cb11a252286145b4597098e7143fa7a1c3';
 
 /// ランキングタイプごとのフィルタ状態を管理するNotifier。
+///
+/// familyキーは `(source, rankingType)`。
 
 final class RankingFilterStateNotifierFamily extends $Family
     with
@@ -74,7 +82,7 @@ final class RankingFilterStateNotifierFamily extends $Family
           RankingFilterState,
           RankingFilterState,
           RankingFilterState,
-          String
+          (NovelSource, String)
         > {
   RankingFilterStateNotifierFamily._()
     : super(
@@ -86,22 +94,32 @@ final class RankingFilterStateNotifierFamily extends $Family
       );
 
   /// ランキングタイプごとのフィルタ状態を管理するNotifier。
+  ///
+  /// familyキーは `(source, rankingType)`。
 
-  RankingFilterStateNotifierProvider call(String rankingType) =>
-      RankingFilterStateNotifierProvider._(argument: rankingType, from: this);
+  RankingFilterStateNotifierProvider call(
+    NovelSource source,
+    String rankingType,
+  ) => RankingFilterStateNotifierProvider._(
+    argument: (source, rankingType),
+    from: this,
+  );
 
   @override
   String toString() => r'rankingFilterStateProvider';
 }
 
 /// ランキングタイプごとのフィルタ状態を管理するNotifier。
+///
+/// familyキーは `(source, rankingType)`。
 
 abstract class _$RankingFilterStateNotifier
     extends $Notifier<RankingFilterState> {
-  late final _$args = ref.$arg as String;
-  String get rankingType => _$args;
+  late final _$args = ref.$arg as (NovelSource, String);
+  NovelSource get source => _$args.$1;
+  String get rankingType => _$args.$2;
 
-  RankingFilterState build(String rankingType);
+  RankingFilterState build(NovelSource source, String rankingType);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
@@ -114,6 +132,6 @@ abstract class _$RankingFilterStateNotifier
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args.$1, _$args.$2));
   }
 }

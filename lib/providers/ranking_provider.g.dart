@@ -9,17 +9,23 @@ part of 'ranking_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// ランキングのロジックを管理するNotifier
+///
+/// familyキーは `(source, rankingType)`。
 
 @ProviderFor(RankingNotifier)
 final rankingProvider = RankingNotifierFamily._();
 
 /// ランキングのロジックを管理するNotifier
+///
+/// familyキーは `(source, rankingType)`。
 final class RankingNotifierProvider
     extends $NotifierProvider<RankingNotifier, RankingState> {
   /// ランキングのロジックを管理するNotifier
+  ///
+  /// familyキーは `(source, rankingType)`。
   RankingNotifierProvider._({
     required RankingNotifierFamily super.from,
-    required String super.argument,
+    required (NovelSource, String) super.argument,
   }) : super(
          retry: null,
          name: r'rankingProvider',
@@ -35,7 +41,7 @@ final class RankingNotifierProvider
   String toString() {
     return r'rankingProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -61,9 +67,11 @@ final class RankingNotifierProvider
   }
 }
 
-String _$rankingNotifierHash() => r'a4d3763e7b2572688c20fb09f970083f77a1a3ed';
+String _$rankingNotifierHash() => r'e296dd8b251ec331fdce06869390b31955a2675b';
 
 /// ランキングのロジックを管理するNotifier
+///
+/// familyキーは `(source, rankingType)`。
 
 final class RankingNotifierFamily extends $Family
     with
@@ -72,7 +80,7 @@ final class RankingNotifierFamily extends $Family
           RankingState,
           RankingState,
           RankingState,
-          String
+          (NovelSource, String)
         > {
   RankingNotifierFamily._()
     : super(
@@ -84,21 +92,26 @@ final class RankingNotifierFamily extends $Family
       );
 
   /// ランキングのロジックを管理するNotifier
+  ///
+  /// familyキーは `(source, rankingType)`。
 
-  RankingNotifierProvider call(String rankingType) =>
-      RankingNotifierProvider._(argument: rankingType, from: this);
+  RankingNotifierProvider call(NovelSource source, String rankingType) =>
+      RankingNotifierProvider._(argument: (source, rankingType), from: this);
 
   @override
   String toString() => r'rankingProvider';
 }
 
 /// ランキングのロジックを管理するNotifier
+///
+/// familyキーは `(source, rankingType)`。
 
 abstract class _$RankingNotifier extends $Notifier<RankingState> {
-  late final _$args = ref.$arg as String;
-  String get rankingType => _$args;
+  late final _$args = ref.$arg as (NovelSource, String);
+  NovelSource get source => _$args.$1;
+  String get rankingType => _$args.$2;
 
-  RankingState build(String rankingType);
+  RankingState build(NovelSource source, String rankingType);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
@@ -111,6 +124,6 @@ abstract class _$RankingNotifier extends $Notifier<RankingState> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args.$1, _$args.$2));
   }
 }

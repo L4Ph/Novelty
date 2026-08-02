@@ -8,6 +8,7 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
 import 'ranking_list_test.mocks.dart';
@@ -57,6 +58,7 @@ void main() {
           child: const MaterialApp(
             home: Scaffold(
               body: RankingList(
+                source: NovelSource.narou,
                 rankingType: 'd',
                 key: PageStorageKey('test'),
               ),
@@ -99,13 +101,17 @@ void main() {
             // ignore: scoped_providers_should_specify_dependencies overrides_are_scoped_to_test
             apiServiceProvider.overrideWithValue(mockApiService),
             // ignore: scoped_providers_should_specify_dependencies overrides_are_scoped_to_test
-            rankingFilterStateProvider('d').overrideWithValue(
-              const RankingFilterState(selectedGenre: 201),
+            rankingFilterStateProvider(
+              NovelSource.narou,
+              'd',
+            ).overrideWithValue(
+              const RankingFilterState(selectedGenreId: '201'),
             ),
           ],
           child: const MaterialApp(
             home: Scaffold(
               body: RankingList(
+                source: NovelSource.narou,
                 rankingType: 'd',
                 key: PageStorageKey('test_filter'),
               ),
@@ -158,13 +164,17 @@ void main() {
             // ignore: scoped_providers_should_specify_dependencies overrides_are_scoped_to_test
             apiServiceProvider.overrideWithValue(mockApiService),
             // ignore: scoped_providers_should_specify_dependencies overrides_are_scoped_to_test
-            rankingFilterStateProvider('d').overrideWithValue(
+            rankingFilterStateProvider(
+              NovelSource.narou,
+              'd',
+            ).overrideWithValue(
               const RankingFilterState(showOnlyOngoing: true),
             ),
           ],
           child: const MaterialApp(
             home: Scaffold(
               body: RankingList(
+                source: NovelSource.narou,
                 rankingType: 'd',
                 key: PageStorageKey('test_ongoing_local'),
               ),
@@ -219,6 +229,7 @@ void main() {
           child: const MaterialApp(
             home: Scaffold(
               body: RankingList(
+                source: NovelSource.narou,
                 rankingType: 'd',
                 key: PageStorageKey('test_dynamic'),
               ),
@@ -234,7 +245,7 @@ void main() {
       final element = tester.element(find.byType(RankingList));
       final container = ProviderScope.containerOf(element);
       container
-          .read(rankingFilterStateProvider('d').notifier)
+          .read(rankingFilterStateProvider(NovelSource.narou, 'd').notifier)
           .setShowOnlyOngoing(value: true);
 
       // 新しいクエリ用にモックの応答を更新

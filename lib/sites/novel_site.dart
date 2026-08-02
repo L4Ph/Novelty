@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_search_query.dart';
+import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/sites/novel_source.dart';
 
 /// ジャンルのマスタデータ。
@@ -142,5 +144,24 @@ abstract class NovelSite {
     String? url,
   }) {
     throw UnsupportedError('${source.label} は本文取得に対応していません');
+  }
+
+  /// キーワード検索を実行する。
+  ///
+  /// 共通項目（[NovelSearchQuery.word] / [NovelSearchQuery.st] 等）を使用する。
+  /// 未対応サイトでは [UnsupportedError] を投げる。
+  Future<NovelSearchResult> searchNovels(NovelSearchQuery query) {
+    throw UnsupportedError('${source.label} は検索に対応していません');
+  }
+
+  /// ランキングを取得する。
+  ///
+  /// [rankingType] は [RankingTypeMaster.id] に対応する。
+  /// 未対応サイトでは [UnsupportedError] を投げる。
+  Future<List<NovelInfo>> fetchRanking(
+    String rankingType, {
+    int page = 1,
+  }) {
+    throw UnsupportedError('${source.label} はランキングに対応していません');
   }
 }

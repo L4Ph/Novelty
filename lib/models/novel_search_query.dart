@@ -1,16 +1,21 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 
 part 'novel_search_query.freezed.dart';
 part 'novel_search_query.g.dart';
 
-/// なろう小説APIの検索クエリを表すクラス。
+/// 小説検索クエリを表すクラス。
 ///
-/// [なろう小説API](https://dev.syosetu.com/man/api/) のGETパラメータを表現する。
+/// なろう小説APIのGETパラメータ（[なろう小説API](https://dev.syosetu.com/man/api/)）を
+/// 表現する。カクヨム等の他サイトでは共通項目（[word] / [st] 等）のみが使われる。
 @freezed
 abstract class NovelSearchQuery with _$NovelSearchQuery {
   /// [NovelSearchQuery]のコンストラクタ
   const factory NovelSearchQuery({
+    /// 提供サイト（プロバイダ）。
+    @Default(NovelSource.narou) NovelSource source,
+
     /// 検索単語。
     ///
     /// 半角または全角スペースで区切るとAND抽出になる。
