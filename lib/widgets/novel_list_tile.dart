@@ -5,8 +5,9 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/router/router.dart';
+import 'package:novelty/sites/novel_site.dart';
+import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
-import 'package:novelty/utils/app_constants.dart';
 
 /// 小説リストのタイルを表示するウィジェット。
 class NovelListTile extends HookWidget {
@@ -44,15 +45,22 @@ class NovelListTile extends HookWidget {
     );
 
     // ジャンル名の計算をメモ化
+    // ジャンル一覧はサイト実装のマスタデータ（NovelSite.genres）から取得する
+    // （なろう=数値ID / カクヨム=FANTASY 等のID体系が異なるため）
     final genreName = useMemoized(
-      () => item.genreId != null && item.genreId != '-1'
-          ? genreList.firstWhere(
-                  (g) => g['id'].toString() == item.genreId,
-                  orElse: () => {'name': '不明'},
-                )['name']
-                as String
-          : '不明',
-      [item.genreId],
+      () {
+        if (item.genreId == null || item.genreId == '-1') {
+          return '不明';
+        }
+        final genres = novelSiteRegistry[item.source]!.genres;
+        return genres
+            .firstWhere(
+              (g) => g.id == item.genreId,
+              orElse: () => const GenreMaster(id: '', name: '不明'),
+            )
+            .name;
+      },
+      [item.genreId, item.source],
     );
 
     // ステータスの計算をメモ化

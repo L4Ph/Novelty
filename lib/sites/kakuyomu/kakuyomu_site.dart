@@ -355,6 +355,13 @@ class KakuyomuSite implements NovelSite {
       final episodeCount = int.tryParse(
         RegExp(r'\d+').firstMatch(episodeCountText ?? '')?.group(0) ?? '',
       );
+      // ★12,218 → 12218（総合レビューポイント）
+      final reviewPointsText = item
+          .querySelector('.widget-workCard-reviewPoints')
+          ?.text;
+      final reviewPoints = int.tryParse(
+        reviewPointsText?.replaceAll(RegExp('[^0-9]'), '') ?? '',
+      );
 
       novels.add(
         NovelInfo(
@@ -367,6 +374,7 @@ class KakuyomuSite implements NovelSite {
           // なろうのendと同義: 1=連載中, 0=完結
           end: (status?.contains('連載中') ?? false) ? 1 : 0,
           generalAllNo: episodeCount,
+          allPoint: reviewPoints,
         ),
       );
     }
