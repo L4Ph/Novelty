@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/episode.dart';
+import 'package:novelty/models/int_or_string_converter.dart';
 import 'package:novelty/models/string_to_int_converter.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/html_escape_converter.dart';
@@ -66,7 +67,8 @@ abstract class NovelInfo with _$NovelInfo {
     /// サイト共通のジャンルID（文字列）。
     /// なろうは [ジャンル一覧](https://dev.syosetu.com/man/api/#genre) のID文字列。
     /// カクヨムはカテゴリID文字列。
-    @JsonKey(name: 'genre') String? genreId,
+    /// なろうAPIは作品によって数値で返す場合があるため、[IntOrStringConverter] で正規化する。
+    @IntOrStringConverter() @JsonKey(name: 'genre') String? genreId,
 
     /// キーワード。
     @HtmlEscapeConverter() String? keyword,

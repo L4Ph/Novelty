@@ -1,7 +1,16 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
 import 'package:novelty/domain/search_state.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
+import 'package:novelty/models/novel_search_result.dart';
+import 'package:novelty/services/api_service.dart';
+import 'package:novelty/utils/settings_provider.dart';
+
+import '../providers/novel_info_offline_test.mocks.dart';
 
 void main() {
   group('SearchState', () {
@@ -106,6 +115,43 @@ void main() {
         state.toString(),
         contains('SearchState'),
       );
+    });
+  });
+
+  group('SearchStateNotifier（破棄時の安全性）', () {
+    test('プロバイダ破棄後にsearchが完了しても例外を投げない', () async {
+      final mockApiService = MockApiService();
+      final completer = Completer<NovelSearchResult>();
+      when(
+        mockApiService.searchNovels(any),
+      ).thenAnswer((_) => completer.future);
+
+      final container = ProviderContainer(
+        overrides: [
+          apiServiceProvider.overrideWithValue(mockApiService),
+          isOfflineModeProvider.overrideWithValue(false),
+        ],
+      );
+
+      // 購読を保持（プロバイダを生きたままにする）
+      final subscription = container.listen(searchStateProvider, (_, _) {});
+      final searchFuture = container
+          .read(searchStateProvider.notifier)
+          .search(const NovelSearchQuery(word: 'test'));
+      await Future<void>.delayed(Duration.zero);
+
+      // 画面離脱等でプロバイダが破棄される
+      subscription.close();
+      container.dispose();
+
+      // 検索が遅れて完了する（破棄後の完了）
+      completer.complete(
+        const NovelSearchResult(novels: [], allCount: 0),
+      );
+      await searchFuture;
+
+      // 例外が投げられていなければ成功
+      verify(mockApiService.searchNovels(any)).called(1);
     });
   });
 }

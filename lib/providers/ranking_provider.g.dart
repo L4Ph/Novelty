@@ -67,7 +67,7 @@ final class RankingNotifierProvider
   }
 }
 
-String _$rankingNotifierHash() => r'e296dd8b251ec331fdce06869390b31955a2675b';
+String _$rankingNotifierHash() => r'1fc2610fe5f677a5908676a1033d3791c5d6677f';
 
 /// ランキングのロジックを管理するNotifier
 ///
