@@ -1739,6 +1739,26 @@ class AppDatabase extends _$AppDatabase {
     return _episodeListSelect(source, workId).get();
   }
 
+  /// 指定エピソードのURLを取得する。
+  ///
+  /// なろうはncodeからURLを組み立てられるが、カクヨムは
+  /// グローバルなエピソードIDが必要なため、目次キャッシュから解決する。
+  Future<String?> getEpisodeUrl(
+    NovelSource source,
+    String workId,
+    int episodeId,
+  ) async {
+    final row = await (select(episodeListEntries)
+          ..where(
+            (e) =>
+                e.source.equalsValue(source) &
+                e.workId.equals(workId) &
+                e.episodeId.equals(episodeId),
+          ))
+        .getSingleOrNull();
+    return row?.url;
+  }
+
   /// 指定範囲のエピソード一覧を取得 (Optimized)
   Future<List<Episode>> getEpisodesRange(
     NovelSource source,

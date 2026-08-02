@@ -6,7 +6,7 @@ import 'package:novelty/sites/novel_source.dart';
 /// マスタデータ（ジャンル・ランキング種別）を提供する。
 /// ジャンルの値は [lib/utils/app_constants.dart] の genreList と
 /// なろうAPIの大ジャンル定義（docs/narou_api/novel_api.md）に基づく。
-class NarouSite implements NovelSite {
+class NarouSite extends NovelSite {
   /// コンストラクタ。
   const NarouSite();
 

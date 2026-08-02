@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:novelty/models/episode.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/sites/novel_source.dart';
 
 /// ジャンルのマスタデータ。
@@ -100,9 +102,12 @@ class RankingTypeMaster {
 
 /// 小説提供サイトの抽象インターフェース。
 ///
-/// P1ではサイトのマスタデータ（ジャンル・ランキング種別）を定義する。
-/// 作品情報の取得などは P2 以降で追加する。
+/// サイトのマスタデータ（ジャンル・ランキング種別）に加え、
+/// 作品情報・目次・本文の取得（読書コア）を提供する。
 abstract class NovelSite {
+  /// コンストラクタ。
+  const NovelSite();
+
   /// サイト種別。
   NovelSource get source;
 
@@ -111,4 +116,31 @@ abstract class NovelSite {
 
   /// ランキング種別のマスタデータ一覧。
   List<RankingTypeMaster> get rankingTypes;
+
+  /// 作品情報を取得する。
+  ///
+  /// 未対応サイトでは [UnsupportedError] を投げる。
+  Future<NovelInfo> fetchNovelInfo(String workId) {
+    throw UnsupportedError('${source.label} は作品情報取得に対応していません');
+  }
+
+  /// 目次（エピソード一覧）を取得する。
+  ///
+  /// 未対応サイトでは [UnsupportedError] を投げる。
+  Future<List<Episode>> fetchToc(String workId) {
+    throw UnsupportedError('${source.label} は目次取得に対応していません');
+  }
+
+  /// エピソード本文を取得する。
+  ///
+  /// [index] は目次順の連番、[url] は解決済みのエピソードURL
+  /// （省略時は目次から解決する）。
+  /// 未対応サイトでは [UnsupportedError] を投げる。
+  Future<Episode> fetchEpisode(
+    String workId,
+    int index, {
+    String? url,
+  }) {
+    throw UnsupportedError('${source.label} は本文取得に対応していません');
+  }
 }

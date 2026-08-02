@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
+import 'package:kakuyomu_parser/kakuyomu_parser.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/download_progress.dart';
@@ -11,6 +13,8 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/providers/network_fallback_event_provider.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/sites/novel_site.dart';
+import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -39,12 +43,17 @@ NovelRepository novelRepository(Ref ref) {
 /// 小説のダウンロードと管理を行うリポジトリクラス。
 class NovelRepository {
   /// コンストラクタ。
+  ///
+  /// [sites] はテスト時にサイト実装を差し替えるために注入できる。
+  /// 省略時は [novelSiteRegistry] を使用する。
   NovelRepository({
     required this.ref,
     required this.apiService,
     required this.settings,
     required AppDatabase db,
-  }) : _db = db;
+    Map<NovelSource, NovelSite>? sites,
+  }) : _db = db,
+       _sites = sites ?? novelSiteRegistry;
 
   /// アプリケーションの設定を取得するためのリファレンス。
   final Ref ref;
@@ -56,6 +65,9 @@ class NovelRepository {
   final AsyncValue<AppSettings> settings;
 
   final AppDatabase _db;
+
+  /// サイト実装のレジストリ（テスト時に差し替え可能）。
+  final Map<NovelSource, NovelSite> _sites;
 
   /// ダウンロード進捗のストリームコントローラー
   final Map<String, StreamController<DownloadProgress>> _progressControllers =
@@ -96,8 +108,8 @@ class NovelRepository {
       return false;
     }
 
-    // ライブラリに追加（P1時点ではなろうのみ対応）
-    final novelInfo = await apiService.fetchNovelInfo(workId);
+    // ライブラリに追加（sourceに応じてサイト実装へ振り分け）
+    final novelInfo = await _fetchNovelInfo(source, workId);
 
     // Novelテーブルに保存
     await _db.insertNovel(novelInfo.toDbCompanion());
@@ -160,14 +172,68 @@ class NovelRepository {
   }
 
   /// メタデータを含むエピソード本文を取得するヘルパーメソッド。
+  ///
+  /// なろうは [ApiService]、カクヨムはサイト実装（[NovelSite]）へ振り分ける。
   Future<Episode> _fetchEpisode(
+    NovelSource source,
     String workId,
     int episode,
   ) async {
-    return apiService.fetchEpisode(
-      workId,
-      episode,
-    );
+    if (source == NovelSource.narou) {
+      return apiService.fetchEpisode(
+        workId,
+        episode,
+      );
+    }
+    final site = _sites[source]!;
+    // カクヨムはURL（エピソードID）が必須のため、目次キャッシュから解決する
+    final url = await _db.getEpisodeUrl(source, workId, episode);
+    return site.fetchEpisode(workId, episode, url: url);
+  }
+
+  /// 作品情報を取得するヘルパーメソッド。
+  ///
+  /// なろうは [ApiService]、カクヨムはサイト実装（[NovelSite]）へ振り分ける。
+  Future<NovelInfo> _fetchNovelInfo(
+    NovelSource source,
+    String workId,
+  ) {
+    if (source == NovelSource.narou) {
+      return apiService.fetchNovelInfo(workId);
+    }
+    return _sites[source]!.fetchNovelInfo(workId);
+  }
+
+  /// エピソードリスト（目次）を取得するヘルパーメソッド。
+  ///
+  /// なろうはページングAPI、カクヨムは全件目次（`episode_sidebar`）を
+  /// ページ単位にスライスして返す。
+  Future<List<Episode>> _fetchEpisodeList(
+    NovelSource source,
+    String workId,
+    int page,
+  ) async {
+    if (source == NovelSource.narou) {
+      return apiService.fetchEpisodeList(workId, page);
+    }
+    final all = await _sites[source]!.fetchToc(workId);
+    final start = (page - 1) * 100;
+    final end = math.min(start + 100, all.length);
+    if (start >= all.length) {
+      return const <Episode>[];
+    }
+    return all.sublist(start, end);
+  }
+
+  /// エピソード本文をコンテンツ要素へパースするヘルパーメソッド。
+  List<NovelContentElement> _parseEpisodeBody(
+    NovelSource source,
+    String body,
+  ) {
+    if (source == NovelSource.narou) {
+      return parseNovelContent(body);
+    }
+    return parseKakuyomuEpisodeBody(body);
   }
 
   /// 単一エピソードのダウンロードを実行するメソッド。
@@ -196,9 +262,9 @@ class NovelRepository {
 
     try {
       // エピソードをフェッチ (Metadata + Content)
-      final ep = await _fetchEpisode(workId, episode);
+      final ep = await _fetchEpisode(source, workId, episode);
       final content = ep.body != null
-          ? parseNovelContent(ep.body!)
+          ? _parseEpisodeBody(source, ep.body!)
           : <NovelContentElement>[];
 
       // データベースに保存（成功）
@@ -273,9 +339,9 @@ class NovelRepository {
 
     // 3. オンラインかつ更新が必要な場合のみ取得
     try {
-      final ep = await _fetchEpisode(workId, episode);
+      final ep = await _fetchEpisode(source, workId, episode);
       final content = ep.body != null
-          ? parseNovelContent(ep.body!)
+          ? _parseEpisodeBody(source, ep.body!)
           : <NovelContentElement>[];
 
       await _db.updateEpisodeContent(
@@ -356,7 +422,7 @@ class NovelRepository {
       // これにより、改稿されたエピソードのみを再ダウンロードできる
       final revisedMap = <int, String?>{};
       try {
-        final info = await apiService.fetchNovelInfo(workId);
+        final info = await _fetchNovelInfo(source, workId);
         final episodes = info.episodes ?? [];
         for (final ep in episodes) {
           if (ep.index != null) {
@@ -523,8 +589,8 @@ class NovelRepository {
     }
 
     try {
-      // オンラインの場合はAPIから取得
-      final episodes = await apiService.fetchEpisodeList(workId, page);
+      // オンラインの場合はAPI（サイト実装）から取得
+      final episodes = await _fetchEpisodeList(source, workId, page);
 
       // DBに保存
       final episodesCompanions = episodes.map((e) {
@@ -604,8 +670,8 @@ class NovelRepository {
     }
 
     try {
-      // P1時点ではなろうのみ対応（workId = ncode）
-      final info = await apiService.fetchNovelInfo(workId);
+      // sourceに応じたサイト実装から作品情報を取得
+      final info = await _fetchNovelInfo(source, workId);
       await _db.insertNovel(info.toDbCompanion());
     } on NovelNotFoundException {
       // 非公開・削除された作品はプレースホルダーとして扱う
@@ -695,7 +761,7 @@ class NovelRepository {
     }
 
     try {
-      final episodes = await apiService.fetchEpisodeList(workId, page);
+      final episodes = await _fetchEpisodeList(source, workId, page);
       final companions = episodes.map((e) {
         return EpisodeListEntriesCompanion(
           source: Value(source),
