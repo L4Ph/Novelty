@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/sites/novel_source.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +27,8 @@ void main() {
           .into(database.novels)
           .insert(
             NovelsCompanion(
-              ncode: Value(normalizedNcode),
+              source: const Value(NovelSource.narou),
+              workId: Value(normalizedNcode),
               title: const Value('Test Novel'),
               generalAllNo: const Value(10), // Total 10 episodes
             ),
@@ -38,7 +40,8 @@ void main() {
           .into(database.episodeContents)
           .insert(
             EpisodeContentsCompanion(
-              ncode: Value(normalizedNcode),
+              source: const Value(NovelSource.narou),
+              workId: Value(normalizedNcode),
               episodeId: const Value(1),
               content: Value([NovelContentElement.plainText('Content 1')]),
             ),
@@ -49,7 +52,8 @@ void main() {
           .into(database.episodeContents)
           .insert(
             EpisodeContentsCompanion(
-              ncode: Value(normalizedNcode),
+              source: const Value(NovelSource.narou),
+              workId: Value(normalizedNcode),
               episodeId: const Value(2),
               content: Value([NovelContentElement.plainText('Content 2')]),
             ),
@@ -60,7 +64,8 @@ void main() {
           .into(database.episodeContents)
           .insert(
             EpisodeContentsCompanion(
-              ncode: Value(normalizedNcode),
+              source: const Value(NovelSource.narou),
+              workId: Value(normalizedNcode),
               episodeId: const Value(3),
               content: const Value([]), // Empty list means failure
             ),
@@ -71,7 +76,8 @@ void main() {
           .into(database.episodeContents)
           .insert(
             EpisodeContentsCompanion(
-              ncode: Value(normalizedNcode),
+              source: const Value(NovelSource.narou),
+              workId: Value(normalizedNcode),
               episodeId: const Value(4),
               content: const Value(null),
             ),
@@ -82,7 +88,8 @@ void main() {
           .into(database.episodeContents)
           .insert(
             EpisodeContentsCompanion(
-              ncode: Value(normalizedNcode),
+              source: const Value(NovelSource.narou),
+              workId: Value(normalizedNcode),
               episodeId: const Value(5),
               content: Value([NovelContentElement.rubyText('漢字', 'かんじ')]),
             ),
@@ -111,7 +118,8 @@ void main() {
             .into(database.novels)
             .insert(
               NovelsCompanion(
-                ncode: Value(normalizedNcode),
+                source: const Value(NovelSource.narou),
+                workId: Value(normalizedNcode),
                 title: const Value('Completed Novel'),
                 generalAllNo: const Value(2),
               ),
@@ -121,7 +129,8 @@ void main() {
             .into(database.episodeContents)
             .insert(
               EpisodeContentsCompanion(
-                ncode: Value(normalizedNcode),
+                source: const Value(NovelSource.narou),
+                workId: Value(normalizedNcode),
                 episodeId: const Value(1),
                 content: Value([NovelContentElement.plainText('1')]),
               ),
@@ -130,7 +139,8 @@ void main() {
             .into(database.episodeContents)
             .insert(
               EpisodeContentsCompanion(
-                ncode: Value(normalizedNcode),
+                source: const Value(NovelSource.narou),
+                workId: Value(normalizedNcode),
                 episodeId: const Value(2),
                 content: Value([NovelContentElement.plainText('2')]),
               ),

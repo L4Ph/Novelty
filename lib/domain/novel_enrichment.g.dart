@@ -71,7 +71,7 @@ final class EnrichedSearchDataProvider
 }
 
 String _$enrichedSearchDataHash() =>
-    r'115177828802ddbca70bb85e09354c694f65fe06';
+    r'1a964dc4b75a73aebebbc74bfd836019577575e3';
 
 /// 検索結果をデータベースのライブラリ状態で強化するプロバイダー
 
@@ -99,12 +99,12 @@ final class EnrichedSearchDataFamily extends $Family
   String toString() => r'enrichedSearchDataProvider';
 }
 
-/// ncodeから単一の豊富な小説データを取得するプロバイダー
+/// 作品IDから単一の豊富な小説データを取得するプロバイダー
 
 @ProviderFor(enrichedNovel)
 final enrichedNovelProvider = EnrichedNovelFamily._();
 
-/// ncodeから単一の豊富な小説データを取得するプロバイダー
+/// 作品IDから単一の豊富な小説データを取得するプロバイダー
 
 final class EnrichedNovelProvider
     extends
@@ -116,10 +116,10 @@ final class EnrichedNovelProvider
     with
         $FutureModifier<EnrichedNovelData>,
         $FutureProvider<EnrichedNovelData> {
-  /// ncodeから単一の豊富な小説データを取得するプロバイダー
+  /// 作品IDから単一の豊富な小説データを取得するプロバイダー
   EnrichedNovelProvider._({
     required EnrichedNovelFamily super.from,
-    required String super.argument,
+    required (NovelSource, String) super.argument,
   }) : super(
          retry: null,
          name: r'enrichedNovelProvider',
@@ -135,7 +135,7 @@ final class EnrichedNovelProvider
   String toString() {
     return r'enrichedNovelProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -146,8 +146,8 @@ final class EnrichedNovelProvider
 
   @override
   FutureOr<EnrichedNovelData> create(Ref ref) {
-    final argument = this.argument as String;
-    return enrichedNovel(ref, argument);
+    final argument = this.argument as (NovelSource, String);
+    return enrichedNovel(ref, argument.$1, argument.$2);
   }
 
   @override
@@ -161,12 +161,16 @@ final class EnrichedNovelProvider
   }
 }
 
-String _$enrichedNovelHash() => r'4c5408924b9b046662f7709784685f107d29d0a5';
+String _$enrichedNovelHash() => r'e216c1636d96187097128df2c3277d722b03c497';
 
-/// ncodeから単一の豊富な小説データを取得するプロバイダー
+/// 作品IDから単一の豊富な小説データを取得するプロバイダー
 
 final class EnrichedNovelFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<EnrichedNovelData>, String> {
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<EnrichedNovelData>,
+          (NovelSource, String)
+        > {
   EnrichedNovelFamily._()
     : super(
         retry: null,
@@ -176,10 +180,10 @@ final class EnrichedNovelFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// ncodeから単一の豊富な小説データを取得するプロバイダー
+  /// 作品IDから単一の豊富な小説データを取得するプロバイダー
 
-  EnrichedNovelProvider call(String ncode) =>
-      EnrichedNovelProvider._(argument: ncode, from: this);
+  EnrichedNovelProvider call(NovelSource source, String workId) =>
+      EnrichedNovelProvider._(argument: (source, workId), from: this);
 
   @override
   String toString() => r'enrichedNovelProvider';

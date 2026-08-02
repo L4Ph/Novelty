@@ -13,7 +13,7 @@ import 'package:novelty/screens/novel_page.dart';
 import 'package:novelty/screens/scaffold_page.dart';
 import 'package:novelty/screens/settings/appearance_settings_page.dart';
 import 'package:novelty/screens/settings/reader_settings_page.dart';
-import 'package:novelty/utils/ncode_utils.dart';
+import 'package:novelty/sites/novel_source.dart';
 
 part 'router.g.dart';
 
@@ -217,25 +217,31 @@ class DownloadsRoute extends GoRouteData with $DownloadsRoute {
 
 /// 小説詳細画面のルート。
 @TypedGoRoute<NovelDetailRoute>(
-  path: '/novel/:ncode',
+  path: '/novel/:source/:workId',
   routes: <TypedRoute<RouteData>>[
     TypedGoRoute<NovelEpisodeRoute>(path: ':episode'),
   ],
 )
 class NovelDetailRoute extends GoRouteData with $NovelDetailRoute {
   /// コンストラクタ。
-  const NovelDetailRoute({required this.ncode});
+  const NovelDetailRoute({required this.source, required this.workId});
 
   /// ルートの親ナビゲーターキー。
   static final GlobalKey<NavigatorState> $parentNavigatorKey =
       _rootNavigatorKey;
 
-  /// 小説のNコード。
-  final String ncode;
+  /// 提供サイト（プロバイダ）の識別子文字列。
+  final String source;
+
+  /// サイト共通の作品ID。
+  final String workId;
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return NovelDetailPage(ncode: ncode.toNormalizedNcode());
+    return NovelDetailPage(
+      source: NovelSource.values.byName(source),
+      workId: workId,
+    );
   }
 }
 
@@ -243,13 +249,17 @@ class NovelDetailRoute extends GoRouteData with $NovelDetailRoute {
 class NovelEpisodeRoute extends GoRouteData with $NovelEpisodeRoute {
   /// コンストラクタ。
   const NovelEpisodeRoute({
-    required this.ncode,
+    required this.source,
+    required this.workId,
     required this.episode,
     this.revised,
   });
 
-  /// 小説のNコード。
-  final String ncode;
+  /// 提供サイト（プロバイダ）の識別子文字列。
+  final String source;
+
+  /// サイト共通の作品ID。
+  final String workId;
 
   /// エピソード番号。
   final int episode;
@@ -260,7 +270,8 @@ class NovelEpisodeRoute extends GoRouteData with $NovelEpisodeRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return NovelPage(
-      ncode: ncode.toNormalizedNcode(),
+      source: NovelSource.values.byName(source),
+      workId: workId,
       episode: episode,
       revised: revised,
     );

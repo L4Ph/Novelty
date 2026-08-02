@@ -9,6 +9,7 @@ import 'package:novelty/database/database.dart' as db;
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 @GenerateMocks([db.AppDatabase, ApiService, NovelRepository])
@@ -67,13 +68,13 @@ void main() {
         controller.onListen = () => controller.add(testNovelInfo);
 
         // Use any to match normalized ncode
-        when(mockRepository.watchNovelInfo(any)).thenAnswer(
+        when(mockRepository.watchNovelInfo(NovelSource.narou, any)).thenAnswer(
           (_) => controller.stream,
         );
 
         final states = <AsyncValue<NovelInfo>>[];
         final sub = container.listen(
-          novelInfoWithCacheProvider(testNcode),
+          novelInfoWithCacheProvider(NovelSource.narou, testNcode),
           (_, next) => states.add(next),
         );
 
@@ -99,13 +100,13 @@ void main() {
         };
 
         // Use any to match normalized ncode
-        when(mockRepository.watchNovelInfo(any)).thenAnswer(
+        when(mockRepository.watchNovelInfo(NovelSource.narou, any)).thenAnswer(
           (_) => controller.stream,
         );
 
         final states = <AsyncValue<NovelInfo>>[];
         final sub = container.listen(
-          novelInfoWithCacheProvider(testNcode),
+          novelInfoWithCacheProvider(NovelSource.narou, testNcode),
           (_, next) => states.add(next),
         );
 
