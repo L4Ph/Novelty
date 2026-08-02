@@ -15,7 +15,7 @@ void main() {
           title: 'テスト連載小説',
           novelType: 1,
           end: 0,
-          genre: 1,
+          genreId: '1',
           writer: 'テスト作者',
         );
 
@@ -41,7 +41,7 @@ void main() {
             title: 'テスト連載小説',
             novelType: 1,
             end: 1,
-            genre: 1,
+            genreId: '1',
             writer: 'テスト作者',
           );
 
@@ -75,7 +75,7 @@ void main() {
           title: 'テスト短編小説',
           novelType: 2,
           end: 0,
-          genre: 1,
+          genreId: '1',
           writer: 'テスト作者',
         );
 
@@ -100,7 +100,7 @@ void main() {
           title: 'テスト短編小説',
           novelType: 2,
           end: 1,
-          genre: 1,
+          genreId: '1',
           writer: 'テスト作者',
         );
 
@@ -127,7 +127,7 @@ void main() {
           title: 'テストタイトル',
           novelType: 1,
           end: 0,
-          genre: 1,
+          genreId: '1',
           writer: 'テスト作者',
           allPoint: 12345,
         );
@@ -159,7 +159,7 @@ void main() {
           title: 'テストタイトル',
           novelType: 1,
           end: 0,
-          genre: 1,
+          genreId: '1',
           writer: 'テスト作者',
         );
 
@@ -182,7 +182,7 @@ void main() {
           title: 'テストタイトル',
           novelType: 1,
           end: 0,
-          genre: 1,
+          genreId: '1',
           writer: 'テスト作者',
         );
 
@@ -211,7 +211,7 @@ void main() {
         title: 'テストタイトル',
         novelType: 1,
         end: 0,
-        genre: 1,
+        genreId: '1',
         writer: 'テスト作者',
       );
 

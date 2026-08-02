@@ -3,26 +3,36 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/string_to_int_converter.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/html_escape_converter.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 
 part 'novel_info.freezed.dart';
 part 'novel_info.g.dart';
 
-/// なろう小説の作品情報を表すクラス。
+/// 小説の作品情報を表すクラス。
 ///
-/// [なろう小説API](https://dev.syosetu.com/man/api/) のレスポンスや、
-/// なろう小説のHTMLからパースした情報を格納する。
+/// なろう小説APIのレスポンスや、なろう小説のHTMLからパースした情報を格納する。
+/// カクヨム対応（#240）により、[source]で提供サイトを識別する。
 @freezed
 abstract class NovelInfo with _$NovelInfo {
   /// [NovelInfo]のコンストラクタ
   const factory NovelInfo({
+    /// 提供サイト（プロバイダ）。
+    @Default(NovelSource.narou) NovelSource source,
+
+    /// サイト共通の作品ID。
+    ///
+    /// なろうはNコード、カクヨムは作品IDが入る。
+    /// なろうの場合は[ncode]と同一の値になる。
+    String? workId,
+
     /// 作品名。
     @HtmlEscapeConverter() String? title,
 
     /// Nコード
     ///
-    /// 常に小文字で扱う
+    /// 常に小文字で扱う。なろう以外のサイトでは null。
     String? ncode,
 
     /// 作者名。
@@ -53,8 +63,10 @@ abstract class NovelInfo with _$NovelInfo {
 
     /// ジャンル。
     ///
-    /// [ジャンル一覧](https://dev.syosetu.com/man/api/#genre)
-    @StringToIntConverter() int? genre,
+    /// サイト共通のジャンルID（文字列）。
+    /// なろうは [ジャンル一覧](https://dev.syosetu.com/man/api/#genre) のID文字列。
+    /// カクヨムはカテゴリID文字列。
+    @JsonKey(name: 'genre') String? genreId,
 
     /// キーワード。
     @HtmlEscapeConverter() String? keyword,
@@ -168,6 +180,9 @@ abstract class NovelInfo with _$NovelInfo {
     ...json,
     if (json['ncode'] is String)
       'ncode': (json['ncode'] as String).toNormalizedNcode(),
+    // 旧フォーマット（workId未設定）の場合はncodeから補完する
+    if (json['workId'] == null && json['ncode'] is String)
+      'workId': (json['ncode'] as String).toNormalizedNcode(),
   });
 }
 
@@ -176,14 +191,16 @@ extension NovelInfoEx on NovelInfo {
   /// [NovelInfo]をデータベースの[NovelsCompanion]に変換するメソッド。
   NovelsCompanion toDbCompanion() {
     return NovelsCompanion(
-      ncode: Value(ncode!),
+      source: Value(source),
+      // なろうの場合はworkId未設定でもncodeから補完する
+      workId: Value(workId ?? ncode!),
       title: Value(title),
       writer: Value(writer),
       userId: Value(userId),
       story: Value(story),
       novelType: Value(novelType),
       end: Value(end),
-      genre: Value(genre),
+      genreId: Value(genreId),
       generalAllNo: Value(generalAllNo),
       keyword: Value(keyword),
       generalFirstup: Value(int.tryParse(generalFirstup ?? '')),

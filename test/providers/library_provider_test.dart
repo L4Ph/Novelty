@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/sites/novel_source.dart';
 
 @GenerateMocks([AppDatabase])
 import 'library_provider_test.mocks.dart';
@@ -18,7 +19,8 @@ void main() {
 
     final testNovels = [
       Novel(
-        ncode: 'n1234ab',
+        source: NovelSource.narou,
+        workId: 'n1234ab',
         title: 'テスト小説1',
         writer: 'テスト作者1',
         story: 'あらすじ1',
@@ -30,7 +32,8 @@ void main() {
         isPrivate: false,
       ),
       Novel(
-        ncode: 'n5678cd',
+        source: NovelSource.narou,
+        workId: 'n5678cd',
         title: 'テスト小説2',
         writer: 'テスト作者2',
         story: 'あらすじ2',

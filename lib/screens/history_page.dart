@@ -47,7 +47,7 @@ class HistoryPage extends ConsumerWidget {
                   ),
                   // グループ内のアイテム
                   ...group.items.map((item) {
-                    final ncode = item.ncode;
+                    final workId = item.workId;
                     final title = item.title ?? 'タイトルなし';
                     final lastEpisode = item.lastEpisode;
                     final updatedAt = item.updatedAt != 0
@@ -72,7 +72,7 @@ class HistoryPage extends ConsumerWidget {
                           unawaited(
                             ref
                                 .read(novelRepositoryProvider)
-                                .deleteHistory(ncode),
+                                .deleteHistory(item.source, workId),
                           );
                         },
                       ),
@@ -80,13 +80,17 @@ class HistoryPage extends ConsumerWidget {
                         if (lastEpisode != null && lastEpisode > 0) {
                           unawaited(
                             NovelEpisodeRoute(
-                              ncode: ncode,
+                              source: item.source.name,
+                              workId: workId,
                               episode: lastEpisode,
                             ).push(context),
                           );
                         } else {
                           unawaited(
-                            NovelDetailRoute(ncode: ncode).push(context),
+                            NovelDetailRoute(
+                              source: item.source.name,
+                              workId: workId,
+                            ).push(context),
                           );
                         }
                       },

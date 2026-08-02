@@ -8,6 +8,7 @@ void main() {
       // Arrange
       const testNovel = NovelInfo(
         ncode: 'n1234test',
+        workId: 'n1234test',
         title: 'Test Novel',
         writer: 'Test Author',
       );
@@ -19,7 +20,7 @@ void main() {
       );
 
       // Assert
-      expect(enrichedData.novel.ncode, equals('n1234test'));
+      expect(enrichedData.novel.workId, equals('n1234test'));
       expect(enrichedData.novel.title, equals('Test Novel'));
       expect(enrichedData.isInLibrary, isTrue);
     });

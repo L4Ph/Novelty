@@ -1,0 +1,19 @@
+name: novel_parser_core
+description: 小説パーサー共通コア（サイト非依存のモデル定義）
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.1
+
+resolution: workspace
+
+dependencies:
+  freezed_annotation:
+  json_annotation:
+
+dev_dependencies:
+  build_runner:
+  freezed:
+  json_serializable: ^6.11.2
+  test:
+  very_good_analysis:

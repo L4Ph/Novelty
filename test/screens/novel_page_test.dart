@@ -7,6 +7,7 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/novel_page.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/gesture_shield.dart';
 
@@ -222,7 +223,8 @@ void main() {
       final mockNovelRepository = MockNovelRepository();
       when(
         mockNovelRepository.addToHistory(
-          ncode: anyNamed('ncode'),
+          source: anyNamed('source'),
+          workId: anyNamed('workId'),
           title: anyNamed('title'),
           writer: anyNamed('writer'),
           lastEpisode: anyNamed('lastEpisode'),
@@ -236,18 +238,30 @@ void main() {
             novelRepositoryProvider.overrideWithValue(mockNovelRepository),
             settingsProvider.overrideWith(VerticalSettings.new),
             novelInfoWithCacheProvider.overrideWith(
-              (ref, ncode) => Stream.value(testNovelInfo),
+              (ref, args) => Stream.value(testNovelInfo),
             ),
             episodeListProvider.overrideWith(
-              (ref, key) => Stream.value(<Episode>[]),
+              (ref, args) => Stream.value(<Episode>[]),
             ),
             novelContentProvider.overrideWith(
-              (ref, ({String ncode, int episode, String? revised}) arg) async =>
-                  [],
+              (
+                ref,
+                ({
+                  NovelSource source,
+                  String workId,
+                  int episode,
+                  String? revised,
+                })
+                arg,
+              ) async => [],
             ),
           ],
           child: const MaterialApp(
-            home: NovelPage(ncode: testNcode, episode: 1),
+            home: NovelPage(
+              source: NovelSource.narou,
+              workId: testNcode,
+              episode: 1,
+            ),
           ),
         ),
       );
@@ -268,7 +282,8 @@ void main() {
       final mockNovelRepository = MockNovelRepository();
       when(
         mockNovelRepository.addToHistory(
-          ncode: anyNamed('ncode'),
+          source: anyNamed('source'),
+          workId: anyNamed('workId'),
           title: anyNamed('title'),
           writer: anyNamed('writer'),
           lastEpisode: anyNamed('lastEpisode'),
@@ -282,18 +297,30 @@ void main() {
             novelRepositoryProvider.overrideWithValue(mockNovelRepository),
             settingsProvider.overrideWith(HorizontalSettings.new),
             novelInfoWithCacheProvider.overrideWith(
-              (ref, ncode) => Stream.value(testNovelInfo),
+              (ref, args) => Stream.value(testNovelInfo),
             ),
             episodeListProvider.overrideWith(
-              (ref, key) => Stream.value(<Episode>[]),
+              (ref, args) => Stream.value(<Episode>[]),
             ),
             novelContentProvider.overrideWith(
-              (ref, ({String ncode, int episode, String? revised}) arg) async =>
-                  [],
+              (
+                ref,
+                ({
+                  NovelSource source,
+                  String workId,
+                  int episode,
+                  String? revised,
+                })
+                arg,
+              ) async => [],
             ),
           ],
           child: const MaterialApp(
-            home: NovelPage(ncode: testNcode, episode: 1),
+            home: NovelPage(
+              source: NovelSource.narou,
+              workId: testNcode,
+              episode: 1,
+            ),
           ),
         ),
       );

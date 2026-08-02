@@ -5,6 +5,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/screens/history_page.dart';
+import 'package:novelty/sites/novel_source.dart';
 
 @GenerateMocks([AppDatabase])
 import 'history_page_test.mocks.dart';
@@ -24,7 +25,8 @@ void main() {
     ) async {
       final testHistoryData = [
         HistoryData(
-          ncode: 'today1',
+          source: NovelSource.narou,
+          workId: 'today1',
           title: '今日の小説1',
           writer: '作者1',
           lastEpisode: 5,
@@ -32,7 +34,8 @@ void main() {
           updatedAt: fixedTime.millisecondsSinceEpoch,
         ),
         HistoryData(
-          ncode: 'today2',
+          source: NovelSource.narou,
+          workId: 'today2',
           title: '今日の小説2',
           writer: '作者2',
           lastEpisode: 3,
@@ -44,7 +47,8 @@ void main() {
               .millisecondsSinceEpoch,
         ),
         HistoryData(
-          ncode: 'yesterday1',
+          source: NovelSource.narou,
+          workId: 'yesterday1',
           title: '昨日の小説',
           writer: '作者3',
           lastEpisode: 10,
@@ -153,7 +157,8 @@ void main() {
       (tester) async {
         final testHistoryData = [
           HistoryData(
-            ncode: 'old1',
+            source: NovelSource.narou,
+            workId: 'old1',
             title: '古い小説',
             writer: '古い作者',
             lastEpisode: 15,

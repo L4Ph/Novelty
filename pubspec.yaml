@@ -20,6 +20,7 @@ environment:
   sdk: ^3.11.3
 workspace:
   - packages/narou_parser
+  - packages/novel_parser_core
   - packages/tategaki
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions

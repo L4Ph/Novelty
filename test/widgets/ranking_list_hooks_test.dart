@@ -25,7 +25,7 @@ void main() {
         ncode: 'n1111a',
         title: 'Test Novel 1',
         writer: 'Test Writer 1',
-        genre: 1,
+        genreId: '1',
         novelType: 1,
         end: 0,
         generalAllNo: 10,

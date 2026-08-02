@@ -69,7 +69,7 @@ final class NovelInfoWithCacheProvider
   /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
   NovelInfoWithCacheProvider._({
     required NovelInfoWithCacheFamily super.from,
-    required String super.argument,
+    required (NovelSource, String) super.argument,
   }) : super(
          retry: null,
          name: r'novelInfoWithCacheProvider',
@@ -85,7 +85,7 @@ final class NovelInfoWithCacheProvider
   String toString() {
     return r'novelInfoWithCacheProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -95,8 +95,8 @@ final class NovelInfoWithCacheProvider
 
   @override
   Stream<NovelInfo> create(Ref ref) {
-    final argument = this.argument as String;
-    return novelInfoWithCache(ref, argument);
+    final argument = this.argument as (NovelSource, String);
+    return novelInfoWithCache(ref, argument.$1, argument.$2);
   }
 
   @override
@@ -111,12 +111,12 @@ final class NovelInfoWithCacheProvider
 }
 
 String _$novelInfoWithCacheHash() =>
-    r'85c561a8aa25cc764fb0c76d7f65d3eed8b24b92';
+    r'01fd12f5092542253e8ea492945e2a5be891c096';
 
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 
 final class NovelInfoWithCacheFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<NovelInfo>, String> {
+    with $FunctionalFamilyOverride<Stream<NovelInfo>, (NovelSource, String)> {
   NovelInfoWithCacheFamily._()
     : super(
         retry: null,
@@ -128,8 +128,8 @@ final class NovelInfoWithCacheFamily extends $Family
 
   /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 
-  NovelInfoWithCacheProvider call(String ncode) =>
-      NovelInfoWithCacheProvider._(argument: ncode, from: this);
+  NovelInfoWithCacheProvider call(NovelSource source, String workId) =>
+      NovelInfoWithCacheProvider._(argument: (source, workId), from: this);
 
   @override
   String toString() => r'novelInfoWithCacheProvider';
@@ -155,7 +155,8 @@ final class NovelContentProvider
   /// 小説のコンテンツを取得するプロバイダー。
   NovelContentProvider._({
     required NovelContentFamily super.from,
-    required ({String ncode, int episode, String? revised}) super.argument,
+    required ({NovelSource source, String workId, int episode, String? revised})
+    super.argument,
   }) : super(
          retry: null,
          name: r'novelContentProvider',
@@ -183,10 +184,17 @@ final class NovelContentProvider
   @override
   FutureOr<List<NovelContentElement>> create(Ref ref) {
     final argument =
-        this.argument as ({String ncode, int episode, String? revised});
+        this.argument
+            as ({
+              NovelSource source,
+              String workId,
+              int episode,
+              String? revised,
+            });
     return novelContent(
       ref,
-      ncode: argument.ncode,
+      source: argument.source,
+      workId: argument.workId,
       episode: argument.episode,
       revised: argument.revised,
     );
@@ -203,7 +211,7 @@ final class NovelContentProvider
   }
 }
 
-String _$novelContentHash() => r'946148ce819d122abf573b303eddb7fb79334a2e';
+String _$novelContentHash() => r'8a7a1d4373913c3b9e3a726cf7ff32f51e902029';
 
 /// 小説のコンテンツを取得するプロバイダー。
 
@@ -211,7 +219,7 @@ final class NovelContentFamily extends $Family
     with
         $FunctionalFamilyOverride<
           FutureOr<List<NovelContentElement>>,
-          ({String ncode, int episode, String? revised})
+          ({NovelSource source, String workId, int episode, String? revised})
         > {
   NovelContentFamily._()
     : super(
@@ -225,11 +233,17 @@ final class NovelContentFamily extends $Family
   /// 小説のコンテンツを取得するプロバイダー。
 
   NovelContentProvider call({
-    required String ncode,
+    required NovelSource source,
+    required String workId,
     required int episode,
     String? revised,
   }) => NovelContentProvider._(
-    argument: (ncode: ncode, episode: episode, revised: revised),
+    argument: (
+      source: source,
+      workId: workId,
+      episode: episode,
+      revised: revised,
+    ),
     from: this,
   );
 
@@ -248,7 +262,7 @@ final class LibraryStatusProvider
   /// 小説のライブラリ状態を管理するプロバイダー。
   LibraryStatusProvider._({
     required LibraryStatusFamily super.from,
-    required String super.argument,
+    required (NovelSource, String) super.argument,
   }) : super(
          retry: null,
          name: r'libraryStatusProvider',
@@ -264,7 +278,7 @@ final class LibraryStatusProvider
   String toString() {
     return r'libraryStatusProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -282,7 +296,7 @@ final class LibraryStatusProvider
   }
 }
 
-String _$libraryStatusHash() => r'74d14ac181e29d196f392de4ed9e13fdc957459c';
+String _$libraryStatusHash() => r'7789ad4534cb893cc9fbcfd86a8d471524effc49';
 
 /// 小説のライブラリ状態を管理するプロバイダー。
 
@@ -293,7 +307,7 @@ final class LibraryStatusFamily extends $Family
           AsyncValue<bool>,
           bool,
           Stream<bool>,
-          String
+          (NovelSource, String)
         > {
   LibraryStatusFamily._()
     : super(
@@ -306,8 +320,8 @@ final class LibraryStatusFamily extends $Family
 
   /// 小説のライブラリ状態を管理するプロバイダー。
 
-  LibraryStatusProvider call(String ncode) =>
-      LibraryStatusProvider._(argument: ncode, from: this);
+  LibraryStatusProvider call(NovelSource source, String workId) =>
+      LibraryStatusProvider._(argument: (source, workId), from: this);
 
   @override
   String toString() => r'libraryStatusProvider';
@@ -316,10 +330,11 @@ final class LibraryStatusFamily extends $Family
 /// 小説のライブラリ状態を管理するプロバイダー。
 
 abstract class _$LibraryStatus extends $StreamNotifier<bool> {
-  late final _$args = ref.$arg as String;
-  String get ncode => _$args;
+  late final _$args = ref.$arg as (NovelSource, String);
+  NovelSource get source => _$args.$1;
+  String get workId => _$args.$2;
 
-  Stream<bool> build(String ncode);
+  Stream<bool> build(NovelSource source, String workId);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
@@ -332,7 +347,7 @@ abstract class _$LibraryStatus extends $StreamNotifier<bool> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args.$1, _$args.$2));
   }
 }
 
@@ -356,7 +371,7 @@ final class DownloadProgressProvider
   /// 小説のダウンロード進捗を監視するプロバイダー。
   DownloadProgressProvider._({
     required DownloadProgressFamily super.from,
-    required String super.argument,
+    required (NovelSource, String) super.argument,
   }) : super(
          retry: null,
          name: r'downloadProgressProvider',
@@ -372,7 +387,7 @@ final class DownloadProgressProvider
   String toString() {
     return r'downloadProgressProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -383,8 +398,8 @@ final class DownloadProgressProvider
 
   @override
   Stream<DownloadProgress?> create(Ref ref) {
-    final argument = this.argument as String;
-    return downloadProgress(ref, argument);
+    final argument = this.argument as (NovelSource, String);
+    return downloadProgress(ref, argument.$1, argument.$2);
   }
 
   @override
@@ -398,12 +413,16 @@ final class DownloadProgressProvider
   }
 }
 
-String _$downloadProgressHash() => r'c336d2d44503f03a40ba05cdff963fdeeab7d305';
+String _$downloadProgressHash() => r'2c23c5e435f8440a6c44a27f4160fc6c56305c93';
 
 /// 小説のダウンロード進捗を監視するプロバイダー。
 
 final class DownloadProgressFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<DownloadProgress?>, String> {
+    with
+        $FunctionalFamilyOverride<
+          Stream<DownloadProgress?>,
+          (NovelSource, String)
+        > {
   DownloadProgressFamily._()
     : super(
         retry: null,
@@ -415,8 +434,8 @@ final class DownloadProgressFamily extends $Family
 
   /// 小説のダウンロード進捗を監視するプロバイダー。
 
-  DownloadProgressProvider call(String ncode) =>
-      DownloadProgressProvider._(argument: ncode, from: this);
+  DownloadProgressProvider call(NovelSource source, String workId) =>
+      DownloadProgressProvider._(argument: (source, workId), from: this);
 
   @override
   String toString() => r'downloadProgressProvider';
@@ -473,7 +492,7 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'5bdc30ed540eeb4c0a14400e350a22604ac23c82';
+String _$downloadStatusHash() => r'b502bb55d3d695bda32e6a54b7db4a40c235945f';
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
@@ -551,7 +570,7 @@ final class EpisodeListProvider
   /// エピソードリストをページ単位で取得するプロバイダー。
   EpisodeListProvider._({
     required EpisodeListFamily super.from,
-    required String super.argument,
+    required (NovelSource, String, int) super.argument,
   }) : super(
          retry: null,
          name: r'episodeListProvider',
@@ -567,7 +586,7 @@ final class EpisodeListProvider
   String toString() {
     return r'episodeListProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -578,8 +597,8 @@ final class EpisodeListProvider
 
   @override
   Stream<List<Episode>> create(Ref ref) {
-    final argument = this.argument as String;
-    return episodeList(ref, argument);
+    final argument = this.argument as (NovelSource, String, int);
+    return episodeList(ref, argument.$1, argument.$2, argument.$3);
   }
 
   @override
@@ -593,12 +612,16 @@ final class EpisodeListProvider
   }
 }
 
-String _$episodeListHash() => r'729c91da200730b7686dc58033503a05891e5a32';
+String _$episodeListHash() => r'c55b839d020312f7f2bdf18ee029b1908c40e274';
 
 /// エピソードリストをページ単位で取得するプロバイダー。
 
 final class EpisodeListFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<List<Episode>>, String> {
+    with
+        $FunctionalFamilyOverride<
+          Stream<List<Episode>>,
+          (NovelSource, String, int)
+        > {
   EpisodeListFamily._()
     : super(
         retry: null,
@@ -610,8 +633,8 @@ final class EpisodeListFamily extends $Family
 
   /// エピソードリストをページ単位で取得するプロバイダー。
 
-  EpisodeListProvider call(String ncodeAndPage) =>
-      EpisodeListProvider._(argument: ncodeAndPage, from: this);
+  EpisodeListProvider call(NovelSource source, String workId, int page) =>
+      EpisodeListProvider._(argument: (source, workId, page), from: this);
 
   @override
   String toString() => r'episodeListProvider';
@@ -630,7 +653,7 @@ final class LastReadEpisodeProvider
   /// 最後に読んだエピソード番号を取得するプロバイダー
   LastReadEpisodeProvider._({
     required LastReadEpisodeFamily super.from,
-    required String super.argument,
+    required (NovelSource, String) super.argument,
   }) : super(
          retry: null,
          name: r'lastReadEpisodeProvider',
@@ -646,7 +669,7 @@ final class LastReadEpisodeProvider
   String toString() {
     return r'lastReadEpisodeProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -656,8 +679,8 @@ final class LastReadEpisodeProvider
 
   @override
   Stream<int?> create(Ref ref) {
-    final argument = this.argument as String;
-    return lastReadEpisode(ref, argument);
+    final argument = this.argument as (NovelSource, String);
+    return lastReadEpisode(ref, argument.$1, argument.$2);
   }
 
   @override
@@ -671,12 +694,12 @@ final class LastReadEpisodeProvider
   }
 }
 
-String _$lastReadEpisodeHash() => r'7af911f1a41e9fe29eb6db2205f8178a5fce803a';
+String _$lastReadEpisodeHash() => r'57fa3006957320a743b6178304ef533eff6c485f';
 
 /// 最後に読んだエピソード番号を取得するプロバイダー
 
 final class LastReadEpisodeFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<int?>, String> {
+    with $FunctionalFamilyOverride<Stream<int?>, (NovelSource, String)> {
   LastReadEpisodeFamily._()
     : super(
         retry: null,
@@ -688,8 +711,8 @@ final class LastReadEpisodeFamily extends $Family
 
   /// 最後に読んだエピソード番号を取得するプロバイダー
 
-  LastReadEpisodeProvider call(String ncode) =>
-      LastReadEpisodeProvider._(argument: ncode, from: this);
+  LastReadEpisodeProvider call(NovelSource source, String workId) =>
+      LastReadEpisodeProvider._(argument: (source, workId), from: this);
 
   @override
   String toString() => r'lastReadEpisodeProvider';

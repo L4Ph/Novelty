@@ -136,9 +136,11 @@ class SearchModal extends HookConsumerWidget {
                     menuMaxHeight: MediaQuery.of(context).size.height * 0.5,
                     initialValue:
                         genreList.any(
-                          (g) => g['id'] == query.value.genre?.firstOrNull,
+                          (g) =>
+                              g['id'].toString() ==
+                              query.value.genreId?.firstOrNull,
                         )
-                        ? query.value.genre?.firstOrNull
+                        ? int.tryParse(query.value.genreId?.firstOrNull ?? '')
                         : null,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
@@ -162,7 +164,7 @@ class SearchModal extends HookConsumerWidget {
                     ],
                     onChanged: (value) {
                       query.value = query.value.copyWith(
-                        genre: value == null ? null : [value],
+                        genreId: value == null ? null : [value.toString()],
                       );
                     },
                   ),

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/sites/novel_source.dart';
 
 void main() {
   late AppDatabase db;
@@ -18,33 +19,36 @@ void main() {
     // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
-        ncode: 'n1234a',
+        source: NovelSource.narou,
+        workId: 'n1234a',
         title: const Value('転生したらスライムだった件'),
         writer: const Value('伏瀬'),
         story: const Value('スライムに転生してしまった。'),
       ),
     );
-    await db.addToLibrary('n1234a');
+    await db.addToLibrary(NovelSource.narou, 'n1234a');
     await db.insertNovel(
       NovelsCompanion.insert(
-        ncode: 'n5678b',
+        source: NovelSource.narou,
+        workId: 'n5678b',
         title: const Value('無職転生'),
         writer: const Value('理不尽な孫の手'),
         story: const Value('異世界に行きたい。'),
       ),
     );
-    await db.addToLibrary('n5678b');
-    await db.addToLibrary('n1234a');
+    await db.addToLibrary(NovelSource.narou, 'n5678b');
+    await db.addToLibrary(NovelSource.narou, 'n1234a');
 
     await db.insertNovel(
       NovelsCompanion.insert(
-        ncode: 'n5678b',
+        source: NovelSource.narou,
+        workId: 'n5678b',
         title: const Value('無職転生'),
         writer: const Value('理不尽な孫の手'),
         story: const Value('異世界に行きたい。'),
       ),
     );
-    await db.addToLibrary('n5678b');
+    await db.addToLibrary(NovelSource.narou, 'n5678b');
 
     // 実行と検証
     // タイトル検索
@@ -71,19 +75,22 @@ void main() {
     // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
-        ncode: 'n1234a',
+        source: NovelSource.narou,
+        workId: 'n1234a',
         title: const Value('Test Novel'),
       ),
     );
-    await db.addToLibrary('n1234a');
+    await db.addToLibrary(NovelSource.narou, 'n1234a');
     await db.upsertEpisodes([
       EpisodeListEntriesCompanion.insert(
-        ncode: 'n1234a',
+        source: NovelSource.narou,
+        workId: 'n1234a',
         episodeId: 1,
         subtitle: const Value('プロローグ'),
       ),
       EpisodeListEntriesCompanion.insert(
-        ncode: 'n1234a',
+        source: NovelSource.narou,
+        workId: 'n1234a',
         episodeId: 2,
         subtitle: const Value('旅立ち'),
       ),
@@ -91,7 +98,8 @@ void main() {
 
     // 本文を更新（updateEpisodeContent 経由で FTS も更新される）
     await db.updateEpisodeContent(
-      ncode: 'n1234a',
+      source: NovelSource.narou,
+      workId: 'n1234a',
       episodeId: 1,
       content: [
         NovelContentElement.plainText('昔々あるところに'),
@@ -102,7 +110,8 @@ void main() {
     );
 
     await db.updateEpisodeContent(
-      ncode: 'n1234a',
+      source: NovelSource.narou,
+      workId: 'n1234a',
       episodeId: 2,
       content: [
         NovelContentElement.plainText('勇者は旅に出た'),
@@ -132,14 +141,16 @@ void main() {
     // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
-        ncode: 'n1234a',
+        source: NovelSource.narou,
+        workId: 'n1234a',
         title: const Value('Test Novel'),
       ),
     );
-    await db.addToLibrary('n1234a');
+    await db.addToLibrary(NovelSource.narou, 'n1234a');
     await db.upsertEpisodes([
       EpisodeListEntriesCompanion.insert(
-        ncode: 'n1234a',
+        source: NovelSource.narou,
+        workId: 'n1234a',
         episodeId: 1,
         subtitle: const Value('旧サブタイトル'),
       ),
@@ -147,7 +158,8 @@ void main() {
 
     // 本文を保存してインデックスを作成
     await db.updateEpisodeContent(
-      ncode: 'n1234a',
+      source: NovelSource.narou,
+      workId: 'n1234a',
       episodeId: 1,
       content: [
         NovelContentElement.plainText('本文はそのまま'),
@@ -160,7 +172,8 @@ void main() {
 
     // サブタイトルのみ変更
     await db.updateEpisodeContent(
-      ncode: 'n1234a',
+      source: NovelSource.narou,
+      workId: 'n1234a',
       episodeId: 1,
       content: [
         NovelContentElement.plainText('本文はそのまま'),
@@ -183,11 +196,12 @@ void main() {
     // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
-        ncode: 'n1234a',
+        source: NovelSource.narou,
+        workId: 'n1234a',
         title: const Value('Delete Me'),
       ),
     );
-    await db.addToLibrary('n1234a');
+    await db.addToLibrary(NovelSource.narou, 'n1234a');
 
     // 存在することを確認
     expect((await db.searchNovels('Delete')).length, 1);
@@ -202,7 +216,10 @@ void main() {
     // カスケードするなら deleteHistory を使う? いや。
 
     // テスト用の削除ヘルパーを追加するか、customStatement を使用する。
-    await db.customStatement('DELETE FROM novels WHERE ncode = ?', ['n1234a']);
+    await db.customStatement(
+      "DELETE FROM novels WHERE source = 'narou' AND work_id = ?",
+      ['n1234a'],
+    );
 
     // 検証
     expect((await db.searchNovels('Delete')).isEmpty, true);
@@ -213,16 +230,18 @@ void main() {
     // ライブラリ内の小説
     await db.insertNovel(
       NovelsCompanion.insert(
-        ncode: 'n1111a',
+        source: NovelSource.narou,
+        workId: 'n1111a',
         title: const Value('Library Novel'),
       ),
     );
-    await db.addToLibrary('n1111a');
+    await db.addToLibrary(NovelSource.narou, 'n1111a');
 
     // ライブラリ外の小説
     await db.insertNovel(
       NovelsCompanion.insert(
-        ncode: 'n2222b',
+        source: NovelSource.narou,
+        workId: 'n2222b',
         title: const Value('Non-Library Novel'),
       ),
     );
@@ -232,7 +251,7 @@ void main() {
 
     // 検証
     expect(results.length, 1);
-    expect(results.first.ncode, 'n1111a');
+    expect(results.first.workId, 'n1111a');
     expect(results.first.title, 'Library Novel');
   });
 
@@ -240,11 +259,12 @@ void main() {
     // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
-        ncode: 'n9999z',
+        source: NovelSource.narou,
+        workId: 'n9999z',
         title: const Value('東京と京都'),
       ),
     );
-    await db.addToLibrary('n9999z');
+    await db.addToLibrary(NovelSource.narou, 'n9999z');
 
     // Act
     final results = await db.searchNovels('東京都');

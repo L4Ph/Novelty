@@ -11,7 +11,7 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/providers/network_fallback_event_provider.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/utils/ncode_utils.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -71,37 +71,39 @@ class NovelRepository {
     _progressControllers.clear();
   }
 
+  /// 進捗管理用のキーを生成する
+  String _progressKey(NovelSource source, String workId) =>
+      '${source.dbId}:$workId';
+
   /// ダウンロード進捗を監視するストリーム
-  Stream<DownloadProgress> watchDownloadProgress(String ncode) {
-    final normalizedNcode = ncode.toNormalizedNcode();
-    _progressControllers.putIfAbsent(
-      normalizedNcode,
-      StreamController.broadcast,
-    );
-    return _progressControllers[normalizedNcode]!.stream;
+  Stream<DownloadProgress> watchDownloadProgress(
+    NovelSource source,
+    String workId,
+  ) {
+    final key = _progressKey(source, workId);
+    _progressControllers.putIfAbsent(key, StreamController.broadcast);
+    return _progressControllers[key]!.stream;
   }
 
   /// 小説をライブラリに追加する。
   ///
   /// 既に存在する場合は何もしない。
   /// 成功した場合はtrueを、既に存在した場合はfalseを返す。
-  Future<bool> addNovelToLibrary(String ncode) async {
-    final ncodeLower = ncode.toNormalizedNcode();
-
+  Future<bool> addNovelToLibrary(NovelSource source, String workId) async {
     // 既にライブラリに存在するかチェック
-    final isInLibrary = await _db.isInLibrary(ncodeLower);
+    final isInLibrary = await _db.isInLibrary(source, workId);
     if (isInLibrary) {
       return false;
     }
 
-    // ライブラリに追加
-    final novelInfo = await apiService.fetchNovelInfo(ncodeLower);
+    // ライブラリに追加（P1時点ではなろうのみ対応）
+    final novelInfo = await apiService.fetchNovelInfo(workId);
 
     // Novelテーブルに保存
     await _db.insertNovel(novelInfo.toDbCompanion());
 
     // LibraryEntriesテーブルに追加
-    await _db.addToLibrary(ncodeLower);
+    await _db.addToLibrary(source, workId);
 
     // Providersを無効化してUIを更新
     ref.invalidate(libraryNovelsProvider);
@@ -110,9 +112,8 @@ class NovelRepository {
   }
 
   /// 小説をライブラリから削除する。
-  Future<void> removeFromLibrary(String ncode) async {
-    final ncodeLower = ncode.toNormalizedNcode();
-    await _db.removeFromLibrary(ncodeLower);
+  Future<void> removeFromLibrary(NovelSource source, String workId) async {
+    await _db.removeFromLibrary(source, workId);
 
     // Providersを無効化してUIを更新
     ref.invalidate(libraryNovelsProvider);
@@ -120,13 +121,12 @@ class NovelRepository {
 
   /// 小説を閲覧履歴に追加する。
   Future<void> addToHistory({
-    required String ncode,
+    required NovelSource source,
+    required String workId,
     required String title,
     required String writer,
     required int lastEpisode,
   }) async {
-    final normalizedNcode = ncode.toNormalizedNcode();
-
     // シークレットモードの場合は履歴を保存しない
     if (settings.value?.isIncognito ?? false) {
       return;
@@ -145,7 +145,8 @@ class NovelRepository {
 
     await _db.addToHistory(
       ReadingHistoryCompanion(
-        ncode: Value(normalizedNcode),
+        source: Value(source),
+        workId: Value(workId),
         lastEpisodeId: Value(validEpisode),
         viewedAt: Value(DateTime.now().millisecondsSinceEpoch),
         updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
@@ -153,19 +154,18 @@ class NovelRepository {
     );
   }
 
-  /// 指定したncodeの閲覧履歴を削除する。
-  Future<void> deleteHistory(String ncode) async {
-    final normalizedNcode = ncode.toNormalizedNcode();
-    await _db.deleteHistory(normalizedNcode);
+  /// 指定した作品の閲覧履歴を削除する。
+  Future<void> deleteHistory(NovelSource source, String workId) async {
+    await _db.deleteHistory(source, workId);
   }
 
   /// メタデータを含むエピソード本文を取得するヘルパーメソッド。
   Future<Episode> _fetchEpisode(
-    String ncode,
+    String workId,
     int episode,
   ) async {
     return apiService.fetchEpisode(
-      ncode.toNormalizedNcode(),
+      workId,
       episode,
     );
   }
@@ -176,15 +176,15 @@ class NovelRepository {
   /// [revised] が指定された場合、キャッシュの改稿日時と比較し、異なる場合は再ダウンロードする。
   /// 戻り値: ダウンロードに成功した場合true、失敗した場合false。
   Future<bool> downloadSingleEpisode(
-    String ncode,
+    NovelSource source,
+    String workId,
     int episode, {
     String? revised,
   }) async {
-    final ncodeLower = ncode.toNormalizedNcode();
     final now = DateTime.now().millisecondsSinceEpoch;
 
     // 既にダウンロード成功済みかチェック
-    final existing = await _db.getEpisodeData(ncodeLower, episode);
+    final existing = await _db.getEpisodeData(source, workId, episode);
     if (existing != null &&
         existing.content != null &&
         existing.content!.isNotEmpty) {
@@ -196,14 +196,15 @@ class NovelRepository {
 
     try {
       // エピソードをフェッチ (Metadata + Content)
-      final ep = await _fetchEpisode(ncodeLower, episode);
+      final ep = await _fetchEpisode(workId, episode);
       final content = ep.body != null
           ? parseNovelContent(ep.body!)
           : <NovelContentElement>[];
 
       // データベースに保存（成功）
       await _db.updateEpisodeContent(
-        ncode: ncodeLower,
+        source: source,
+        workId: workId,
         episodeId: episode,
         content: content,
         fetchedAt: now,
@@ -221,7 +222,8 @@ class NovelRepository {
 
       try {
         await _db.updateEpisodeContent(
-          ncode: ncodeLower,
+          source: source,
+          workId: workId,
           episodeId: episode,
           content: const [], // 空の本文
           fetchedAt: now,
@@ -240,13 +242,13 @@ class NovelRepository {
   /// [revised] が指定された場合、キャッシュの改稿日時と比較し、
   /// 異なる場合は再取得する。
   Future<List<NovelContentElement>> getEpisode(
-    String ncode,
+    NovelSource source,
+    String workId,
     int episode, {
     String? revised,
   }) async {
-    final cached = await _db.getEpisodeData(ncode, episode);
+    final cached = await _db.getEpisodeData(source, workId, episode);
 
-    // ネットワーク接続状態を確認
     // ネットワーク接続状態を確認
     final isOffline = ref.read(isOfflineModeProvider);
 
@@ -271,13 +273,14 @@ class NovelRepository {
 
     // 3. オンラインかつ更新が必要な場合のみ取得
     try {
-      final ep = await _fetchEpisode(ncode, episode);
+      final ep = await _fetchEpisode(workId, episode);
       final content = ep.body != null
           ? parseNovelContent(ep.body!)
           : <NovelContentElement>[];
 
       await _db.updateEpisodeContent(
-        ncode: ncode.toNormalizedNcode(),
+        source: source,
+        workId: workId,
         episodeId: episode,
         content: content,
         fetchedAt: DateTime.now().millisecondsSinceEpoch,
@@ -300,7 +303,8 @@ class NovelRepository {
       // subtitle/urlは指定せず、既存の目次メタデータを上書きしない
       try {
         await _db.updateEpisodeContent(
-          ncode: ncode.toNormalizedNcode(),
+          source: source,
+          workId: workId,
           episodeId: episode,
           content: const [],
           fetchedAt: DateTime.now().millisecondsSinceEpoch,
@@ -312,9 +316,13 @@ class NovelRepository {
   }
 
   /// 小説の情報を取得するメソッド。
-  Future<void> downloadEpisode(String ncode, int episode) async {
+  Future<void> downloadEpisode(
+    NovelSource source,
+    String workId,
+    int episode,
+  ) async {
     // 既存のdownloadSingleEpisodeを利用するように変更
-    await downloadSingleEpisode(ncode, episode);
+    await downloadSingleEpisode(source, workId, episode);
   }
 
   /// 小説のダウンロードを行うメソッド。
@@ -322,11 +330,15 @@ class NovelRepository {
   /// 各エピソードのダウンロードを試み、失敗したエピソードがあっても継続する。
   /// 最初に目次を取得して改稿日時(revised)を確認する。
   Future<void> downloadNovel(
-    String ncode,
+    NovelSource source,
+    String workId,
     int totalEpisodes,
   ) async {
-    final ncodeLower = ncode.toNormalizedNcode();
-    final progressController = _progressControllers[ncodeLower];
+    final progressController =
+        _progressControllers[_progressKey(
+          source,
+          workId,
+        )];
     var successCount = 0;
     var failureCount = 0;
 
@@ -344,7 +356,7 @@ class NovelRepository {
       // これにより、改稿されたエピソードのみを再ダウンロードできる
       final revisedMap = <int, String?>{};
       try {
-        final info = await apiService.fetchNovelInfo(ncodeLower);
+        final info = await apiService.fetchNovelInfo(workId);
         final episodes = info.episodes ?? [];
         for (final ep in episodes) {
           if (ep.index != null) {
@@ -360,7 +372,8 @@ class NovelRepository {
       for (var i = 1; i <= totalEpisodes; i++) {
         final revised = revisedMap[i];
         final success = await downloadSingleEpisode(
-          ncodeLower,
+          source,
+          workId,
           i,
           revised: revised,
         );
@@ -406,16 +419,21 @@ class NovelRepository {
       rethrow;
     } finally {
       await progressController?.close();
-      _progressControllers.remove(ncodeLower);
+      _progressControllers.remove(_progressKey(source, workId));
     }
   }
 
   /// ダウンロード済みエピソードを削除するメソッド。
-  Future<void> deleteDownloadedEpisode(String ncode, int episode) async {
+  Future<void> deleteDownloadedEpisode(
+    NovelSource source,
+    String workId,
+    int episode,
+  ) async {
     // コンテンツをNULLに更新
     await (_db.update(_db.episodeContents)..where(
           (e) =>
-              e.ncode.equals(ncode.toNormalizedNcode()) &
+              e.source.equalsValue(source) &
+              e.workId.equals(workId) &
               e.episodeId.equals(episode),
         ))
         .write(
@@ -427,21 +445,31 @@ class NovelRepository {
 
   /// ダウンロード済み小説を削除するメソッド。
   ///
-  /// 該当ncodeのすべてのダウンロード済みエピソードを一括削除する。
-  Future<void> deleteDownloadedNovel(String ncode) async {
+  /// 該当作品のすべてのダウンロード済みエピソードを一括削除する。
+  Future<void> deleteDownloadedNovel(
+    NovelSource source,
+    String workId,
+  ) async {
     // コンテンツをNULLに更新する。
     await (_db.update(
-      _db.episodeContents,
-    )..where((e) => e.ncode.equals(ncode.toNormalizedNcode()))).write(
-      const EpisodeContentsCompanion(
-        content: Value<List<NovelContentElement>?>(null),
-      ),
-    );
+          _db.episodeContents,
+        )..where(
+          (e) => e.source.equalsValue(source) & e.workId.equals(workId),
+        ))
+        .write(
+          const EpisodeContentsCompanion(
+            content: Value<List<NovelContentElement>?>(null),
+          ),
+        );
   }
 
   /// ダウンロードパスを取得するメソッド。
-  Stream<bool> isEpisodeDownloaded(String ncode, int episode) async* {
-    final cached = await _db.getEpisodeData(ncode, episode);
+  Stream<bool> isEpisodeDownloaded(
+    NovelSource source,
+    String workId,
+    int episode,
+  ) async* {
+    final cached = await _db.getEpisodeData(source, workId, episode);
     yield cached != null &&
         cached.content != null &&
         cached.content!.isNotEmpty;
@@ -451,14 +479,15 @@ class NovelRepository {
   ///
   /// 戻り値の[DownloadResult]によって、UIでの処理を判断する。
   Future<DownloadResult> downloadNovelWithResult(
-    String ncode,
+    NovelSource source,
+    String workId,
     int totalEpisodes,
   ) async {
     try {
-      await downloadNovel(ncode, totalEpisodes);
+      await downloadNovel(source, workId, totalEpisodes);
 
       // ライブラリに追加されているかをチェック
-      final isInLibrary = await _db.isInLibrary(ncode.toNormalizedNcode());
+      final isInLibrary = await _db.isInLibrary(source, workId);
 
       return DownloadResult.success(needsLibraryAddition: !isInLibrary);
     } on Exception catch (e) {
@@ -467,8 +496,11 @@ class NovelRepository {
   }
 
   /// エピソードリストを取得する
-  Future<List<Episode>> fetchEpisodeList(String ncode, int page) async {
-    final normalizedNcode = ncode.toNormalizedNcode();
+  Future<List<Episode>> fetchEpisodeList(
+    NovelSource source,
+    String workId,
+    int page,
+  ) async {
     final start = (page - 1) * 100 + 1;
     final end = page * 100;
 
@@ -478,7 +510,8 @@ class NovelRepository {
     // オフラインの場合はDBから取得
     if (isOffline) {
       final cachedEpisodes = await _db.getEpisodesRange(
-        normalizedNcode,
+        source,
+        workId,
         start,
         end,
       );
@@ -491,12 +524,13 @@ class NovelRepository {
 
     try {
       // オンラインの場合はAPIから取得
-      final episodes = await apiService.fetchEpisodeList(normalizedNcode, page);
+      final episodes = await apiService.fetchEpisodeList(workId, page);
 
       // DBに保存
       final episodesCompanions = episodes.map((e) {
         return EpisodeListEntriesCompanion(
-          ncode: Value(normalizedNcode),
+          source: Value(source),
+          workId: Value(workId),
           episodeId: Value(e.index ?? 0),
           subtitle: Value(e.subtitle),
           url: Value(e.url),
@@ -511,7 +545,8 @@ class NovelRepository {
     } catch (e) {
       // API取得失敗時はDBから取得を試みる
       final cachedEpisodes = await _db.getEpisodesRange(
-        normalizedNcode,
+        source,
+        workId,
         start,
         end,
       );
@@ -526,25 +561,23 @@ class NovelRepository {
   ///
   /// DBにキャッシュがあれば即座に返し、最新情報を取得して更新する。
   /// キャッシュが無くて取得に失敗した場合はストリームエラーとして伝播する。
-  Stream<NovelInfo> watchNovelInfo(String ncode) {
-    final normalizedNcode = ncode.toNormalizedNcode();
-
-    return Stream.fromFuture(_db.getNovel(normalizedNcode)).asyncExpand(
+  Stream<NovelInfo> watchNovelInfo(NovelSource source, String workId) {
+    return Stream.fromFuture(_db.getNovel(source, workId)).asyncExpand(
       (cached) {
         if (cached != null) {
           // キャッシュが存在する場合は即座に発行し、裏で再取得する
-          _refreshNovelInfo(normalizedNcode).ignore();
+          _refreshNovelInfo(source, workId).ignore();
           return _db
-              .watchNovel(normalizedNcode)
+              .watchNovel(source, workId)
               .where((novel) => novel != null)
               .map((novel) => novel!.toModel());
         }
         // キャッシュが無い場合は再取得に成功するまで待つ
         return Stream.fromFuture(
-          _refreshNovelInfo(normalizedNcode),
+          _refreshNovelInfo(source, workId),
         ).asyncExpand(
           (_) => _db
-              .watchNovel(normalizedNcode)
+              .watchNovel(source, workId)
               .where((novel) => novel != null)
               .map((novel) => novel!.toModel()),
         );
@@ -553,18 +586,17 @@ class NovelRepository {
   }
 
   /// 小説情報を明示的に再取得する
-  Future<void> refreshNovelInfo(String ncode) async {
-    final normalizedNcode = ncode.toNormalizedNcode();
-    await _refreshNovelInfo(normalizedNcode);
+  Future<void> refreshNovelInfo(NovelSource source, String workId) async {
+    await _refreshNovelInfo(source, workId);
   }
 
   /// 小説情報をAPIから取得しDBに保存する。
   /// 取得失敗時はキャッシュがあればフォールバックイベントを発行し、
   /// キャッシュが無い場合はエラーを呼び出し元に伝える。
-  Future<void> _refreshNovelInfo(String normalizedNcode) async {
+  Future<void> _refreshNovelInfo(NovelSource source, String workId) async {
     final isOffline = ref.read(isOfflineModeProvider);
     if (isOffline) {
-      final cached = await _db.getNovel(normalizedNcode);
+      final cached = await _db.getNovel(source, workId);
       if (cached == null) {
         throw const OfflineException();
       }
@@ -572,23 +604,26 @@ class NovelRepository {
     }
 
     try {
-      final info = await apiService.fetchNovelInfo(normalizedNcode);
+      // P1時点ではなろうのみ対応（workId = ncode）
+      final info = await apiService.fetchNovelInfo(workId);
       await _db.insertNovel(info.toDbCompanion());
     } on NovelNotFoundException {
       // 非公開・削除された作品はプレースホルダーとして扱う
       await _db.ensureNovelFetchState(
-        normalizedNcode,
+        source,
+        workId,
         isPrivate: true,
         cachedAt: DateTime.now().millisecondsSinceEpoch,
       );
     } on Exception {
       // ネットワークエラー等はキャッシュがあればフォールバックし、
       // キャッシュが無い場合はエラーを呼び出し元に伝える
-      final cached = await _db.getNovel(normalizedNcode);
+      final cached = await _db.getNovel(source, workId);
       if (cached != null) {
         _emitFallbackEvent('最新の作品情報を取得できませんでした。キャッシュを表示しています。');
         await _db.ensureNovelFetchState(
-          normalizedNcode,
+          source,
+          workId,
           cachedAt: DateTime.now().millisecondsSinceEpoch,
         );
       } else {
@@ -601,47 +636,55 @@ class NovelRepository {
   ///
   /// DBにキャッシュがあれば即座に返し、最新の目次を取得して更新する。
   /// キャッシュが無くて取得に失敗した場合はストリームエラーとして伝播する。
-  Stream<List<Episode>> watchEpisodeList(String ncode, int page) {
-    final normalizedNcode = ncode.toNormalizedNcode();
+  Stream<List<Episode>> watchEpisodeList(
+    NovelSource source,
+    String workId,
+    int page,
+  ) {
     final start = (page - 1) * 100 + 1;
     final end = start + 99;
 
     return Stream.fromFuture(
-      _db.getEpisodesRange(normalizedNcode, start, end),
+      _db.getEpisodesRange(source, workId, start, end),
     ).asyncExpand((cached) {
       if (cached.isNotEmpty) {
         // キャッシュが存在する場合は即座に発行し、裏で再取得する
-        _refreshEpisodeList(normalizedNcode, page, start).ignore();
-        return _db.watchEpisodesRange(normalizedNcode, start, end);
+        _refreshEpisodeList(source, workId, page, start).ignore();
+        return _db.watchEpisodesRange(source, workId, start, end);
       }
       // キャッシュが無い場合は再取得に成功するまで待つ
       return Stream.fromFuture(
-        _refreshEpisodeList(normalizedNcode, page, start),
+        _refreshEpisodeList(source, workId, page, start),
       ).asyncExpand(
-        (_) => _db.watchEpisodesRange(normalizedNcode, start, end),
+        (_) => _db.watchEpisodesRange(source, workId, start, end),
       );
     });
   }
 
   /// エピソードリストを明示的に再取得する
-  Future<void> refreshEpisodeList(String ncode, int page) async {
-    final normalizedNcode = ncode.toNormalizedNcode();
+  Future<void> refreshEpisodeList(
+    NovelSource source,
+    String workId,
+    int page,
+  ) async {
     final start = (page - 1) * 100 + 1;
-    await _refreshEpisodeList(normalizedNcode, page, start);
+    await _refreshEpisodeList(source, workId, page, start);
   }
 
   /// エピソード目次をAPIから取得しDBに保存する。
   /// 取得失敗時はキャッシュがあればフォールバックイベントを発行し、
   /// キャッシュが無い場合はエラーを呼び出し元に伝える。
   Future<void> _refreshEpisodeList(
-    String normalizedNcode,
+    NovelSource source,
+    String workId,
     int page,
     int start,
   ) async {
     final isOffline = ref.read(isOfflineModeProvider);
     if (isOffline) {
       final cached = await _db.getEpisodesRange(
-        normalizedNcode,
+        source,
+        workId,
         start,
         start + 99,
       );
@@ -652,10 +695,11 @@ class NovelRepository {
     }
 
     try {
-      final episodes = await apiService.fetchEpisodeList(normalizedNcode, page);
+      final episodes = await apiService.fetchEpisodeList(workId, page);
       final companions = episodes.map((e) {
         return EpisodeListEntriesCompanion(
-          ncode: Value(normalizedNcode),
+          source: Value(source),
+          workId: Value(workId),
           episodeId: Value(e.index ?? 0),
           subtitle: Value(e.subtitle ?? ''),
           url: Value(e.url ?? ''),
@@ -668,7 +712,8 @@ class NovelRepository {
       // ネットワークエラー等はキャッシュがあればフォールバックし、
       // キャッシュが無い場合はエラーを呼び出し元に伝える
       final cached = await _db.getEpisodesRange(
-        normalizedNcode,
+        source,
+        workId,
         start,
         start + 99,
       );
@@ -681,10 +726,10 @@ class NovelRepository {
   }
 
   /// 最後に読んだエピソード番号を監視する
-  Stream<int?> watchLastReadEpisode(String ncode) {
-    final normalizedNcode = ncode.toNormalizedNcode();
-    return (_db.select(_db.readingHistory)
-          ..where((t) => t.ncode.equals(normalizedNcode)))
+  Stream<int?> watchLastReadEpisode(NovelSource source, String workId) {
+    return (_db.select(_db.readingHistory)..where(
+          (t) => t.source.equalsValue(source) & t.workId.equals(workId),
+        ))
         .watchSingleOrNull()
         .map((history) => history?.lastEpisodeId);
   }
@@ -705,36 +750,40 @@ class NovelRepository {
 /// 小説の情報を取得し、DBにキャッシュするプロバイダー。
 Stream<NovelInfo> novelInfoWithCache(
   Ref ref,
-  String ncode,
+  NovelSource source,
+  String workId,
 ) {
   ref.keepAlive();
-  final normalizedNcode = ncode.toNormalizedNcode();
   final repository = ref.watch(novelRepositoryProvider);
 
-  return repository.watchNovelInfo(normalizedNcode);
+  return repository.watchNovelInfo(source, workId);
 }
 
 @riverpod
 /// 小説のコンテンツを取得するプロバイダー。
 Future<List<NovelContentElement>> novelContent(
   Ref ref, {
-  required String ncode,
+  required NovelSource source,
+  required String workId,
   required int episode,
   String? revised,
 }) async {
-  final normalizedNcode = ncode.toNormalizedNcode();
   final repository = ref.read(novelRepositoryProvider);
-  return repository.getEpisode(normalizedNcode, episode, revised: revised);
+  return repository.getEpisode(
+    source,
+    workId,
+    episode,
+    revised: revised,
+  );
 }
 
 @riverpod
 /// 小説のライブラリ状態を管理するプロバイダー。
 class LibraryStatus extends _$LibraryStatus {
   @override
-  Stream<bool> build(String ncode) {
-    final normalizedNcode = ncode.toNormalizedNcode();
+  Stream<bool> build(NovelSource source, String workId) {
     final db = ref.watch(appDatabaseProvider);
-    return db.watchIsInLibrary(normalizedNcode);
+    return db.watchIsInLibrary(source, workId);
   }
 
   /// ライブラリの状態をトグルするメソッド。
@@ -749,9 +798,15 @@ class LibraryStatus extends _$LibraryStatus {
         // 事前にNovelsテーブルに小説情報が存在することを保証する必要がある。
         // 通常はfetchNovelInfoによって挿入済み。
         await db.insertNovel(novelInfo.toDbCompanion());
-        await db.addToLibrary(novelInfo.ncode!);
+        await db.addToLibrary(
+          novelInfo.source,
+          novelInfo.workId ?? novelInfo.ncode!,
+        );
       } else {
-        await db.removeFromLibrary(novelInfo.ncode!);
+        await db.removeFromLibrary(
+          novelInfo.source,
+          novelInfo.workId ?? novelInfo.ncode!,
+        );
       }
 
       ref.invalidate(libraryNovelsProvider);
@@ -765,11 +820,11 @@ class LibraryStatus extends _$LibraryStatus {
 /// 小説のダウンロード進捗を監視するプロバイダー。
 Stream<DownloadProgress?> downloadProgress(
   Ref ref,
-  String ncode,
+  NovelSource source,
+  String workId,
 ) {
-  final normalizedNcode = ncode.toNormalizedNcode();
   final repo = ref.watch(novelRepositoryProvider);
-  return repo.watchDownloadProgress(normalizedNcode);
+  return repo.watchDownloadProgress(source, workId);
 }
 
 @riverpod
@@ -794,7 +849,8 @@ class DownloadStatus extends _$DownloadStatus {
 
     try {
       final result = await repo.downloadNovelWithResult(
-        novelInfo.ncode!,
+        novelInfo.source,
+        novelInfo.workId ?? novelInfo.ncode!,
         novelInfo.generalAllNo!,
       );
 
@@ -815,7 +871,10 @@ class DownloadStatus extends _$DownloadStatus {
     state = const AsyncValue.loading();
 
     try {
-      await repo.deleteDownloadedNovel(novelInfo.ncode!);
+      await repo.deleteDownloadedNovel(
+        novelInfo.source,
+        novelInfo.workId ?? novelInfo.ncode!,
+      );
       ref.invalidateSelf();
       return const DownloadResult.success();
     } on Exception catch (e, st) {
@@ -829,20 +888,19 @@ class DownloadStatus extends _$DownloadStatus {
 /// エピソードリストをページ単位で取得するプロバイダー。
 Stream<List<Episode>> episodeList(
   Ref ref,
-  String ncodeAndPage,
+  NovelSource source,
+  String workId,
+  int page,
 ) {
   ref.keepAlive();
-  final parts = ncodeAndPage.split('_');
-  final ncode = parts[0];
-  final page = int.parse(parts[1]);
   final repository = ref.watch(novelRepositoryProvider);
 
-  return repository.watchEpisodeList(ncode, page);
+  return repository.watchEpisodeList(source, workId, page);
 }
 
 @Riverpod(keepAlive: true)
 /// 最後に読んだエピソード番号を取得するプロバイダー
-Stream<int?> lastReadEpisode(Ref ref, String ncode) {
+Stream<int?> lastReadEpisode(Ref ref, NovelSource source, String workId) {
   final repository = ref.watch(novelRepositoryProvider);
-  return repository.watchLastReadEpisode(ncode);
+  return repository.watchLastReadEpisode(source, workId);
 }
