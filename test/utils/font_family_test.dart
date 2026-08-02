@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/utils/font_family.dart';
 
@@ -45,117 +44,13 @@ void main() {
     });
   });
 
-  group('resolveFontFamily (ゴシック)', () {
-    test('Android ではファミリーを指定しない', () {
-      final result = resolveFontFamily(
-        FontFamilySetting.sans,
-        TargetPlatform.android,
-      );
-
-      expect(result.family, isNull);
-      expect(result.fallbacks, isEmpty);
+  group('resolveFontFamily', () {
+    test('ゴシック体はバンドルの NotoSansJP を返す', () {
+      expect(resolveFontFamily(FontFamilySetting.sans), 'NotoSansJP');
     });
 
-    test('iOS ではファミリーを指定しない', () {
-      final result = resolveFontFamily(
-        FontFamilySetting.sans,
-        TargetPlatform.iOS,
-      );
-
-      expect(result.family, isNull);
-      expect(result.fallbacks, isEmpty);
-    });
-
-    test('macOS ではファミリーを指定しない', () {
-      final result = resolveFontFamily(
-        FontFamilySetting.sans,
-        TargetPlatform.macOS,
-      );
-
-      expect(result.family, isNull);
-      expect(result.fallbacks, isEmpty);
-    });
-
-    test('Windows では Noto Sans JP を Yu Gothic のフォールバック付きで使う', () {
-      final result = resolveFontFamily(
-        FontFamilySetting.sans,
-        TargetPlatform.windows,
-      );
-
-      expect(result.family, 'Noto Sans JP');
-      expect(result.fallbacks, ['Yu Gothic']);
-    });
-
-    test('Linux では Noto Sans CJK JP を使う', () {
-      final result = resolveFontFamily(
-        FontFamilySetting.sans,
-        TargetPlatform.linux,
-      );
-
-      expect(result.family, 'Noto Sans CJK JP');
-      expect(result.fallbacks, isEmpty);
-    });
-  });
-
-  group('resolveFontFamily (明朝)', () {
-    test('Android ではシステムの serif ファミリーを使う', () {
-      final result = resolveFontFamily(
-        FontFamilySetting.serif,
-        TargetPlatform.android,
-      );
-
-      expect(result.family, 'serif');
-      expect(result.fallbacks, isEmpty);
-    });
-
-    test('iOS では Hiragino Mincho ProN を使う', () {
-      final result = resolveFontFamily(
-        FontFamilySetting.serif,
-        TargetPlatform.iOS,
-      );
-
-      expect(result.family, 'Hiragino Mincho ProN');
-      expect(result.fallbacks, isEmpty);
-    });
-
-    test('macOS では Hiragino Mincho ProN を使う', () {
-      final result = resolveFontFamily(
-        FontFamilySetting.serif,
-        TargetPlatform.macOS,
-      );
-
-      expect(result.family, 'Hiragino Mincho ProN');
-      expect(result.fallbacks, isEmpty);
-    });
-
-    test('Windows では Noto Serif JP を Yu Mincho のフォールバック付きで使う', () {
-      final result = resolveFontFamily(
-        FontFamilySetting.serif,
-        TargetPlatform.windows,
-      );
-
-      expect(result.family, 'Noto Serif JP');
-      expect(result.fallbacks, ['Yu Mincho']);
-    });
-
-    test('Linux では Noto Serif CJK JP を使う', () {
-      final result = resolveFontFamily(
-        FontFamilySetting.serif,
-        TargetPlatform.linux,
-      );
-
-      expect(result.family, 'Noto Serif CJK JP');
-      expect(result.fallbacks, isEmpty);
-    });
-
-    test('fuchsia ではファミリーを指定しない', () {
-      final result = resolveFontFamily(
-        FontFamilySetting.serif,
-        TargetPlatform.fuchsia,
-      );
-
-      expect(result.family, isNull);
-      expect(result.fallbacks, isEmpty);
+    test('明朝体はバンドルの NotoSerifJP を返す', () {
+      expect(resolveFontFamily(FontFamilySetting.serif), 'NotoSerifJP');
     });
   });
 }

@@ -7,6 +7,7 @@ import 'package:novelty/router/router.dart';
 import 'package:novelty/screens/migration_progress_splash.dart';
 import 'package:novelty/screens/migration_recovery_screen.dart';
 import 'package:novelty/services/backup_service.dart';
+import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/offline_mode_banner.dart';
 import 'package:riverpod/legacy.dart' show StateProvider;
@@ -119,9 +120,11 @@ class _AppWithSettings extends ConsumerWidget {
             themeMode: settings.themeMode,
             theme: ThemeData(
               colorScheme: colorScheme,
+              fontFamily: bundledSansFontFamily,
             ),
             darkTheme: ThemeData(
               colorScheme: darkColorSchema,
+              fontFamily: bundledSansFontFamily,
             ),
             routerConfig: router,
             builder: (context, child) => OfflineModeBanner(child: child!),

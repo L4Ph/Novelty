@@ -1,4 +1,8 @@
-import 'package:flutter/foundation.dart';
+/// バンドルフォントのファミリー名(ゴシック体)。
+const bundledSansFontFamily = 'NotoSansJP';
+
+/// バンドルフォントのファミリー名(明朝体)。
+const bundledSerifFontFamily = 'NotoSerifJP';
 
 /// フォント設定の意味的なキー。
 ///
@@ -32,68 +36,17 @@ enum FontFamilySetting {
   }
 }
 
-/// フォント設定を解決した結果。
+/// フォント設定からバンドルフォントのファミリー名へ解決する。
 ///
-/// [family] が null の場合はプラットフォーム標準のフォントを使用する。
-/// [fallbacks] は [family] が存在しない場合のフォールバック先ファミリー名。
-@immutable
-class FontFamilyResolution {
-  /// コンストラクタ。
-  const FontFamilyResolution({this.family, this.fallbacks = const []});
-
-  /// 使用するフォントファミリー名。
-  final String? family;
-
-  /// フォールバック先のフォントファミリー名。
-  final List<String> fallbacks;
-}
-
-/// フォント設定とプラットフォームから実際のファミリー名へ解決する。
-///
-/// バンドルフォントを廃止し、各プラットフォームに同梱されているフォントを
-/// 使用する方針のため、設定値は「ゴシック」「明朝」の意味的なキーのみを持つ。
-FontFamilyResolution resolveFontFamily(
-  FontFamilySetting fontFamily,
-  TargetPlatform platform,
-) {
+/// 全プラットフォームで同梱の Noto フォントを使用する。
+/// システムフォントに委ねると OS のロケール解決によって
+/// 中国語字形の CJK フォントが選ばれる場合があるため、
+/// 日本語字形のみを持つフォントをバンドルして固定する。
+String resolveFontFamily(FontFamilySetting fontFamily) {
   switch (fontFamily) {
-    case FontFamilySetting.serif:
-      // 明朝体はプラットフォーム固有のファミリー名を指定する
-      switch (platform) {
-        case TargetPlatform.android:
-          // 汎用名 `serif` がシステムの明朝体 (Noto Serif CJK JP) へ解決される
-          return const FontFamilyResolution(family: 'serif');
-        case TargetPlatform.iOS:
-        case TargetPlatform.macOS:
-          return const FontFamilyResolution(family: 'Hiragino Mincho ProN');
-        case TargetPlatform.windows:
-          // Windows 11 以降は Noto Serif JP が同梱される
-          return const FontFamilyResolution(
-            family: 'Noto Serif JP',
-            fallbacks: ['Yu Mincho'],
-          );
-        case TargetPlatform.linux:
-          return const FontFamilyResolution(family: 'Noto Serif CJK JP');
-        case TargetPlatform.fuchsia:
-          return const FontFamilyResolution();
-      }
     case FontFamilySetting.sans:
-      // ゴシック体はプラットフォーム標準のゴシック体を使用する
-      switch (platform) {
-        case TargetPlatform.windows:
-          // Windows 10/11 には Noto Sans JP が同梱される
-          return const FontFamilyResolution(
-            family: 'Noto Sans JP',
-            fallbacks: ['Yu Gothic'],
-          );
-        case TargetPlatform.linux:
-          return const FontFamilyResolution(family: 'Noto Sans CJK JP');
-        case TargetPlatform.android:
-        case TargetPlatform.iOS:
-        case TargetPlatform.macOS:
-        case TargetPlatform.fuchsia:
-          // プラットフォーム標準のフォントに任せる
-          return const FontFamilyResolution();
-      }
+      return bundledSansFontFamily;
+    case FontFamilySetting.serif:
+      return bundledSerifFontFamily;
   }
 }

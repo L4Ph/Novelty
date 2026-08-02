@@ -81,6 +81,13 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  fonts:
+    - family: NotoSansJP
+      fonts:
+        - asset: assets/fonts/NotoSansJP.ttf
+    - family: NotoSerifJP
+      fonts:
+        - asset: assets/fonts/NotoSerifJP.ttf
 # An image asset can refer to one or more resolution-specific "variants", see
 # https://flutter.dev/to/resolution-aware-images
 # For details regarding adding assets from package dependencies, see

@@ -146,8 +146,8 @@ void main() {
           )
           .first,
     );
-    expect(defaultTextStyle.style.fontFamily, 'serif');
-    expect(defaultTextStyle.style.fontFamilyFallback, isEmpty);
+    expect(defaultTextStyle.style.fontFamily, 'NotoSerifJP');
+    expect(defaultTextStyle.style.fontFamilyFallback, isNull);
   });
 
   testWidgets('横書き設定でNovelContentViewがレンダリングされること', (tester) async {
