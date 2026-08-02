@@ -5,6 +5,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/router/router.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/app_constants.dart';
 
 /// 小説リストのタイルを表示するウィジェット。
@@ -178,6 +179,32 @@ class NovelListTile extends HookWidget {
                           Icons.favorite,
                           size: 16,
                           color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      // ソースバッジ（カクヨム等の非なろうサイトのみ表示）
+                      if (item.source != NovelSource.narou) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item.source.label,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 8),
                       ],
