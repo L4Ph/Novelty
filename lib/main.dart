@@ -1,5 +1,6 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/router/router.dart';
@@ -19,6 +20,19 @@ Future<void> main() async {
     ),
   );
 }
+
+/// アプリ全体でサポートするロケール。
+/// 日本語(日本)のみをサポートし、OSのロケールに関わらず
+/// 日本語環境として動作させることで、CJKフォントの
+/// 中国語グリフへのフォールバックを防ぐ。
+const appSupportedLocales = <Locale>[Locale('ja', 'JP')];
+
+/// アプリ全体で使用するローカライゼーションデリゲート。
+const appLocalizationsDelegates = <LocalizationsDelegate<dynamic>>[
+  GlobalMaterialLocalizations.delegate,
+  GlobalWidgetsLocalizations.delegate,
+  GlobalCupertinoLocalizations.delegate,
+];
 
 /// マイグレーションリトライ回数を管理するプロバイダー。
 final StateProvider<int> migrationRetryCounterProvider = StateProvider<int>(
@@ -48,13 +62,17 @@ class MyApp extends ConsumerWidget {
     return dbInit.when(
       data: (_) => const _AppWithSettings(),
       loading: () => const MaterialApp(
-        locale: Locale('ja'),
+        locale: Locale('ja', 'JP'),
+        supportedLocales: appSupportedLocales,
+        localizationsDelegates: appLocalizationsDelegates,
         home: MigrationProgressSplash(),
       ),
       error: (err, stack) {
         final db = ref.read(appDatabaseProvider);
         return MaterialApp(
-          locale: const Locale('ja'),
+          locale: const Locale('ja', 'JP'),
+          supportedLocales: appSupportedLocales,
+          localizationsDelegates: appLocalizationsDelegates,
           home: MigrationRecoveryScreen(
             error: err,
             onRetry: () {
@@ -95,7 +113,9 @@ class _AppWithSettings extends ConsumerWidget {
 
           return MaterialApp.router(
             title: 'Novelty',
-            locale: const Locale('ja'),
+            locale: const Locale('ja', 'JP'),
+            supportedLocales: appSupportedLocales,
+            localizationsDelegates: appLocalizationsDelegates,
             themeMode: settings.themeMode,
             theme: ThemeData(
               colorScheme: colorScheme,
