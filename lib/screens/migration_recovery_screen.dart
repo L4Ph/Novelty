@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:novelty/database/migration_helper.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:novelty/utils/clipboard_helper.dart';
 
 /// マイグレーション失敗時に表示するリカバリー画面。
 /// リトライ、DBのエクスポート、エラーレポートの共有を提供する。
@@ -61,8 +61,9 @@ class MigrationRecoveryScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -89,9 +90,9 @@ class MigrationRecoveryScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: () => unawaited(_shareLatestReport(context)),
-              icon: const Icon(Icons.share),
-              label: const Text('エラーレポートを共有'),
+              onPressed: () => unawaited(_copyLatestReportPath(context)),
+              icon: const Icon(Icons.copy),
+              label: const Text('エラーレポートのパスをコピー'),
             ),
           ],
         ),
@@ -114,16 +115,16 @@ class MigrationRecoveryScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _shareLatestReport(BuildContext context) async {
+  Future<void> _copyLatestReportPath(BuildContext context) async {
     try {
       final latestReport = await _findLatestMigrationReport();
       if (latestReport != null) {
-        await SharePlus.instance.share(
-          ShareParams(
-            files: [XFile(latestReport.path)],
-            subject: 'Novelty マイグレーションエラーレポート',
-          ),
-        );
+        await copyTextToClipboard(latestReport.path);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('エラーレポートのパスをコピーしました')),
+          );
+        }
       } else {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -134,7 +135,7 @@ class MigrationRecoveryScreen extends StatelessWidget {
     } on Exception catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('レポートの共有に失敗しました: $e')),
+          SnackBar(content: Text('エラーレポートのパスのコピーに失敗しました: $e')),
         );
       }
     }

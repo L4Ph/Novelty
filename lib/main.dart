@@ -48,11 +48,13 @@ class MyApp extends ConsumerWidget {
     return dbInit.when(
       data: (_) => const _AppWithSettings(),
       loading: () => const MaterialApp(
+        locale: Locale('ja'),
         home: MigrationProgressSplash(),
       ),
       error: (err, stack) {
         final db = ref.read(appDatabaseProvider);
         return MaterialApp(
+          locale: const Locale('ja'),
           home: MigrationRecoveryScreen(
             error: err,
             onRetry: () {
@@ -93,6 +95,7 @@ class _AppWithSettings extends ConsumerWidget {
 
           return MaterialApp.router(
             title: 'Novelty',
+            locale: const Locale('ja'),
             themeMode: settings.themeMode,
             theme: ThemeData(
               colorScheme: colorScheme,

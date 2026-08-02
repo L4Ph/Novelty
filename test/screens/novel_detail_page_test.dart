@@ -7,6 +7,8 @@ import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/novel_detail_page.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
+import '../helpers/clipboard.dart';
+
 /// テスト用のライブラリ状態Notifier
 class FakeLibraryStatus extends LibraryStatus {
   @override
@@ -39,7 +41,7 @@ void main() {
             downloadProgressProvider.overrideWith(
               (ref, ncode) => Stream.value(null),
             ),
-            libraryStatusProvider.overrideWith(FakeLibraryStatus.new),
+            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
             lastReadEpisodeProvider.overrideWith(
               (ref, ncode) => Stream.value(null),
             ),
@@ -81,7 +83,7 @@ void main() {
             downloadProgressProvider.overrideWith(
               (ref, ncode) => Stream.value(null),
             ),
-            libraryStatusProvider.overrideWith(FakeLibraryStatus.new),
+            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
             lastReadEpisodeProvider.overrideWith(
               (ref, ncode) => Stream.value(null),
             ),
@@ -123,7 +125,7 @@ void main() {
             downloadProgressProvider.overrideWith(
               (ref, ncode) => Stream.value(null),
             ),
-            libraryStatusProvider.overrideWith(FakeLibraryStatus.new),
+            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
             lastReadEpisodeProvider.overrideWith(
               (ref, ncode) => Stream.value(null),
             ),
@@ -171,7 +173,7 @@ void main() {
             downloadProgressProvider.overrideWith(
               (ref, ncode) => Stream.value(null),
             ),
-            libraryStatusProvider.overrideWith(FakeLibraryStatus.new),
+            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
             lastReadEpisodeProvider.overrideWith(
               (ref, ncode) => Stream.value(null),
             ),
@@ -188,6 +190,52 @@ void main() {
         find.widgetWithText(FilledButton, 'ライブラリに追加'),
       );
       expect(button.enabled, isTrue);
+    });
+
+    testWidgets('共有アイコンをタップするとタイトルとURLがクリップボードにコピーされる', (
+      tester,
+    ) async {
+      final clipboardMock = installClipboardMock(tester);
+      addTearDown(clipboardMock.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isOfflineModeProvider.overrideWithValue(false),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, ncode) => Stream.value(
+                NovelInfo(
+                  ncode: ncode,
+                  title: '共有テスト小説',
+                ),
+              ),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, key) => Stream.value(<Episode>[]),
+            ),
+            downloadProgressProvider.overrideWith(
+              (ref, ncode) => Stream.value(null),
+            ),
+            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
+            lastReadEpisodeProvider.overrideWith(
+              (ref, ncode) => Stream.value(null),
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelDetailPage(ncode: testNcode),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.copy));
+      await tester.pumpAndSettle();
+
+      clipboardMock.expectCopiedText(
+        '共有テスト小説\nhttps://ncode.syosetu.com/$testNcode/',
+      );
+      expect(find.text('コピーしました'), findsOneWidget);
     });
   });
 }

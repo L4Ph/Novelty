@@ -2,13 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/router/router.dart';
+import 'package:novelty/utils/clipboard_helper.dart';
+import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 /// 小説の詳細ページ
 class NovelDetailPage extends ConsumerStatefulWidget {
@@ -49,6 +50,14 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
         _showTitle = show;
       });
     }
+  }
+
+  Future<void> _copyNovelInfo(String? title, String url) async {
+    final messenger = ScaffoldMessenger.of(context);
+    await copyTextToClipboard('${title ?? ''}\n$url');
+    messenger.showSnackBar(
+      const SnackBar(content: Text('コピーしました')),
+    );
   }
 
   void _loadMoreEpisodes() {
@@ -175,13 +184,19 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
         onPressed: () async {
           // 短編: 常にエピソード1へ移動
           if (isShortStory) {
-            await context.push('/novel/${widget.ncode}/1');
+            await NovelEpisodeRoute(
+              ncode: widget.ncode,
+              episode: 1,
+            ).push<void>(context);
             return;
           }
 
           // 連載: 最後に読んだエピソードまたはエピソード1へ移動
           final targetEpisode = lastReadEpisode ?? 1;
-          await context.push('/novel/${widget.ncode}/$targetEpisode');
+          await NovelEpisodeRoute(
+            ncode: widget.ncode,
+            episode: targetEpisode,
+          ).push<void>(context);
         },
         icon: const Icon(Icons.menu_book),
         label: Text(
@@ -225,14 +240,14 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
               ),
               actions: [
                 IconButton(
-                  tooltip: '共有',
-                  icon: const Icon(Icons.share),
+                  tooltip: 'コピー',
+                  icon: const Icon(Icons.copy),
                   onPressed: () {
-                    final url = 'https://ncode.syosetu.com/${novelInfo.ncode}/';
+                    final url =
+                        'https://ncode.syosetu.com/'
+                        '${novelInfo.ncode?.toNormalizedNcode() ?? ''}/';
                     unawaited(
-                      SharePlus.instance.share(
-                        ShareParams(text: '${novelInfo.title}\n$url'),
-                      ),
+                      _copyNovelInfo(novelInfo.title, url),
                     );
                   },
                 ),
@@ -334,7 +349,9 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                       onTap: novelInfo.userId != null
                           ? () {
                               unawaited(
-                                context.push('/author/${novelInfo.userId}'),
+                                AuthorNovelsRoute(
+                                  userId: novelInfo.userId!,
+                                ).push(context),
                               );
                             }
                           : null,
@@ -752,13 +769,13 @@ class _EpisodeListTile extends ConsumerWidget {
             )
           : null,
       onTap: () {
-        final uri = Uri(
-          path: '/novel/$ncode/$episodeNumber',
-          queryParameters: episode.revised != null
-              ? {'revised': episode.revised}
-              : null,
+        unawaited(
+          NovelEpisodeRoute(
+            ncode: ncode,
+            episode: episodeNumber,
+            revised: episode.revised,
+          ).push(context),
         );
-        unawaited(context.push(uri.toString()));
       },
       onLongPress: isOfflineMode
           ? () => showOfflineDisabledSnackBar(context)
