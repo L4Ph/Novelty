@@ -1,5 +1,5 @@
-import 'package:narou_parser/src/models/novel_content_element.dart';
 import 'package:narou_parser/src/parser_lookup.dart';
+import 'package:novel_parser_core/novel_parser_core.dart';
 
 /// HTML文字列から小説のコンテンツをパースする関数。
 ///

@@ -4,7 +4,7 @@
 /// ベンチマークや検証目的で使用してください。
 library;
 
-export 'src/models/novel_content_element.dart';
+export 'package:novel_parser_core/novel_parser_core.dart';
 export 'src/parser_experimental.dart';
 // export 'src/parser_lookup.dart';
 export 'src/parser_state_machine.dart';
