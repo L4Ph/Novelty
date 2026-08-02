@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      go_router_builder:
+        generate_for:
+          - lib/router/router.dart
+      drift_dev:
+        generate_for:
+          - lib/database/database.dart
