@@ -1,4 +1,9 @@
+Noto Sans JP:
 Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'
+
+GenEi Koburi Mincho v6:
+Copyright (c) 2017-2019, o_tamon, with Reserved Font Name 'GenEi'.
+Copyright (c) 2017 Adobe Systems Incorporated (http://www.adobe.com/), with Reserved Font Name 'Source'.
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:novelty/repositories/preferences_repository.dart';
-import 'package:novelty/utils/font_family.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'settings_provider.g.dart';
@@ -13,7 +12,6 @@ class AppSettings {
     required this.themeMode,
     required this.fontSize,
     required this.lineHeight,
-    required this.fontFamily,
     required this.isVertical,
     required this.isIncognito,
     required this.isPageFlip,
@@ -29,9 +27,6 @@ class AppSettings {
 
   /// 行間。
   final double lineHeight;
-
-  /// フォント設定（意味的なキー）。
-  final FontFamilySetting fontFamily;
 
   /// 縦書き設定。
   final bool isVertical;
@@ -59,7 +54,6 @@ class AppSettings {
     ThemeMode? themeMode,
     double? fontSize,
     double? lineHeight,
-    FontFamilySetting? fontFamily,
     bool? isVertical,
     bool? isIncognito,
     bool? isPageFlip,
@@ -70,7 +64,6 @@ class AppSettings {
       themeMode: themeMode ?? this.themeMode,
       fontSize: fontSize ?? this.fontSize,
       lineHeight: lineHeight ?? this.lineHeight,
-      fontFamily: fontFamily ?? this.fontFamily,
       isVertical: isVertical ?? this.isVertical,
       isIncognito: isIncognito ?? this.isIncognito,
       isPageFlip: isPageFlip ?? this.isPageFlip,
@@ -86,7 +79,6 @@ class Settings extends _$Settings {
   static const _themeModeKey = 'theme_mode';
   static const _fontSizeKey = 'font_size';
   static const _lineHeightKey = 'line_height';
-  static const _fontFamilyKey = 'font_family';
   static const _isVerticalKey = 'is_vertical';
   static const _isIncognitoKey = 'is_incognito';
   static const _isPageFlipKey = 'is_page_flip';
@@ -118,15 +110,6 @@ class Settings extends _$Settings {
         await repo.getInt(_themeModeKey) ?? ThemeMode.system.index;
     final fontSize = await repo.getDouble(_fontSizeKey) ?? 16.0;
     final lineHeight = await repo.getDouble(_lineHeightKey) ?? 1.5;
-    // フォント設定は意味的なキーで管理する。
-    // 旧バージョンで保存されたバンドルフォント名は新しいキーへ移行する。
-    final storedFontFamily = await repo.getString(_fontFamilyKey);
-    final fontFamily = FontFamilySetting.fromStored(storedFontFamily);
-    // 保存済みの値がある場合のみ、正規化した値と異なれば永続化する
-    // (新規インストール時は書き込まない)
-    if (storedFontFamily != null && storedFontFamily != fontFamily.storageKey) {
-      await repo.setString(_fontFamilyKey, fontFamily.storageKey);
-    }
     final isVertical = await repo.getBool(_isVerticalKey) ?? false;
     final isIncognito = await repo.getBool(_isIncognitoKey) ?? false;
     final isPageFlip = await repo.getBool(_isPageFlipKey) ?? false;
@@ -137,7 +120,6 @@ class Settings extends _$Settings {
       themeMode: ThemeMode.values[themeModeIndex],
       fontSize: fontSize,
       lineHeight: lineHeight,
-      fontFamily: fontFamily,
       isVertical: isVertical,
       isIncognito: isIncognito,
       isPageFlip: isPageFlip,
@@ -206,28 +188,6 @@ class Settings extends _$Settings {
     } catch (e, stackTrace) {
       debugPrint(
         'Error saving line height setting: $e\nStack trace: $stackTrace',
-      );
-      state = AsyncError(e, stackTrace);
-      rethrow;
-    }
-  }
-
-  /// フォントを設定するメソッド。
-  Future<void> setFontFamily(FontFamilySetting family) async {
-    if (!state.hasValue) {
-      throw StateError('Settings are not loaded');
-    }
-
-    try {
-      final repo = await _repo;
-      final success = await repo.setString(_fontFamilyKey, family.storageKey);
-      if (!success) {
-        throw Exception('Failed to save font family setting');
-      }
-      state = AsyncData(state.value!.copyWith(fontFamily: family));
-    } catch (e, stackTrace) {
-      debugPrint(
-        'Error saving font family setting: $e\nStack trace: $stackTrace',
       );
       state = AsyncError(e, stackTrace);
       rethrow;

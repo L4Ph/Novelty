@@ -9,7 +9,6 @@ import 'package:novelty/database/database.dart' as db;
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
-import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 @GenerateMocks([db.AppDatabase, ApiService, NovelRepository])
@@ -22,7 +21,6 @@ class MockSettings extends Settings {
     isVertical: false,
     themeMode: ThemeMode.system,
     lineHeight: 1.5,
-    fontFamily: FontFamilySetting.sans,
     isIncognito: false,
     isPageFlip: false,
     isRubyEnabled: true,

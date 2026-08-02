@@ -86,9 +86,9 @@ flutter:
     - family: NotoSansJP
       fonts:
         - asset: assets/fonts/NotoSansJP.ttf
-    - family: NotoSerifJP
+    - family: GenEiKoburiMincho
       fonts:
-        - asset: assets/fonts/NotoSerifJP.ttf
+        - asset: assets/fonts/GenEiKoburiMin6-R.ttf
 # An image asset can refer to one or more resolution-specific "variants", see
 # https://flutter.dev/to/resolution-aware-images
 # For details regarding adding assets from package dependencies, see

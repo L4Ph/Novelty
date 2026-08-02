@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
-import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
@@ -15,7 +14,6 @@ AppSettings get defaultTestSettings => const AppSettings(
   fontSize: 16,
   themeMode: ThemeMode.system,
   lineHeight: 1.5,
-  fontFamily: FontFamilySetting.sans,
   isIncognito: false,
   isPageFlip: false,
   isRubyEnabled: true,
@@ -121,7 +119,7 @@ void main() {
     expect(find.byType(TategakiText), findsOneWidget);
   });
 
-  testWidgets('ページめくり縦書きでは設定フォントがDefaultTextStyle経由で適用されること', (tester) async {
+  testWidgets('ページめくり縦書きでは固定フォントがDefaultTextStyle経由で適用されること', (tester) async {
     await pumpWidget(
       tester,
       contentValue: AsyncData(testContent),
@@ -129,7 +127,6 @@ void main() {
         defaultTestSettings.copyWith(
           isVertical: true,
           isPageFlip: true,
-          fontFamily: FontFamilySetting.serif,
         ),
       ),
     );
@@ -146,7 +143,7 @@ void main() {
           )
           .first,
     );
-    expect(defaultTextStyle.style.fontFamily, 'NotoSerifJP');
+    expect(defaultTextStyle.style.fontFamily, 'GenEiKoburiMincho');
     expect(defaultTextStyle.style.fontFamilyFallback, isNull);
   });
 

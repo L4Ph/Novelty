@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 /// 閲覧設定ページ
@@ -71,61 +70,6 @@ class ReaderSettingsPage extends ConsumerWidget {
                 }
               }
             },
-          ),
-        ),
-        ListTile(
-          title: const Text('フォント'),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              DropdownButton<FontFamilySetting>(
-                value: settings.fontFamily,
-                isExpanded: true,
-                underline: const SizedBox(),
-                items: const [
-                  DropdownMenuItem(
-                    value: FontFamilySetting.sans,
-                    child: Text('ゴシック'),
-                  ),
-                  DropdownMenuItem(
-                    value: FontFamilySetting.serif,
-                    child: Text('明朝'),
-                  ),
-                ],
-                onChanged: (value) async {
-                  if (value != null) {
-                    try {
-                      await ref
-                          .read(settingsProvider.notifier)
-                          .setFontFamily(value);
-                    } on Exception catch (e, stackTrace) {
-                      debugPrint(
-                        'Failed to save font family: $e\n$stackTrace',
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('フォントファミリー設定の保存に失敗しました'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    }
-                  }
-                },
-              ),
-              // OS標準フォントを使用する旨の補足説明
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '端末のフォントを使用します',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
       ],

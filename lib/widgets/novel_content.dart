@@ -116,11 +116,11 @@ class NovelContentBody extends HookWidget {
       data: (settingsData) {
         return content.when(
           data: (contentData) {
-            // 設定のフォントをバンドルフォントのファミリー名へ解決する
+            // 小説本文は固定のバンドルフォント(源暎こぶり明朝)を使用する
             final textStyle = TextStyle(
               fontSize: settingsData.fontSize,
               color: textColor,
-              fontFamily: resolveFontFamily(settingsData.fontFamily),
+              fontFamily: novelBodyFontFamily,
               height: settingsData.lineHeight,
             );
 

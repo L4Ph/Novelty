@@ -67,11 +67,12 @@ class MyApp extends ConsumerWidget {
 
     return dbInit.when(
       data: (_) => const _AppWithSettings(),
-      loading: () => const MaterialApp(
+      loading: () => MaterialApp(
         locale: appLocale,
         supportedLocales: appSupportedLocales,
         localizationsDelegates: appLocalizationsDelegates,
-        home: MigrationProgressSplash(),
+        theme: ThemeData(fontFamily: appUiFontFamily),
+        home: const MigrationProgressSplash(),
       ),
       error: (err, stack) {
         final db = ref.read(appDatabaseProvider);
@@ -79,6 +80,7 @@ class MyApp extends ConsumerWidget {
           locale: appLocale,
           supportedLocales: appSupportedLocales,
           localizationsDelegates: appLocalizationsDelegates,
+          theme: ThemeData(fontFamily: appUiFontFamily),
           home: MigrationRecoveryScreen(
             error: err,
             onRetry: () {
@@ -125,11 +127,11 @@ class _AppWithSettings extends ConsumerWidget {
             themeMode: settings.themeMode,
             theme: ThemeData(
               colorScheme: colorScheme,
-              fontFamily: bundledSansFontFamily,
+              fontFamily: appUiFontFamily,
             ),
             darkTheme: ThemeData(
               colorScheme: darkColorSchema,
-              fontFamily: bundledSansFontFamily,
+              fontFamily: appUiFontFamily,
             ),
             routerConfig: router,
             builder: (context, child) => OfflineModeBanner(child: child!),
