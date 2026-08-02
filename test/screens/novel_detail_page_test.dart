@@ -248,5 +248,56 @@ void main() {
       );
       expect(find.text('コピーしました'), findsOneWidget);
     });
+
+    testWidgets('カクヨム作品の共有ではkakuyomu.jpのURLがコピーされる', (
+      tester,
+    ) async {
+      const kakuyomuWorkId = '16818023211929539879';
+      final clipboardMock = installClipboardMock(tester);
+      addTearDown(clipboardMock.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isOfflineModeProvider.overrideWithValue(false),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, args) => Stream.value(
+                const NovelInfo(
+                  source: NovelSource.kakuyomu,
+                  workId: kakuyomuWorkId,
+                  title: 'カクヨム共有テスト小説',
+                ),
+              ),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, args) => Stream.value(<Episode>[]),
+            ),
+            downloadProgressProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
+            lastReadEpisodeProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelDetailPage(
+              source: NovelSource.kakuyomu,
+              workId: kakuyomuWorkId,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.copy));
+      await tester.pumpAndSettle();
+
+      clipboardMock.expectCopiedText(
+        'カクヨム共有テスト小説\nhttps://kakuyomu.jp/works/$kakuyomuWorkId',
+      );
+      expect(find.text('コピーしました'), findsOneWidget);
+    });
   });
 }

@@ -9,8 +9,8 @@ import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/router/router.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/clipboard_helper.dart';
-import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:novelty/utils/work_url.dart';
 
 /// 小説の詳細ページ
 class NovelDetailPage extends ConsumerStatefulWidget {
@@ -269,9 +269,12 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                   tooltip: 'コピー',
                   icon: const Icon(Icons.copy),
                   onPressed: () {
-                    final url =
-                        'https://ncode.syosetu.com/'
-                        '${novelInfo.ncode?.toNormalizedNcode() ?? ''}/';
+                    // サイトに応じた作品URLを組み立てる（なろう/カクヨム）
+                    final url = buildWorkUrl(
+                      novelInfo.source,
+                      ncode: novelInfo.ncode,
+                      workId: novelInfo.workId,
+                    );
                     unawaited(
                       _copyNovelInfo(novelInfo.title, url),
                     );
