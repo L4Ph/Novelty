@@ -1,0 +1,18 @@
+name: kakuyomu_parser
+description: カクヨム小説パーサー
+version: 0.1.0
+publish_to: "none" # 内部パッケージ（path 依存を持つ）のため公開しない
+
+environment:
+  sdk: ^3.8.1
+
+resolution: workspace
+
+dependencies:
+  html:
+  novel_parser_core:
+    path: ../novel_parser_core
+
+dev_dependencies:
+  test:
+  very_good_analysis:
