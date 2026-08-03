@@ -768,6 +768,12 @@ class _EpisodeListTile extends ConsumerWidget {
     final episodeNumber = episode.index;
     final episodeTitle = episode.subtitle ?? 'No Title';
 
+    // デバッグ用: 話数の由来を確認するログ
+    debugPrint(
+      '[Novelty][EpisodeList] source=${source.name} '
+      'index=$episodeNumber url=${episode.url}',
+    );
+
     if (episodeNumber == null) {
       return ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
