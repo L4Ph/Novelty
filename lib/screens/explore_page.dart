@@ -17,6 +17,7 @@ import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 import 'package:novelty/widgets/search_modal.dart';
+import 'package:novelty/widgets/source_selector.dart';
 
 /// "見つける"ページのウィジェット。
 class ExplorePage extends ConsumerStatefulWidget {
@@ -128,13 +129,12 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
           initialSelectedGenreId: currentFilter.selectedGenreId,
           onApply: ({required showOnlyOngoing, required selectedGenreId}) {
             // Providerの状態を更新
-            ref
-                .read(
-                  rankingFilterStateProvider(
-                    _source,
-                    currentRankingType,
-                  ).notifier,
-                )
+            ref.read(
+                rankingFilterStateProvider(
+                  _source,
+                  currentRankingType,
+                ).notifier,
+              )
               ..setShowOnlyOngoing(value: showOnlyOngoing)
               ..setSelectedGenreId(selectedGenreId);
           },
@@ -184,32 +184,24 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
           bottom: searchState.isSearching
               ? null
               : PreferredSize(
-                  preferredSize: const Size.fromHeight(96),
+                  preferredSize: const Size.fromHeight(112),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // プロバイダ切替
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: SegmentedButton<NovelSource>(
-                          segments: const [
-                            ButtonSegment(
-                              value: NovelSource.narou,
-                              label: Text('なろう'),
-                            ),
-                            ButtonSegment(
-                              value: NovelSource.kakuyomu,
-                              label: Text('カクヨム'),
-                            ),
-                          ],
-                          selected: {_source},
-                          onSelectionChanged: (selection) {
-                            _switchSource(selection.first);
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        child: SourceSelector(
+                          sources: NovelSource.values,
+                          selected: _source,
+                          onChanged: (source) {
+                            if (source != null) {
+                              _switchSource(source);
+                            }
                           },
-                          showSelectedIcon: false,
-                          style: const ButtonStyle(
-                            visualDensity: VisualDensity.compact,
-                          ),
                         ),
                       ),
                       TabBar(
@@ -257,6 +249,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
     );
   }
 }
+
 class _OfflineExploreBody extends StatelessWidget {
   const _OfflineExploreBody();
 

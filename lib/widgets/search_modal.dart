@@ -7,6 +7,7 @@ import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/sort_selection_sheet.dart';
+import 'package:novelty/widgets/source_selector.dart';
 
 /// 検索条件を指定するモーダルウィジェット
 class SearchModal extends HookConsumerWidget {
@@ -65,20 +66,13 @@ class SearchModal extends HookConsumerWidget {
                   const SizedBox(height: 16),
 
                   // プロバイダ切替
-                  SegmentedButton<NovelSource>(
-                    segments: const [
-                      ButtonSegment(
-                        value: NovelSource.narou,
-                        label: Text('なろう'),
-                      ),
-                      ButtonSegment(
-                        value: NovelSource.kakuyomu,
-                        label: Text('カクヨム'),
-                      ),
-                    ],
-                    selected: {query.value.source},
-                    onSelectionChanged: (selection) {
-                      final source = selection.first;
+                  SourceSelector(
+                    sources: NovelSource.values,
+                    selected: query.value.source,
+                    onChanged: (source) {
+                      if (source == null) {
+                        return;
+                      }
                       final isNarou = source == NovelSource.narou;
                       query.value = query.value.copyWith(
                         source: source,
@@ -92,7 +86,6 @@ class SearchModal extends HookConsumerWidget {
                         order: isNarou ? query.value.order : 'new',
                       );
                     },
-                    showSelectedIcon: false,
                   ),
                   const SizedBox(height: 24),
 
@@ -119,211 +112,212 @@ class SearchModal extends HookConsumerWidget {
 
                   // なろう固有の詳細検索条件（カクヨムでは非表示）
                   if (query.value.source == NovelSource.narou) ...[
-                  // 検索対象（チップ）
-                  Text(
-                    '検索対象',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      FilterChip(
-                        label: const Text('タイトル'),
-                        selected: query.value.title,
-                        onSelected: (selected) {
-                          query.value = query.value.copyWith(title: selected);
-                        },
-                      ),
-                      FilterChip(
-                        label: const Text('あらすじ'),
-                        selected: query.value.ex,
-                        onSelected: (selected) {
-                          query.value = query.value.copyWith(ex: selected);
-                        },
-                      ),
-                      FilterChip(
-                        label: const Text('キーワード'),
-                        selected: query.value.keyword,
-                        onSelected: (selected) {
-                          query.value = query.value.copyWith(keyword: selected);
-                        },
-                      ),
-                      FilterChip(
-                        label: const Text('作者名'),
-                        selected: query.value.wname,
-                        onSelected: (selected) {
-                          query.value = query.value.copyWith(wname: selected);
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // ジャンル
-                  Text(
-                    'ジャンル',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<int?>(
-                    menuMaxHeight: MediaQuery.of(context).size.height * 0.5,
-                    initialValue:
-                        genreList.any(
-                          (g) =>
-                              g['id'].toString() ==
-                              query.value.genreId?.firstOrNull,
-                        )
-                        ? int.tryParse(query.value.genreId?.firstOrNull ?? '')
-                        : null,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
+                    // 検索対象（チップ）
+                    Text(
+                      '検索対象',
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
-                    items: [
-                      const DropdownMenuItem(
-                        child: Text('指定なし'),
-                      ),
-                      ...genreList.map(
-                        (g) => DropdownMenuItem(
-                          value: g['id'] as int,
-                          child: Text(g['name'] as String),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilterChip(
+                          label: const Text('タイトル'),
+                          selected: query.value.title,
+                          onSelected: (selected) {
+                            query.value = query.value.copyWith(title: selected);
+                          },
+                        ),
+                        FilterChip(
+                          label: const Text('あらすじ'),
+                          selected: query.value.ex,
+                          onSelected: (selected) {
+                            query.value = query.value.copyWith(ex: selected);
+                          },
+                        ),
+                        FilterChip(
+                          label: const Text('キーワード'),
+                          selected: query.value.keyword,
+                          onSelected: (selected) {
+                            query.value = query.value.copyWith(
+                              keyword: selected,
+                            );
+                          },
+                        ),
+                        FilterChip(
+                          label: const Text('作者名'),
+                          selected: query.value.wname,
+                          onSelected: (selected) {
+                            query.value = query.value.copyWith(wname: selected);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ジャンル
+                    Text(
+                      'ジャンル',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<int?>(
+                      menuMaxHeight: MediaQuery.of(context).size.height * 0.5,
+                      initialValue:
+                          genreList.any(
+                            (g) =>
+                                g['id'].toString() ==
+                                query.value.genreId?.firstOrNull,
+                          )
+                          ? int.tryParse(query.value.genreId?.firstOrNull ?? '')
+                          : null,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
                         ),
                       ),
-                    ],
-                    onChanged: (value) {
-                      query.value = query.value.copyWith(
-                        genreId: value == null ? null : [value.toString()],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
+                      items: [
+                        const DropdownMenuItem(
+                          child: Text('指定なし'),
+                        ),
+                        ...genreList.map(
+                          (g) => DropdownMenuItem(
+                            value: g['id'] as int,
+                            child: Text(g['name'] as String),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        query.value = query.value.copyWith(
+                          genreId: value == null ? null : [value.toString()],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
 
-                  // 種別
-                  Text(
-                    '種別',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      ChoiceChip(
-                        label: const Text('すべて'),
-                        selected: query.value.type == null,
-                        onSelected: (selected) {
-                          if (selected) {
-                            query.value = query.value.copyWith(type: null);
-                          }
-                        },
-                      ),
-                      ...novelTypes.entries.map((entry) {
-                        return ChoiceChip(
-                          label: Text(entry.value),
-                          selected: query.value.type == entry.key,
+                    // 種別
+                    Text(
+                      '種別',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        ChoiceChip(
+                          label: const Text('すべて'),
+                          selected: query.value.type == null,
                           onSelected: (selected) {
                             if (selected) {
-                              query.value = query.value.copyWith(
-                                type: entry.key,
-                              );
-                            } else if (query.value.type == entry.key) {
-                              // 任意: 選択解除で「すべて」に戻る
                               query.value = query.value.copyWith(type: null);
                             }
                           },
-                        );
-                      }),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 並び順
-                  Text(
-                    '並び順',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  InputDecorator(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                    child: InkWell(
-                      onTap: () {
-                        unawaited(
-                          showModalBottomSheet<void>(
-                            context: context,
-                            isScrollControlled: true,
-                            useSafeArea: true,
-                            builder: (context) => SortSelectionSheet(
-                              currentOrder: query.value.order,
-                              onOrderSelected: (newOrder) {
+                        ),
+                        ...novelTypes.entries.map((entry) {
+                          return ChoiceChip(
+                            label: Text(entry.value),
+                            selected: query.value.type == entry.key,
+                            onSelected: (selected) {
+                              if (selected) {
                                 query.value = query.value.copyWith(
-                                  order: newOrder,
+                                  type: entry.key,
                                 );
-                                Navigator.pop(context);
-                              },
+                              } else if (query.value.type == entry.key) {
+                                // 任意: 選択解除で「すべて」に戻る
+                                query.value = query.value.copyWith(type: null);
+                              }
+                            },
+                          );
+                        }),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // 並び順
+                    Text(
+                      '並び順',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    InputDecorator(
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          unawaited(
+                            showModalBottomSheet<void>(
+                              context: context,
+                              isScrollControlled: true,
+                              useSafeArea: true,
+                              builder: (context) => SortSelectionSheet(
+                                currentOrder: query.value.order,
+                                onOrderSelected: (newOrder) {
+                                  query.value = query.value.copyWith(
+                                    order: newOrder,
+                                  );
+                                  Navigator.pop(context);
+                                },
+                              ),
                             ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                novelOrders[query.value.order] ??
+                                    query.value.order,
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              const Icon(Icons.arrow_drop_down),
+                            ],
                           ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              novelOrders[query.value.order] ??
-                                  query.value.order,
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                            const Icon(Icons.arrow_drop_down),
-                          ],
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // 詳細設定
-                  ExpansionTile(
-                    title: const Text('詳細設定'),
-                    initiallyExpanded: showAdvanced.value,
-                    onExpansionChanged: (expanded) =>
-                        showAdvanced.value = expanded,
-                    children: [
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: notWordController,
+                    // 詳細設定
+                    ExpansionTile(
+                      title: const Text('詳細設定'),
+                      initiallyExpanded: showAdvanced.value,
+                      onExpansionChanged: (expanded) =>
+                          showAdvanced.value = expanded,
+                      children: [
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: notWordController,
 
-                        decoration: InputDecoration(
-                          labelText: '除外キーワード',
-                          hintText: 'スペース区切りで入力',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          decoration: InputDecoration(
+                            labelText: '除外キーワード',
+                            hintText: 'スペース区切りで入力',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
                           ),
-                          filled: true,
+                          onChanged: (text) {
+                            query.value = query.value.copyWith(notword: text);
+                          },
                         ),
-                        onChanged: (text) {
-                          query.value = query.value.copyWith(notword: text);
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ], // なろう固有の詳細検索条件ここまで
-
                   // 通常 Scaffold の SafeArea が余白を確保するが、念のため
                   // to have some padding at bottom of scroll
                   const SizedBox(height: 100),
