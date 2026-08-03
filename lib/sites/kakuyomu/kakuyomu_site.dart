@@ -94,6 +94,29 @@ class KakuyomuSite implements NovelSite {
   @override
   NovelSource get source => NovelSource.kakuyomu;
 
+  /// カクヨムのメタ情報（★レビューポイント表記）。
+  @override
+  String? metaText(NovelInfo info) {
+    final point = info.allPoint;
+    if (point == null) {
+      return null;
+    }
+    return '★${_formatWithComma(point)}';
+  }
+
+  /// 数値を3桁カンマ区切りに整形する。
+  static String _formatWithComma(int value) {
+    final digits = value.toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) {
+        buffer.write(',');
+      }
+      buffer.write(digits[i]);
+    }
+    return buffer.toString();
+  }
+
   /// カクヨムのジャンルマスタ。
   ///
   /// ジャンルIDは作品ページの `Work.genre` に含まれるキー
@@ -203,14 +226,15 @@ class KakuyomuSite implements NovelSite {
     String rankingType, {
     int page = 1,
   }) async {
-    final uri = Uri.parse(
-      '${source.baseUrl}/rankings/all/$rankingType',
-    ).replace(
-      queryParameters: <String, String>{
-        'work_variation': 'long',
-        if (page > 1) 'page': '$page',
-      },
-    );
+    final uri =
+        Uri.parse(
+          '${source.baseUrl}/rankings/all/$rankingType',
+        ).replace(
+          queryParameters: <String, String>{
+            'work_variation': 'long',
+            if (page > 1) 'page': '$page',
+          },
+        );
     final html = await _fetch(uri.toString());
     return _parseRanking(html);
   }
@@ -263,8 +287,8 @@ class KakuyomuSite implements NovelSite {
     Map<String, dynamic> work,
     Map<String, dynamic> apollo,
   ) {
-    final authorRef = (work['author'] as Map<String, dynamic>?)?['__ref']
-        as String?;
+    final authorRef =
+        (work['author'] as Map<String, dynamic>?)?['__ref'] as String?;
     final author = authorRef == null
         ? null
         : apollo[authorRef] as Map<String, dynamic>?;
@@ -291,8 +315,7 @@ class KakuyomuSite implements NovelSite {
         _ => 1,
       },
       generalAllNo: publicEpisodeCount,
-      keyword:
-          (work['tagLabels'] as List<dynamic>?)?.cast<String>().join(' '),
+      keyword: (work['tagLabels'] as List<dynamic>?)?.cast<String>().join(' '),
       generalFirstup: work['publishedAt'] as String?,
       generalLastup: work['lastEpisodePublishedAt'] as String?,
     );
@@ -302,8 +325,7 @@ class KakuyomuSite implements NovelSite {
   NovelSearchResult _parseSearchResults(String html) {
     final apollo = _parseApolloState(html);
     final rootQuery = apollo['ROOT_QUERY'] as Map<String, dynamic>?;
-    final searchKey = rootQuery
-        ?.keys
+    final searchKey = rootQuery?.keys
         .where((k) => k.startsWith('searchWorks('))
         .firstOrNull;
     final connection = searchKey == null
@@ -311,8 +333,7 @@ class KakuyomuSite implements NovelSite {
         : rootQuery?[searchKey] as Map<String, dynamic>?;
     final totalCount = (connection?['totalCount'] as int?) ?? 0;
 
-    final nodes =
-        (connection?['nodes'] as List<dynamic>?) ?? const <dynamic>[];
+    final nodes = (connection?['nodes'] as List<dynamic>?) ?? const <dynamic>[];
     final novels = <NovelInfo>[];
     for (final node in nodes) {
       final ref = (node as Map<String, dynamic>)['__ref'] as String?;
@@ -405,8 +426,7 @@ class KakuyomuSite implements NovelSite {
     final pageProps =
         (data['props'] as Map<String, dynamic>?)?['pageProps']
             as Map<String, dynamic>?;
-    final apollo =
-        pageProps?['__APOLLO_STATE__'] as Map<String, dynamic>?;
+    final apollo = pageProps?['__APOLLO_STATE__'] as Map<String, dynamic>?;
     if (apollo == null) {
       throw const FormatException('__APOLLO_STATE__ が見つかりません');
     }

@@ -17,7 +17,6 @@ import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 import 'package:novelty/widgets/search_modal.dart';
-import 'package:novelty/widgets/source_selector.dart';
 
 /// "見つける"ページのウィジェット。
 class ExplorePage extends ConsumerStatefulWidget {
@@ -158,7 +157,34 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('見つける'),
+          title: Row(
+            children: [
+              const Text('見つける'),
+              const SizedBox(width: 16),
+              // プロバイダ切替（コンパクトなドロップダウン）
+              if (!searchState.isSearching)
+                DropdownButtonHideUnderline(
+                  child: DropdownButton<NovelSource>(
+                    key: const Key('explore_source_dropdown'),
+                    value: _source,
+                    isDense: true,
+                    icon: const Icon(Icons.public),
+                    items: [
+                      for (final source in NovelSource.values)
+                        DropdownMenuItem(
+                          value: source,
+                          child: Text(source.label),
+                        ),
+                    ],
+                    onChanged: (source) {
+                      if (source != null) {
+                        _switchSource(source);
+                      }
+                    },
+                  ),
+                ),
+            ],
+          ),
           actions: [
             if (searchState.isSearching)
               IconButton(
@@ -184,34 +210,12 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
           bottom: searchState.isSearching
               ? null
               : PreferredSize(
-                  preferredSize: const Size.fromHeight(112),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // プロバイダ切替
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        child: SourceSelector(
-                          sources: NovelSource.values,
-                          selected: _source,
-                          onChanged: (source) {
-                            if (source != null) {
-                              _switchSource(source);
-                            }
-                          },
-                        ),
-                      ),
-                      TabBar(
-                        controller: _tabController,
-                        isScrollable: _rankingTypes.length > 5,
-                        tabs: [
-                          for (final type in _rankingTypes)
-                            Tab(text: type.label),
-                        ],
-                      ),
+                  preferredSize: const Size.fromHeight(48),
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: _rankingTypes.length > 5,
+                    tabs: [
+                      for (final type in _rankingTypes) Tab(text: type.label),
                     ],
                   ),
                 ),

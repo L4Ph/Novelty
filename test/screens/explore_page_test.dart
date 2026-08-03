@@ -118,7 +118,7 @@ void main() {
       expect(find.text('四半期'), findsOneWidget);
 
       // カクヨムに切り替える
-      await tester.tap(find.byType(DropdownButtonFormField<NovelSource?>));
+      await tester.tap(find.byKey(const Key('explore_source_dropdown')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('カクヨム').last);
       await tester.pumpAndSettle();

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/novel_search_query.dart';
+import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/sort_selection_sheet.dart';
@@ -318,6 +319,44 @@ class SearchModal extends HookConsumerWidget {
                       ],
                     ),
                   ], // なろう固有の詳細検索条件ここまで
+                  // カクヨム固有の検索条件（なろうでは非表示）
+                  if (query.value.source == NovelSource.kakuyomu) ...[
+                    Text(
+                      'ジャンル',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String?>(
+                      menuMaxHeight: MediaQuery.of(context).size.height * 0.5,
+                      initialValue: query.value.genreId?.firstOrNull,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      items: [
+                        const DropdownMenuItem(
+                          child: Text('指定なし'),
+                        ),
+                        ...novelSiteRegistry[NovelSource.kakuyomu]!.genres.map(
+                          (g) => DropdownMenuItem(
+                            value: g.id,
+                            child: Text(g.name),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        query.value = query.value.copyWith(
+                          genreId: value == null ? null : [value],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                  ], // カクヨム固有の検索条件ここまで
                   // 通常 Scaffold の SafeArea が余白を確保するが、念のため
                   // to have some padding at bottom of scroll
                   const SizedBox(height: 100),
