@@ -1007,11 +1007,31 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> _populateFtsTables() async {
+    // マイグレーションなどで一から再構築する際、
+    // 行ごとの INSERT OR REPLACE + rowid 解決は遅いため、
+    // 空のFTSテーブルへの一括 INSERT に切り替える。
+    // （FTSテーブルは呼び出し元で DROP & CREATE 済みの前提）
+
     // Novels検索インデックスを再構築
     final allNovels = await select(novels).get();
-    for (final novel in allNovels) {
-      await _updateNovelSearchIndex(novel);
-    }
+    await batch((batch) {
+      for (final novel in allNovels) {
+        final tokenizedTitle = SearchTokenizer.tokenize(novel.title ?? '');
+        final tokenizedWriter = SearchTokenizer.tokenize(novel.writer ?? '');
+        final tokenizedStory = SearchTokenizer.tokenize(novel.story ?? '');
+        batch.customStatement(
+          'INSERT INTO novels_search(source, work_id, title, writer, story) '
+          'VALUES (?, ?, ?, ?, ?)',
+          [
+            novel.source.dbId,
+            novel.workId,
+            tokenizedTitle,
+            tokenizedWriter,
+            tokenizedStory,
+          ],
+        );
+      }
+    });
 
     // Episodes検索インデックスを再構築
     final episodeRows = await customSelect(
@@ -1023,17 +1043,42 @@ class AppDatabase extends _$AppDatabase {
       'WHERE c.content IS NOT NULL',
       readsFrom: {episodeListEntries, episodeContents},
     ).get();
-    for (final row in episodeRows) {
-      final contentJson = row.read<String?>('content');
-      if (contentJson == null) continue;
-      await _updateEpisodeSearchIndex(
-        source: NovelSource.values.byName(row.read<String>('source')),
-        workId: row.read<String>('work_id'),
-        episodeId: row.read<int>('episode_id'),
-        subtitle: row.read<String?>('subtitle'),
-        content: const ContentConverter().fromSql(contentJson),
-      );
-    }
+
+    await batch((batch) {
+      for (final row in episodeRows) {
+        final contentJson = row.read<String?>('content');
+        if (contentJson == null) continue;
+
+        final tokenizedSubtitle =
+            SearchTokenizer.tokenize(row.read<String?>('subtitle') ?? '');
+
+        // 本文コンテンツから検索用テキストを抽出する
+        final buffer = StringBuffer();
+        for (final element
+            in const ContentConverter().fromSql(contentJson)) {
+          if (element is PlainText) {
+            buffer.write(element.text);
+          } else if (element is RubyText) {
+            buffer.write(element.base);
+          }
+        }
+        final tokenizedContent =
+            SearchTokenizer.tokenize(buffer.toString());
+
+        batch.customStatement(
+          'INSERT INTO episodes_search('
+          ' source, work_id, episode_id, subtitle, content) '
+          'VALUES (?, ?, ?, ?, ?)',
+          [
+            row.read<String>('source'),
+            row.read<String>('work_id'),
+            row.read<int>('episode_id'),
+            tokenizedSubtitle,
+            tokenizedContent,
+          ],
+        );
+      }
+    });
   }
 
   /// 小説の検索インデックスを更新
