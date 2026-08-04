@@ -41,7 +41,6 @@ class SourceSelector extends StatelessWidget {
       initialValue: selected,
       isExpanded: true,
       decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.public),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),

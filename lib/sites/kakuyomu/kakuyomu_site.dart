@@ -132,7 +132,9 @@ class KakuyomuSite implements NovelSite {
     GenreMaster(id: 'MYSTERY', name: 'ミステリー'),
     GenreMaster(id: 'HORROR', name: 'ホラー'),
     GenreMaster(id: 'DRAMA', name: 'ドラマ'),
-    GenreMaster(id: 'OTHER', name: 'その他'),
+    GenreMaster(id: 'CRITICISM', name: '批評'),
+    GenreMaster(id: 'NONFICTION', name: 'ノンフィクション'),
+    GenreMaster(id: 'OTHERS', name: 'その他'),
   ];
 
   /// カクヨムのランキング種別マスタ。
@@ -196,10 +198,13 @@ class KakuyomuSite implements NovelSite {
     return episode!.url!;
   }
 
-  /// キーワード検索を実行する。
+  /// 検索を実行する。
   ///
-  /// `/search?q=` のNext.jsページから `searchWorks` の結果をパースする。
-  /// [NovelSearchQuery.word] とページング（[NovelSearchQuery.st]）のみ使用する。
+  /// `/search` のNext.jsページから `searchWorks` の結果をパースする。
+  /// 使用する検索条件は [NovelSearchQuery.word]、ジャンル（[NovelSearchQuery.genreId]）、
+  /// 連載状態（[NovelSearchQuery.serialStatus]）、
+  /// 文字数範囲（[NovelSearchQuery.totalCharacterCountRange]）、
+  /// およびページング（[NovelSearchQuery.st]）。
   @override
   Future<NovelSearchResult> searchNovels(NovelSearchQuery query) async {
     final word = query.word?.trim() ?? '';
@@ -210,6 +215,12 @@ class KakuyomuSite implements NovelSite {
       '/search',
       <String, String>{
         if (word.isNotEmpty) 'q': word,
+        // ジャンルID（FANTASY等）はURL上小文字（fantasy等）で指定する
+        if (query.genreId != null && query.genreId!.isNotEmpty)
+          'genre_name': query.genreId!.first.toLowerCase(),
+        if (query.serialStatus != null) 'serial_status': query.serialStatus!,
+        if (query.totalCharacterCountRange != null)
+          'total_character_count_range': query.totalCharacterCountRange!,
         if (offset > 0) 'offset': '$offset',
       },
     ).toString();

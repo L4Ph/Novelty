@@ -13,6 +13,7 @@ import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:novelty/widgets/app_bar_source_dropdown.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
 import 'package:novelty/widgets/ranking_list.dart';
@@ -160,27 +161,20 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
           title: Row(
             children: [
               const Text('見つける'),
-              const SizedBox(width: 16),
-              // プロバイダ切替（コンパクトなドロップダウン）
+              // プロバイダ切替（AppBar用コンパクトドロップダウン）
+              // タイトルの残り領域で中央に配置する
               if (!searchState.isSearching)
-                DropdownButtonHideUnderline(
-                  child: DropdownButton<NovelSource>(
-                    key: const Key('explore_source_dropdown'),
-                    value: _source,
-                    isDense: true,
-                    icon: const Icon(Icons.public),
-                    items: [
-                      for (final source in NovelSource.values)
-                        DropdownMenuItem(
-                          value: source,
-                          child: Text(source.label),
-                        ),
-                    ],
-                    onChanged: (source) {
-                      if (source != null) {
-                        _switchSource(source);
-                      }
-                    },
+                Expanded(
+                  child: Center(
+                    child: AppBarSourceDropdown(
+                      sources: NovelSource.values,
+                      selected: _source,
+                      onChanged: (source) {
+                        if (source != null) {
+                          _switchSource(source);
+                        }
+                      },
+                    ),
                   ),
                 ),
             ],

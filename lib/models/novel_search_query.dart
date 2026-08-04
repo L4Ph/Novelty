@@ -150,6 +150,25 @@ abstract class NovelSearchQuery with _$NovelSearchQuery {
     /// * `ter` - 短編と完結済連載作品
     String? type,
 
+    /// 連載状態（カクヨム専用）。
+    ///
+    /// カクヨム `/search` の `serial_status` パラメータに対応する。
+    /// * `running` - 連載中
+    /// * `completed` - 完結
+    ///
+    /// なろうでは [type] を使うため、なろうAPIには送信しない。
+    String? serialStatus,
+
+    /// 総文字数範囲（カクヨム専用）。
+    ///
+    /// カクヨム `/search` の `total_character_count_range` パラメータに対応する。
+    /// `20000-100000` のように最小値と最大値をハイフン(-)で区切る。
+    /// 片側のみの場合は `-20000` / `100000-` のように指定する。
+    ///
+    /// なろうでは [minlen] / [maxlen] / [length] を使うため、
+    /// なろうAPIには送信しない。
+    String? totalCharacterCountRange,
+
     /// 文体。
     ///
     /// ハイフン(-)記号で区切ればOR検索ができる。

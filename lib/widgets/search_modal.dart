@@ -85,6 +85,11 @@ class SearchModal extends HookConsumerWidget {
                         genreId: isNarou ? query.value.genreId : null,
                         type: isNarou ? query.value.type : null,
                         order: isNarou ? query.value.order : 'new',
+                        // カクヨム固有の条件もリセットする
+                        serialStatus: isNarou ? null : query.value.serialStatus,
+                        totalCharacterCountRange: isNarou
+                            ? null
+                            : query.value.totalCharacterCountRange,
                       );
                     },
                   ),
@@ -327,6 +332,7 @@ class SearchModal extends HookConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String?>(
+                      key: const Key('kakuyomu_genre'),
                       menuMaxHeight: MediaQuery.of(context).size.height * 0.5,
                       initialValue: query.value.genreId?.firstOrNull,
                       decoration: InputDecoration(
@@ -355,6 +361,88 @@ class SearchModal extends HookConsumerWidget {
                         );
                       },
                     ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '連載状態',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String?>(
+                      key: const Key('kakuyomu_serial_status'),
+                      initialValue: query.value.serialStatus,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          child: Text('指定なし'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'running',
+                          child: Text('連載中'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'completed',
+                          child: Text('完結'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        query.value = query.value.copyWith(
+                          serialStatus: value,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '文字数',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String?>(
+                      key: const Key('kakuyomu_char_count_range'),
+                      initialValue: query.value.totalCharacterCountRange,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          child: Text('指定なし'),
+                        ),
+                        DropdownMenuItem(
+                          value: '-20000',
+                          child: Text('〜2万字'),
+                        ),
+                        DropdownMenuItem(
+                          value: '20000-100000',
+                          child: Text('2万〜10万字'),
+                        ),
+                        DropdownMenuItem(
+                          value: '100000-',
+                          child: Text('10万字〜'),
+                        ),
+                        DropdownMenuItem(
+                          value: '500000-',
+                          child: Text('50万字〜'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        query.value = query.value.copyWith(
+                          totalCharacterCountRange: value,
+                        );
+                      },
+                    ),
                     const SizedBox(height: 24),
                   ], // カクヨム固有の検索条件ここまで
                   // 通常 Scaffold の SafeArea が余白を確保するが、念のため
@@ -369,6 +457,7 @@ class SearchModal extends HookConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: FilledButton.icon(
+                  key: const Key('search_button'),
                   onPressed: () => onSearch(query.value),
                   icon: const Icon(Icons.search),
                   label: const Text('検索する'),

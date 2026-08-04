@@ -10,10 +10,10 @@ import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/search_page.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
+import 'package:novelty/widgets/app_bar_source_dropdown.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
 import 'package:novelty/widgets/search_modal.dart';
-import 'package:novelty/widgets/source_selector.dart';
 
 /// "ライブラリ"ページのウィジェット。
 class LibraryPage extends ConsumerWidget {
@@ -84,7 +84,27 @@ class LibraryPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ライブラリ'),
+        title: Row(
+          children: [
+            const Text('ライブラリ'),
+            // プロバイダ絞り込み（探索画面と同一のAppBarドロップダウン）
+            // タイトルの残り領域で中央に配置する
+            Expanded(
+              child: Center(
+                child: AppBarSourceDropdown(
+                  sources: NovelSource.values,
+                  selected: filter.source,
+                  allLabel: 'すべて',
+                  onChanged: (source) {
+                    ref
+                        .read(libraryFilterStateProvider.notifier)
+                        .setSource(source);
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -120,19 +140,6 @@ class LibraryPage extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          // プロバイダ絞り込み
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SourceSelector(
-              sources: NovelSource.values,
-              selected: filter.source,
-              allLabel: 'すべて',
-              onChanged: (source) {
-                ref.read(libraryFilterStateProvider.notifier).setSource(source);
-              },
-            ),
-          ),
-          const Divider(height: 1),
           Expanded(
             child: filteredNovelsAsync.when(
               data: (novels) {
