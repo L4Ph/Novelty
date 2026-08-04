@@ -1049,21 +1049,20 @@ class AppDatabase extends _$AppDatabase {
         final contentJson = row.read<String?>('content');
         if (contentJson == null) continue;
 
-        final tokenizedSubtitle =
-            SearchTokenizer.tokenize(row.read<String?>('subtitle') ?? '');
+        final tokenizedSubtitle = SearchTokenizer.tokenize(
+          row.read<String?>('subtitle') ?? '',
+        );
 
         // 本文コンテンツから検索用テキストを抽出する
         final buffer = StringBuffer();
-        for (final element
-            in const ContentConverter().fromSql(contentJson)) {
+        for (final element in const ContentConverter().fromSql(contentJson)) {
           if (element is PlainText) {
             buffer.write(element.text);
           } else if (element is RubyText) {
             buffer.write(element.base);
           }
         }
-        final tokenizedContent =
-            SearchTokenizer.tokenize(buffer.toString());
+        final tokenizedContent = SearchTokenizer.tokenize(buffer.toString());
 
         batch.customStatement(
           'INSERT INTO episodes_search('
@@ -1793,14 +1792,14 @@ class AppDatabase extends _$AppDatabase {
     String workId,
     int episodeId,
   ) async {
-    final row = await (select(episodeListEntries)
-          ..where(
-            (e) =>
-                e.source.equalsValue(source) &
-                e.workId.equals(workId) &
-                e.episodeId.equals(episodeId),
-          ))
-        .getSingleOrNull();
+    final row =
+        await (select(episodeListEntries)..where(
+              (e) =>
+                  e.source.equalsValue(source) &
+                  e.workId.equals(workId) &
+                  e.episodeId.equals(episodeId),
+            ))
+            .getSingleOrNull();
     return row?.url;
   }
 

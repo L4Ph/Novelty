@@ -64,40 +64,58 @@ class BackupService {
   /// バックアップファイルからデータベース全体を復元する
   /// 既存のデータベースは上書きされる
   ///
-  /// 戻り値: インポート結果
+  /// 戻り値: インポート結果(キャンセル時は [ImportResult.cancelled] がtrue)
+  ///
+  /// 失敗時は例外をスローし、元のデータベースファイルを復元する。
   Future<ImportResult> importDatabaseFromFile() async {
     // バックアップファイルを選択
+    // AndroidのSAF経由では PlatformFile.path がnull(content:// URI)に
+    // なり得るため、readStream経由で読み込む
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['db'],
       dialogTitle: 'バックアップファイルを選択',
+      withReadStream: true,
     );
 
     if (result == null || result.files.isEmpty) {
-      return const ImportResult(success: false);
+      return const ImportResult(cancelled: true);
     }
 
+    final pickedFile = result.files.single;
+
     // ファイル名からスキーマバージョンを抽出
-    final fileName = result.files.single.name;
-    final backupVersion = _extractVersionFromFileName(fileName);
+    final backupVersion = _extractVersionFromFileName(pickedFile.name);
+
+    final readStream = pickedFile.readStream;
+    if (readStream == null) {
+      throw StateError('選択したファイルを読み込めませんでした');
+    }
 
     // データベース接続を閉じる
     await _database.close();
 
-    try {
-      // データベースファイルのパスを取得
-      final dbFolder = await getApplicationDocumentsDirectory();
-      final dbFile = File(p.join(dbFolder.path, 'novelty.db'));
+    // データベースファイルのパスを取得
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final dbFile = File(p.join(dbFolder.path, 'novelty.db'));
+    final backupFile = File('${dbFile.path}.bak');
 
+    var backupCreated = false;
+    try {
       // 既存のデータベースをバックアップ(念のため)
       if (dbFile.existsSync()) {
-        final backupFile = File('${dbFile.path}.bak');
         await dbFile.copy(backupFile.path);
+        backupCreated = true;
       }
 
-      // 選択したバックアップファイルで置き換え
-      final selectedFile = File(result.files.single.path!);
-      await selectedFile.copy(dbFile.path);
+      // 選択したバックアップファイルの内容で置き換え
+      final sink = dbFile.openWrite();
+      try {
+        await sink.addStream(readStream);
+        await sink.flush();
+      } finally {
+        await sink.close();
+      }
 
       return ImportResult(
         success: true,
@@ -105,9 +123,12 @@ class BackupService {
         requiresMigration:
             backupVersion != null && backupVersion < currentSchemaVersion,
       );
-    } finally {
-      // データベースを再初期化するため、何もしない
-      // 呼び出し側でプロバイダーをinvalidateする必要がある
+    } on Object {
+      // コピー失敗時は元のデータベースファイルを復元する
+      if (backupCreated && backupFile.existsSync()) {
+        await backupFile.copy(dbFile.path);
+      }
+      rethrow;
     }
   }
 
@@ -140,13 +161,17 @@ class BackupService {
 class ImportResult {
   /// コンストラクタ
   const ImportResult({
-    required this.success,
+    this.success = false,
+    this.cancelled = false,
     this.backupVersion,
     this.requiresMigration = false,
   });
 
   /// インポートが成功したかどうか
   final bool success;
+
+  /// ファイル選択がキャンセルされたかどうか
+  final bool cancelled;
 
   /// バックアップファイルのスキーマバージョン
   final int? backupVersion;

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/database/database_maintenance.dart';
 import 'package:novelty/services/backup_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
@@ -21,7 +22,6 @@ class DataStoragePage extends ConsumerStatefulWidget {
 
 class _DataStoragePageState extends ConsumerState<DataStoragePage> {
   late BackupService _backupService;
-  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -73,14 +73,12 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
           leading: const Icon(Icons.save_alt),
           title: const Text('データベースをエクスポート'),
           subtitle: const Text('すべてのデータをバックアップファイルに保存'),
-          enabled: !_isProcessing,
           onTap: _exportDatabase,
         ),
         ListTile(
           leading: const Icon(Icons.upload_file),
           title: const Text('データベースをインポート'),
           subtitle: const Text('バックアップファイルからすべてのデータを復元'),
-          enabled: !_isProcessing,
           onTap: _importDatabase,
         ),
       ],
@@ -89,32 +87,36 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
 
   /// データベース全体をエクスポート
   Future<void> _exportDatabase() async {
-    setState(() {
-      _isProcessing = true;
-    });
-
+    String? filePath;
+    Object? error;
     try {
-      final filePath = await _backupService.exportDatabaseToFile();
-      if (filePath != null && mounted) {
-        // データベースプロバイダーを再初期化
-        ref.invalidate(appDatabaseProvider);
-
-        _showSuccessDialog(
-          'データベースのエクスポートが完了しました',
-          'バックアップファイルを保存しました:\n$filePath',
-        );
-      }
-    } on Exception catch (e) {
-      if (mounted) {
-        _showErrorDialog('エクスポートに失敗しました', e.toString());
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
-      }
+      filePath = await runWithDatabaseMaintenance(
+        ref,
+        label: 'データベースをエクスポートしています…',
+        task: _backupService.exportDatabaseToFile,
+      );
+    } on Object catch (e) {
+      error = e;
     }
+
+    if (!mounted) return;
+
+    if (error != null) {
+      _showErrorDialog('エクスポートに失敗しました', error.toString());
+      return;
+    }
+    if (filePath == null) {
+      _showSnackBar('エクスポートをキャンセルしました');
+      return;
+    }
+
+    // 完了を明示してからデータベースを再初期化する
+    await _showSuccessDialog(
+      'データベースのエクスポートが完了しました',
+      'バックアップファイルを保存しました:\n$filePath',
+    );
+    if (!mounted) return;
+    ref.invalidate(appDatabaseProvider);
   }
 
   /// ストレージ設定セクションを構築
@@ -174,27 +176,17 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
 
     if (confirmed != true) return;
 
-    setState(() {
-      _isProcessing = true;
-    });
-
     try {
       // TODO(L4Ph): Implement actual cache clearing logic here
       // For now, we simulate a delay
       await Future<void>.delayed(const Duration(seconds: 1));
 
       if (mounted) {
-        _showSuccessDialog('完了', 'キャッシュを削除しました');
+        unawaited(_showSuccessDialog('完了', 'キャッシュを削除しました'));
       }
     } on Exception catch (e) {
       if (mounted) {
         _showErrorDialog('エラー', 'キャッシュの削除に失敗しました: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
       }
     }
   }
@@ -207,33 +199,39 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
       return;
     }
 
-    setState(() {
-      _isProcessing = true;
-    });
-
+    ImportResult? result;
+    Object? error;
     try {
-      final result = await _backupService.importDatabaseFromFile();
-      if (result.success && mounted) {
-        // データベースプロバイダーを再初期化
-        ref.invalidate(appDatabaseProvider);
-
-        // マイグレーション情報を含めて再起動ダイアログを表示
-        _showRestartRequiredDialog(
-          requiresMigration: result.requiresMigration,
-          backupVersion: result.backupVersion,
-        );
-      }
-    } on Exception catch (e) {
-      if (mounted) {
-        _showErrorDialog('インポートに失敗しました', e.toString());
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
-      }
+      result = await runWithDatabaseMaintenance(
+        ref,
+        label: 'データベースをインポートしています…',
+        task: _backupService.importDatabaseFromFile,
+      );
+    } on Object catch (e) {
+      error = e;
     }
+
+    if (!mounted) return;
+
+    if (error != null) {
+      _showErrorDialog('インポートに失敗しました', error.toString());
+      return;
+    }
+    if (result == null || result.cancelled) {
+      _showSnackBar('インポートをキャンセルしました');
+      return;
+    }
+    if (!result.success) {
+      _showErrorDialog('インポートに失敗しました', '不明なエラーが発生しました');
+      return;
+    }
+
+    // 完了を明示してからデータベースを再初期化する。
+    // 再初期化は起動時と同一の経路(進捗スプラッシュ表示)で行われ、
+    // 古いバージョンのバックアップは自動的にマイグレーションされる。
+    await _showSuccessDialog('復元が完了しました', 'すべてのデータが復元されました。');
+    if (!mounted) return;
+    ref.invalidate(appDatabaseProvider);
   }
 
   /// インポート確認ダイアログを表示
@@ -262,21 +260,26 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
   }
 
   /// 成功ダイアログを表示
-  void _showSuccessDialog(String title, String message) {
-    unawaited(
-      showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
+  Future<void> _showSuccessDialog(String title, String message) {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
       ),
+    );
+  }
+
+  /// スナックバーを表示
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -291,42 +294,6 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 再起動が必要なことを通知するダイアログを表示
-  void _showRestartRequiredDialog({
-    bool requiresMigration = false,
-    int? backupVersion,
-  }) {
-    // メッセージを構築
-    var message = 'すべてのデータが復元されました。\n\n';
-
-    if (requiresMigration && backupVersion != null) {
-      message +=
-          '※ このバックアップは古いバージョン(v$backupVersion)のものです。\n'
-          'アプリ起動時に自動的に最新バージョンへ移行されます。\n\n';
-    }
-
-    message += '変更を反映するため、アプリを終了して再起動してください。';
-
-    unawaited(
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Text('復元が完了しました'),
-          content: Text(message),
-          actions: [
-            FilledButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
               child: const Text('OK'),
             ),
           ],
