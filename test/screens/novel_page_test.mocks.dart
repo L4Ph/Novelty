@@ -5,9 +5,9 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i8;
 
+import 'package:kakuyomu_parser/kakuyomu_parser.dart' as _i11;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i6;
-import 'package:narou_parser/narou_parser.dart' as _i11;
 import 'package:novelty/models/download_progress.dart' as _i9;
 import 'package:novelty/models/download_result.dart' as _i3;
 import 'package:novelty/models/episode.dart' as _i12;

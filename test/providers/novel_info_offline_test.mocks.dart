@@ -670,6 +670,18 @@ class MockAppDatabase extends _i1.Mock implements _i3.AppDatabase {
           as _i5.Future<List<_i7.Episode>>);
 
   @override
+  _i5.Future<String?> getEpisodeUrl(
+    _i12.NovelSource? source,
+    String? workId,
+    int? episodeId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getEpisodeUrl, [source, workId, episodeId]),
+            returnValue: _i5.Future<String?>.value(),
+          )
+          as _i5.Future<String?>);
+
+  @override
   _i5.Future<List<_i7.Episode>> getEpisodesRange(
     _i12.NovelSource? source,
     String? workId,
