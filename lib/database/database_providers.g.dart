@@ -9,16 +9,25 @@ part of 'database_providers.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// アプリケーションデータベースのインスタンスを提供するプロバイダー。
+///
+/// 再初期化(invalidate)時に旧インスタンスの接続が残り続けると
+/// 同じDBファイルへの接続が多重に開かれるため、破棄時にクローズする。
 
 @ProviderFor(appDatabase)
 final appDatabaseProvider = AppDatabaseProvider._();
 
 /// アプリケーションデータベースのインスタンスを提供するプロバイダー。
+///
+/// 再初期化(invalidate)時に旧インスタンスの接続が残り続けると
+/// 同じDBファイルへの接続が多重に開かれるため、破棄時にクローズする。
 
 final class AppDatabaseProvider
     extends $FunctionalProvider<AppDatabase, AppDatabase, AppDatabase>
     with $Provider<AppDatabase> {
   /// アプリケーションデータベースのインスタンスを提供するプロバイダー。
+  ///
+  /// 再初期化(invalidate)時に旧インスタンスの接続が残り続けると
+  /// 同じDBファイルへの接続が多重に開かれるため、破棄時にクローズする。
   AppDatabaseProvider._()
     : super(
         from: null,
@@ -52,7 +61,7 @@ final class AppDatabaseProvider
   }
 }
 
-String _$appDatabaseHash() => r'98a09c6cfd43966155dfbdb0787fa18c85438e13';
+String _$appDatabaseHash() => r'879bfe1ad96d42751dfae1ace4af49c128830f95';
 
 /// ライブラリに登録されている小説のリストを監視するプロバイダー。
 

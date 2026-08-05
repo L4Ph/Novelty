@@ -85,6 +85,7 @@ void main() {
             error: Exception('test error'),
             onExportDatabase: () async {
               exportCalled = true;
+              return null;
             },
           ),
         ),

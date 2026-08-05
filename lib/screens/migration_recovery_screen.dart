@@ -22,8 +22,9 @@ class MigrationRecoveryScreen extends StatelessWidget {
   /// リトライボタンが押されたときに呼ばれるコールバック
   final VoidCallback? onRetry;
 
-  /// DBエクスポートボタンが押されたときに呼ばれるコールバック
-  final Future<void> Function()? onExportDatabase;
+  /// DBエクスポートボタンが押されたときに呼ばれるコールバック。
+  /// 戻り値はエクスポートされたファイルのパス。キャンセル時はnull。
+  final Future<String?> Function()? onExportDatabase;
 
   @override
   Widget build(BuildContext context) {
@@ -105,11 +106,43 @@ class MigrationRecoveryScreen extends StatelessWidget {
       return;
     }
     try {
-      await onExportDatabase!();
-    } on Exception catch (e) {
-      if (context.mounted) {
+      final exportPath = await onExportDatabase!();
+      if (!context.mounted) {
+        return;
+      }
+      if (exportPath == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エクスポートに失敗しました: $e')),
+          const SnackBar(content: Text('エクスポートをキャンセルしました')),
+        );
+      } else {
+        await showDialog<void>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('データベースのエクスポートが完了しました'),
+            content: Text('バックアップファイルを保存しました:\n$exportPath'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } on Object catch (e) {
+      if (context.mounted) {
+        await showDialog<void>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('エクスポートに失敗しました'),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
         );
       }
     }

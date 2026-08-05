@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/database/database_maintenance.dart';
 import 'package:novelty/services/backup_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
@@ -20,15 +21,11 @@ class DataStoragePage extends ConsumerStatefulWidget {
 }
 
 class _DataStoragePageState extends ConsumerState<DataStoragePage> {
-  late BackupService _backupService;
-  bool _isProcessing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _backupService =
-        widget.backupService ?? BackupService(ref.read(appDatabaseProvider));
-  }
+  /// バックアップサービス。
+  /// インポートでDBインスタンスが差し替わるため、
+  /// 使用のたびに現在のプロバイダーから生成する。
+  BackupService get _backupService =>
+      widget.backupService ?? BackupService(ref.read(appDatabaseProvider));
 
   @override
   Widget build(BuildContext context) {
@@ -73,14 +70,12 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
           leading: const Icon(Icons.save_alt),
           title: const Text('データベースをエクスポート'),
           subtitle: const Text('すべてのデータをバックアップファイルに保存'),
-          enabled: !_isProcessing,
           onTap: _exportDatabase,
         ),
         ListTile(
           leading: const Icon(Icons.upload_file),
           title: const Text('データベースをインポート'),
           subtitle: const Text('バックアップファイルからすべてのデータを復元'),
-          enabled: !_isProcessing,
           onTap: _importDatabase,
         ),
       ],
@@ -89,32 +84,35 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
 
   /// データベース全体をエクスポート
   Future<void> _exportDatabase() async {
-    setState(() {
-      _isProcessing = true;
-    });
-
+    String? filePath;
+    Object? error;
     try {
-      final filePath = await _backupService.exportDatabaseToFile();
-      if (filePath != null && mounted) {
-        // データベースプロバイダーを再初期化
-        ref.invalidate(appDatabaseProvider);
-
-        _showSuccessDialog(
-          'データベースのエクスポートが完了しました',
-          'バックアップファイルを保存しました:\n$filePath',
-        );
-      }
-    } on Exception catch (e) {
-      if (mounted) {
-        _showErrorDialog('エクスポートに失敗しました', e.toString());
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
-      }
+      filePath = await runWithDatabaseMaintenance(
+        ref,
+        label: 'データベースをエクスポートしています…',
+        task: _backupService.exportDatabaseToFile,
+      );
+    } on Object catch (e) {
+      error = e;
     }
+
+    if (!mounted) return;
+
+    if (error != null) {
+      unawaited(_showErrorDialog('エクスポートに失敗しました', error.toString()));
+      return;
+    }
+    if (filePath == null) {
+      _showSnackBar('エクスポートをキャンセルしました');
+      return;
+    }
+
+    // VACUUM INTO は接続を維持したまま整合性のあるコピーを取得
+    // できるため、エクスポート後のデータベース再初期化は不要。
+    await _showSuccessDialog(
+      'データベースのエクスポートが完了しました',
+      'バックアップファイルを保存しました:\n$filePath',
+    );
   }
 
   /// ストレージ設定セクションを構築
@@ -174,27 +172,17 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
 
     if (confirmed != true) return;
 
-    setState(() {
-      _isProcessing = true;
-    });
-
     try {
       // TODO(L4Ph): Implement actual cache clearing logic here
       // For now, we simulate a delay
       await Future<void>.delayed(const Duration(seconds: 1));
 
       if (mounted) {
-        _showSuccessDialog('完了', 'キャッシュを削除しました');
+        unawaited(_showSuccessDialog('完了', 'キャッシュを削除しました'));
       }
     } on Exception catch (e) {
       if (mounted) {
-        _showErrorDialog('エラー', 'キャッシュの削除に失敗しました: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
+        unawaited(_showErrorDialog('エラー', 'キャッシュの削除に失敗しました: $e'));
       }
     }
   }
@@ -207,33 +195,42 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
       return;
     }
 
-    setState(() {
-      _isProcessing = true;
-    });
-
+    // ステージング(バックアップファイルの読み込み)。
+    // この段階ではDB接続もDBファイルも変更されない。
+    ImportStagedResult? staged;
+    Object? error;
     try {
-      final result = await _backupService.importDatabaseFromFile();
-      if (result.success && mounted) {
-        // データベースプロバイダーを再初期化
-        ref.invalidate(appDatabaseProvider);
-
-        // マイグレーション情報を含めて再起動ダイアログを表示
-        _showRestartRequiredDialog(
-          requiresMigration: result.requiresMigration,
-          backupVersion: result.backupVersion,
-        );
-      }
-    } on Exception catch (e) {
-      if (mounted) {
-        _showErrorDialog('インポートに失敗しました', e.toString());
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
-      }
+      staged = await runWithDatabaseMaintenance(
+        ref,
+        label: 'バックアップファイルを読み込んでいます…',
+        task: _backupService.stageImport,
+      );
+    } on Object catch (e) {
+      error = e;
     }
+
+    if (!mounted) return;
+
+    if (error != null) {
+      unawaited(_showErrorDialog('インポートに失敗しました', error.toString()));
+      return;
+    }
+    if (staged == null || staged.cancelled) {
+      _showSnackBar('インポートをキャンセルしました');
+      return;
+    }
+
+    // 読み込みが完了したので、データベースを切り替える。
+    // 切り替え中は画面全体がアンマウントされて再初期化されるため、
+    // 結果は再初期化後にスナックバーで通知される
+    // (importSwapResultProvider 経由)。
+    startImportSwap(
+      ref,
+      payload: ImportSwapPayload(
+        pendingFilePath: staged.pendingFilePath!,
+        backupVersion: staged.backupVersion,
+      ),
+    );
   }
 
   /// インポート確認ダイアログを表示
@@ -262,75 +259,42 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
   }
 
   /// 成功ダイアログを表示
-  void _showSuccessDialog(String title, String message) {
-    unawaited(
-      showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
+  Future<void> _showSuccessDialog(String title, String message) {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
       ),
+    );
+  }
+
+  /// スナックバーを表示
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
   /// エラーダイアログを表示
-  void _showErrorDialog(String title, String message) {
-    unawaited(
-      showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 再起動が必要なことを通知するダイアログを表示
-  void _showRestartRequiredDialog({
-    bool requiresMigration = false,
-    int? backupVersion,
-  }) {
-    // メッセージを構築
-    var message = 'すべてのデータが復元されました。\n\n';
-
-    if (requiresMigration && backupVersion != null) {
-      message +=
-          '※ このバックアップは古いバージョン(v$backupVersion)のものです。\n'
-          'アプリ起動時に自動的に最新バージョンへ移行されます。\n\n';
-    }
-
-    message += '変更を反映するため、アプリを終了して再起動してください。';
-
-    unawaited(
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Text('復元が完了しました'),
-          content: Text(message),
-          actions: [
-            FilledButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        ),
+  Future<void> _showErrorDialog(String title, String message) {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
