@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 void main() {
@@ -203,6 +204,45 @@ void main() {
   });
 
   group('flutter_hooks integration', () {
+    group('source badge', () {
+      testWidgets('カクヨム作品にはソースバッジが表示される', (tester) async {
+        const item = NovelInfo(
+          source: NovelSource.kakuyomu,
+          workId: '16818023211929539879',
+          title: 'カクヨム作品',
+          end: 1,
+        );
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: NovelListTile(item: item),
+            ),
+          ),
+        );
+
+        expect(find.text('カクヨム'), findsOneWidget);
+      });
+
+      testWidgets('なろう作品にはソースバッジが表示されない', (tester) async {
+        const item = NovelInfo(
+          ncode: 'N1234AB',
+          title: 'なろう作品',
+          end: 1,
+        );
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: NovelListTile(item: item),
+            ),
+          ),
+        );
+
+        expect(find.text('小説家になろう'), findsNothing);
+      });
+    });
+
     testWidgets('should use HookWidget and maintain functionality', (
       tester,
     ) async {
