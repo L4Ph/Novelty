@@ -11,11 +11,18 @@ jobs:
     # スタックされたPRの場合は最上位(position == size、変更の完全な
     # セットを含む)のマージ時のみ実行し、中間PRのマージでは
     # リリースを切らない。
+    # `no-release` ラベルが付いたPRでは実行しない
+    # (ドキュメント・CIのみの変更など)。
     if: >-
       github.event.pull_request.merged == true &&
       (github.event.pull_request.stack == null ||
-      github.event.pull_request.stack.position == github.event.pull_request.stack.size)
+      github.event.pull_request.stack.position == github.event.pull_request.stack.size) &&
+      !contains(github.event.pull_request.labels.*.name, 'no-release')
     runs-on: ubuntu-latest
+    # 連続マージ時の二重リリースを防ぐ
+    concurrency:
+      group: auto-release
+      cancel-in-progress: false
     permissions:
       contents: write
 
@@ -131,13 +138,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create and push tag
-        run: |
-          git tag ${{ steps.calculate_version.outputs.tag_name }} ${{ steps.commit.outputs.sha }}
-          git push origin ${{ steps.calculate_version.outputs.tag_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Setup mise
         uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
         with:
@@ -189,7 +189,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # タグはここで作成される(ビルド成功後のため、
+          # リリースのないタグだけが残ることを防げる)
           gh release create ${{ steps.calculate_version.outputs.tag_name }} \
+            --target ${{ steps.commit.outputs.sha }} \
             --title "Release ${{ steps.calculate_version.outputs.semver_version }}" \
             --generate-notes \
             build/app/outputs/bundle/release/app-release.aab \
