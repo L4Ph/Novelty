@@ -7,6 +7,7 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/router/router.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/clipboard_helper.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
@@ -14,10 +15,17 @@ import 'package:novelty/utils/settings_provider.dart';
 /// 小説の詳細ページ
 class NovelDetailPage extends ConsumerStatefulWidget {
   /// コンストラクタ
-  const NovelDetailPage({required this.ncode, super.key});
+  const NovelDetailPage({
+    required this.source,
+    required this.workId,
+    super.key,
+  });
 
-  /// 詳細ページの識別子として使用される小説のコード
-  final String ncode;
+  /// 提供サイト（プロバイダ）。
+  final NovelSource source;
+
+  /// サイト共通の作品ID（なろうはNコード）。
+  final String workId;
 
   @override
   ConsumerState<NovelDetailPage> createState() => _NovelDetailPageState();
@@ -62,7 +70,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
 
   void _loadMoreEpisodes() {
     final novelInfo = ref
-        .read(novelInfoWithCacheProvider(widget.ncode))
+        .read(novelInfoWithCacheProvider(widget.source, widget.workId))
         .asData
         ?.value;
     if (novelInfo?.generalAllNo != null) {
@@ -80,8 +88,13 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
   @override
   Widget build(BuildContext context) {
     // 1. ノベル情報の取得とエラー通知
-    final novelInfoAsync = ref.watch(novelInfoWithCacheProvider(widget.ncode));
-    ref.listen(novelInfoWithCacheProvider(widget.ncode), (previous, next) {
+    final novelInfoAsync = ref.watch(
+      novelInfoWithCacheProvider(widget.source, widget.workId),
+    );
+    ref.listen(novelInfoWithCacheProvider(widget.source, widget.workId), (
+      previous,
+      next,
+    ) {
       if (next.hasError && !next.isLoading) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('ノベル情報の更新に失敗しました: ${next.error}')),
@@ -96,10 +109,15 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
 
     // 読み込み済みのページまで全てwatchする
     for (var i = 1; i <= _currentPage; i++) {
-      final pageState = ref.watch(episodeListProvider('${widget.ncode}_$i'));
+      final pageState = ref.watch(
+        episodeListProvider(widget.source, widget.workId, i),
+      );
 
       // エラー通知のためのリスナー
-      ref.listen(episodeListProvider('${widget.ncode}_$i'), (previous, next) {
+      ref.listen(episodeListProvider(widget.source, widget.workId, i), (
+        previous,
+        next,
+      ) {
         if (next.hasError && !next.isLoading) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('ページ $i の更新に失敗しました: ${next.error}')),
@@ -156,9 +174,11 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     final isOfflineMode = ref.watch(isOfflineModeProvider);
     final isShortStory = novelInfo.generalAllNo == 1;
     final downloadProgressAsync = ref.watch(
-      downloadProgressProvider(widget.ncode),
+      downloadProgressProvider(widget.source, widget.workId),
     );
-    final isFavoriteAsync = ref.watch(libraryStatusProvider(widget.ncode));
+    final isFavoriteAsync = ref.watch(
+      libraryStatusProvider(widget.source, widget.workId),
+    );
     final isInLibrary = isFavoriteAsync.value ?? false;
 
     final progressBar = downloadProgressAsync.when(
@@ -176,7 +196,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     );
 
     final lastReadEpisode = ref
-        .watch(lastReadEpisodeProvider(widget.ncode))
+        .watch(lastReadEpisodeProvider(widget.source, widget.workId))
         .value;
 
     return Scaffold(
@@ -185,7 +205,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
           // 短編: 常にエピソード1へ移動
           if (isShortStory) {
             await NovelEpisodeRoute(
-              ncode: widget.ncode,
+              source: widget.source.name,
+              workId: widget.workId,
               episode: 1,
             ).push<void>(context);
             return;
@@ -194,7 +215,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
           // 連載: 最後に読んだエピソードまたはエピソード1へ移動
           final targetEpisode = lastReadEpisode ?? 1;
           await NovelEpisodeRoute(
-            ncode: widget.ncode,
+            source: widget.source.name,
+            workId: widget.workId,
             episode: targetEpisode,
           ).push<void>(context);
         },
@@ -208,9 +230,13 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
       body: RefreshIndicator(
         onRefresh: () async {
           final repository = ref.read(novelRepositoryProvider);
-          await repository.refreshNovelInfo(widget.ncode);
+          await repository.refreshNovelInfo(widget.source, widget.workId);
           for (var i = 1; i <= _currentPage; i++) {
-            await repository.refreshEpisodeList(widget.ncode, i);
+            await repository.refreshEpisodeList(
+              widget.source,
+              widget.workId,
+              i,
+            );
           }
         },
         child: CustomScrollView(
@@ -376,7 +402,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                                   ref
                                       .read(
                                         libraryStatusProvider(
-                                          widget.ncode,
+                                          widget.source,
+                                          widget.workId,
                                         ).notifier,
                                       )
                                       .toggle(novelInfo),
@@ -396,7 +423,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                                   ref
                                       .read(
                                         libraryStatusProvider(
-                                          widget.ncode,
+                                          widget.source,
+                                          widget.workId,
                                         ).notifier,
                                       )
                                       .toggle(novelInfo),
@@ -453,7 +481,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
               )
             else
               _EpisodeListSliver(
-                ncode: widget.ncode,
+                source: widget.source,
+                workId: widget.workId,
                 totalEpisodes: novelInfo.generalAllNo ?? 0,
                 episodes: episodes,
                 isLoading: isLoading,
@@ -540,7 +569,8 @@ class _StorySectionState extends State<_StorySection> {
 
 class _EpisodeListSliver extends StatelessWidget {
   const _EpisodeListSliver({
-    required this.ncode,
+    required this.source,
+    required this.workId,
     required this.totalEpisodes,
     required this.episodes,
     required this.isLoading,
@@ -549,7 +579,8 @@ class _EpisodeListSliver extends StatelessWidget {
     // initialLoadDoneは不要（親がローディング状態を管理）
   });
 
-  final String ncode;
+  final NovelSource source;
+  final String workId;
   final int totalEpisodes;
   final List<Episode> episodes;
   final bool isLoading;
@@ -621,7 +652,8 @@ class _EpisodeListSliver extends StatelessWidget {
           final episode = episodes[episodeIndex];
           return _EpisodeListTile(
             episode: episode,
-            ncode: ncode,
+            source: source,
+            workId: workId,
           );
         },
         childCount: episodes.length + 2, // ヘッダー + アイテム + フッター
@@ -661,7 +693,12 @@ Future<void> _handleDownload(
               onPressed: () {
                 unawaited(
                   ref
-                      .read(libraryStatusProvider(novelInfo.ncode!).notifier)
+                      .read(
+                        libraryStatusProvider(
+                          novelInfo.source,
+                          novelInfo.workId ?? novelInfo.ncode!,
+                        ).notifier,
+                      )
                       .toggle(novelInfo),
                 );
               },
@@ -683,11 +720,13 @@ Future<void> _handleDownload(
 class _EpisodeListTile extends ConsumerWidget {
   const _EpisodeListTile({
     required this.episode,
-    required this.ncode,
+    required this.source,
+    required this.workId,
   });
 
   final Episode episode;
-  final String ncode;
+  final NovelSource source;
+  final String workId;
 
   int? extractEpisodeNumber(String? url) {
     if (url == null) return null;
@@ -771,7 +810,8 @@ class _EpisodeListTile extends ConsumerWidget {
       onTap: () {
         unawaited(
           NovelEpisodeRoute(
-            ncode: ncode,
+            source: source.name,
+            workId: workId,
             episode: episodeNumber,
             revised: episode.revised,
           ).push(context),
@@ -865,7 +905,7 @@ class _EpisodeListTile extends ConsumerWidget {
   ) async {
     final repo = ref.read(novelRepositoryProvider);
     try {
-      await repo.deleteDownloadedEpisode(ncode, episodeNumber);
+      await repo.deleteDownloadedEpisode(source, workId, episodeNumber);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('削除しました')),
@@ -890,7 +930,8 @@ class _EpisodeListTile extends ConsumerWidget {
 
     try {
       final success = await repo.downloadSingleEpisode(
-        ncode,
+        source,
+        workId,
         episodeNumber,
         revised: episode.revised,
       );

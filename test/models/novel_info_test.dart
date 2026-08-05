@@ -19,7 +19,7 @@ void main() {
       final novel = NovelInfo.fromJson(json);
 
       expect(novel.title, equals('Test Novel'));
-      expect(novel.ncode, equals('n1234ab'));
+      expect(novel.workId, equals('n1234ab'));
       expect(novel.userId, equals(12345));
       expect(novel.novelType, equals(1));
       expect(novel.globalPoint, equals(10000));
@@ -46,13 +46,13 @@ void main() {
         userId: 12345,
         novelType: 1,
         end: 0,
-        genre: 1,
+        genreId: '1',
         generalAllNo: 100,
       );
 
       final companion = novel.toDbCompanion();
 
-      expect(companion.ncode.value, equals('n1234'));
+      expect(companion.workId.value, equals('n1234'));
       expect(companion.title.value, equals('Test Novel'));
       expect(companion.userId.value, equals(12345));
     });

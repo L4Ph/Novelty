@@ -1,4 +1,4 @@
-import 'package:narou_parser/src/models/novel_content_element.dart';
+import 'package:novel_parser_core/novel_parser_core.dart';
 
 /// ルックアップテーブルによる高速パース処理（最適化版）。
 ///
