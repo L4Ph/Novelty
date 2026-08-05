@@ -7,8 +7,14 @@ on:
 
 jobs:
   release:
-    # PRがマージされた場合のみ実行
-    if: github.event.pull_request.merged == true
+    # PRがマージされた場合のみ実行。
+    # スタックされたPRの場合は最上位(position == size、変更の完全な
+    # セットを含む)のマージ時のみ実行し、中間PRのマージでは
+    # リリースを切らない。
+    if: >-
+      github.event.pull_request.merged == true &&
+      (github.event.pull_request.stack == null ||
+      github.event.pull_request.stack.position == github.event.pull_request.stack.size)
     runs-on: ubuntu-latest
     permissions:
       contents: write
