@@ -1,7 +1,17 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/providers/ranking_provider.dart';
+import 'package:novelty/services/api_service.dart';
+import 'package:novelty/sites/novel_source.dart';
+import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/utils/value_wrapper.dart';
+
+import 'novel_info_offline_test.mocks.dart';
 
 void main() {
   group('RankingState', () {
@@ -100,5 +110,46 @@ void main() {
         contains('RankingState'),
       );
     });
+  });
+
+  group('RankingNotifier（破棄時の安全性）', () {
+    test('プロバイダ破棄後にfetchNextPageが完了しても例外を投げない', () async {
+      final mockApiService = MockApiService();
+      final completer = Completer<NovelSearchResult>();
+      when(
+        mockApiService.searchNovels(any),
+      ).thenAnswer((_) => completer.future);
+
+      final container = ProviderContainer(
+        overrides: [
+          apiServiceProvider.overrideWithValue(mockApiService),
+          isOfflineModeProvider.overrideWithValue(false),
+        ],
+      );
+
+      // ランキングの購読を開始（fetchNextPageが走る）
+      final subscription = container.listen(
+        rankingProvider(NovelSource.narou, 'm'),
+        (_, _) {},
+      );
+      // fetchNextPage がAPI await中になるまで進める
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      // タブ切替等でプロバイダが破棄される
+      subscription.close();
+      container.dispose();
+
+      // APIレスポンスが遅れて返る（破棄後の完了）
+      completer.complete(
+        const NovelSearchResult(novels: [], allCount: 0),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      // 例外が投げられていなければ成功（破棄後のstate更新でエラーにならない）
+      verify(mockApiService.searchNovels(any)).called(1);
+    });
+
+
   });
 }

@@ -248,5 +248,130 @@ void main() {
       );
       expect(find.text('コピーしました'), findsOneWidget);
     });
+
+    testWidgets('カクヨム作品の共有ではkakuyomu.jpのURLがコピーされる', (
+      tester,
+    ) async {
+      const kakuyomuWorkId = '16818023211929539879';
+      final clipboardMock = installClipboardMock(tester);
+      addTearDown(clipboardMock.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isOfflineModeProvider.overrideWithValue(false),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, args) => Stream.value(
+                const NovelInfo(
+                  source: NovelSource.kakuyomu,
+                  workId: kakuyomuWorkId,
+                  title: 'カクヨム共有テスト小説',
+                ),
+              ),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, args) => Stream.value(<Episode>[]),
+            ),
+            downloadProgressProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
+            lastReadEpisodeProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelDetailPage(
+              source: NovelSource.kakuyomu,
+              workId: kakuyomuWorkId,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.copy));
+      await tester.pumpAndSettle();
+
+      clipboardMock.expectCopiedText(
+        'カクヨム共有テスト小説\nhttps://kakuyomu.jp/works/$kakuyomuWorkId',
+      );
+      expect(find.text('コピーしました'), findsOneWidget);
+    });
+
+    testWidgets('カクヨム作品のエピソード一覧で話数が目次順連番で表示される', (
+      tester,
+    ) async {
+      const kakuyomuWorkId = '1177354054891139802';
+      const kakuyomuEpisodeId = '1177354054891141560';
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isOfflineModeProvider.overrideWithValue(false),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, args) => Stream.value(
+                const NovelInfo(
+                  source: NovelSource.kakuyomu,
+                  workId: kakuyomuWorkId,
+                  title: 'カクヨム話数テスト小説',
+                  generalAllNo: 3,
+                ),
+              ),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, args) => Stream.value(
+                const [
+                  Episode(
+                    source: NovelSource.kakuyomu,
+                    index: 1,
+                    subtitle: '第一話',
+                    url:
+                        'https://kakuyomu.jp/works/$kakuyomuWorkId/episodes/$kakuyomuEpisodeId',
+                  ),
+                  Episode(
+                    source: NovelSource.kakuyomu,
+                    index: 2,
+                    subtitle: '第二話',
+                    url:
+                        'https://kakuyomu.jp/works/$kakuyomuWorkId/episodes/1177354054891141561',
+                  ),
+                  Episode(
+                    source: NovelSource.kakuyomu,
+                    index: 3,
+                    subtitle: '第三話',
+                    url:
+                        'https://kakuyomu.jp/works/$kakuyomuWorkId/episodes/1177354054891141562',
+                  ),
+                ],
+              ),
+            ),
+            downloadProgressProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
+            lastReadEpisodeProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelDetailPage(
+              source: NovelSource.kakuyomu,
+              workId: kakuyomuWorkId,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // 話数は作品IDではなく目次順の連番で表示される
+      expect(find.text('第1話'), findsOneWidget);
+      expect(find.text('第2話'), findsOneWidget);
+      expect(find.text('第3話'), findsOneWidget);
+      // 作品IDが話数として表示されないこと
+      expect(find.text('第$kakuyomuWorkId話'), findsNothing);
+    });
   });
 }

@@ -13,6 +13,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'ranking_provider.g.dart';
 
+
+
 /// ランキングの状態を管理するクラス
 @immutable
 class RankingState {
@@ -102,6 +104,7 @@ class RankingNotifier extends _$RankingNotifier {
     // Watch filter state to trigger rebuild when it changes
     ref.watch(rankingFilterStateProvider(source, rankingType));
 
+
     // Initial fetch
     unawaited(Future.microtask(fetchNextPage));
     return const RankingState();
@@ -138,6 +141,10 @@ class RankingNotifier extends _$RankingNotifier {
         await _fetchSiteRanking(filter, currentState);
       }
     } on Object catch (e) {
+      // タブ切替等でプロバイダが破棄された場合は状態を更新しない
+      if (!ref.mounted) {
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
         isLoadingMore: false,
@@ -170,6 +177,11 @@ class RankingNotifier extends _$RankingNotifier {
       final query = _buildQuery(filter, order, currentPageToFetch);
 
       final result = await apiService.searchNovels(query);
+
+      // タブ切替等でプロバイダが破棄された場合は中断する
+      if (!ref.mounted) {
+        return;
+      }
 
       final fetchedNovels = result.novels;
       hasMoreOnServer = fetchedNovels.length >= 20;
@@ -212,6 +224,11 @@ class RankingNotifier extends _$RankingNotifier {
       rankingType,
       page: currentState.page,
     );
+
+    // タブ切替等でプロバイダが破棄された場合は中断する
+    if (!ref.mounted) {
+      return;
+    }
 
     // クライアントサイドでフィルタを適用
     final filtered = fetched.where((novel) {

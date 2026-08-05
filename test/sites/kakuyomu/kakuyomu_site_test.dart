@@ -328,6 +328,8 @@ void main() {
         expect(first.genreId, 'FANTASY');
         expect(first.generalAllNo, 23);
         expect(first.end, 1); // 連載中
+        // ★12,218 → 12218（レビューポイント）
+        expect(first.allPoint, 12218);
       });
 
       test('ページング（page）をURLクエリに反映する', () async {

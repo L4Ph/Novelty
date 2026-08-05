@@ -243,6 +243,53 @@ void main() {
       });
     });
 
+    group('genre name', () {
+      testWidgets('カクヨムのジャンルIDをサイトのマスタデータから解決する', (
+        tester,
+      ) async {
+        const item = NovelInfo(
+          source: NovelSource.kakuyomu,
+          workId: '16818023211929539879',
+          title: 'カクヨム作品',
+          genreId: 'FANTASY',
+          writer: 'テスト作者',
+          end: 1,
+        );
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: NovelListTile(item: item),
+            ),
+          ),
+        );
+
+        // なろうのgenreListに無いIDでも「不明」にならず、サイトマスタから解決する
+        expect(find.textContaining('ファンタジー'), findsOneWidget);
+        expect(find.textContaining('不明'), findsNothing);
+      });
+
+      testWidgets('なろうのジャンルIDを従来どおり解決する', (tester) async {
+        const item = NovelInfo(
+          ncode: 'N1234AB',
+          title: 'なろう作品',
+          genreId: '101',
+          writer: 'テスト作者',
+          end: 1,
+        );
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: NovelListTile(item: item),
+            ),
+          ),
+        );
+
+        expect(find.textContaining('不明'), findsNothing);
+      });
+    });
+
     testWidgets('should use HookWidget and maintain functionality', (
       tester,
     ) async {

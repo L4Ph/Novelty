@@ -119,6 +119,10 @@ class SearchStateNotifier extends _$SearchStateNotifier {
     try {
       final result = await _searchBySource(query);
 
+      // 画面離脱等でプロバイダが破棄された場合は状態を更新しない
+      if (!ref.mounted) {
+        return;
+      }
       state = state.copyWith(
         results: result.novels,
         allCount: result.allCount,
@@ -126,6 +130,9 @@ class SearchStateNotifier extends _$SearchStateNotifier {
         error: const Value<Object?>(null),
       );
     } on Object catch (e) {
+      if (!ref.mounted) {
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
         error: Value<Object?>(e),
@@ -159,6 +166,10 @@ class SearchStateNotifier extends _$SearchStateNotifier {
 
       final result = await _searchBySource(nextQuery);
 
+      // 画面離脱等でプロバイダが破棄された場合は状態を更新しない
+      if (!ref.mounted) {
+        return;
+      }
       final newResults = [...state.results, ...result.novels];
 
       state = state.copyWith(
@@ -167,6 +178,9 @@ class SearchStateNotifier extends _$SearchStateNotifier {
         error: const Value<Object?>(null),
       );
     } on Object catch (e) {
+      if (!ref.mounted) {
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
         error: Value<Object?>(e),

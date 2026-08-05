@@ -9,8 +9,8 @@ import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/router/router.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/clipboard_helper.dart';
-import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:novelty/utils/work_url.dart';
 
 /// 小説の詳細ページ
 class NovelDetailPage extends ConsumerStatefulWidget {
@@ -269,9 +269,12 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                   tooltip: 'コピー',
                   icon: const Icon(Icons.copy),
                   onPressed: () {
-                    final url =
-                        'https://ncode.syosetu.com/'
-                        '${novelInfo.ncode?.toNormalizedNcode() ?? ''}/';
+                    // サイトに応じた作品URLを組み立てる（なろう/カクヨム）
+                    final url = buildWorkUrl(
+                      novelInfo.source,
+                      ncode: novelInfo.ncode,
+                      workId: novelInfo.workId,
+                    );
                     unawaited(
                       _copyNovelInfo(novelInfo.title, url),
                     );
@@ -756,22 +759,13 @@ class _EpisodeListTile extends ConsumerWidget {
   final NovelSource source;
   final String workId;
 
-  int? extractEpisodeNumber(String? url) {
-    if (url == null) return null;
-    final match = RegExp(r'/(\d+)/').firstMatch(url);
-    if (match != null) {
-      final episodeNumber = match.group(1);
-      if (episodeNumber != null) {
-        return int.tryParse(episodeNumber);
-      }
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final episodeNumber = extractEpisodeNumber(episode.url);
+    // 話数は目次順の連番（episode.index）を使用する。
+    // URLからの抽出はカクヨムのURL（/works/{workId}/episodes/{episodeId}）で
+    // 作品IDを拾ってしまうため行わない。
+    final episodeNumber = episode.index;
     final episodeTitle = episode.subtitle ?? 'No Title';
 
     if (episodeNumber == null) {

@@ -25,6 +25,21 @@ void main() {
       expect(novel.globalPoint, equals(10000));
     });
 
+    test('genreが数値で返る作品でもgenreIdを文字列としてパースできる', () {
+      // なろうAPIは作品によってgenreを数値（int）で返す場合がある
+      final json = {
+        'title': 'Test Novel',
+        'ncode': 'N1234AB',
+        'novel_type': '1',
+        'end': '0',
+        'genre': 201,
+      };
+
+      final novel = NovelInfo.fromJson(json);
+
+      expect(novel.genreId, equals('201'));
+    });
+
     test('toJsonでJSONに変換できる', () {
       const novel = NovelInfo(
         title: 'Test Novel',
