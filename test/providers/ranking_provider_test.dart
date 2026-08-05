@@ -5,13 +5,52 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_result.dart';
+import 'package:novelty/models/ranking_page.dart';
 import 'package:novelty/providers/ranking_provider.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/sites/novel_site.dart';
+import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/utils/value_wrapper.dart';
 
 import 'novel_info_offline_test.mocks.dart';
+
+/// 固定の [RankingPage] を返すだけの最小のサイト実装。
+///
+/// ランキング以外のメソッドは [NovelSite] のデフォルト実装
+/// （[UnsupportedError]）を使用する。
+class _StubRankingSite extends NovelSite {
+  _StubRankingSite(this._pages);
+
+  /// ページ番号（1始まり）に対応する [RankingPage] の一覧。
+  final List<RankingPage> _pages;
+
+  /// fetchRanking が呼ばれた回数。
+  int callCount = 0;
+
+  @override
+  NovelSource get source => NovelSource.kakuyomu;
+
+  @override
+  List<GenreMaster> get genres => const <GenreMaster>[];
+
+  @override
+  List<RankingTypeMaster> get rankingTypes => const <RankingTypeMaster>[];
+
+  @override
+  String? metaText(NovelInfo info) => null;
+
+  @override
+  Future<RankingPage> fetchRanking(
+    String rankingType, {
+    int page = 1,
+  }) async {
+    callCount++;
+    final index = (page - 1).clamp(0, _pages.length - 1);
+    return _pages[index];
+  }
+}
 
 void main() {
   group('RankingState', () {
@@ -151,5 +190,99 @@ void main() {
     });
 
 
+  });
+
+  group('RankingNotifier（カクヨムのサイト実装経路）', () {
+    test('hasNextPage=false ならhasMoreがfalseになりそれ以上取得しない', () async {
+      final site = _StubRankingSite(<RankingPage>[
+        const RankingPage(
+          novels: <NovelInfo>[
+            NovelInfo(title: '作品A', ncode: 'n1'),
+          ],
+          hasNextPage: false,
+        ),
+      ]);
+      final container = ProviderContainer(
+        overrides: [
+          novelSiteRegistryProvider.overrideWithValue(
+            <NovelSource, NovelSite>{NovelSource.kakuyomu: site},
+          ),
+          isOfflineModeProvider.overrideWithValue(false),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final subscription = container.listen(
+        rankingProvider(NovelSource.kakuyomu, 'daily'),
+        (_, _) {},
+      );
+      // fetchNextPage の完了を待つ
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      final state = container.read(
+        rankingProvider(NovelSource.kakuyomu, 'daily'),
+      );
+      expect(state.novels, hasLength(1));
+      expect(state.hasMore, isFalse);
+      expect(site.callCount, 1);
+
+      // hasMore=false なら追加の fetchNextPage はサイトを呼び出さない
+      await container
+          .read(rankingProvider(NovelSource.kakuyomu, 'daily').notifier)
+          .fetchNextPage();
+      await Future<void>.delayed(Duration.zero);
+      expect(site.callCount, 1);
+      subscription.close();
+    });
+
+    test('hasNextPage=true ならhasMoreがtrueのまま次のページを取得する', () async {
+      final site = _StubRankingSite(<RankingPage>[
+        const RankingPage(
+          novels: <NovelInfo>[
+            NovelInfo(title: '作品A', ncode: 'n1'),
+          ],
+          hasNextPage: true,
+        ),
+        const RankingPage(
+          novels: <NovelInfo>[
+            NovelInfo(title: '作品B', ncode: 'n2'),
+          ],
+          hasNextPage: false,
+        ),
+      ]);
+      final container = ProviderContainer(
+        overrides: [
+          novelSiteRegistryProvider.overrideWithValue(
+            <NovelSource, NovelSite>{NovelSource.kakuyomu: site},
+          ),
+          isOfflineModeProvider.overrideWithValue(false),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final subscription = container.listen(
+        rankingProvider(NovelSource.kakuyomu, 'daily'),
+        (_, _) {},
+      );
+      // 1ページ目取得
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(site.callCount, 1);
+
+      // 次のページを取得
+      await container
+          .read(rankingProvider(NovelSource.kakuyomu, 'daily').notifier)
+          .fetchNextPage();
+      await Future<void>.delayed(Duration.zero);
+
+      final state = container.read(
+        rankingProvider(NovelSource.kakuyomu, 'daily'),
+      );
+      expect(state.novels, hasLength(2));
+      expect(state.hasMore, isFalse);
+      expect(site.callCount, 2);
+      subscription.close();
+    });
   });
 }

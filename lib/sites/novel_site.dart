@@ -3,6 +3,7 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
+import 'package:novelty/models/ranking_page.dart';
 import 'package:novelty/sites/novel_source.dart';
 
 /// ジャンルのマスタデータ。
@@ -165,7 +166,7 @@ abstract class NovelSite {
   ///
   /// [rankingType] は [RankingTypeMaster.id] に対応する。
   /// 未対応サイトでは [UnsupportedError] を投げる。
-  Future<List<NovelInfo>> fetchRanking(
+  Future<RankingPage> fetchRanking(
     String rankingType, {
     int page = 1,
   }) {

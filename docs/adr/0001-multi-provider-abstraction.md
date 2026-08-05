@@ -19,7 +19,7 @@ Nコード（`ncode`）の一意キーに深く依存していた。カクヨム
    DB・モデル・ルーティングは `NovelSource` + `workId` の複合キーで管理する。
 2. **サイト抽象レイヤー（`lib/sites/`）** を新設する。
    - `NovelSite`: マスタデータ（`genres` / `rankingTypes`）+ 読書コア（`fetchNovelInfo` / `fetchToc` / `fetchEpisode`）+ 探索（`searchNovels` / `fetchRanking`）
-   - レジストリ `novelSiteRegistry: Map<NovelSource, NovelSite>`
+   - レジストリ `defaultNovelSiteRegistry: Map<NovelSource, NovelSite>`（Riverpodプロバイダ `novelSiteRegistryProvider` で注入可能）
    - 未対応メソッドは既定で `UnsupportedError` を投げる
 3. **DBマイグレーション v16→v17（非破壊）**。全テーブルを `(source, work_id[, episode_id])` 複合キーに移行し、
    既存データは `source='narou'` として100%維持する。ジャンルは `INTEGER` → `TEXT`（`genreId`）に一般化。

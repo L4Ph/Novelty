@@ -249,12 +249,12 @@ class RankingNotifier extends _$RankingNotifier {
     RankingFilterState filter,
     RankingState currentState,
   ) async {
-    final site = novelSiteRegistry[source]!;
+    final site = ref.read(novelSiteRegistryProvider)[source]!;
     _logRanking(
       'fetchNextPage(${source.dbId}): ランキング取得 page=${currentState.page} '
       'mounted=${ref.mounted}',
     );
-    final fetched = await site.fetchRanking(
+    final result = await site.fetchRanking(
       rankingType,
       page: currentState.page,
     );
@@ -267,11 +267,11 @@ class RankingNotifier extends _$RankingNotifier {
       return;
     }
     _logRanking(
-      'fetchNextPage(${source.dbId}): 取得成功 ${fetched.length}件',
+      'fetchNextPage(${source.dbId}): 取得成功 ${result.novels.length}件',
     );
 
     // クライアントサイドでフィルタを適用
-    final filtered = fetched.where((novel) {
+    final filtered = result.novels.where((novel) {
       if (filter.showOnlyOngoing) {
         if (novel.end != 1) return false;
       }
@@ -281,8 +281,8 @@ class RankingNotifier extends _$RankingNotifier {
       return true;
     }).toList();
 
-    // カクヨムのランキングは1ページに約100件含まれる
-    final hasMore = fetched.length >= 100;
+    // サーバーが返す hasNextPage で次のページ有無を判定する
+    final hasMore = result.hasNextPage;
     state = currentState.copyWith(
       novels: [...currentState.novels, ...filtered],
       isLoading: false,
