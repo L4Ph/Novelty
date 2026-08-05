@@ -48,9 +48,9 @@ jobs:
 
             // バージョンアップタイプを判定
             let bumpType = 'default';
-            if (labels.includes('pride')) {
+            if (labels.includes('proud')) {
               bumpType = 'proud';
-              console.log('Detected "pride" label - will bump PROUD version');
+              console.log('Detected "proud" label - will bump PROUD version');
             } else if (labels.includes('shame')) {
               bumpType = 'shame';
               console.log('Detected "shame" label - will bump SHAME version');
