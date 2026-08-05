@@ -5,6 +5,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/database/database_initialization.dart';
+import 'package:novelty/database/database_maintenance.dart';
 import 'package:novelty/screens/data_storage_page.dart';
 import 'package:novelty/services/backup_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -93,8 +94,8 @@ void main() {
 
     group('インポート', () {
       testWidgets('データベースインポート確認ダイアログが表示される', (tester) async {
-        when(mockBackupService.importDatabaseFromFile()).thenAnswer(
-          (_) async => const ImportResult(success: true),
+        when(mockBackupService.stageImport()).thenAnswer(
+          (_) async => const ImportStagedResult(cancelled: true),
         );
 
         await pumpPage(tester);
@@ -106,9 +107,14 @@ void main() {
         expect(find.text('復元する'), findsOneWidget);
       });
 
-      testWidgets('成功すると復元完了ダイアログが表示される', (tester) async {
-        when(mockBackupService.importDatabaseFromFile()).thenAnswer(
-          (_) async => const ImportResult(success: true),
+      testWidgets('読み込みが成功するとデータベースの切り替えが開始される', (
+        tester,
+      ) async {
+        when(mockBackupService.stageImport()).thenAnswer(
+          (_) async => const ImportStagedResult(
+            pendingFilePath: '/tmp/novelty.db.import_pending',
+            backupVersion: 17,
+          ),
         );
 
         await pumpPage(tester);
@@ -117,13 +123,21 @@ void main() {
         await tester.tap(find.text('復元する'));
         await tester.pumpAndSettle();
 
-        expect(find.text('復元が完了しました'), findsOneWidget);
-        verify(mockBackupService.importDatabaseFromFile()).called(1);
+        verify(mockBackupService.stageImport()).called(1);
+
+        final element = tester.element(find.byType(DataStoragePage));
+        final container = ProviderScope.containerOf(element);
+        final maintenance = container.read(databaseMaintenanceProvider);
+        expect(maintenance, isA<DatabaseMaintenanceBusy>());
+        final swap = (maintenance as DatabaseMaintenanceBusy).importSwap;
+        expect(swap, isNotNull);
+        expect(swap!.pendingFilePath, '/tmp/novelty.db.import_pending');
+        expect(swap.backupVersion, 17);
       });
 
       testWidgets('キャンセルするとスナックバーが表示される', (tester) async {
-        when(mockBackupService.importDatabaseFromFile()).thenAnswer(
-          (_) async => const ImportResult(cancelled: true),
+        when(mockBackupService.stageImport()).thenAnswer(
+          (_) async => const ImportStagedResult(cancelled: true),
         );
 
         await pumpPage(tester);
@@ -137,7 +151,7 @@ void main() {
 
       testWidgets('失敗すると理由付きのエラーダイアログが表示される', (tester) async {
         when(
-          mockBackupService.importDatabaseFromFile(),
+          mockBackupService.stageImport(),
         ).thenThrow(Exception('import boom'));
 
         await pumpPage(tester);

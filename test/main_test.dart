@@ -104,5 +104,40 @@ void main() {
       expect(find.text('データベースをインポートしています…'), findsNothing);
       expect(find.text('読書データを最新の状態に更新しています。'), findsOneWidget);
     });
+
+    testWidgets('インポート適用中は配下の画面がアンマウントされる', (tester) async {
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: DatabaseMaintenanceOverlay(
+              child: Scaffold(body: Center(child: Text('配下の画面'))),
+            ),
+          ),
+        ),
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(DatabaseMaintenanceOverlay)),
+      );
+
+      // 通常のBusy状態では配下の画面は維持される
+      container.read(databaseMaintenanceProvider.notifier).state =
+          const DatabaseMaintenanceBusy('データベースをエクスポートしています…');
+      await tester.pump();
+      expect(find.text('配下の画面'), findsOneWidget);
+
+      // インポート適用(payload付き)では配下の画面がアンマウントされる。
+      // DBへのストリーム購読を全てキャンセルさせるため。
+      container
+          .read(databaseMaintenanceProvider.notifier)
+          .state = const DatabaseMaintenanceBusy(
+        'データベースを切り替えています…',
+        importSwap: ImportSwapPayload(
+          pendingFilePath: '/tmp/novelty.db.import_pending',
+        ),
+      );
+      await tester.pump();
+      expect(find.text('データベースを切り替えています…'), findsOneWidget);
+      expect(find.text('配下の画面'), findsNothing);
+    });
   });
 }

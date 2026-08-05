@@ -23,8 +23,9 @@ import 'package:novelty/services/backup_service.dart' as _i2;
 // ignore_for_file: subtype_of_sealed_class
 // ignore_for_file: invalid_use_of_internal_member
 
-class _FakeImportResult_0 extends _i1.SmartFake implements _i2.ImportResult {
-  _FakeImportResult_0(Object parent, Invocation parentInvocation)
+class _FakeImportStagedResult_0 extends _i1.SmartFake
+    implements _i2.ImportStagedResult {
+  _FakeImportStagedResult_0(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -45,15 +46,32 @@ class MockBackupService extends _i1.Mock implements _i2.BackupService {
           as _i3.Future<String?>);
 
   @override
-  _i3.Future<_i2.ImportResult> importDatabaseFromFile() =>
+  _i3.Future<String?> exportDatabaseFileDirectly() =>
       (super.noSuchMethod(
-            Invocation.method(#importDatabaseFromFile, []),
-            returnValue: _i3.Future<_i2.ImportResult>.value(
-              _FakeImportResult_0(
+            Invocation.method(#exportDatabaseFileDirectly, []),
+            returnValue: _i3.Future<String?>.value(),
+          )
+          as _i3.Future<String?>);
+
+  @override
+  _i3.Future<_i2.ImportStagedResult> stageImport() =>
+      (super.noSuchMethod(
+            Invocation.method(#stageImport, []),
+            returnValue: _i3.Future<_i2.ImportStagedResult>.value(
+              _FakeImportStagedResult_0(
                 this,
-                Invocation.method(#importDatabaseFromFile, []),
+                Invocation.method(#stageImport, []),
               ),
             ),
           )
-          as _i3.Future<_i2.ImportResult>);
+          as _i3.Future<_i2.ImportStagedResult>);
+
+  @override
+  _i3.Future<void> applyImportSwap(String? pendingFilePath) =>
+      (super.noSuchMethod(
+            Invocation.method(#applyImportSwap, [pendingFilePath]),
+            returnValue: _i3.Future<void>.value(),
+            returnValueForMissingStub: _i3.Future<void>.value(),
+          )
+          as _i3.Future<void>);
 }
