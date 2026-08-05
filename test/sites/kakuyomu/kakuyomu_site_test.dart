@@ -404,6 +404,22 @@ void main() {
         expect(first.allPoint, 13730);
       });
 
+      test('rankedWorksクエリが無い場合はFormatExceptionを投げる', () async {
+        final adapter = _FixtureAdapter(<String, String>{
+          '/rankings/all/daily': '''
+<html><head><script id="__NEXT_DATA__" type="application/json">
+{"props":{"pageProps":{"__APOLLO_STATE__":{"ROOT_QUERY":{}}}}}
+</script></head><body></body></html>
+''',
+        });
+        final site = _createSite(adapter);
+
+        await expectLater(
+          site.fetchRanking('daily'),
+          throwsA(isA<FormatException>()),
+        );
+      });
+
       test('pageInfo.hasNextPageがRankingPage.hasNextPageに反映される', () async {
         final adapter = _FixtureAdapter(<String, String>{
           '/rankings/all/daily': _fixture('ranking_page.html'),

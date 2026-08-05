@@ -368,9 +368,11 @@ class KakuyomuSite implements NovelSite {
     final rankingKey = rootQuery?.keys
         .where((k) => k.startsWith('rankedWorks('))
         .firstOrNull;
-    final connection = rankingKey == null
-        ? null
-        : rootQuery?[rankingKey] as Map<String, dynamic>?;
+    if (rankingKey == null) {
+      // 構造が変わると黙って空になるのを防ぐため、明示的に失敗させる
+      throw const FormatException('rankedWorks クエリが見つかりません');
+    }
+    final connection = rootQuery?[rankingKey] as Map<String, dynamic>?;
     final pageInfo = connection?['pageInfo'] as Map<String, dynamic>?;
     final hasNextPage = (pageInfo?['hasNextPage'] as bool?) ?? false;
 

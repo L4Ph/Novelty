@@ -226,6 +226,13 @@ void main() {
       expect(state.novels, hasLength(1));
       expect(state.hasMore, isFalse);
       expect(site.callCount, 1);
+
+      // hasMore=false なら追加の fetchNextPage はサイトを呼び出さない
+      await container
+          .read(rankingProvider(NovelSource.kakuyomu, 'daily').notifier)
+          .fetchNextPage();
+      await Future<void>.delayed(Duration.zero);
+      expect(site.callCount, 1);
       subscription.close();
     });
 
