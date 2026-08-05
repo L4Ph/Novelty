@@ -284,6 +284,78 @@ void main() {
           anyElement(contains('offset=40')),
         );
       });
+
+      test('ジャンル指定をgenre_nameパラメータに反映する', () async {
+        final adapter = _FixtureAdapter(<String, String>{
+          '/search': _fixture('search_page.html'),
+        });
+        final site = _createSite(adapter);
+
+        await site.searchNovels(
+          const NovelSearchQuery(word: 'test', genreId: ['FANTASY']),
+        );
+
+        expect(
+          adapter.requestedUris,
+          anyElement(contains('genre_name=fantasy')),
+        );
+      });
+
+      test('連載状態指定をserial_statusパラメータに反映する', () async {
+        final adapter = _FixtureAdapter(<String, String>{
+          '/search': _fixture('search_page.html'),
+        });
+        final site = _createSite(adapter);
+
+        await site.searchNovels(
+          const NovelSearchQuery(word: 'test', serialStatus: 'running'),
+        );
+
+        expect(
+          adapter.requestedUris,
+          anyElement(contains('serial_status=running')),
+        );
+      });
+
+      test('文字数範囲指定をtotal_character_count_rangeパラメータに反映する', () async {
+        final adapter = _FixtureAdapter(<String, String>{
+          '/search': _fixture('search_page.html'),
+        });
+        final site = _createSite(adapter);
+
+        await site.searchNovels(
+          const NovelSearchQuery(
+            word: 'test',
+            totalCharacterCountRange: '20000-100000',
+          ),
+        );
+
+        expect(
+          adapter.requestedUris,
+          anyElement(contains('total_character_count_range=20000-100000')),
+        );
+      });
+
+      test('ジャンル・連載状態・文字数範囲を同時指定できる', () async {
+        final adapter = _FixtureAdapter(<String, String>{
+          '/search': _fixture('search_page.html'),
+        });
+        final site = _createSite(adapter);
+
+        await site.searchNovels(
+          const NovelSearchQuery(
+            word: 'test',
+            genreId: ['LOVE_STORY'],
+            serialStatus: 'completed',
+            totalCharacterCountRange: '100000-',
+          ),
+        );
+
+        final uri = adapter.requestedUris.first;
+        expect(uri, contains('genre_name=love_story'));
+        expect(uri, contains('serial_status=completed'));
+        expect(uri, contains('total_character_count_range=100000-'));
+      });
     });
 
     group('fetchRanking', () {
@@ -352,10 +424,14 @@ void main() {
       test('カクヨムのジャンル・ランキング種別を定義している', () {
         final site = _createSite(_FixtureAdapter(<String, String>{}));
 
-        expect(site.genres, hasLength(10));
+        expect(site.genres, hasLength(12));
         expect(site.genres.first.id, 'LOVE_STORY');
         expect(site.genres.first.name, '恋愛');
         expect(site.genres.map((g) => g.id), contains('FANTASY'));
+        expect(site.genres.map((g) => g.id), contains('CRITICISM'));
+        expect(site.genres.map((g) => g.id), contains('NONFICTION'));
+        // カクヨムのジャンルキーは複数形（others）のため OTHERS が正
+        expect(site.genres.map((g) => g.id), contains('OTHERS'));
 
         expect(site.rankingTypes, hasLength(5));
         expect(site.rankingTypes.first.id, 'daily');

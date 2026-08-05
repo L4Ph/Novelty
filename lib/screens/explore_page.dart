@@ -13,6 +13,7 @@ import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:novelty/widgets/app_bar_source_dropdown.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
 import 'package:novelty/widgets/ranking_list.dart';
@@ -128,13 +129,12 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
           initialSelectedGenreId: currentFilter.selectedGenreId,
           onApply: ({required showOnlyOngoing, required selectedGenreId}) {
             // Providerの状態を更新
-            ref
-                .read(
-                  rankingFilterStateProvider(
-                    _source,
-                    currentRankingType,
-                  ).notifier,
-                )
+            ref.read(
+                rankingFilterStateProvider(
+                  _source,
+                  currentRankingType,
+                ).notifier,
+              )
               ..setShowOnlyOngoing(value: showOnlyOngoing)
               ..setSelectedGenreId(selectedGenreId);
           },
@@ -158,7 +158,27 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('見つける'),
+          title: Row(
+            children: [
+              const Text('見つける'),
+              // プロバイダ切替（AppBar用コンパクトドロップダウン）
+              // タイトルの残り領域で中央に配置する
+              if (!searchState.isSearching)
+                Expanded(
+                  child: Center(
+                    child: AppBarSourceDropdown(
+                      sources: NovelSource.values,
+                      selected: _source,
+                      onChanged: (source) {
+                        if (source != null) {
+                          _switchSource(source);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+            ],
+          ),
           actions: [
             if (searchState.isSearching)
               IconButton(
@@ -184,42 +204,12 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
           bottom: searchState.isSearching
               ? null
               : PreferredSize(
-                  preferredSize: const Size.fromHeight(96),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // プロバイダ切替
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: SegmentedButton<NovelSource>(
-                          segments: const [
-                            ButtonSegment(
-                              value: NovelSource.narou,
-                              label: Text('なろう'),
-                            ),
-                            ButtonSegment(
-                              value: NovelSource.kakuyomu,
-                              label: Text('カクヨム'),
-                            ),
-                          ],
-                          selected: {_source},
-                          onSelectionChanged: (selection) {
-                            _switchSource(selection.first);
-                          },
-                          showSelectedIcon: false,
-                          style: const ButtonStyle(
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ),
-                      ),
-                      TabBar(
-                        controller: _tabController,
-                        isScrollable: _rankingTypes.length > 5,
-                        tabs: [
-                          for (final type in _rankingTypes)
-                            Tab(text: type.label),
-                        ],
-                      ),
+                  preferredSize: const Size.fromHeight(48),
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: _rankingTypes.length > 5,
+                    tabs: [
+                      for (final type in _rankingTypes) Tab(text: type.label),
                     ],
                   ),
                 ),
@@ -257,6 +247,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
     );
   }
 }
+
 class _OfflineExploreBody extends StatelessWidget {
   const _OfflineExploreBody();
 

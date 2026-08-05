@@ -119,6 +119,13 @@ abstract class NovelSite {
   /// ランキング種別のマスタデータ一覧。
   List<RankingTypeMaster> get rankingTypes;
 
+  /// リスト表示用のサイト固有情報サフィックスを返す。
+  ///
+  /// なろうは「1.2k pt」、カクヨムは「★1,234」のように、
+  /// サイトごとの評価指標を整形して返す。
+  /// 表示すべき情報がない場合は null。
+  String? metaText(NovelInfo info);
+
   /// 作品情報を取得する。
   ///
   /// 未対応サイトでは [UnsupportedError] を投げる。

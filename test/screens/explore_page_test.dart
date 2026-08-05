@@ -118,7 +118,9 @@ void main() {
       expect(find.text('四半期'), findsOneWidget);
 
       // カクヨムに切り替える
-      await tester.tap(find.text('カクヨム'));
+      await tester.tap(find.byKey(const Key('app_bar_source_dropdown')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('カクヨム').last);
       await tester.pumpAndSettle();
 
       // カクヨムのランキング種別（年間タブ）が表示される

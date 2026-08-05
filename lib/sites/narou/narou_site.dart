@@ -1,3 +1,4 @@
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_source.dart';
 
@@ -12,6 +13,16 @@ class NarouSite extends NovelSite {
 
   @override
   NovelSource get source => NovelSource.narou;
+
+  /// なろうのメタ情報（ポイント表記）。
+  @override
+  String? metaText(NovelInfo info) {
+    final point = info.allPoint;
+    if (point == null) {
+      return null;
+    }
+    return '${(point / 1000).toStringAsFixed(1)}k pt';
+  }
 
   /// なろうのジャンルマスタ。
   ///

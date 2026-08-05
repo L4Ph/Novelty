@@ -54,6 +54,8 @@ _NovelSearchQuery _$NovelSearchQueryFromJson(
   time: json['time'] as String?,
   ncode: (json['ncode'] as List<dynamic>?)?.map((e) => e as String).toList(),
   type: json['type'] as String?,
+  serialStatus: json['serialStatus'] as String?,
+  totalCharacterCountRange: json['totalCharacterCountRange'] as String?,
   buntai: (json['buntai'] as List<dynamic>?)
       ?.map((e) => (e as num).toInt())
       .toList(),
@@ -103,6 +105,8 @@ Map<String, dynamic> _$NovelSearchQueryToJson(_NovelSearchQuery instance) =>
       'time': instance.time,
       'ncode': instance.ncode,
       'type': instance.type,
+      'serialStatus': instance.serialStatus,
+      'totalCharacterCountRange': instance.totalCharacterCountRange,
       'buntai': instance.buntai,
       'stop': instance.stop,
       'lastup': instance.lastup,

@@ -13,6 +13,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'ranking_provider.g.dart';
 
+/// ランキング取得フローのデバッグログを出力する。
+///
+/// `flutter run` 時に `[Novelty][Ranking]` のプレフィックスで
+/// フィルタできるようにしている。
+void _logRanking(String message) {
+  debugPrint('[Novelty][Ranking] $message');
+}
+
 
 
 /// ランキングの状態を管理するクラス
@@ -113,6 +121,12 @@ class RankingNotifier extends _$RankingNotifier {
   /// 次のページを取得する
   Future<void> fetchNextPage() async {
     final currentState = state;
+    _logRanking(
+      'fetchNextPage: source=$source rankingType=$rankingType '
+      'page=${currentState.page} isLoading=${currentState.isLoading} '
+      'isLoadingMore=${currentState.isLoadingMore} '
+      'hasMore=${currentState.hasMore} mounted=${ref.mounted}',
+    );
     if (currentState.isLoading ||
         currentState.isLoadingMore ||
         !currentState.hasMore) {
@@ -140,7 +154,11 @@ class RankingNotifier extends _$RankingNotifier {
       } else {
         await _fetchSiteRanking(filter, currentState);
       }
-    } on Object catch (e) {
+    } on Object catch (e, stackTrace) {
+      _logRanking(
+        'fetchNextPage: ERROR source=$source rankingType=$rankingType '
+        'mounted=${ref.mounted} error=$e\n$stackTrace',
+      );
       // タブ切替等でプロバイダが破棄された場合は状態を更新しない
       if (!ref.mounted) {
         return;
@@ -176,14 +194,26 @@ class RankingNotifier extends _$RankingNotifier {
         pagesFetched < maxPagesToFetch) {
       final query = _buildQuery(filter, order, currentPageToFetch);
 
+      _logRanking(
+        'fetchNextPage(narou): API page=$currentPageToFetch '
+        'mounted=${ref.mounted}',
+      );
       final result = await apiService.searchNovels(query);
 
       // タブ切替等でプロバイダが破棄された場合は中断する
       if (!ref.mounted) {
+        _logRanking(
+          'fetchNextPage(narou): プロバイダ破棄のため中断 '
+          '(page=$currentPageToFetch)',
+        );
         return;
       }
 
       final fetchedNovels = result.novels;
+      _logRanking(
+        'fetchNextPage(narou): page=$currentPageToFetch 取得成功 '
+        '${fetchedNovels.length}件',
+      );
       hasMoreOnServer = fetchedNovels.length >= 20;
 
       // Apply client-side filtering
@@ -220,6 +250,10 @@ class RankingNotifier extends _$RankingNotifier {
     RankingState currentState,
   ) async {
     final site = novelSiteRegistry[source]!;
+    _logRanking(
+      'fetchNextPage(${source.dbId}): ランキング取得 page=${currentState.page} '
+      'mounted=${ref.mounted}',
+    );
     final fetched = await site.fetchRanking(
       rankingType,
       page: currentState.page,
@@ -227,8 +261,14 @@ class RankingNotifier extends _$RankingNotifier {
 
     // タブ切替等でプロバイダが破棄された場合は中断する
     if (!ref.mounted) {
+      _logRanking(
+        'fetchNextPage(${source.dbId}): プロバイダ破棄のため中断',
+      );
       return;
     }
+    _logRanking(
+      'fetchNextPage(${source.dbId}): 取得成功 ${fetched.length}件',
+    );
 
     // クライアントサイドでフィルタを適用
     final filtered = fetched.where((novel) {

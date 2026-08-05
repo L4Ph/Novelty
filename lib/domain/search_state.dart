@@ -121,6 +121,10 @@ class SearchStateNotifier extends _$SearchStateNotifier {
 
       // 画面離脱等でプロバイダが破棄された場合は状態を更新しない
       if (!ref.mounted) {
+        debugPrint(
+          '[Novelty][Search] search: プロバイダ破棄のため中断 '
+          '(source=${query.source})',
+        );
         return;
       }
       state = state.copyWith(
@@ -129,7 +133,11 @@ class SearchStateNotifier extends _$SearchStateNotifier {
         isLoading: false,
         error: const Value<Object?>(null),
       );
-    } on Object catch (e) {
+    } on Object catch (e, stackTrace) {
+      debugPrint(
+        '[Novelty][Search] search: ERROR source=${query.source} '
+        'mounted=${ref.mounted} error=$e\n$stackTrace',
+      );
       if (!ref.mounted) {
         return;
       }
@@ -168,6 +176,9 @@ class SearchStateNotifier extends _$SearchStateNotifier {
 
       // 画面離脱等でプロバイダが破棄された場合は状態を更新しない
       if (!ref.mounted) {
+        debugPrint(
+          '[Novelty][Search] loadMore: プロバイダ破棄のため中断',
+        );
         return;
       }
       final newResults = [...state.results, ...result.novels];
@@ -177,7 +188,11 @@ class SearchStateNotifier extends _$SearchStateNotifier {
         isLoading: false,
         error: const Value<Object?>(null),
       );
-    } on Object catch (e) {
+    } on Object catch (e, stackTrace) {
+      debugPrint(
+        '[Novelty][Search] loadMore: ERROR mounted=${ref.mounted} '
+        'error=$e\n$stackTrace',
+      );
       if (!ref.mounted) {
         return;
       }

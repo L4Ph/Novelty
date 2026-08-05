@@ -74,12 +74,14 @@ class NovelListTile extends HookWidget {
       [item.novelType, item.end],
     );
 
-    // ポイント表示の計算をメモ化
+    // サイト固有情報(pt/★)の計算をメモ化
+    // 評価指標はサイトごとに異なるため、サイト実装（NovelSite.metaText）に委譲する
     final pointSuffix = useMemoized(
-      () => item.allPoint != null
-          ? ' • ${(item.allPoint! / 1000).toStringAsFixed(1)}k pt'
-          : '',
-      [item.allPoint],
+      () {
+        final text = novelSiteRegistry[item.source]!.metaText(item);
+        return text != null ? ' • $text' : '';
+      },
+      [item.source, item.allPoint],
     );
 
     // デフォルトのonTapハンドラーをメモ化

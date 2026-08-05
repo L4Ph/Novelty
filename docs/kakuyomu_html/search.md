@@ -55,5 +55,16 @@ Apollo ステート内の `searchWorks(...)` コネクションに含まれる�
 | `NovelSearchResult.allCount` | `SearchWorkConnection.totalCount` |
 | 各作品 | `Work:{id}` エンティティを `_workToNovelInfo` で変換 |
 
-- なろう固有の詳細検索条件（ジャンル・種別・並び順・除外語等）はカクヨムでは未対応のため、
+### 対応している絞り込み条件
+
+カクヨム `/search` のクエリパラメータとして以下をサポートする。
+
+| 条件 | `NovelSearchQuery` フィールド | URLパラメータ | 値 |
+|---|---|---|---|
+| ジャンル | `genreId` | `genre_name` | 小文字スネークケース（例: `FANTASY` → `fantasy`）。カクヨムのジャンルキーは `others` のように複数形のものがある |
+| 連載状態 | `serialStatus` | `serial_status` | `running` / `completed` |
+| 文字数範囲 | `totalCharacterCountRange` | `total_character_count_range` | `-20000` / `20000-100000` / `100000-` / `500000-` |
+
+- なろう固有の詳細検索条件（種別・並び順・除外語等）はカクヨムでは未対応のため、
   UI上はカクヨム選択時に非表示にする
+- タグ検索はなろう側にも相当機能がないため対象外とする
