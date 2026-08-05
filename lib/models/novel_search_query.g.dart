@@ -9,6 +9,9 @@ part of 'novel_search_query.dart';
 _NovelSearchQuery _$NovelSearchQueryFromJson(
   Map<String, dynamic> json,
 ) => _NovelSearchQuery(
+  source:
+      $enumDecodeNullable(_$NovelSourceEnumMap, json['source']) ??
+      NovelSource.narou,
   word: json['word'] as String?,
   notword: json['notword'] as String?,
   title: json['title'] as bool? ?? false,
@@ -65,6 +68,7 @@ _NovelSearchQuery _$NovelSearchQueryFromJson(
 
 Map<String, dynamic> _$NovelSearchQueryToJson(_NovelSearchQuery instance) =>
     <String, dynamic>{
+      'source': _$NovelSourceEnumMap[instance.source]!,
       'word': instance.word,
       'notword': instance.notword,
       'title': instance.title,
@@ -108,3 +112,8 @@ Map<String, dynamic> _$NovelSearchQueryToJson(_NovelSearchQuery instance) =>
       'lim': instance.lim,
       'st': instance.st,
     };
+
+const _$NovelSourceEnumMap = {
+  NovelSource.narou: 'narou',
+  NovelSource.kakuyomu: 'kakuyomu',
+};

@@ -8,6 +8,8 @@ import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/screens/search_page.dart';
+import 'package:novelty/sites/novel_site_registry.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
 import 'package:novelty/widgets/search_modal.dart';
@@ -25,6 +27,11 @@ class LibraryPage extends ConsumerWidget {
     // フィルタリング処理
     final filteredNovelsAsync = libraryNovelsAsync.whenData((novels) {
       return novels.cast<Novel>().where((novel) {
+        // サイト絞り込みフィルタ
+        if (filter.source != null && novel.source != filter.source) {
+          return false;
+        }
+
         // 連載中のみフィルタ
         if (filter.showOnlyOngoing) {
           // end: 1 = 連載中, 0 = 完結/短編
@@ -34,8 +41,8 @@ class LibraryPage extends ConsumerWidget {
         }
 
         // ジャンルフィルタ
-        if (filter.selectedGenre != null) {
-          if (novel.genreId != filter.selectedGenre.toString()) {
+        if (filter.selectedGenreId != null) {
+          if (novel.genreId != filter.selectedGenreId) {
             return false;
           }
         }
@@ -45,21 +52,28 @@ class LibraryPage extends ConsumerWidget {
     });
 
     void showFilterSheet() {
+      // ジャンル一覧は選択中のサイトのマスタデータを使用する
+      final genres = novelSiteRegistry[filter.source ?? NovelSource.narou]!
+          .genres;
       unawaited(
         showModalBottomSheet<void>(
           context: context,
           isScrollControlled: true,
           useSafeArea: true,
           builder: (context) => RankingFilterSheet(
+            genres: genres,
             initialShowOnlyOngoing: filter.showOnlyOngoing,
-            initialSelectedGenre: filter.selectedGenre,
-            onApply: ({required showOnlyOngoing, required selectedGenre}) {
+            initialSelectedGenreId: filter.selectedGenreId,
+            onApply: ({
+              required showOnlyOngoing,
+              required selectedGenreId,
+            }) {
               ref
                   .read(libraryFilterStateProvider.notifier)
                   .setShowOnlyOngoing(value: showOnlyOngoing);
               ref
                   .read(libraryFilterStateProvider.notifier)
-                  .setSelectedGenre(selectedGenre);
+                  .setSelectedGenreId(selectedGenreId);
             },
           ),
         ),
@@ -102,7 +116,44 @@ class LibraryPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: filteredNovelsAsync.when(
+      body: Column(
+        children: [
+          // プロバイダ絞り込み
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                ChoiceChip(
+                  label: const Text('すべて'),
+                  selected: filter.source == null,
+                  onSelected: (_) {
+                    ref
+                        .read(libraryFilterStateProvider.notifier)
+                        .setSource(null);
+                  },
+                  visualDensity: VisualDensity.compact,
+                ),
+                const SizedBox(width: 8),
+                for (final source in NovelSource.values)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(source.label),
+                      selected: filter.source == source,
+                      onSelected: (_) {
+                        ref
+                            .read(libraryFilterStateProvider.notifier)
+                            .setSource(source);
+                      },
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: filteredNovelsAsync.when(
         data: (novels) {
           if (novels.isEmpty) {
             // フィルタ適用中の場合はメッセージを変えるなどの配慮も可能だが、
@@ -163,8 +214,12 @@ class LibraryPage extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error: $err')),
+            ),
+          ),
+        ],
       ),
     );
   }

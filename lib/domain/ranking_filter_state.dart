@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/value_wrapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -9,26 +10,32 @@ part 'ranking_filter_state.g.dart';
 class RankingFilterState {
   /// コンストラクタ。
   const RankingFilterState({
+    this.source = NovelSource.narou,
     this.showOnlyOngoing = false,
-    this.selectedGenre,
+    this.selectedGenreId,
   });
+
+  /// 提供サイト（プロバイダ）。
+  final NovelSource source;
 
   /// 連載中の作品のみを表示するかどうか。
   final bool showOnlyOngoing;
 
-  /// 選択されたジャンル。
-  final int? selectedGenre;
+  /// 選択されたジャンルID（サイト共通の文字列ID）。
+  final String? selectedGenreId;
 
   /// フィールドを変更した新しいインスタンスを作成する
   RankingFilterState copyWith({
+    NovelSource? source,
     bool? showOnlyOngoing,
-    Value<int?>? selectedGenre,
+    Value<String?>? selectedGenreId,
   }) {
     return RankingFilterState(
+      source: source ?? this.source,
       showOnlyOngoing: showOnlyOngoing ?? this.showOnlyOngoing,
-      selectedGenre: selectedGenre != null
-          ? selectedGenre.value
-          : this.selectedGenre,
+      selectedGenreId: selectedGenreId != null
+          ? selectedGenreId.value
+          : this.selectedGenreId,
     );
   }
 
@@ -37,25 +44,28 @@ class RankingFilterState {
       identical(this, other) ||
       other is RankingFilterState &&
           runtimeType == other.runtimeType &&
+          source == other.source &&
           showOnlyOngoing == other.showOnlyOngoing &&
-          selectedGenre == other.selectedGenre;
+          selectedGenreId == other.selectedGenreId;
 
   @override
-  int get hashCode => Object.hash(showOnlyOngoing, selectedGenre);
+  int get hashCode => Object.hash(source, showOnlyOngoing, selectedGenreId);
 
   @override
   String toString() =>
-      'RankingFilterState(showOnlyOngoing: $showOnlyOngoing, '
-      'selectedGenre: $selectedGenre)';
+      'RankingFilterState(source: $source, showOnlyOngoing: '
+      '$showOnlyOngoing, selectedGenreId: $selectedGenreId)';
 }
 
 /// ランキングタイプごとのフィルタ状態を管理するNotifier。
+///
+/// familyキーは `(source, rankingType)`。
 @riverpod
 class RankingFilterStateNotifier extends _$RankingFilterStateNotifier {
   @override
-  RankingFilterState build(String rankingType) {
+  RankingFilterState build(NovelSource source, String rankingType) {
     // 初期状態はフィルタなし
-    return const RankingFilterState();
+    return RankingFilterState(source: source);
   }
 
   /// 連載中のみ表示フィルタを設定する。
@@ -64,14 +74,14 @@ class RankingFilterStateNotifier extends _$RankingFilterStateNotifier {
   }
 
   /// ジャンルフィルタを設定する。
-  void setSelectedGenre(int? genre) {
+  void setSelectedGenreId(String? genreId) {
     state = state.copyWith(
-      selectedGenre: genre != null ? Value(genre) : const Value(null),
+      selectedGenreId: genreId != null ? Value(genreId) : const Value(null),
     );
   }
 
   /// フィルタ状態をリセットする。
   void reset() {
-    state = const RankingFilterState();
+    state = RankingFilterState(source: state.source);
   }
 }

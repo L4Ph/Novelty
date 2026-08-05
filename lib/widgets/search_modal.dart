@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/novel_search_query.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/app_constants.dart';
 import 'package:novelty/widgets/sort_selection_sheet.dart';
 
@@ -61,6 +62,38 @@ class SearchModal extends HookConsumerWidget {
                     style: Theme.of(context).textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 16),
+
+                  // プロバイダ切替
+                  SegmentedButton<NovelSource>(
+                    segments: const [
+                      ButtonSegment(
+                        value: NovelSource.narou,
+                        label: Text('なろう'),
+                      ),
+                      ButtonSegment(
+                        value: NovelSource.kakuyomu,
+                        label: Text('カクヨム'),
+                      ),
+                    ],
+                    selected: {query.value.source},
+                    onSelectionChanged: (selection) {
+                      final source = selection.first;
+                      final isNarou = source == NovelSource.narou;
+                      query.value = query.value.copyWith(
+                        source: source,
+                        // サイト切替時はなろう固有の詳細条件をリセットする
+                        title: isNarou && query.value.title,
+                        ex: isNarou && query.value.ex,
+                        keyword: isNarou && query.value.keyword,
+                        wname: isNarou && query.value.wname,
+                        genreId: isNarou ? query.value.genreId : null,
+                        type: isNarou ? query.value.type : null,
+                        order: isNarou ? query.value.order : 'new',
+                      );
+                    },
+                    showSelectedIcon: false,
+                  ),
                   const SizedBox(height: 24),
 
                   // キーワード
@@ -84,6 +117,8 @@ class SearchModal extends HookConsumerWidget {
                   ),
                   const SizedBox(height: 16),
 
+                  // なろう固有の詳細検索条件（カクヨムでは非表示）
+                  if (query.value.source == NovelSource.narou) ...[
                   // 検索対象（チップ）
                   Text(
                     '検索対象',
@@ -287,6 +322,7 @@ class SearchModal extends HookConsumerWidget {
                       const SizedBox(height: 16),
                     ],
                   ),
+                  ], // なろう固有の詳細検索条件ここまで
 
                   // 通常 Scaffold の SafeArea が余白を確保するが、念のため
                   // to have some padding at bottom of scroll

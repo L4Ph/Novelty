@@ -5,6 +5,8 @@ import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/sites/novel_site_registry.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/utils/value_wrapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -92,11 +94,13 @@ class RankingState {
 
 @riverpod
 /// ランキングのロジックを管理するNotifier
+///
+/// familyキーは `(source, rankingType)`。
 class RankingNotifier extends _$RankingNotifier {
   @override
-  RankingState build(String rankingType) {
+  RankingState build(NovelSource source, String rankingType) {
     // Watch filter state to trigger rebuild when it changes
-    ref.watch(rankingFilterStateProvider(rankingType));
+    ref.watch(rankingFilterStateProvider(source, rankingType));
 
     // Initial fetch
     unawaited(Future.microtask(fetchNextPage));
@@ -126,60 +130,110 @@ class RankingNotifier extends _$RankingNotifier {
     );
 
     try {
-      final filter = ref.read(rankingFilterStateProvider(rankingType));
-      final apiService = ref.read(apiServiceProvider);
-      final order = _mapRankingTypeToOrder(rankingType);
+      final filter = ref.read(rankingFilterStateProvider(source, rankingType));
 
-      final newNovels = <NovelInfo>[];
-      var currentPageToFetch = currentState.page;
-      var hasMoreOnServer = true;
-
-      // Fetch loop to ensure we get enough items after filtering
-      // Limit to fetching at most 5 pages at a time to prevent
-      // excessive API calls
-      var pagesFetched = 0;
-      const maxPagesToFetch = 5;
-
-      while (newNovels.length < 20 &&
-          hasMoreOnServer &&
-          pagesFetched < maxPagesToFetch) {
-        final query = _buildQuery(filter, order, currentPageToFetch);
-
-        final result = await apiService.searchNovels(query);
-
-        final fetchedNovels = result.novels;
-        hasMoreOnServer = fetchedNovels.length >= 20;
-
-        // Apply client-side filtering
-        final filtered = fetchedNovels.where((novel) {
-          if (filter.showOnlyOngoing) {
-            // end: 1 = 連載中, 0 = 短編または完結
-            // API仕様: https://dev.syosetu.com/man/api/#end
-            if (novel.end != 1) return false;
-          }
-          return true;
-        }).toList();
-
-        newNovels.addAll(filtered);
-        currentPageToFetch++;
-        pagesFetched++;
+      if (source == NovelSource.narou) {
+        await _fetchNarouRanking(filter, currentState);
+      } else {
+        await _fetchSiteRanking(filter, currentState);
       }
-
-      state = currentState.copyWith(
-        novels: [...currentState.novels, ...newNovels],
-        isLoading: false,
-        isLoadingMore: false,
-        page: currentPageToFetch, // Update to the next page to fetch
-        hasMore: hasMoreOnServer || newNovels.length >= 20,
-        error: const Value<Object?>(null),
-      );
     } on Object catch (e) {
-      state = currentState.copyWith(
+      state = state.copyWith(
         isLoading: false,
         isLoadingMore: false,
         error: Value<Object?>(e),
       );
     }
+  }
+
+  /// なろうのランキングを検索APIで取得する（従来フロー）。
+  Future<void> _fetchNarouRanking(
+    RankingFilterState filter,
+    RankingState currentState,
+  ) async {
+    final apiService = ref.read(apiServiceProvider);
+    final order = _mapRankingTypeToOrder(rankingType);
+
+    final newNovels = <NovelInfo>[];
+    var currentPageToFetch = currentState.page;
+    var hasMoreOnServer = true;
+
+    // Fetch loop to ensure we get enough items after filtering
+    // Limit to fetching at most 5 pages at a time to prevent
+    // excessive API calls
+    var pagesFetched = 0;
+    const maxPagesToFetch = 5;
+
+    while (newNovels.length < 20 &&
+        hasMoreOnServer &&
+        pagesFetched < maxPagesToFetch) {
+      final query = _buildQuery(filter, order, currentPageToFetch);
+
+      final result = await apiService.searchNovels(query);
+
+      final fetchedNovels = result.novels;
+      hasMoreOnServer = fetchedNovels.length >= 20;
+
+      // Apply client-side filtering
+      final filtered = fetchedNovels.where((novel) {
+        if (filter.showOnlyOngoing) {
+          // end: 1 = 連載中, 0 = 短編または完結
+          // API仕様: https://dev.syosetu.com/man/api/#end
+          if (novel.end != 1) return false;
+        }
+        if (filter.selectedGenreId != null) {
+          if (novel.genreId != filter.selectedGenreId) return false;
+        }
+        return true;
+      }).toList();
+
+      newNovels.addAll(filtered);
+      currentPageToFetch++;
+      pagesFetched++;
+    }
+
+    state = currentState.copyWith(
+      novels: [...currentState.novels, ...newNovels],
+      isLoading: false,
+      isLoadingMore: false,
+      page: currentPageToFetch, // Update to the next page to fetch
+      hasMore: hasMoreOnServer || newNovels.length >= 20,
+      error: const Value<Object?>(null),
+    );
+  }
+
+  /// カクヨム等のサイト実装からランキングを取得する。
+  Future<void> _fetchSiteRanking(
+    RankingFilterState filter,
+    RankingState currentState,
+  ) async {
+    final site = novelSiteRegistry[source]!;
+    final fetched = await site.fetchRanking(
+      rankingType,
+      page: currentState.page,
+    );
+
+    // クライアントサイドでフィルタを適用
+    final filtered = fetched.where((novel) {
+      if (filter.showOnlyOngoing) {
+        if (novel.end != 1) return false;
+      }
+      if (filter.selectedGenreId != null) {
+        if (novel.genreId != filter.selectedGenreId) return false;
+      }
+      return true;
+    }).toList();
+
+    // カクヨムのランキングは1ページに約100件含まれる
+    final hasMore = fetched.length >= 100;
+    state = currentState.copyWith(
+      novels: [...currentState.novels, ...filtered],
+      isLoading: false,
+      isLoadingMore: false,
+      page: currentState.page + 1,
+      hasMore: hasMore,
+      error: const Value<Object?>(null),
+    );
   }
 
   /// データをリフレッシュする
@@ -211,10 +265,11 @@ class RankingNotifier extends _$RankingNotifier {
     int page,
   ) {
     return NovelSearchQuery(
+      source: source,
       order: order,
       st: (page - 1) * 20 + 1, // 1-based start
-      genreId: filter.selectedGenre != 0 && filter.selectedGenre != null
-          ? [filter.selectedGenre!.toString()]
+      genreId: filter.selectedGenreId != null
+          ? [filter.selectedGenreId!]
           : null,
     );
   }

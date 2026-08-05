@@ -1,5 +1,7 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/domain/library_filter_state.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/value_wrapper.dart';
 
 void main() {
@@ -7,18 +9,21 @@ void main() {
     test('デフォルト値が正しく設定される', () {
       const state = LibraryFilterState();
 
+      expect(state.source, isNull);
       expect(state.showOnlyOngoing, isFalse);
-      expect(state.selectedGenre, isNull);
+      expect(state.selectedGenreId, isNull);
     });
 
     test('コンストラクタでフィールドを設定できる', () {
       const state = LibraryFilterState(
+        source: NovelSource.kakuyomu,
         showOnlyOngoing: true,
-        selectedGenre: 1,
+        selectedGenreId: 'FANTASY',
       );
 
+      expect(state.source, NovelSource.kakuyomu);
       expect(state.showOnlyOngoing, isTrue);
-      expect(state.selectedGenre, equals(1));
+      expect(state.selectedGenreId, equals('FANTASY'));
     });
 
     test('copyWithでフィールドを変更できる', () {
@@ -26,39 +31,38 @@ void main() {
 
       final updated1 = state.copyWith(showOnlyOngoing: true);
       expect(updated1.showOnlyOngoing, isTrue);
-      expect(updated1.selectedGenre, isNull);
+      expect(updated1.selectedGenreId, isNull);
 
-      final updated2 = updated1.copyWith(selectedGenre: const Value(2));
+      final updated2 = updated1.copyWith(
+        selectedGenreId: const Value('FANTASY'),
+        source: const Value(NovelSource.kakuyomu),
+      );
       expect(updated2.showOnlyOngoing, isTrue);
-      expect(updated2.selectedGenre, equals(2));
+      expect(updated2.selectedGenreId, equals('FANTASY'));
+      expect(updated2.source, NovelSource.kakuyomu);
     });
 
     test('copyWithでnullを明示的に設定できる', () {
-      const state = LibraryFilterState(selectedGenre: 1);
+      const state = LibraryFilterState(selectedGenreId: 'FANTASY');
 
-      final updated = state.copyWith(selectedGenre: const Value<int?>(null));
+      final updated = state.copyWith(
+        selectedGenreId: const Value<String?>(null),
+      );
 
-      expect(updated.selectedGenre, isNull);
+      expect(updated.selectedGenreId, isNull);
       expect(updated.showOnlyOngoing, equals(state.showOnlyOngoing));
-    });
-
-    test('copyWithでパラメータを省略すると元の値が保持される', () {
-      const state = LibraryFilterState(selectedGenre: 1);
-
-      final updated = state.copyWith(showOnlyOngoing: true);
-
-      expect(updated.showOnlyOngoing, isTrue);
-      expect(updated.selectedGenre, equals(1)); // 変更されていない
     });
 
     test('同じ値を持つインスタンスは等価', () {
       const state1 = LibraryFilterState(
+        source: NovelSource.kakuyomu,
         showOnlyOngoing: true,
-        selectedGenre: 1,
+        selectedGenreId: 'FANTASY',
       );
       const state2 = LibraryFilterState(
+        source: NovelSource.kakuyomu,
         showOnlyOngoing: true,
-        selectedGenre: 1,
+        selectedGenreId: 'FANTASY',
       );
 
       expect(state1, equals(state2));
@@ -74,13 +78,66 @@ void main() {
 
     test('toStringが正しい形式を返す', () {
       const state = LibraryFilterState(
+        source: NovelSource.kakuyomu,
         showOnlyOngoing: true,
-        selectedGenre: 1,
+        selectedGenreId: 'FANTASY',
       );
 
       expect(
         state.toString(),
-        'LibraryFilterState(showOnlyOngoing: true, selectedGenre: 1)',
+        'LibraryFilterState(source: NovelSource.kakuyomu, '
+        'showOnlyOngoing: true, selectedGenreId: FANTASY)',
+      );
+    });
+  });
+
+  group('LibraryFilterStateNotifier', () {
+    test('setSourceがジャンルフィルタをリセットして状態を更新する', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container
+          .read(libraryFilterStateProvider.notifier)
+        ..setSelectedGenreId('FANTASY')
+        ..setShowOnlyOngoing(value: true)
+        ..setSource(NovelSource.kakuyomu);
+
+      final state = container.read(libraryFilterStateProvider);
+      expect(state.source, NovelSource.kakuyomu);
+      // サイト切替時はジャンルフィルタがリセットされる
+      expect(state.selectedGenreId, isNull);
+      expect(state.showOnlyOngoing, isTrue);
+    });
+
+    test('setSelectedGenreId / setShowOnlyOngoing が状態を更新する', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container
+          .read(libraryFilterStateProvider.notifier)
+        ..setSource(NovelSource.narou)
+        ..setSelectedGenreId('201')
+        ..setShowOnlyOngoing(value: true);
+
+      final state = container.read(libraryFilterStateProvider);
+      expect(state.source, NovelSource.narou);
+      expect(state.selectedGenreId, '201');
+      expect(state.showOnlyOngoing, isTrue);
+    });
+
+    test('resetが初期状態に戻す', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container
+          .read(libraryFilterStateProvider.notifier)
+        ..setSource(NovelSource.kakuyomu)
+        ..setSelectedGenreId('FANTASY')
+        ..reset();
+
+      expect(
+        container.read(libraryFilterStateProvider),
+        const LibraryFilterState(),
       );
     });
   });

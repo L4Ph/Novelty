@@ -9,6 +9,9 @@ import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/domain/search_state.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/router/router.dart';
+import 'package:novelty/sites/novel_site.dart';
+import 'package:novelty/sites/novel_site_registry.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
@@ -25,15 +28,23 @@ class ExplorePage extends ConsumerStatefulWidget {
 }
 
 class _ExplorePageState extends ConsumerState<ExplorePage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  NovelSource _source = NovelSource.narou;
   late TabController _tabController;
-  var _searchQuery = const NovelSearchQuery();
+  NovelSearchQuery _searchQuery = const NovelSearchQuery();
   late final VoidCallback _tabListener;
+
+  /// 現在のサイトのランキング種別一覧。
+  List<RankingTypeMaster> get _rankingTypes =>
+      novelSiteRegistry[_source]!.rankingTypes;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(
+      length: _rankingTypes.length,
+      vsync: this,
+    );
     _tabListener = () {
       if (_tabController.indexIsChanging) {
         return;
@@ -53,6 +64,23 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
       ..removeListener(_tabListener)
       ..dispose();
     super.dispose();
+  }
+
+  /// プロバイダを切り替える。
+  void _switchSource(NovelSource source) {
+    if (source == _source) {
+      return;
+    }
+    setState(() {
+      _source = source;
+      _tabController
+        ..removeListener(_tabListener)
+        ..dispose();
+      _tabController = TabController(
+        length: _rankingTypes.length,
+        vsync: this,
+      )..addListener(_tabListener);
+    });
   }
 
   Future<void> _performSearch() async {
@@ -81,12 +109,12 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
 
   void _showRankingFilterDialog() {
     // 現在のタブのランキングタイプを取得
-    final rankingTypes = ['d', 'w', 'm', 'q', 'all'];
-    final currentRankingType = rankingTypes[_tabController.index];
+    final currentRankingType = _rankingTypes[_tabController.index].id;
+    final site = novelSiteRegistry[_source]!;
 
     // 現在のフィルタ状態を取得
     final currentFilter = ref.read(
-      rankingFilterStateProvider(currentRankingType),
+      rankingFilterStateProvider(_source, currentRankingType),
     );
 
     unawaited(
@@ -95,16 +123,20 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
         isScrollControlled: true,
         useSafeArea: true,
         builder: (context) => RankingFilterSheet(
+          genres: site.genres,
           initialShowOnlyOngoing: currentFilter.showOnlyOngoing,
-          initialSelectedGenre: currentFilter.selectedGenre,
-          onApply: ({required showOnlyOngoing, required selectedGenre}) {
+          initialSelectedGenreId: currentFilter.selectedGenreId,
+          onApply: ({required showOnlyOngoing, required selectedGenreId}) {
             // Providerの状態を更新
-            final _ =
-                ref.read(
-                    rankingFilterStateProvider(currentRankingType).notifier,
-                  )
-                  ..setShowOnlyOngoing(value: showOnlyOngoing)
-                  ..setSelectedGenre(selectedGenre);
+            ref
+                .read(
+                  rankingFilterStateProvider(
+                    _source,
+                    currentRankingType,
+                  ).notifier,
+                )
+              ..setShowOnlyOngoing(value: showOnlyOngoing)
+              ..setSelectedGenreId(selectedGenreId);
           },
         ),
       ),
@@ -151,15 +183,45 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
           ],
           bottom: searchState.isSearching
               ? null
-              : TabBar(
-                  controller: _tabController,
-                  tabs: const [
-                    Tab(text: '日間'),
-                    Tab(text: '週間'),
-                    Tab(text: '月間'),
-                    Tab(text: '四半期'),
-                    Tab(text: '累計'),
-                  ],
+              : PreferredSize(
+                  preferredSize: const Size.fromHeight(96),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // プロバイダ切替
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: SegmentedButton<NovelSource>(
+                          segments: const [
+                            ButtonSegment(
+                              value: NovelSource.narou,
+                              label: Text('なろう'),
+                            ),
+                            ButtonSegment(
+                              value: NovelSource.kakuyomu,
+                              label: Text('カクヨム'),
+                            ),
+                          ],
+                          selected: {_source},
+                          onSelectionChanged: (selection) {
+                            _switchSource(selection.first);
+                          },
+                          showSelectedIcon: false,
+                          style: const ButtonStyle(
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ),
+                      TabBar(
+                        controller: _tabController,
+                        isScrollable: _rankingTypes.length > 5,
+                        tabs: [
+                          for (final type in _rankingTypes)
+                            Tab(text: type.label),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
         ),
         body: searchState.isSearching
@@ -172,27 +234,15 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
             ? const _OfflineExploreBody()
             : TabBarView(
                 controller: _tabController,
-                children: const [
-                  RankingList(
-                    rankingType: 'd',
-                    key: PageStorageKey('d'),
-                  ),
-                  RankingList(
-                    rankingType: 'w',
-                    key: PageStorageKey('w'),
-                  ),
-                  RankingList(
-                    rankingType: 'm',
-                    key: PageStorageKey('m'),
-                  ),
-                  RankingList(
-                    rankingType: 'q',
-                    key: PageStorageKey('q'),
-                  ),
-                  RankingList(
-                    rankingType: 'all',
-                    key: PageStorageKey('all'),
-                  ),
+                children: [
+                  for (final type in _rankingTypes)
+                    RankingList(
+                      source: _source,
+                      rankingType: type.id,
+                      key: PageStorageKey<String>(
+                        '${_source.dbId}_${type.id}',
+                      ),
+                    ),
                 ],
               ),
       ),
@@ -207,8 +257,6 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
     );
   }
 }
-
-/// オフラインモード中の「見つける」画面の内容。
 class _OfflineExploreBody extends StatelessWidget {
   const _OfflineExploreBody();
 

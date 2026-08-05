@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
+import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/sites/novel_site_registry.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/utils/value_wrapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -114,8 +117,7 @@ class SearchStateNotifier extends _$SearchStateNotifier {
     }
 
     try {
-      final apiService = ref.read(apiServiceProvider);
-      final result = await apiService.searchNovels(query);
+      final result = await _searchBySource(query);
 
       state = state.copyWith(
         results: result.novels,
@@ -155,8 +157,7 @@ class SearchStateNotifier extends _$SearchStateNotifier {
         st: state.results.length + 1,
       );
 
-      final apiService = ref.read(apiServiceProvider);
-      final result = await apiService.searchNovels(nextQuery);
+      final result = await _searchBySource(nextQuery);
 
       final newResults = [...state.results, ...result.novels];
 
@@ -176,5 +177,16 @@ class SearchStateNotifier extends _$SearchStateNotifier {
   /// 検索状態をリセットする。
   void reset() {
     state = const SearchState();
+  }
+
+  /// sourceに応じて検索を実行する。
+  ///
+  /// なろうは [ApiService]、カクヨムはサイト実装へ振り分ける。
+  Future<NovelSearchResult> _searchBySource(NovelSearchQuery query) async {
+    if (query.source == NovelSource.narou) {
+      final apiService = ref.read(apiServiceProvider);
+      return apiService.searchNovels(query);
+    }
+    return novelSiteRegistry[query.source]!.searchNovels(query);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/value_wrapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -9,26 +10,32 @@ part 'library_filter_state.g.dart';
 class LibraryFilterState {
   /// コンストラクタ。
   const LibraryFilterState({
+    this.source,
     this.showOnlyOngoing = false,
-    this.selectedGenre,
+    this.selectedGenreId,
   });
+
+  /// 絞り込む提供サイト。null はすべてのサイト。
+  final NovelSource? source;
 
   /// 連載中の作品のみを表示するかどうか。
   final bool showOnlyOngoing;
 
-  /// 選択されたジャンル。
-  final int? selectedGenre;
+  /// 選択されたジャンルID（サイト共通の文字列ID）。
+  final String? selectedGenreId;
 
   /// フィールドを変更した新しいインスタンスを作成する
   LibraryFilterState copyWith({
+    Value<NovelSource?>? source,
     bool? showOnlyOngoing,
-    Value<int?>? selectedGenre,
+    Value<String?>? selectedGenreId,
   }) {
     return LibraryFilterState(
+      source: source != null ? source.value : this.source,
       showOnlyOngoing: showOnlyOngoing ?? this.showOnlyOngoing,
-      selectedGenre: selectedGenre != null
-          ? selectedGenre.value
-          : this.selectedGenre,
+      selectedGenreId: selectedGenreId != null
+          ? selectedGenreId.value
+          : this.selectedGenreId,
     );
   }
 
@@ -37,16 +44,17 @@ class LibraryFilterState {
       identical(this, other) ||
       other is LibraryFilterState &&
           runtimeType == other.runtimeType &&
+          source == other.source &&
           showOnlyOngoing == other.showOnlyOngoing &&
-          selectedGenre == other.selectedGenre;
+          selectedGenreId == other.selectedGenreId;
 
   @override
-  int get hashCode => Object.hash(showOnlyOngoing, selectedGenre);
+  int get hashCode => Object.hash(source, showOnlyOngoing, selectedGenreId);
 
   @override
   String toString() =>
-      'LibraryFilterState(showOnlyOngoing: $showOnlyOngoing, '
-      'selectedGenre: $selectedGenre)';
+      'LibraryFilterState(source: $source, showOnlyOngoing: '
+      '$showOnlyOngoing, selectedGenreId: $selectedGenreId)';
 }
 
 /// ライブラリのフィルタ状態を管理するNotifier。
@@ -57,15 +65,24 @@ class LibraryFilterStateNotifier extends _$LibraryFilterStateNotifier {
     return const LibraryFilterState();
   }
 
+  /// サイト絞り込みフィルタを設定する。
+  void setSource(NovelSource? source) {
+    // サイトを切り替えたらジャンルフィルタはリセットする
+    state = LibraryFilterState(
+      source: source,
+      showOnlyOngoing: state.showOnlyOngoing,
+    );
+  }
+
   /// 連載中のみ表示フィルタを設定する。
   void setShowOnlyOngoing({required bool value}) {
     state = state.copyWith(showOnlyOngoing: value);
   }
 
   /// ジャンルフィルタを設定する。
-  void setSelectedGenre(int? genre) {
+  void setSelectedGenreId(String? genreId) {
     state = state.copyWith(
-      selectedGenre: genre != null ? Value(genre) : const Value(null),
+      selectedGenreId: genreId != null ? Value(genreId) : const Value(null),
     );
   }
 
