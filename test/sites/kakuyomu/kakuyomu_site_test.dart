@@ -45,7 +45,7 @@ class _FixtureAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-/// 指定URLへの初回アクセスで302を返し、リダイレクト先ではHTMLを返すアダプタ。
+/// 指定URLへの初回アクセスで307を返し、リダイレクト先ではHTMLを返すアダプタ。
 class _RedirectAdapter implements HttpClientAdapter {
   _RedirectAdapter({
     required this.redirectFrom,
@@ -69,7 +69,7 @@ class _RedirectAdapter implements HttpClientAdapter {
     if (options.path == redirectFrom) {
       return ResponseBody.fromString(
         '',
-        302,
+        307,
         headers: <String, List<String>>{
           'location': <String>[redirectTo],
         },
@@ -359,7 +359,7 @@ void main() {
     });
 
     group('fetchRanking', () {
-      test('302リダイレクトをフォローしてランキングを取得できる', () async {
+      test('307リダイレクトをフォローしてランキングを取得できる', () async {
         final redirectAdapter = _RedirectAdapter(
           redirectFrom: 'https://kakuyomu.jp/rankings/all/daily',
           redirectTo:
@@ -372,9 +372,9 @@ void main() {
           rateLimiter: KakuyomuRateLimiter(interval: Duration.zero),
         );
 
-        final novels = await site.fetchRanking('daily');
+        final page = await site.fetchRanking('daily');
 
-        expect(novels, isNotEmpty);
+        expect(page.novels, isNotEmpty);
         // リダイレクト先が1回リクエストされている
         expect(
           redirectAdapter.requestedUris,
@@ -382,26 +382,38 @@ void main() {
         );
       });
 
-      test('ランキングページのHTMLから作品一覧をパースできる', () async {
+      test('ランキングページのrankedWorksから作品一覧をパースできる', () async {
         final adapter = _FixtureAdapter(<String, String>{
           '/rankings/all/daily': _fixture('ranking_page.html'),
         });
         final site = _createSite(adapter);
 
-        final novels = await site.fetchRanking('daily');
+        final page = await site.fetchRanking('daily');
 
-        expect(novels, isNotEmpty);
-        expect(novels, hasLength(10));
-        final first = novels.first;
+        expect(page.novels, isNotEmpty);
+        expect(page.novels, hasLength(2));
+        final first = page.novels.first;
         expect(first.source, NovelSource.kakuyomu);
         expect(first.workId, '2912051603474311296');
         expect(first.title, '宮廷魔導師選抜試験を記念受験した田舎者');
         expect(first.writer, '古野ジョン');
         expect(first.genreId, 'FANTASY');
-        expect(first.generalAllNo, 23);
-        expect(first.end, 1); // 連載中
-        // ★12,218 → 12218（レビューポイント）
-        expect(first.allPoint, 12218);
+        expect(first.generalAllNo, 27);
+        expect(first.end, 1); // RUNNING → 連載中
+        // totalReviewPoint 13,730 → allPoint（★表示用）
+        expect(first.allPoint, 13730);
+      });
+
+      test('pageInfo.hasNextPageがRankingPage.hasNextPageに反映される', () async {
+        final adapter = _FixtureAdapter(<String, String>{
+          '/rankings/all/daily': _fixture('ranking_page.html'),
+        });
+        final site = _createSite(adapter);
+
+        final page = await site.fetchRanking('daily');
+
+        // フィクスチャは hasNextPage: true
+        expect(page.hasNextPage, isTrue);
       });
 
       test('ページング（page）をURLクエリに反映する', () async {

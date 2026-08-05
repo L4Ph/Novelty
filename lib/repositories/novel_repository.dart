@@ -45,7 +45,7 @@ class NovelRepository {
   /// コンストラクタ。
   ///
   /// [sites] はテスト時にサイト実装を差し替えるために注入できる。
-  /// 省略時は [novelSiteRegistry] を使用する。
+  /// 省略時は [defaultNovelSiteRegistry] を使用する。
   NovelRepository({
     required this.ref,
     required this.apiService,
@@ -53,7 +53,7 @@ class NovelRepository {
     required AppDatabase db,
     Map<NovelSource, NovelSite>? sites,
   }) : _db = db,
-       _sites = sites ?? novelSiteRegistry;
+       _sites = sites ?? defaultNovelSiteRegistry;
 
   /// アプリケーションの設定を取得するためのリファレンス。
   final Ref ref;

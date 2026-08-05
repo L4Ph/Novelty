@@ -216,6 +216,6 @@ class SearchStateNotifier extends _$SearchStateNotifier {
       final apiService = ref.read(apiServiceProvider);
       return apiService.searchNovels(query);
     }
-    return novelSiteRegistry[query.source]!.searchNovels(query);
+    return defaultNovelSiteRegistry[query.source]!.searchNovels(query);
   }
 }

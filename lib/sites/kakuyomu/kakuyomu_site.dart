@@ -6,6 +6,7 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
+import 'package:novelty/models/ranking_page.dart';
 import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_source.dart';
 
@@ -230,10 +231,11 @@ class KakuyomuSite implements NovelSite {
 
   /// ランキングを取得する。
   ///
-  /// `/rankings/all/<period>?work_variation=long` のHTMLをパースする。
-  /// ランキングページは302リダイレクトするため、フォローして取得する。
+  /// `/rankings/all/<period>?work_variation=long` のHTMLに含まれる
+  /// `rankedWorks` クエリの結果をパースする。
+  /// ランキングページは307リダイレクトするため、フォローして取得する。
   @override
-  Future<List<NovelInfo>> fetchRanking(
+  Future<RankingPage> fetchRanking(
     String rankingType, {
     int page = 1,
   }) async {
@@ -293,7 +295,7 @@ class KakuyomuSite implements NovelSite {
 
   /// Apollo ステートのWorkエンティティを [NovelInfo] へ変換する。
   ///
-  /// 作品ページ・検索結果の両方で使用する共通変換。
+  /// 作品ページ・検索結果・ランキングのすべてで使用する共通変換。
   NovelInfo _workToNovelInfo(
     Map<String, dynamic> work,
     Map<String, dynamic> apollo,
@@ -326,6 +328,8 @@ class KakuyomuSite implements NovelSite {
         _ => 1,
       },
       generalAllNo: publicEpisodeCount,
+      // 総合レビューポイント（★表示に使用）
+      allPoint: work['totalReviewPoint'] as int?,
       keyword: (work['tagLabels'] as List<dynamic>?)?.cast<String>().join(' '),
       generalFirstup: work['publishedAt'] as String?,
       generalLastup: work['lastEpisodePublishedAt'] as String?,
@@ -357,60 +361,30 @@ class KakuyomuSite implements NovelSite {
     return NovelSearchResult(novels: novels, allCount: totalCount);
   }
 
-  /// ランキングページのHTMLから [NovelInfo] のリストを組み立てる。
-  List<NovelInfo> _parseRanking(String html) {
-    final document = html_parser.parse(html);
-    final items = document.querySelectorAll('div.widget-work');
+  /// ランキングページの `rankedWorks` クエリから [RankingPage] を組み立てる。
+  RankingPage _parseRanking(String html) {
+    final apollo = _parseApolloState(html);
+    final rootQuery = apollo['ROOT_QUERY'] as Map<String, dynamic>?;
+    final rankingKey = rootQuery?.keys
+        .where((k) => k.startsWith('rankedWorks('))
+        .firstOrNull;
+    final connection = rankingKey == null
+        ? null
+        : rootQuery?[rankingKey] as Map<String, dynamic>?;
+    final pageInfo = connection?['pageInfo'] as Map<String, dynamic>?;
+    final hasNextPage = (pageInfo?['hasNextPage'] as bool?) ?? false;
+
+    final nodes = (connection?['nodes'] as List<dynamic>?) ?? const <dynamic>[];
     final novels = <NovelInfo>[];
-    for (final item in items) {
-      final titleEl = item.querySelector('.widget-workCard-titleLabel');
-      final href = titleEl?.attributes['href'];
-      if (href == null) {
+    for (final node in nodes) {
+      final ref = (node as Map<String, dynamic>)['__ref'] as String?;
+      final work = ref == null ? null : apollo[ref] as Map<String, dynamic>?;
+      if (work == null) {
         continue;
       }
-      final workId = Uri.parse(href).pathSegments.last;
-      final authorEl = item.querySelector('.widget-workCard-authorLabel');
-      final storyEl = item.querySelector('.widget-workCard-introduction');
-      final genreEl = item.querySelector('.widget-workCard-genre a');
-      final genreHref = genreEl?.attributes['href'];
-      // /genres/fantasy/recent_works → FANTASY
-      final genreId = genreHref == null
-          ? null
-          : Uri.parse(genreHref).pathSegments[1].toUpperCase();
-      final status = item
-          .querySelector('.widget-workCard-statusLabel')
-          ?.text
-          .trim();
-      final episodeCountText = item
-          .querySelector('.widget-workCard-episodeCount')
-          ?.text;
-      final episodeCount = int.tryParse(
-        RegExp(r'\d+').firstMatch(episodeCountText ?? '')?.group(0) ?? '',
-      );
-      // ★12,218 → 12218（総合レビューポイント）
-      final reviewPointsText = item
-          .querySelector('.widget-workCard-reviewPoints')
-          ?.text;
-      final reviewPoints = int.tryParse(
-        reviewPointsText?.replaceAll(RegExp('[^0-9]'), '') ?? '',
-      );
-
-      novels.add(
-        NovelInfo(
-          source: NovelSource.kakuyomu,
-          workId: workId,
-          title: titleEl!.text.trim(),
-          writer: authorEl?.text.trim(),
-          story: storyEl?.text.trim(),
-          genreId: genreId,
-          // なろうのendと同義: 1=連載中, 0=完結
-          end: (status?.contains('連載中') ?? false) ? 1 : 0,
-          generalAllNo: episodeCount,
-          allPoint: reviewPoints,
-        ),
-      );
+      novels.add(_workToNovelInfo(work, apollo));
     }
-    return novels;
+    return RankingPage(novels: novels, hasNextPage: hasNextPage);
   }
 
   /// 作品ページの `__NEXT_DATA__` から初回エピソードIDを取得する。

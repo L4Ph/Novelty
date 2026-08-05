@@ -55,7 +55,7 @@ class LibraryPage extends ConsumerWidget {
     void showFilterSheet() {
       // ジャンル一覧は選択中のサイトのマスタデータを使用する
       final genres =
-          novelSiteRegistry[filter.source ?? NovelSource.narou]!.genres;
+          defaultNovelSiteRegistry[filter.source ?? NovelSource.narou]!.genres;
       unawaited(
         showModalBottomSheet<void>(
           context: context,

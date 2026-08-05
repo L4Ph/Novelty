@@ -348,7 +348,9 @@ class SearchModal extends HookConsumerWidget {
                         const DropdownMenuItem(
                           child: Text('指定なし'),
                         ),
-                        ...novelSiteRegistry[NovelSource.kakuyomu]!.genres.map(
+                        ...defaultNovelSiteRegistry[NovelSource.kakuyomu]!
+                            .genres
+                            .map(
                           (g) => DropdownMenuItem(
                             value: g.id,
                             child: Text(g.name),

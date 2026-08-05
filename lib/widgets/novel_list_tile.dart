@@ -52,7 +52,7 @@ class NovelListTile extends HookWidget {
         if (item.genreId == null || item.genreId == '-1') {
           return '不明';
         }
-        final genres = novelSiteRegistry[item.source]!.genres;
+        final genres = defaultNovelSiteRegistry[item.source]!.genres;
         return genres
             .firstWhere(
               (g) => g.id == item.genreId,
@@ -78,7 +78,7 @@ class NovelListTile extends HookWidget {
     // 評価指標はサイトごとに異なるため、サイト実装（NovelSite.metaText）に委譲する
     final pointSuffix = useMemoized(
       () {
-        final text = novelSiteRegistry[item.source]!.metaText(item);
+        final text = defaultNovelSiteRegistry[item.source]!.metaText(item);
         return text != null ? ' • $text' : '';
       },
       [item.source, item.allPoint],

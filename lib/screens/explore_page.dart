@@ -37,7 +37,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
 
   /// 現在のサイトのランキング種別一覧。
   List<RankingTypeMaster> get _rankingTypes =>
-      novelSiteRegistry[_source]!.rankingTypes;
+      defaultNovelSiteRegistry[_source]!.rankingTypes;
 
   @override
   void initState() {
@@ -111,7 +111,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
   void _showRankingFilterDialog() {
     // 現在のタブのランキングタイプを取得
     final currentRankingType = _rankingTypes[_tabController.index].id;
-    final site = novelSiteRegistry[_source]!;
+    final site = defaultNovelSiteRegistry[_source]!;
 
     // 現在のフィルタ状態を取得
     final currentFilter = ref.read(
