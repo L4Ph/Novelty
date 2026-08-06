@@ -17,14 +17,13 @@ import 'package:novelty/widgets/ranking_list.dart';
 import 'ranking_list_test.mocks.dart';
 
 @GenerateMocks([ApiService])
-
 /// 固定の [RankingPage] を返すだけの最小のサイト実装。
 ///
 /// ランキング以外のメソッドは [NovelSite] のデフォルト実装
 /// （[UnsupportedError]）を使用する。
 ///
-/// タイル側（[NovelListTile]）のジャンル・メタ情報は
-/// 静的レジストリ（[defaultNovelSiteRegistry]）を参照するため、
+/// タイル側のジャンル・メタ情報は静的レジストリ
+/// （[defaultNovelSiteRegistry]）を参照するため、
 /// このスタブの genres / rankingTypes / metaText はテストでは呼ばれない。
 class _StubRankingSite extends NovelSite {
   _StubRankingSite(this._pages);
