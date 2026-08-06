@@ -15,4 +15,4 @@ dependencies:
 
 dev_dependencies:
   test:
-  very_good_analysis:
+  very_good_analysis: ^10.3.0
