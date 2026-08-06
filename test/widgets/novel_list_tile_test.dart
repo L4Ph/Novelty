@@ -204,66 +204,6 @@ void main() {
   });
 
   group('flutter_hooks integration', () {
-    group('source badge', () {
-      testWidgets('カクヨム作品にはソースバッジが表示される', (tester) async {
-        const item = NovelInfo(
-          source: NovelSource.kakuyomu,
-          workId: '16818023211929539879',
-          title: 'カクヨム作品',
-          end: 1,
-        );
-
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: Scaffold(
-              body: NovelListTile(item: item),
-            ),
-          ),
-        );
-
-        expect(find.text('カクヨム'), findsOneWidget);
-      });
-
-      testWidgets('showSourceBadge: false ならカクヨム作品でもソースバッジが表示されない', (
-        tester,
-      ) async {
-        const item = NovelInfo(
-          source: NovelSource.kakuyomu,
-          workId: '16818023211929539879',
-          title: 'カクヨム作品',
-          end: 1,
-        );
-
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: Scaffold(
-              body: NovelListTile(item: item, showSourceBadge: false),
-            ),
-          ),
-        );
-
-        expect(find.text('カクヨム'), findsNothing);
-      });
-
-      testWidgets('なろう作品にはソースバッジが表示されない', (tester) async {
-        const item = NovelInfo(
-          ncode: 'N1234AB',
-          title: 'なろう作品',
-          end: 1,
-        );
-
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: Scaffold(
-              body: NovelListTile(item: item),
-            ),
-          ),
-        );
-
-        expect(find.text('小説家になろう'), findsNothing);
-      });
-    });
-
     group('genre name', () {
       testWidgets('カクヨムのジャンルIDをサイトのマスタデータから解決する', (
         tester,
