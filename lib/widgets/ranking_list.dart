@@ -104,6 +104,9 @@ class RankingList extends HookConsumerWidget {
           return NovelListTile(
             item: novel,
             rank: rank,
+            // ランキングはタブ切替で単一サイトに固定されているため
+            // ソースバッジは冗長なので表示しない
+            showSourceBadge: false,
             // enrichedData: ... ライブラリ状態が必要ならここで取得
           );
         },

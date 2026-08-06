@@ -224,6 +224,27 @@ void main() {
         expect(find.text('カクヨム'), findsOneWidget);
       });
 
+      testWidgets('showSourceBadge: false ならカクヨム作品でもソースバッジが表示されない', (
+        tester,
+      ) async {
+        const item = NovelInfo(
+          source: NovelSource.kakuyomu,
+          workId: '16818023211929539879',
+          title: 'カクヨム作品',
+          end: 1,
+        );
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: NovelListTile(item: item, showSourceBadge: false),
+            ),
+          ),
+        );
+
+        expect(find.text('カクヨム'), findsNothing);
+      });
+
       testWidgets('なろう作品にはソースバッジが表示されない', (tester) async {
         const item = NovelInfo(
           ncode: 'N1234AB',

@@ -7,13 +7,53 @@ import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
+import 'package:novelty/models/ranking_page.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/sites/novel_site.dart';
+import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
 import 'ranking_list_test.mocks.dart';
 
 @GenerateMocks([ApiService])
+
+/// 固定の [RankingPage] を返すだけの最小のサイト実装。
+///
+/// ランキング以外のメソッドは [NovelSite] のデフォルト実装
+/// （[UnsupportedError]）を使用する。
+///
+/// タイル側（[NovelListTile]）のジャンル・メタ情報は
+/// 静的レジストリ（[defaultNovelSiteRegistry]）を参照するため、
+/// このスタブの genres / rankingTypes / metaText はテストでは呼ばれない。
+class _StubRankingSite extends NovelSite {
+  _StubRankingSite(this._pages);
+
+  /// ページ番号（1始まり）に対応する [RankingPage] の一覧。
+  final List<RankingPage> _pages;
+
+  @override
+  NovelSource get source => NovelSource.kakuyomu;
+
+  @override
+  List<GenreMaster> get genres => const <GenreMaster>[];
+
+  @override
+  List<RankingTypeMaster> get rankingTypes => const <RankingTypeMaster>[];
+
+  @override
+  String? metaText(NovelInfo info) => null;
+
+  @override
+  Future<RankingPage> fetchRanking(
+    String rankingType, {
+    int page = 1,
+  }) async {
+    final index = (page - 1).clamp(0, _pages.length - 1);
+    return _pages[index];
+  }
+}
+
 void main() {
   group('RankingList Widget Tests', () {
     late MockApiService mockApiService;
@@ -259,6 +299,52 @@ void main() {
       // リアクティブ性が無い場合、'Initial Novel' が表示されたままになり失敗する
       if (find.text('Filtered Novel').evaluate().isEmpty) {}
       expect(find.text('Filtered Novel'), findsOneWidget);
+    });
+
+    testWidgets('カクヨムのランキング項目にはソースバッジが表示されない', (
+      tester,
+    ) async {
+      final site = _StubRankingSite(
+        const <RankingPage>[
+          RankingPage(
+            novels: <NovelInfo>[
+              NovelInfo(
+                source: NovelSource.kakuyomu,
+                workId: '16818023211929539879',
+                title: 'カクヨムランキング作品',
+                writer: 'テスト作者',
+                end: 1,
+              ),
+            ],
+            hasNextPage: false,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            // ignore: scoped_providers_should_specify_dependencies overrides_are_scoped_to_test
+            novelSiteRegistryProvider.overrideWithValue(
+              <NovelSource, NovelSite>{NovelSource.kakuyomu: site},
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: RankingList(
+                source: NovelSource.kakuyomu,
+                rankingType: 'daily',
+                key: PageStorageKey('test_kakuyomu_badge'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('カクヨムランキング作品'), findsOneWidget);
+      expect(find.text('カクヨム'), findsNothing);
     });
   });
 }

@@ -19,6 +19,7 @@ class NovelListTile extends HookWidget {
     this.onTap,
     this.onLongPress,
     this.enrichedData,
+    this.showSourceBadge = true,
   });
 
   /// 小説の情報。
@@ -29,6 +30,12 @@ class NovelListTile extends HookWidget {
 
   /// 順位（ランキング表示用）。
   final int? rank;
+
+  /// ソースバッジ（カクヨム等の非なろうサイト）を表示するかどうか。
+  ///
+  /// ランキングタブ等、表示対象が単一サイトに固定されている場合は
+  /// バッジが冗長になるため `false` を渡して隠せるようにする。
+  final bool showSourceBadge;
 
   /// タップ時のコールバック。
   final VoidCallback? onTap;
@@ -193,7 +200,8 @@ class NovelListTile extends HookWidget {
                         const SizedBox(width: 8),
                       ],
                       // ソースバッジ（カクヨム等の非なろうサイトのみ表示）
-                      if (item.source != NovelSource.narou) ...[
+                      if (showSourceBadge &&
+                          item.source != NovelSource.narou) ...[
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
