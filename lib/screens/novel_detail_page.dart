@@ -373,33 +373,32 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                           ),
                     ),
                     const SizedBox(height: 8),
-                    // ソースバッジ（カクヨム等の非なろうサイトのみ表示）
-                    if (novelInfo.source != NovelSource.narou)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            novelInfo.source.label,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
-                          ),
+                    // ソースバッジ（プロバイダ名を常に表示）
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          novelInfo.source.label,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
                       ),
+                    ),
                     const SizedBox(height: 12),
                     // Writer
                     InkWell(

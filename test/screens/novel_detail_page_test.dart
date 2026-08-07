@@ -67,6 +67,83 @@ void main() {
       );
     });
 
+    testWidgets('なろう作品でもソースバッジが表示される', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isOfflineModeProvider.overrideWithValue(false),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, args) => Stream.value(
+                NovelInfo(
+                  source: args.$1,
+                  workId: args.$2,
+                  ncode: args.$2,
+                  title: 'バッジテスト小説',
+                ),
+              ),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, args) => Stream.value(<Episode>[]),
+            ),
+            downloadProgressProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
+            lastReadEpisodeProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('小説家になろう'), findsOneWidget);
+    });
+
+    testWidgets('カクヨム作品でもソースバッジが表示される', (tester) async {
+      const kakuyomuWorkId = '16818023211929539879';
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isOfflineModeProvider.overrideWithValue(false),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, args) => Stream.value(
+                const NovelInfo(
+                  source: NovelSource.kakuyomu,
+                  workId: kakuyomuWorkId,
+                  title: 'バッジテスト小説',
+                ),
+              ),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, args) => Stream.value(<Episode>[]),
+            ),
+            downloadProgressProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
+            lastReadEpisodeProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelDetailPage(
+              source: NovelSource.kakuyomu,
+              workId: kakuyomuWorkId,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('カクヨム'), findsOneWidget);
+    });
+
     testWidgets('公開作品では非公開バナーが表示されない', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
