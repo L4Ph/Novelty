@@ -50,7 +50,7 @@ Apollo ステート内の `searchWorks(...)` コネクションに含まれる�
 
 | 項目 | 値 |
 |---|---|
-| URL | `/search?q={word}&offset={(page-1)*20}` |
+| URL | `/search?q={word}&page={N}`（`page` は2ページ目以降のみ送信。`offset` はサーバー側で破棄されるため送信しない） |
 | 1ページの件数 | 20件（なろうと同一） |
 | `NovelSearchResult.allCount` | `SearchWorkConnection.totalCount` |
 | 各作品 | `Work:{id}` エンティティを `_workToNovelInfo` で変換 |
