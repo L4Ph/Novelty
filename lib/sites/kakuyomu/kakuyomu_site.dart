@@ -209,8 +209,9 @@ class KakuyomuSite implements NovelSite {
   @override
   Future<NovelSearchResult> searchNovels(NovelSearchQuery query) async {
     final word = query.word?.trim() ?? '';
+    // カクヨムの /search は offset ではなく page でページ送りする。
+    // offset はサーバー側で破棄されるため送信しない。
     final page = query.lim > 0 ? ((query.st - 1) ~/ query.lim) + 1 : 1;
-    final offset = (page - 1) * query.lim;
     final url = Uri.https(
       'kakuyomu.jp',
       '/search',
@@ -222,7 +223,7 @@ class KakuyomuSite implements NovelSite {
         if (query.serialStatus != null) 'serial_status': query.serialStatus!,
         if (query.totalCharacterCountRange != null)
           'total_character_count_range': query.totalCharacterCountRange!,
-        if (offset > 0) 'offset': '$offset',
+        if (page > 1) 'page': '$page',
       },
     ).toString();
     final html = await _fetch(url);

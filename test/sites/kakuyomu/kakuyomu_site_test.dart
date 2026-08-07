@@ -265,7 +265,7 @@ void main() {
         expect(first.genreId, isNotNull);
       });
 
-      test('ページング（offset）をURLクエリに反映する', () async {
+      test('ページング（page）をURLクエリに反映する', () async {
         final adapter = _FixtureAdapter(<String, String>{
           '/search': _fixture('search_page.html'),
         });
@@ -278,10 +278,27 @@ void main() {
 
         final requested = adapter.requestedPaths.first;
         expect(requested, '/search');
-        // offset=40 が付与されている（クエリはpathに含まれないため別途確認）
+        // カクヨムは offset ではなく page でページ送りする
+        expect(adapter.requestedUris, anyElement(contains('page=3')));
+        // サーバー側で破棄される offset は送信しない
         expect(
           adapter.requestedUris,
-          anyElement(contains('offset=40')),
+          isNot(anyElement(contains('offset='))),
+        );
+      });
+
+      test('1ページ目はpageパラメータを送信しない', () async {
+        final adapter = _FixtureAdapter(<String, String>{
+          '/search': _fixture('search_page.html'),
+        });
+        final site = _createSite(adapter);
+
+        await site.searchNovels(const NovelSearchQuery(word: 'test'));
+
+        expect(adapter.requestedUris, isNot(anyElement(contains('page='))));
+        expect(
+          adapter.requestedUris,
+          isNot(anyElement(contains('offset='))),
         );
       });
 
