@@ -15,7 +15,7 @@ import 'package:novelty/screens/migration_recovery_screen.dart';
 import 'package:novelty/services/backup_service.dart';
 import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
-import 'package:novelty/widgets/offline_mode_banner.dart';
+import 'package:novelty/widgets/network_fallback_snackbar.dart';
 
 export 'package:novelty/database/database_initialization.dart';
 
@@ -322,7 +322,7 @@ class _AppWithSettings extends ConsumerWidget {
             routerConfig: router,
             builder: (context, child) => ImportSwapResultHandler(
               child: DatabaseMaintenanceOverlay(
-                child: OfflineModeBanner(child: child!),
+                child: NetworkFallbackSnackbar(child: child!),
               ),
             ),
           );
