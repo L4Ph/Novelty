@@ -7,13 +7,10 @@ import 'package:novelty/widgets/network_fallback_snackbar.dart';
 
 void main() {
   group('NetworkFallbackSnackbar', () {
-    testWidgets('オフラインモードON時でもヘッダーを表示しない', (tester) async {
+    testWidgets('ヘッダーバナーを表示しない', (tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(true),
-          ],
-          child: const MaterialApp(
+        const ProviderScope(
+          child: MaterialApp(
             home: NetworkFallbackSnackbar(
               child: Scaffold(body: Placeholder()),
             ),
@@ -28,7 +25,6 @@ void main() {
     testWidgets('フォールバックイベント発生時にスナックバーを表示する', (tester) async {
       final container = ProviderContainer(
         overrides: [
-          isOfflineModeProvider.overrideWithValue(false),
           settingsProvider.overrideWith(FakeSettings.new),
         ],
       );
