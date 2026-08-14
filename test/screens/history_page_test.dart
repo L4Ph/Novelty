@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
@@ -151,6 +152,84 @@ void main() {
 
       expect(find.textContaining('Error:'), findsOneWidget);
     });
+
+    testWidgets(
+      '履歴タップで本文を開き、戻るで目次へ遷移できること',
+      (tester) async {
+        final testHistoryData = [
+          HistoryData(
+            source: NovelSource.narou,
+            workId: 'today1',
+            title: '今日の小説1',
+            writer: '作者1',
+            lastEpisode: 5,
+            viewedAt: fixedTime.millisecondsSinceEpoch,
+            updatedAt: fixedTime.millisecondsSinceEpoch,
+          ),
+        ];
+
+        when(
+          mockDatabase.watchHistory(),
+        ).thenAnswer((_) => Stream.value(testHistoryData));
+
+        // アプリと同構造のパスを持つスタブ GoRouter
+        // (本文だけを push すると目次がスタックに積まれない問題を検証するため)
+        final stubRouter = GoRouter(
+          initialLocation: '/history',
+          routes: [
+            GoRoute(
+              path: '/history',
+              builder: (context, state) => const HistoryPage(),
+            ),
+            GoRoute(
+              path: '/novel/:source/:workId',
+              builder: (context, state) => Scaffold(
+                appBar: AppBar(),
+                body: const Center(child: Text('目次')),
+              ),
+              routes: [
+                GoRoute(
+                  path: ':episode',
+                  builder: (context, state) => Scaffold(
+                    appBar: AppBar(),
+                    body: const Center(child: Text('本文')),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            retry: (_, _) => null,
+            overrides: [
+              appDatabaseProvider.overrideWithValue(mockDatabase),
+              currentTimeProvider.overrideWithValue(fixedTime),
+            ],
+            child: MaterialApp.router(routerConfig: stubRouter),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // 履歴アイテムをタップ → 本文が表示される
+        await tester.tap(find.text('今日の小説1'));
+        await tester.pumpAndSettle();
+        expect(find.text('本文'), findsOneWidget);
+
+        // 戻る → 目次が表示される
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        expect(find.text('目次'), findsOneWidget);
+
+        // さらに戻る → 履歴に戻る
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        expect(find.text('履歴がありません。'), findsNothing);
+        expect(find.text('今日の小説1'), findsOneWidget);
+      },
+    );
 
     testWidgets(
       'should display old date format for history older than 7 days',

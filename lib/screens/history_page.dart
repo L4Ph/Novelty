@@ -78,6 +78,14 @@ class HistoryPage extends ConsumerWidget {
                       ),
                       onTap: () {
                         if (lastEpisode != null && lastEpisode > 0) {
+                          // 本文を開く際は目次(小説詳細)も積むことで、
+                          // 戻るボタンで本文から目次へ遷移できるようにする
+                          unawaited(
+                            NovelDetailRoute(
+                              source: item.source.name,
+                              workId: workId,
+                            ).push(context),
+                          );
                           unawaited(
                             NovelEpisodeRoute(
                               source: item.source.name,
