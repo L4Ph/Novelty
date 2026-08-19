@@ -13,6 +13,7 @@ import 'package:novelty/models/novel_download_summary.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/search_tokenizer.dart';
 import 'package:path/path.dart' as p;
+import 'package:wakachigaki/wakachigaki.dart' as wakachigaki;
 import 'package:path_provider/path_provider.dart';
 
 export 'database_providers.dart';
@@ -1186,10 +1187,11 @@ class AppDatabase extends _$AppDatabase {
   /// エピソードの検索
   ///
   /// v18で `episodes_search` を廃止し、Hybrid `txt` での全文スキャンに置換。
-  /// 将来 `wakachigaki` の `tokenize(query)` で分割したトークンで `every` 検索する予定だが、
-  /// 現段階では単純な部分一致で代替する。
+  /// `wakachigaki.tokenize(query)` でクエリを分かち書きし、`txt` に対して `every` で絞り込む。
   Future<List<EpisodeSearchResult>> searchEpisodes(String query) async {
     if (query.isEmpty) return [];
+    final queryTokens = wakachigaki.tokenize(query);
+    if (queryTokens.isEmpty) return [];
 
     final results = await customSelect(
       '''
@@ -1214,12 +1216,12 @@ class AppDatabase extends _$AppDatabase {
     return results
         .where((row) {
           final subtitle = row.read<String?>('subtitle') ?? '';
-          if (subtitle.contains(query)) return true;
+          if (queryTokens.every(subtitle.contains)) return true;
 
           final contentJson = row.read<String?>('content');
           if (contentJson == null) return false;
 
-          // Hybrid の txt に対して部分一致で判定する
+          // Hybrid の txt に対してトークン毎の部分一致で判定する
           try {
             final contentList = const ContentConverter().fromSql(contentJson);
             final buffer = StringBuffer();
@@ -1232,7 +1234,8 @@ class AppDatabase extends _$AppDatabase {
                 buffer.write('\n');
               }
             }
-            if (buffer.toString().contains(query)) return true;
+            final plain = buffer.toString();
+            if (queryTokens.every(plain.contains)) return true;
           } on Exception catch (_) {
             // 解析失敗は無視する
           }
