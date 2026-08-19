@@ -1,0 +1,6 @@
+include: package:lints/recommended.yaml
+
+analyzer:
+  errors:
+    public_member_api_docs: ignore
+    document_ignores: ignore

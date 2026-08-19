@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
@@ -6,6 +5,8 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 import 'package:narou_parser/narou_parser.dart';
+// ignore: depend_on_referenced_packages, reason: workspace パッケージのため
+import 'package:novel_parser_core/novel_parser_core.dart';
 import 'package:novelty/database/migration_helper.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_download_summary.dart';
@@ -13,6 +14,7 @@ import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/search_tokenizer.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:wakachigaki/wakachigaki.dart' as wakachigaki;
 
 export 'database_providers.dart';
 export 'migration_helper.dart';
@@ -117,6 +119,8 @@ CREATE TABLE IF NOT EXISTS episode_contents (
 ''';
 
 /// 小説のコンテンツをデータベースに保存するための変換クラス
+///
+/// Hybrid JSON `{"txt":..., "rb":[...]}` 形式で保存する。旧verbose形式も読込可能。
 class ContentConverter
     extends TypeConverter<List<NovelContentElement>, String> {
   /// コンストラクタ
@@ -127,18 +131,13 @@ class ContentConverter
     if (fromDb.isEmpty) {
       return [];
     }
-    final decoded = json.decode(fromDb) as List;
-    return decoded
-        .map(
-          (dynamic e) =>
-              NovelContentElement.fromJson(e as Map<String, dynamic>),
-        )
-        .toList();
+    // HybridConverter が旧verboseと新Hybridの両方を読む
+    return HybridConverter.fromHybridJson(fromDb);
   }
 
   @override
   String toSql(List<NovelContentElement> value) {
-    return value.toJsonString();
+    return HybridConverter.toHybridJson(value);
   }
 }
 
@@ -481,7 +480,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.test(super.e);
 
   /// 現在のデータベーススキーマバージョン
-  static const int currentSchemaVersion = 17;
+  static const int currentSchemaVersion = 18;
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -708,6 +707,13 @@ class AppDatabase extends _$AppDatabase {
             // 既存データは source='narou' として100%維持する。
             // ジャンルは INTEGER → TEXT（genre_id）に変換する。
             await _migrateToV17();
+          }
+
+          if (from < 18) {
+            // v18: Hybrid JSON への移行と episodes_search 廃止
+            // episode_contents.content を verbose → Hybrid {txt,rb} に変換し、
+            // 巨大な episodes_search FTS を削除して DB を半減させる
+            await _migrateToV18();
           }
 
           if (from < 14) {
@@ -980,8 +986,78 @@ class AppDatabase extends _$AppDatabase {
     await customStatement('PRAGMA foreign_keys = ON');
   }
 
+  /// v18 マイグレーション: Hybrid JSON への変換と episodes_search 廃止
+  Future<void> _migrateToV18() async {
+    // 1. episode_contents.content を verbose → Hybrid {txt,rb} に変換
+    // 11,077件 × 平均13KB なのでメモリに全件載せてバッチ更新する
+    final rows = await customSelect(
+      'SELECT source, work_id, episode_id, content FROM episode_contents '
+      'WHERE content IS NOT NULL',
+      readsFrom: {episodeContents},
+    ).get();
+
+    for (final row in rows) {
+      final content = row.read<String>('content');
+      final trimmed = content.trimLeft();
+
+      // 空の表現は Hybrid 空値へ正規化する。
+      // それ以外の表現はそのままの形を維持しても DB 上の意味は同等だが、
+      // 集計 SQL が '{"txt":"","rb":[]}' を「未ダウンロード」として扱うため、
+      // ここで統一しておく（空文字や '[]' が誤って成功扱いされるのを防ぐ）。
+      const hybridEmpty = '{"txt":"","rb":[]}';
+      if (content.isEmpty || content == '[]' || content == hybridEmpty) {
+        if (content != hybridEmpty) {
+          await customStatement(
+            'UPDATE episode_contents SET content = ? '
+            'WHERE source = ? AND work_id = ? AND episode_id = ?',
+            [
+              hybridEmpty,
+              row.read<String>('source'),
+              row.read<String>('work_id'),
+              row.read<int>('episode_id'),
+            ],
+          );
+        }
+        continue;
+      }
+
+      // 既に Hybrid ならスキップ
+      if (trimmed.startsWith('{"txt"') || trimmed.startsWith('{"rb"')) {
+        continue;
+      }
+      try {
+        final elements = HybridConverter.fromHybridJson(content);
+        final hybrid = HybridConverter.toHybridJson(elements);
+        if (hybrid == content) continue;
+        await customStatement(
+          'UPDATE episode_contents SET content = ? '
+          'WHERE source = ? AND work_id = ? AND episode_id = ?',
+          [
+            hybrid,
+            row.read<String>('source'),
+            row.read<String>('work_id'),
+            row.read<int>('episode_id'),
+          ],
+        );
+      } on Object {
+        // パース失敗はスキップ（元のまま残す）
+        continue;
+      }
+    }
+
+    // 2. 巨大な episodes_search FTS を削除（456MB削減）
+    // 仮想テーブルを DROP すると shadow テーブルも自動削除されるが、念のため個別にも DROP
+    await customStatement('DROP TABLE IF EXISTS episodes_search');
+    await customStatement('DROP TABLE IF EXISTS episodes_search_data');
+    await customStatement('DROP TABLE IF EXISTS episodes_search_idx');
+    await customStatement('DROP TABLE IF EXISTS episodes_search_content');
+    await customStatement('DROP TABLE IF EXISTS episodes_search_docsize');
+    await customStatement('DROP TABLE IF EXISTS episodes_search_config');
+  }
+
   Future<void> _createFtsTables() async {
     // Novels用FTSテーブル（デフォルトトークナイザー）
+    // v18以降は episodes_search は廃止（Hybrid txt での全文スキャンに置換）
     await customStatement('''
       CREATE VIRTUAL TABLE IF NOT EXISTS novels_search USING fts5(
         source UNINDEXED,
@@ -989,17 +1065,6 @@ class AppDatabase extends _$AppDatabase {
         title,
         writer,
         story
-      );
-    ''');
-
-    // Episodes用FTSテーブル（デフォルトトークナイザー）
-    await customStatement('''
-      CREATE VIRTUAL TABLE IF NOT EXISTS episodes_search USING fts5(
-        source UNINDEXED,
-        work_id UNINDEXED,
-        episode_id UNINDEXED,
-        subtitle,
-        content
       );
     ''');
 
@@ -1011,6 +1076,7 @@ class AppDatabase extends _$AppDatabase {
     // 行ごとの INSERT OR REPLACE + rowid 解決は遅いため、
     // 空のFTSテーブルへの一括 INSERT に切り替える。
     // （FTSテーブルは呼び出し元で DROP & CREATE 済みの前提）
+    // v18以降は episodes_search を廃止したため novels のみ再構築する
 
     // Novels検索インデックスを再構築
     final allNovels = await select(novels).get();
@@ -1028,52 +1094,6 @@ class AppDatabase extends _$AppDatabase {
             tokenizedTitle,
             tokenizedWriter,
             tokenizedStory,
-          ],
-        );
-      }
-    });
-
-    // Episodes検索インデックスを再構築
-    final episodeRows = await customSelect(
-      'SELECT l.source, l.work_id, l.episode_id, l.subtitle, c.content '
-      'FROM episode_list_entries l '
-      'JOIN episode_contents c '
-      'ON c.source = l.source AND c.work_id = l.work_id '
-      'AND c.episode_id = l.episode_id '
-      'WHERE c.content IS NOT NULL',
-      readsFrom: {episodeListEntries, episodeContents},
-    ).get();
-
-    await batch((batch) {
-      for (final row in episodeRows) {
-        final contentJson = row.read<String?>('content');
-        if (contentJson == null) continue;
-
-        final tokenizedSubtitle = SearchTokenizer.tokenize(
-          row.read<String?>('subtitle') ?? '',
-        );
-
-        // 本文コンテンツから検索用テキストを抽出する
-        final buffer = StringBuffer();
-        for (final element in const ContentConverter().fromSql(contentJson)) {
-          if (element is PlainText) {
-            buffer.write(element.text);
-          } else if (element is RubyText) {
-            buffer.write(element.base);
-          }
-        }
-        final tokenizedContent = SearchTokenizer.tokenize(buffer.toString());
-
-        batch.customStatement(
-          'INSERT INTO episodes_search('
-          ' source, work_id, episode_id, subtitle, content) '
-          'VALUES (?, ?, ?, ?, ?)',
-          [
-            row.read<String>('source'),
-            row.read<String>('work_id'),
-            row.read<int>('episode_id'),
-            tokenizedSubtitle,
-            tokenizedContent,
           ],
         );
       }
@@ -1107,6 +1127,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// エピソードの検索インデックスを更新
+  ///
+  /// v18で `episodes_search` を廃止したため何もしない。Hybrid `txt` での全文スキャンに置換。
   Future<void> _updateEpisodeSearchIndex({
     required NovelSource source,
     required String workId,
@@ -1114,40 +1136,8 @@ class AppDatabase extends _$AppDatabase {
     required String? subtitle,
     required List<NovelContentElement>? content,
   }) async {
-    if (content == null) return;
-
-    final tokenizedSubtitle = SearchTokenizer.tokenize(subtitle ?? '');
-
-    // 本文コンテンツから検索用テキストを抽出する
-    final buffer = StringBuffer();
-    for (final element in content) {
-      if (element is PlainText) {
-        buffer.write(element.text);
-      } else if (element is RubyText) {
-        buffer.write(element.base);
-      }
-    }
-    final tokenizedContent = SearchTokenizer.tokenize(buffer.toString());
-
-    await customStatement(
-      '''
-      INSERT OR REPLACE INTO episodes_search(rowid, source, work_id, episode_id, subtitle, content)
-      VALUES (
-        (SELECT rowid FROM episodes_search WHERE source = ? AND work_id = ? AND episode_id = ?),
-        ?, ?, ?, ?, ?
-      )
-      ''',
-      [
-        source.dbId,
-        workId,
-        episodeId,
-        source.dbId,
-        workId,
-        episodeId,
-        tokenizedSubtitle,
-        tokenizedContent,
-      ],
-    );
+    // episodes_search は廃止、索引更新は不要
+    return;
   }
 
   /// 小説の検索インデックスから削除
@@ -1163,17 +1153,15 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// エピソードの検索インデックスから削除
+  ///
+  /// v18で `episodes_search` を廃止したため何もしない。
   // ignore: unused_element
   Future<void> _deleteEpisodeSearchIndex(
     NovelSource source,
     String workId,
     int episodeId,
   ) async {
-    await customStatement(
-      'DELETE FROM episodes_search WHERE source = ? AND work_id = ? '
-      'AND episode_id = ?',
-      [source.dbId, workId, episodeId],
-    );
+    return;
   }
 
   /// 小説情報の取得
@@ -1218,9 +1206,13 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// エピソードの検索
+  ///
+  /// v18で `episodes_search` を廃止し、Hybrid `txt` での全文スキャンに置換。
+  /// `wakachigaki.tokenize(query)` でクエリを分かち書きし、`txt` に対して `every` で絞り込む。
   Future<List<EpisodeSearchResult>> searchEpisodes(String query) async {
-    final tokenizedQuery = SearchTokenizer.tokenize(query);
-    if (tokenizedQuery.isEmpty) return [];
+    if (query.isEmpty) return [];
+    final queryTokens = wakachigaki.tokenize(query);
+    if (queryTokens.isEmpty) return [];
 
     final results = await customSelect(
       '''
@@ -1238,35 +1230,33 @@ class AppDatabase extends _$AppDatabase {
       JOIN novels n ON l.source = n.source AND l.work_id = n.work_id
       JOIN library_entries le
         ON l.source = le.source AND l.work_id = le.work_id
-      JOIN episodes_search es
-        ON l.source = es.source AND l.work_id = es.work_id
-        AND l.episode_id = es.episode_id
-      WHERE es.episodes_search MATCH ?
-      ORDER BY es.rank
-      LIMIT 100
       ''',
-      variables: [Variable.withString(tokenizedQuery)],
       readsFrom: {episodeListEntries, episodeContents, novels, libraryEntries},
     ).get();
 
     return results
         .where((row) {
           final subtitle = row.read<String?>('subtitle') ?? '';
-          if (subtitle.contains(query)) return true;
+          if (queryTokens.every(subtitle.contains)) return true;
 
           final contentJson = row.read<String?>('content');
           if (contentJson == null) return false;
 
-          // 完全一致を確認するため本文を解析する
+          // Hybrid の txt に対してトークン毎の部分一致で判定する
           try {
             final contentList = const ContentConverter().fromSql(contentJson);
+            final buffer = StringBuffer();
             for (final element in contentList) {
               if (element is PlainText) {
-                if (element.text.contains(query)) return true;
+                buffer.write(element.text);
               } else if (element is RubyText) {
-                if (element.base.contains(query)) return true;
+                buffer.write(element.base);
+              } else if (element is NewLine) {
+                buffer.write('\n');
               }
             }
+            final plain = buffer.toString();
+            if (queryTokens.every(plain.contains)) return true;
           } on Exception catch (_) {
             // 解析失敗は無視する
           }
@@ -1281,6 +1271,7 @@ class AppDatabase extends _$AppDatabase {
             novelTitle: row.read<String?>('novel_title') ?? '',
           );
         })
+        .take(100)
         .toList();
   }
 
@@ -1845,7 +1836,8 @@ class AppDatabase extends _$AppDatabase {
       'SELECT '
       'l.source, l.work_id, l.episode_id, l.subtitle, l.url, l.published_at, '
       'l.revised_at, '
-      "CASE WHEN c.content IS NOT NULL AND c.content != '[]' "
+      // ignore: lines_longer_than_80_chars, reason: SQL リテラルのため
+      "CASE WHEN c.content IS NOT NULL AND c.content NOT IN ('[]', '{\"txt\":\"\",\"rb\":[]}') "
       'THEN 1 ELSE 0 END as is_downloaded '
       'FROM episode_list_entries l '
       'LEFT JOIN episode_contents c '
@@ -1902,9 +1894,11 @@ class AppDatabase extends _$AppDatabase {
     final query = customSelect(
       'SELECT '
       'e.source, e.work_id, '
-      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content != '[]' "
+      // ignore: lines_longer_than_80_chars, reason: SQL リテラルのため
+      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content NOT IN ('[]', '{\"txt\":\"\",\"rb\":[]}') "
       'THEN 1 END) as success_count, '
-      "COUNT(CASE WHEN e.content = '[]' THEN 1 END) as failure_count, "
+      // ignore: lines_longer_than_80_chars, reason: SQL リテラルのため
+      "COUNT(CASE WHEN e.content IN ('[]', '{\"txt\":\"\",\"rb\":[]}') THEN 1 END) as failure_count, "
       'n.general_all_no '
       'FROM episode_contents e '
       'JOIN novels n ON e.source = n.source AND e.work_id = n.work_id '
