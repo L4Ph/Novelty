@@ -305,7 +305,7 @@ void main() {
     expect(toc[1].read<int>('episode_id'), 2);
     expect(toc[1].read<String?>('revised_at'), isNull);
 
-    // episode_contents: 本文キャッシュが維持される
+    // episode_contents: 本文キャッシュが維持され、v18で Hybrid に変換される
     final contents = await db
         .customSelect(
           'SELECT source, work_id, episode_id, content, fetched_at, revised_at '
@@ -317,13 +317,14 @@ void main() {
     expect(contents[0].read<String>('work_id'), 'n1234ab');
     expect(
       contents[0].read<String>('content'),
-      '[{"runtimeType":"plainText","text":"本文1"}]',
+      '{"txt":"本文1","rb":[]}',
     );
     expect(contents[0].read<int>('fetched_at'), 1700000000000);
     expect(contents[0].read<String?>('revised_at'), '2024-01-02 00:00:00');
     expect(contents[1].read<String?>('content'), '[]');
 
     // FTSテーブルが再構築され、データが再投入されていること
+    // v18で episodes_search は廃止されたため novels_search のみ
     final novelFtsCount = await db
         .customSelect(
           'SELECT COUNT(*) AS c FROM novels_search',
@@ -331,12 +332,12 @@ void main() {
         .getSingle();
     expect(novelFtsCount.read<int>('c'), 2);
 
-    final episodeFtsCount = await db
+    final episodeFtsTables = await db
         .customSelect(
-          'SELECT COUNT(*) AS c FROM episodes_search',
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='episodes_search'",
         )
-        .getSingle();
-    expect(episodeFtsCount.read<int>('c'), 2);
+        .get();
+    expect(episodeFtsTables, isEmpty);
 
     // 新スキーマで新しいsourceの行を追加できること（複合主キーの動作確認）
     await db.customStatement(

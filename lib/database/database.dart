@@ -13,8 +13,8 @@ import 'package:novelty/models/novel_download_summary.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/search_tokenizer.dart';
 import 'package:path/path.dart' as p;
-import 'package:wakachigaki/wakachigaki.dart' as wakachigaki;
 import 'package:path_provider/path_provider.dart';
+import 'package:wakachigaki/wakachigaki.dart' as wakachigaki;
 
 export 'database_providers.dart';
 export 'migration_helper.dart';
@@ -998,7 +998,11 @@ class AppDatabase extends _$AppDatabase {
 
     for (final row in rows) {
       final content = row.read<String>('content');
-      if (content.isEmpty || content == '[]') continue;
+      if (content.isEmpty ||
+          content == '[]' ||
+          content == '{"txt":"","rb":[]}') {
+        continue;
+      }
       final trimmed = content.trimLeft();
       // 既に Hybrid ならスキップ
       if (trimmed.startsWith('{"txt"') || trimmed.startsWith('{"rb"')) {
@@ -1815,7 +1819,7 @@ class AppDatabase extends _$AppDatabase {
       'SELECT '
       'l.source, l.work_id, l.episode_id, l.subtitle, l.url, l.published_at, '
       'l.revised_at, '
-      "CASE WHEN c.content IS NOT NULL AND c.content != '[]' "
+      "CASE WHEN c.content IS NOT NULL AND c.content NOT IN ('[]', '{\"txt\":\"\",\"rb\":[]}') "
       'THEN 1 ELSE 0 END as is_downloaded '
       'FROM episode_list_entries l '
       'LEFT JOIN episode_contents c '
@@ -1872,9 +1876,9 @@ class AppDatabase extends _$AppDatabase {
     final query = customSelect(
       'SELECT '
       'e.source, e.work_id, '
-      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content != '[]' "
+      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content NOT IN ('[]', '{\"txt\":\"\",\"rb\":[]}') "
       'THEN 1 END) as success_count, '
-      "COUNT(CASE WHEN e.content = '[]' THEN 1 END) as failure_count, "
+      "COUNT(CASE WHEN e.content IN ('[]', '{\"txt\":\"\",\"rb\":[]}') THEN 1 END) as failure_count, "
       'n.general_all_no '
       'FROM episode_contents e '
       'JOIN novels n ON e.source = n.source AND e.work_id = n.work_id '

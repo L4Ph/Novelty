@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, reason: cli tool
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -18,10 +20,6 @@ Future<void> main() async {
   if (start == -1) {
     throw Exception('model not found');
   }
-  final braceStart = body.indexOf('{', start);
-  final braceEnd = body.lastIndexOf('}');
-  final jsonLike = body.substring(braceStart, braceEnd + 1);
-
   // TypeScript のオブジェクトを JSON に近づけるため、シングルクォートをダブルクォートに、
   // 未クォートキーをクォートする簡易変換はせず、Dart 側でそのまま貼り付ける
   // ここでは body 全体を Dart の raw 文字列として埋め込むのが最も忠実

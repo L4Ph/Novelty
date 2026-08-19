@@ -59,9 +59,9 @@ dependencies:
   shared_preferences: ^2.5.3
   tategaki:
     path: packages/tategaki
+  url_launcher: ^6.3.2
   wakachigaki:
     path: packages/wakachigaki
-  url_launcher: ^6.3.2
 dev_dependencies:
   build_runner: 2.15.1
   drift_dev: ^2.34.0
