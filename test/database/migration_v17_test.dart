@@ -1,3 +1,5 @@
+// ignore_for_file: lines_longer_than_80_chars, reason: SQL literal
+
 import 'dart:io';
 
 import 'package:drift/drift.dart' show Variable;

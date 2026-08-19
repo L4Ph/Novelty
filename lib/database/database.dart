@@ -1819,6 +1819,7 @@ class AppDatabase extends _$AppDatabase {
       'SELECT '
       'l.source, l.work_id, l.episode_id, l.subtitle, l.url, l.published_at, '
       'l.revised_at, '
+      // ignore: lines_longer_than_80_chars, reason: SQL literal
       "CASE WHEN c.content IS NOT NULL AND c.content NOT IN ('[]', '{\"txt\":\"\",\"rb\":[]}') "
       'THEN 1 ELSE 0 END as is_downloaded '
       'FROM episode_list_entries l '
@@ -1876,8 +1877,10 @@ class AppDatabase extends _$AppDatabase {
     final query = customSelect(
       'SELECT '
       'e.source, e.work_id, '
+      // ignore: lines_longer_than_80_chars, reason: SQL literal
       "COUNT(CASE WHEN e.content IS NOT NULL AND e.content NOT IN ('[]', '{\"txt\":\"\",\"rb\":[]}') "
       'THEN 1 END) as success_count, '
+      // ignore: lines_longer_than_80_chars, reason: SQL literal
       "COUNT(CASE WHEN e.content IN ('[]', '{\"txt\":\"\",\"rb\":[]}') THEN 1 END) as failure_count, "
       'n.general_all_no '
       'FROM episode_contents e '
