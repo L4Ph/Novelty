@@ -3,6 +3,7 @@
 
 import 'package:wakachigaki/src/hash.dart';
 import 'package:wakachigaki/src/model.dart';
+import 'package:wakachigaki/src/normalize.dart';
 import 'package:wakachigaki/src/ngram.dart';
 
 final RegExp _kanjiReg = RegExp(
@@ -71,9 +72,12 @@ List<NgramFeature> Function(String) featurer(
   final h = hash(nBuckets);
 
   return (text) {
-    final source = text;
-    final chars = source.split('');
-    final charsWithMarkers = [...prefix, ...source.toLowerCase().split(''), ...suffix];
+    // JS の text.normalize() (NFC) + [...source] (コードポイント) 相当。
+    // サロゲートペアを1文字として扱うようコードポイント単位で分割する。
+    final source = nfcNormalize(text);
+    final chars = _codePoints(source);
+    final lowerChars = _codePoints(source.toLowerCase());
+    final charsWithMarkers = [...prefix, ...lowerChars, ...suffix];
     final typesWithMarkers = [...prefix, ...chars.map(getCharType), ...suffix];
     final ngramByChars = ngram(charsWithMarkers);
     final ngramByTypes = ngram(typesWithMarkers);
@@ -93,6 +97,17 @@ List<NgramFeature> Function(String) featurer(
       return NgramFeature(char: chars[i], features: features);
     });
   };
+}
+
+/// 文字列をコードポイント単位 (サロゲートペア対応) に分割する。
+List<String> _codePoints(String s) {
+  if (s.isEmpty) return const [];
+  final result = <String>[];
+  final runes = s.runes;
+  for (final r in runes) {
+    result.add(String.fromCharCode(r));
+  }
+  return result;
 }
 
 final List<NgramFeature> Function(String) features = featurer(

@@ -4,5 +4,6 @@ export 'src/feature.dart';
 export 'src/hash.dart';
 export 'src/model.dart';
 export 'src/ngram.dart';
+export 'src/normalize.dart';
 export 'src/predict.dart';
 export 'src/tokenize.dart';

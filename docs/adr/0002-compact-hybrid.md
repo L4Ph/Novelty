@@ -16,6 +16,8 @@ Grillingでは「本文をどう持つか」「索引は要るのか」「`plain
 
 2. **DBマイグレーション v17→v18 で一括変換。** `currentSchemaVersion = 18` とし、`_migrateToV18` で `episode_contents` 11,077件を `HybridConverter` で再エンコードする。`content` が `'[]'` または `'{"txt":"","rb":[]}'` は空（失敗）として集計し、`success_count`/`failure_count` の SQL も両方を考慮する。`episodes_search` および shadow テーブルは `DROP` し、`_createFtsTables`/`_populateFtsTables` は `novels_search` のみに縮退する。新規インストールでは `episodes_search` を作成しない。
 
+   - `wakachigaki` の `tokenize` は参照実装（`yuhsak/wakachigaki` TS / `wakachigaki-py`）と出力が完全一致することを、README 例・サロゲートペア・NFC 結合文字を含む複数ケースで検証している（`dart test packages/wakachigaki`）。
+
 3. **`wakachigaki` をクリーンルームで自前移植し、クエリ側だけに使う。** `packages/wakachigaki` を `workspace` に新設し、 `yuhsak/wakachigaki`（MIT）のアルゴリズムを仕様として自前実装する。`Adora-Inc/japanese_word_tokenizer` は参照に留め、コードのコピーは行わず来歴も残さない。モデルは `tool/codegen.dart`（Dart）が `yuhsak/wakachigaki` の `src/model/model.ts` を `fetch` して `packages/wakachigaki/lib/src/model.dart` の `const` に生成する。リポジトリには `model.json` を残さず、`yuhsak` のみを `tool/codegen.dart` と `lib/generated/wakachigaki_model.dart` のヘッダでクレジットする。FT（追加学習）は第一弾では見送り、汎用モデルで検証してから `tool/wakachigaki/` に Python を隔離して追加する二段階とする。
 
 4. **検索は索引なしの全文スキャンに置換。** `searchEpisodes` は `SELECT content FROM episode_contents` → `HybridConverter.fromSql` → `txt.contains` を `wakachigaki.tokenize(query).every(plain.contains)` で絞り込む。`episodes_search` への `JOIN` と `MATCH` を廃止し、`_updateEpisodeSearchIndex` は `no-op` 化する。`novels_search`（title/writer/story のみ）は `2MB` と小さいため維持する。`Isolate` での一括デコードは将来のチューニング余地として残し、第一弾ではメインスレッドで70msを許容する。
