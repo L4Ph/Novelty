@@ -1,40 +1,58 @@
-// ignore_for_file: avoid_print, reason: cli tool
+// ignore_for_file: avoid_print, reason: CLI ツールであるため
 
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
+
 /// yuhsak/wakachigaki の model.ts を fetch して Dart const に変換する
+///
+/// 上流の `main` は変更され得るため、取得先を完全な commit SHA に固定し、
+/// 取得内容の SHA-256 を期待値と照合してから生成する (サプライチェーン対策)。
 Future<void> main() async {
-  const url =
-      'https://raw.githubusercontent.com/yuhsak/wakachigaki/main/src/model/model.ts';
+  // 固定対象: https://github.com/yuhsak/wakachigaki のこの commit
+  const upstreamCommit = '4a434512e24546dabad40639d03153b1ed495b55';
+  // この commit の src/model/model.ts の SHA-256
+  const expectedSha256 =
+      'c043362b6922a5b595a48a5ee3c06acfeaa1a391ff3c44ad805f48291740a6dd';
+  const url = 'https://raw.githubusercontent.com/yuhsak/wakachigaki/'
+      '$upstreamCommit/src/model/model.ts';
   print('Fetching $url ...');
   final client = HttpClient();
   final request = await client.getUrl(Uri.parse(url));
   final response = await request.close();
-  final body = await response.transform(utf8.decoder).join();
+  final bodyBytes = await response.fold<List<int>>(
+    <int>[],
+    (acc, chunk) => acc..addAll(chunk),
+  );
   client.close();
 
+  final body = utf8.decode(bodyBytes);
+
+  // SHA-256 検証: 想定内容と一致しない場合は中止する
+  final actualSha256 = sha256.convert(bodyBytes).toString();
+  if (actualSha256 != expectedSha256) {
+    throw StateError(
+      'model.ts の SHA-256 が期待値と一致しません。 '
+      'expected=$expectedSha256, actual=$actualSha256。 '
+      '上流が更新された可能性があります。commit と期待ハッシュを確認してください。',
+    );
+  }
+
   // model.ts は `export const model: Model = { ... }` 形式
-  // `export const` 以降のオブジェクトを抽出
   final start = body.indexOf('export const model');
   if (start == -1) {
     throw Exception('model not found');
   }
-  // TypeScript のオブジェクトを JSON に近づけるため、シングルクォートをダブルクォートに、
-  // 未クォートキーをクォートする簡易変換はせず、Dart 側でそのまま貼り付ける
-  // ここでは body 全体を Dart の raw 文字列として埋め込むのが最も忠実
-  // 簡易: model.ts の内容から `weight` 部分を抽出して Dart Map リテラルに変換
-  // 今回は body の `export const model` 以降をそのまま Dart に移植するため、
-  // TypeScript の `:` 区切りを Dart でも使えるようにする（Dart の Map は `:` でOK）
 
-  // より確実に: body をそのまま Dart ファイルにコメントで残し、重みは Adora の Dart 変換を参考にせず
-  // ここでは簡易的に body から `weight` の文字列表現を抽出して Dart ファイルに埋め込む
-  // threshold は別途取得（model.ts 内に含まれる）
   const thresholdCode = 'const double wakachigakiThreshold = 0.5;';
 
   var modelRaw = body.substring(start);
   // export const model: Model =  を除去
-  modelRaw = modelRaw.replaceFirst(RegExp(r'export const model\s*:\s*Model\s*=\s*'), '');
+  modelRaw = modelRaw.replaceFirst(
+    RegExp(r'export const model\s*:\s*Model\s*=\s*'),
+    '',
+  );
   modelRaw = modelRaw.replaceAll(' as const', '');
   modelRaw = modelRaw.trim();
   // 末尾の ; を除去
@@ -43,9 +61,6 @@ Future<void> main() async {
   }
 
   // TypeScript の未クォートキーを Dart の文字列キーに変換
-  // 例: version: 2 → 'version': 2,  C: 86 → 'C': 86
-  // ただし既にクォートされている '1': はそのまま
-  // 正規表現で `(\b\w+\b)\s*:` を `'\\1':` に置換、ただし `'` で始まるものは除外
   final quoted = modelRaw.replaceAllMapped(
     RegExp(r'''(?<!')\b([A-Za-z_][A-Za-z0-9_]*)\b\s*:'''),
     (m) => "'${m.group(1)}':",
@@ -53,8 +68,9 @@ Future<void> main() async {
 
   final out = '''
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// Generated from yuhsak/wakachigaki (MIT) via tool/codegen.dart
+// Generated from yuhsak/wakachigaki（MIT）via tool/codegen.dart
 // Credit: yuhsak/wakachigaki - https://github.com/yuhsak/wakachigaki
+// 上流 commit: $upstreamCommit (SHA-256 = $actualSha256)
 
 $thresholdCode
 

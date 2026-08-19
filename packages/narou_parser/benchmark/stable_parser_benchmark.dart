@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print // benchmark logic
+// ignore_for_file: avoid_print // ベンチマーク用出力のため
 
 import 'package:narou_parser/narou_parser.dart';
 

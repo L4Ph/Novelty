@@ -78,7 +78,8 @@ class HybridConverter {
     }).toList()
       ..sort((a, b) => a.off.compareTo(b.off));
 
-    // 検証: txt と base の一致
+    // 検証: txt と base の一致、およびスパン同士の重なり
+    var prevEnd = -1;
     for (final span in spans) {
       if (span.off < 0 || span.off + span.base.length > txt.length) {
         throw FormatException(
@@ -86,6 +87,14 @@ class HybridConverter {
           'off=${span.off}, base=${span.base}, txt.length=${txt.length}',
         );
       }
+      // 重なり検出: 直前スパンの終端より前から始まる場合
+      if (span.off < prevEnd) {
+        throw FormatException(
+          'Ruby span が重なっています: '
+          'off=${span.off}, base=${span.base} (直前スパンの終端=$prevEnd)',
+        );
+      }
+      prevEnd = span.off + span.base.length;
       final actual = txt.substring(span.off, span.off + span.base.length);
       if (actual != span.base) {
         throw FormatException(
@@ -133,9 +142,14 @@ class HybridConverter {
 
     flushPlain();
 
-    // 末尾に rb が残っている場合はエラー（txt終端を超える）
+    // 末尾に rb が残っている場合はエラー（txt 終端を超える、または順序不整合）
     if (rbIndex < spans.length) {
-      throw const FormatException('Ruby span が txt 終端を超えています');
+      final span = spans[rbIndex];
+      throw FormatException(
+        'Ruby span が txt 内で消費されませんでした '
+        '(txt 終端を超える、またはスパンが重なっています): '
+        'off=${span.off}, base=${span.base}',
+      );
     }
 
     return result;

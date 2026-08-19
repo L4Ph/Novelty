@@ -70,4 +70,4 @@ coverage/
 
 # End of https://www.toptal.com/developers/gitignore/api/flutter
 novelty_backup*.db
-package.json
+/package.json

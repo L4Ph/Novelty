@@ -64,6 +64,7 @@ dependencies:
     path: packages/wakachigaki
 dev_dependencies:
   build_runner: 2.15.1
+  crypto: ^3.0.6
   drift_dev: ^2.34.0
   flutter_test:
     sdk: flutter

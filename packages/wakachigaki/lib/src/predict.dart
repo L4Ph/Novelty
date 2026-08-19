@@ -5,31 +5,63 @@ import 'package:wakachigaki/src/feature.dart';
 import 'package:wakachigaki/src/model.dart';
 import 'package:wakachigaki/src/ngram.dart';
 
-num _lookup(Map<dynamic, dynamic> weight, NgramFeatureItem f) {
-  final byKind = weight[f.kind];
-  if (byKind is! Map) return 0;
-  final bySize = byKind['${f.size}'];
-  if (bySize is! Map) return 0;
-  final byOffset = bySize['${f.offset}'];
-  if (byOffset is! Map) return 0;
-  final value = byOffset[f.value];
-  return value is num ? value : 0;
+// 重みを「キー(int) → バケット内マップ」へ事前にインデックス化し、
+// 文字ごとの繰り返し処理で動的な Map 参照・文字列補間をしないようにする。
+//
+// type/hash ごとに `size → offset → { value: weight }` の構造へ変換する。
+typedef _Weights = Map<String, Map<int, Map<int, Map<String, num>>>>;
+
+final _indexedWeights = _buildIndexedWeights();
+final num _bias = wakachigakiModel['weight']['bias'] as num; // 参照実装と同じ
+final num _distanceWeight = wakachigakiModel['weight']['distance'] as num;
+final int _scale = wakachigakiScale;
+
+_Weights _buildIndexedWeights() {
+  final weight = wakachigakiModel['weight'] as Map;
+  final result = <String, Map<int, Map<int, Map<String, num>>>>{};
+  for (final kind in const ['type', 'hash']) {
+    final byKind = weight[kind] as Map?;
+    if (byKind == null) continue;
+    final sizeMap = <int, Map<int, Map<String, num>>>{};
+    byKind.forEach((sKey, v) {
+      final size = int.tryParse('$sKey') ?? 0;
+      final offsetMap = <int, Map<String, num>>{};
+      (v as Map).forEach((oKey, v2) {
+        final offset = int.tryParse('$oKey') ?? 0;
+        (v2 as Map).forEach((valueKey, w) {
+          offsetMap.putIfAbsent(offset, () => {})[valueKey] = w as num;
+        });
+      });
+      sizeMap[size] = offsetMap;
+    });
+    result[kind] = sizeMap;
+  }
+  return result;
+}
+
+num _lookup(NgramFeatureItem f) {
+  final bySize = _indexedWeights[f.kind]?[f.size];
+  if (bySize == null) return 0;
+  final byOffset = bySize[f.offset];
+  if (byOffset == null) return 0;
+  return byOffset[f.value] ?? 0;
 }
 
 /// 1文字分の確率を計算する。[distance] は前回切れ目からの距離。
 double proba(List<NgramFeatureItem> features, int distance) {
-  final weight = wakachigakiModel['weight'] as Map;
-  final bias = weight['bias'] as num;
-  final distanceWeight = weight['distance'] as num;
-  final scale = wakachigakiScale;
-
-  final sum = features.fold<num>(0, (acc, f) => acc + _lookup(weight, f));
-  final value = (bias + sum + distance * distanceWeight) / scale;
+  var sum = 0.0;
+  for (final f in features) {
+    sum += _lookup(f);
+  }
+  final value = (_bias + sum + distance * _distanceWeight) / _scale;
   return sigmoid(value);
 }
 
 /// 各文字が「単語境界」かどうかを bool リストで返す
-List<bool> predict(List<NgramFeature> features, {double threshold = 0.5}) {
+List<bool> predict(
+  List<NgramFeature> features, {
+  double threshold = wakachigakiThreshold,
+}) {
   final result = <bool>[];
   var distance = 0;
   for (final feature in features) {

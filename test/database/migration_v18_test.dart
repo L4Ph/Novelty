@@ -1,4 +1,4 @@
-// ignore_for_file: unused_import, depend_on_referenced_packages, prefer_foreach, lines_longer_than_80_chars, avoid_redundant_argument_values, prefer_const_declarations, reason: test convenience
+// ignore_for_file: depend_on_referenced_packages, prefer_foreach, lines_longer_than_80_chars, avoid_redundant_argument_values, prefer_const_declarations, reason: テスト支援のため
 
 import 'dart:io';
 
@@ -150,8 +150,13 @@ void main() {
       INSERT INTO episode_contents (source, work_id, episode_id, content, fetched_at, revised_at)
       VALUES ('narou', 'n1234ab', 4, NULL, 1700000000000, NULL)
       ''',
+      // 空文字列の本文 (v18 で Hybrid 空値へ正規化すべき)
       '''
-      INSERT INTO novels (source, work_id, title) VALUES ('narou', 'n1234ab', 'テスト小説')
+      INSERT INTO episode_contents (source, work_id, episode_id, content, fetched_at, revised_at)
+      VALUES ('narou', 'n1234ab', 5, '', 1700000000000, NULL)
+      ''',
+      '''
+      INSERT INTO novels (source, work_id, title, general_all_no) VALUES ('narou', 'n1234ab', 'テスト小説', 5)
       ''',
       '''
       INSERT INTO library_entries (source, work_id, added_at) VALUES ('narou', 'n1234ab', 1700000000000)
@@ -184,7 +189,7 @@ void main() {
     final contents = await db.customSelect(
       'SELECT source, work_id, episode_id, content FROM episode_contents ORDER BY episode_id',
     ).get();
-    expect(contents.length, 4);
+    expect(contents.length, 5);
 
     // episode 1: plain + newLine + plain
     final c1 = contents[0].read<String?>('content')!;
@@ -209,14 +214,36 @@ void main() {
     expect((e2[0] as RubyText).base, '前');
     expect(c2.contains('"txt"'), isTrue);
 
-    // episode 3: 空配列 [] は Hybrid で {"txt":"","rb":[]} に変換される
+    // episode 3: 空配列 [] は Hybrid 空値 {"txt":"","rb":[]} に変換される
     final c3 = contents[2].read<String>('content');
-    // 空配列は Hybrid でも空として扱われるため、txt が空か "[]" のどちらか
-    // 実装では "[]" は空リストとして保持せず {"txt":"","rb":[]} にする
-    expect(c3.contains('"txt"') || c3 == '[]', isTrue);
+    expect(c3, '{"txt":"","rb":[]}');
 
     // episode 4: NULL はそのまま NULL
     expect(contents[3].read<String?>('content'), isNull);
+
+    // episode 5: 空文字列 '' は Hybrid 空値へ正規化され、未ダウンロード扱いになる
+    expect(contents[4].read<String>('content'), '{"txt":"","rb":[]}');
+
+    // ダウンロード集計: 空値 (=未ダウンロード) は成功件数に加算されないこと。
+    // general_all_no=5 のうち、実際に本文を持つのは episode 1 (本文) と
+    // episode 2 (ルビ) の2件なので successCount は 2。
+    // episode 3 ([]), episode 5 (空文字→Hybrid空値) は成功に数えない。
+    final summary = await db.customSelect(
+      'SELECT '
+      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content NOT IN ('[]', '{\"txt\":\"\",\"rb\":[]}') "
+      'THEN 1 END) as success_count, '
+      'n.general_all_no '
+      'FROM episode_contents e '
+      'JOIN novels n ON e.source = n.source AND e.work_id = n.work_id '
+      'WHERE e.source = ? AND e.work_id = ? '
+      'GROUP BY e.source, e.work_id',
+      variables: [
+        Variable.withString('narou'),
+        Variable.withString('n1234ab'),
+      ],
+    ).getSingle();
+    expect(summary.read<int>('success_count'), 2); // 空値は成功に数えない
+    expect(summary.read<int>('general_all_no'), 5);
 
     // episodes_search が削除されていること
     final tables = await db.customSelect(
@@ -240,13 +267,13 @@ void main() {
     await db.updateEpisodeContent(
       source: NovelSource.narou,
       workId: 'n1234ab',
-      episodeId: 5,
+      episodeId: 6,
       content: [NovelContentElement.plainText('新規')],
       fetchedAt: 1700000000000,
       revisedAt: null,
     );
     final c5 = await db.customSelect(
-      'SELECT content FROM episode_contents WHERE episode_id = 5',
+      'SELECT content FROM episode_contents WHERE episode_id = 6',
     ).getSingle();
     expect(c5.read<String>('content').contains('"txt"'), isTrue);
   });

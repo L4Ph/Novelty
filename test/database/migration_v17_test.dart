@@ -1,4 +1,4 @@
-// ignore_for_file: lines_longer_than_80_chars, reason: SQL literal
+// ignore_for_file: lines_longer_than_80_chars, reason: SQL リテラルのため
 
 import 'dart:io';
 
@@ -323,7 +323,8 @@ void main() {
     );
     expect(contents[0].read<int>('fetched_at'), 1700000000000);
     expect(contents[0].read<String?>('revised_at'), '2024-01-02 00:00:00');
-    expect(contents[1].read<String?>('content'), '[]');
+    // v18 で空配列 '[]' は Hybrid 空値へ正規化される
+    expect(contents[1].read<String?>('content'), '{"txt":"","rb":[]}');
 
     // FTSテーブルが再構築され、データが再投入されていること
     // v18で episodes_search は廃止されたため novels_search のみ

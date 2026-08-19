@@ -109,6 +109,35 @@ void main() {
       );
     });
 
+    test('重なった rb スパンを検出して FormatException を投げる', () {
+      // off=0 base="AB" と off=1 base="BC" は重なる
+      final jsonStr = jsonEncode({
+        'txt': 'ABCDE',
+        'rb': [
+          {'off': 0, 'base': 'AB', 'ruby': 'エー'},
+          {'off': 1, 'base': 'BC', 'ruby': 'ビー'},
+        ],
+      });
+      expect(
+        () => HybridConverter.fromHybridJson(jsonStr),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('txt 終端を越える未消費スパンを検出して FormatException を投げる', () {
+      // スパンの位置が txt の長さを超える場合、範囲外エラーになる
+      final jsonStr = jsonEncode({
+        'txt': 'AB',
+        'rb': [
+          {'off': 1, 'base': 'BC', 'ruby': 'ビー'}, // off=1 で len=2 は txt 終端を超える
+        ],
+      });
+      expect(
+        () => HybridConverter.fromHybridJson(jsonStr),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
     test('HybridConverter.fromHybridJson は旧 verbose JSON も読める（移行用）', () {
       // 旧形式: [{"text":"A","runtimeType":"plainText"}, {"runtimeType":"newLine"}]
       final oldJson = jsonEncode([

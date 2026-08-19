@@ -1,6 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// Generated from yuhsak/wakachigaki (MIT) via tool/codegen.dart
+// Generated from yuhsak/wakachigaki（MIT）via tool/codegen.dart
 // Credit: yuhsak/wakachigaki - https://github.com/yuhsak/wakachigaki
+// 上流 commit: 4a434512e24546dabad40639d03153b1ed495b55 (SHA-256 = c043362b6922a5b595a48a5ee3c06acfeaa1a391ff3c44ad805f48291740a6dd)
 
 const double wakachigakiThreshold = 0.5;
 

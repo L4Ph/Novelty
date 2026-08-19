@@ -5,7 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 import 'package:narou_parser/narou_parser.dart';
-// ignore: depend_on_referenced_packages, reason: workspace package
+// ignore: depend_on_referenced_packages, reason: workspace パッケージのため
 import 'package:novel_parser_core/novel_parser_core.dart';
 import 'package:novelty/database/migration_helper.dart';
 import 'package:novelty/models/episode.dart';
@@ -998,12 +998,29 @@ class AppDatabase extends _$AppDatabase {
 
     for (final row in rows) {
       final content = row.read<String>('content');
-      if (content.isEmpty ||
-          content == '[]' ||
-          content == '{"txt":"","rb":[]}') {
+      final trimmed = content.trimLeft();
+
+      // 空の表現は Hybrid 空値へ正規化する。
+      // それ以外の表現はそのままの形を維持しても DB 上の意味は同等だが、
+      // 集計 SQL が '{"txt":"","rb":[]}' を「未ダウンロード」として扱うため、
+      // ここで統一しておく（空文字や '[]' が誤って成功扱いされるのを防ぐ）。
+      const hybridEmpty = '{"txt":"","rb":[]}';
+      if (content.isEmpty || content == '[]' || content == hybridEmpty) {
+        if (content != hybridEmpty) {
+          await customStatement(
+            'UPDATE episode_contents SET content = ? '
+            'WHERE source = ? AND work_id = ? AND episode_id = ?',
+            [
+              hybridEmpty,
+              row.read<String>('source'),
+              row.read<String>('work_id'),
+              row.read<int>('episode_id'),
+            ],
+          );
+        }
         continue;
       }
-      final trimmed = content.trimLeft();
+
       // 既に Hybrid ならスキップ
       if (trimmed.startsWith('{"txt"') || trimmed.startsWith('{"rb"')) {
         continue;
@@ -1819,7 +1836,7 @@ class AppDatabase extends _$AppDatabase {
       'SELECT '
       'l.source, l.work_id, l.episode_id, l.subtitle, l.url, l.published_at, '
       'l.revised_at, '
-      // ignore: lines_longer_than_80_chars, reason: SQL literal
+      // ignore: lines_longer_than_80_chars, reason: SQL リテラルのため
       "CASE WHEN c.content IS NOT NULL AND c.content NOT IN ('[]', '{\"txt\":\"\",\"rb\":[]}') "
       'THEN 1 ELSE 0 END as is_downloaded '
       'FROM episode_list_entries l '
@@ -1877,10 +1894,10 @@ class AppDatabase extends _$AppDatabase {
     final query = customSelect(
       'SELECT '
       'e.source, e.work_id, '
-      // ignore: lines_longer_than_80_chars, reason: SQL literal
+      // ignore: lines_longer_than_80_chars, reason: SQL リテラルのため
       "COUNT(CASE WHEN e.content IS NOT NULL AND e.content NOT IN ('[]', '{\"txt\":\"\",\"rb\":[]}') "
       'THEN 1 END) as success_count, '
-      // ignore: lines_longer_than_80_chars, reason: SQL literal
+      // ignore: lines_longer_than_80_chars, reason: SQL リテラルのため
       "COUNT(CASE WHEN e.content IN ('[]', '{\"txt\":\"\",\"rb\":[]}') THEN 1 END) as failure_count, "
       'n.general_all_no '
       'FROM episode_contents e '
