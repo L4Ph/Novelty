@@ -59,6 +59,15 @@ Future<void> main() async {
 $thresholdCode
 
 const Map<String, dynamic> wakachigakiModel = $quoted;
+
+/// モデル設定値（生成スクリプトが末尾に追記）
+int get wakachigakiNBuckets =>
+    (wakachigakiModel['config'] as Map)['nBuckets'] as int;
+int get wakachigakiSize => (wakachigakiModel['config'] as Map)['size'] as int;
+int get wakachigakiOffset =>
+    (wakachigakiModel['config'] as Map)['offset'] as int;
+int get wakachigakiScale =>
+    (wakachigakiModel['config'] as Map)['scale'] as int;
 ''';
 
   final outFile = File('packages/wakachigaki/lib/src/model.dart');

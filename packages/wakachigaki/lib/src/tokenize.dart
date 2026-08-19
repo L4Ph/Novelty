@@ -1,54 +1,37 @@
+// 分かち書き
+// yuhsak/wakachigaki の src/tokenize.ts を Dart に移植
+
 import 'package:wakachigaki/src/feature.dart';
+import 'package:wakachigaki/src/model.dart';
+import 'package:wakachigaki/src/predict.dart';
 
-// 最小実装: 文字種に基づく簡易分かち書き
-// 本来は重み付きロジスティック回帰で境界確率を計算するが、
-// 第一弾では文字種 N-gram の簡易版で近似する。
-// 将来 tool/codegen.dart で生成した重みを使って predict を差し替える.
+class _Tokenizer {
+  _Tokenizer(this.nBuckets, this.size, this.offset) : _features = featurer(nBuckets, size, offset);
 
-/// 日本語テキストを分かち書きする
-List<String> tokenize(String text) {
-  if (text.isEmpty) return [];
-  final normalized = text.replaceAll(RegExp(r'\s+'), '');
-  if (normalized.isEmpty) return [];
-  if (normalized.length == 1) return [normalized];
+  final int nBuckets;
+  final int size;
+  final int offset;
+  final List<NgramFeature> Function(String) _features;
 
-  final tokens = <String>[];
-  final buffer = StringBuffer();
+  List<String> call(String text) {
+    final chars = _features(text);
+    final willBreak = predict(chars, threshold: wakachigakiThreshold);
 
-  for (var i = 0; i < normalized.length; i++) {
-    final ch = normalized[i];
-    buffer.write(ch);
-
-    if (i < normalized.length - 1) {
-      final nextCh = normalized[i + 1];
-      final nextType = getCharType(nextCh);
-      final currType = getCharType(ch);
-      final isBoundary =
-          (currType != nextType && currType != 'H' && nextType != 'H') ||
-              (nextCh == 'は' ||
-                  nextCh == 'が' ||
-                  nextCh == 'を' ||
-                  nextCh == 'に' ||
-                  nextCh == 'で');
-      if (isBoundary && buffer.length >= 2) {
-        tokens.add(buffer.toString());
-        buffer.clear();
+    final acc = <String>[''];
+    for (var i = 0; i < chars.length; i++) {
+      acc[acc.length - 1] += chars[i].char;
+      if (willBreak[i]) {
+        acc.add('');
       }
     }
+    return acc.where((c) => c.isNotEmpty).toList();
   }
-  if (buffer.isNotEmpty) {
-    tokens.add(buffer.toString());
-  }
-  final merged = <String>[];
-  for (final t in tokens) {
-    if (t.length == 1 && merged.isNotEmpty && merged.last.length == 1) {
-      merged[merged.length - 1] = merged.last + t;
-    } else {
-      merged.add(t);
-    }
-  }
-  return merged.where((e) => e.isNotEmpty).toList();
 }
+
+final _tokenizer = _Tokenizer(wakachigakiNBuckets, wakachigakiSize, wakachigakiOffset);
+
+/// 日本語テキストを分かち書きする
+List<String> tokenize(String text) => _tokenizer(text);
 
 /// 互換エイリアス
 List<String> segment(String text) => tokenize(text);

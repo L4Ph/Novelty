@@ -612,3 +612,12 @@ const Map<String, dynamic> wakachigakiModel = {
     'bias': 147,
   },
 };
+
+/// モデル設定値（生成スクリプトが末尾に追記）
+int get wakachigakiNBuckets =>
+    (wakachigakiModel['config'] as Map)['nBuckets'] as int;
+int get wakachigakiSize => (wakachigakiModel['config'] as Map)['size'] as int;
+int get wakachigakiOffset =>
+    (wakachigakiModel['config'] as Map)['offset'] as int;
+int get wakachigakiScale =>
+    (wakachigakiModel['config'] as Map)['scale'] as int;
