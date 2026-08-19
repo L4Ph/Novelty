@@ -49,8 +49,15 @@ Riverpodプロバイダ `novelSiteRegistryProvider` で注入可能（テスト�
 
 サイト実装がコード定義で提供するジャンル（`GenreMaster`）・ランキング種別（`RankingTypeMaster`）。
 
+### Hybrid（本文キャッシュ形式）
+
+`episode_contents.content` の永続化形式（`lib/database/database.dart:120` の `ContentConverter`、 `packages/novel_parser_core/lib/src/models/hybrid_converter.dart`）。`txt` は `PlainText.text` + `RubyText.base` + `"\n"` を連結した読み上げテキスト（検索対象）、`rb` は `[{"off":int,"base":String,"ruby":String}]` の注釈配列。`newLine` は `txt` 内の `"\n"` として表現する。旧 `runtimeType` 形式も読込可能。
+
+- **避ける**: `plain` 列の物理化や子テーブル `episode_rubies` に正規化しない（本文概念は1列で保つ）。
+
 ## 主要な決定（ADR 参照）
 
 - 複数プロバイダ抽象化: [ADR-0001](./docs/adr/0001-multi-provider-abstraction.md)
+- Hybrid JSON と FTS 廃止: [ADR-0002](./docs/adr/0002-compact-hybrid.md)
 - カクヨムは公式APIなし・公開HTMLの取得解析のみ（robots.txt遵守）
 - フェーズ分割（P1〜P4）: エピック #240
