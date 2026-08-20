@@ -435,7 +435,7 @@ void main() {
         isA<MigrationException>().having(
           (e) => e.toVersion,
           'toVersion',
-          18,
+          19,
         ),
       ),
     );
@@ -464,11 +464,11 @@ void main() {
         .get();
     expect(oldTables, isEmpty);
 
-    // スキーマバージョンが18に更新されていること
+    // スキーマバージョンが19に更新されていること
     final versionResult = await db
         .customSelect('PRAGMA user_version')
         .getSingle();
-    expect(versionResult.read<int>('user_version'), 18);
+    expect(versionResult.read<int>('user_version'), 19);
 
     // novelsに非公開フラグが追加されていること
     final novel = await db.getNovel(NovelSource.narou, 'n1234ab');

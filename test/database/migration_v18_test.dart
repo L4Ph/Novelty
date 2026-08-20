@@ -186,9 +186,11 @@ void main() {
     addTearDown(db.close);
 
     // Hybrid に変換されていること
-    final contents = await db.customSelect(
-      'SELECT source, work_id, episode_id, content FROM episode_contents ORDER BY episode_id',
-    ).get();
+    final contents = await db
+        .customSelect(
+          'SELECT source, work_id, episode_id, content FROM episode_contents ORDER BY episode_id',
+        )
+        .get();
     expect(contents.length, 5);
 
     // episode 1: plain + newLine + plain
@@ -228,40 +230,48 @@ void main() {
     // general_all_no=5 のうち、実際に本文を持つのは episode 1 (本文) と
     // episode 2 (ルビ) の2件なので successCount は 2。
     // episode 3 ([]), episode 5 (空文字→Hybrid空値) は成功に数えない。
-    final summary = await db.customSelect(
-      'SELECT '
-      "COUNT(CASE WHEN e.content IS NOT NULL AND e.content NOT IN ('[]', '{\"txt\":\"\",\"rb\":[]}') "
-      'THEN 1 END) as success_count, '
-      'n.general_all_no '
-      'FROM episode_contents e '
-      'JOIN novels n ON e.source = n.source AND e.work_id = n.work_id '
-      'WHERE e.source = ? AND e.work_id = ? '
-      'GROUP BY e.source, e.work_id',
-      variables: [
-        Variable.withString('narou'),
-        Variable.withString('n1234ab'),
-      ],
-    ).getSingle();
+    final summary = await db
+        .customSelect(
+          'SELECT '
+          "COUNT(CASE WHEN e.content IS NOT NULL AND e.content NOT IN ('[]', '{\"txt\":\"\",\"rb\":[]}') "
+          'THEN 1 END) as success_count, '
+          'n.general_all_no '
+          'FROM episode_contents e '
+          'JOIN novels n ON e.source = n.source AND e.work_id = n.work_id '
+          'WHERE e.source = ? AND e.work_id = ? '
+          'GROUP BY e.source, e.work_id',
+          variables: [
+            Variable.withString('narou'),
+            Variable.withString('n1234ab'),
+          ],
+        )
+        .getSingle();
     expect(summary.read<int>('success_count'), 2); // 空値は成功に数えない
     expect(summary.read<int>('general_all_no'), 5);
 
     // episodes_search が削除されていること
-    final tables = await db.customSelect(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='episodes_search'",
-    ).get();
+    final tables = await db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='episodes_search'",
+        )
+        .get();
     expect(tables, isEmpty);
 
     // shadow テーブルも削除されていること
-    final shadow = await db.customSelect(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'episodes_search_%'",
-    ).get();
+    final shadow = await db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'episodes_search_%'",
+        )
+        .get();
     expect(shadow, isEmpty);
 
-    // novels_search は残っていること
-    final novelsSearch = await db.customSelect(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='novels_search'",
-    ).get();
-    expect(novelsSearch, isNotEmpty);
+    // novels_search は v19 で削除されていること
+    final novelsSearch = await db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='novels_search'",
+        )
+        .get();
+    expect(novelsSearch, isEmpty);
 
     // 新しい Hybrid 形式で保存できること
     await db.updateEpisodeContent(
@@ -272,9 +282,11 @@ void main() {
       fetchedAt: 1700000000000,
       revisedAt: null,
     );
-    final c5 = await db.customSelect(
-      'SELECT content FROM episode_contents WHERE episode_id = 6',
-    ).getSingle();
+    final c5 = await db
+        .customSelect(
+          'SELECT content FROM episode_contents WHERE episode_id = 6',
+        )
+        .getSingle();
     expect(c5.read<String>('content').contains('"txt"'), isTrue);
   });
 
@@ -287,7 +299,9 @@ void main() {
     expect((oldDecoded[0] as PlainText).text, 'A');
 
     // 新 Hybrid
-    final hybrid = HybridConverter.toHybridJson([NovelContentElement.plainText('A')]);
+    final hybrid = HybridConverter.toHybridJson([
+      NovelContentElement.plainText('A'),
+    ]);
     final hybridDecoded = converter.fromSql(hybrid);
     expect(hybridDecoded, hasLength(1));
     expect((hybridDecoded[0] as PlainText).text, 'A');

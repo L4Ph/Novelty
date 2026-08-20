@@ -11,10 +11,8 @@ import 'package:novelty/database/migration_helper.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_download_summary.dart';
 import 'package:novelty/sites/novel_source.dart';
-import 'package:novelty/utils/search_tokenizer.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:wakachigaki/wakachigaki.dart' as wakachigaki;
 
 export 'database_providers.dart';
 export 'migration_helper.dart';
@@ -480,7 +478,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.test(super.e);
 
   /// 現在のデータベーススキーマバージョン
-  static const int currentSchemaVersion = 18;
+  static const int currentSchemaVersion = 19;
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -490,7 +488,6 @@ class AppDatabase extends _$AppDatabase {
     return MigrationStrategy(
       onCreate: (m) async {
         await m.createAll();
-        await _createFtsTables();
       },
       onUpgrade: (m, from, to) async {
         try {
@@ -605,8 +602,6 @@ class AppDatabase extends _$AppDatabase {
 
           if (from < 16) {
             // 旧episodesテーブルを目次・本文の2テーブルに分割する
-            // v14のFTS再構築より前に実行し、_populateFtsTables()で
-            // episode_list_entries / episode_contents を参照できるようにする
             // ここでは v16 形状（ncode 主キー）で作成する（v17再構築は末尾）
             await customStatement(_v16CreateEpisodeListEntriesSql);
             await customStatement(_v16CreateEpisodeContentsSql);
@@ -716,14 +711,12 @@ class AppDatabase extends _$AppDatabase {
             await _migrateToV18();
           }
 
-          if (from < 14) {
-            // トリグラムトークナイザーからデフォルトトークナイザー(simple)へ切り替え、
-            // トリガーを削除したためFTSテーブルを手動で再構築・再投入する
-            await customStatement('DROP TABLE IF EXISTS novels_search');
-            await customStatement('DROP TABLE IF EXISTS episodes_search');
-
-            await _createFtsTables();
-            await _populateFtsTables();
+          if (from < 19) {
+            // v19: novels_search FTS5 の撤去（本文検索は機能ごと削除）
+            // 小説検索は SQL の LIKE 部分一致へ置換し、FTS5 仮想テーブルと
+            // index 用コードを削除する。
+            // DROP 後に VACUUM を実行し、物理ファイルのサイズも回収する。
+            await _migrateToV19();
           }
         } on MigrationException {
           rethrow;
@@ -974,15 +967,6 @@ class AppDatabase extends _$AppDatabase {
       );
     });
 
-    // ---- FTS 再構築 ----
-    await step('fts', () async {
-      await customStatement('DROP TABLE IF EXISTS novels_search');
-      await customStatement('DROP TABLE IF EXISTS episodes_search');
-
-      await _createFtsTables();
-      await step('fts_populate', _populateFtsTables);
-    });
-
     await customStatement('PRAGMA foreign_keys = ON');
   }
 
@@ -1055,113 +1039,26 @@ class AppDatabase extends _$AppDatabase {
     await customStatement('DROP TABLE IF EXISTS episodes_search_config');
   }
 
-  Future<void> _createFtsTables() async {
-    // Novels用FTSテーブル（デフォルトトークナイザー）
-    // v18以降は episodes_search は廃止（Hybrid txt での全文スキャンに置換）
-    await customStatement('''
-      CREATE VIRTUAL TABLE IF NOT EXISTS novels_search USING fts5(
-        source UNINDEXED,
-        work_id UNINDEXED,
-        title,
-        writer,
-        story
-      );
-    ''');
-
-    // トリガーによる自動更新は行わない
-  }
-
-  Future<void> _populateFtsTables() async {
-    // マイグレーションなどで一から再構築する際、
-    // 行ごとの INSERT OR REPLACE + rowid 解決は遅いため、
-    // 空のFTSテーブルへの一括 INSERT に切り替える。
-    // （FTSテーブルは呼び出し元で DROP & CREATE 済みの前提）
-    // v18以降は episodes_search を廃止したため novels のみ再構築する
-
-    // Novels検索インデックスを再構築
-    final allNovels = await select(novels).get();
-    await batch((batch) {
-      for (final novel in allNovels) {
-        final tokenizedTitle = SearchTokenizer.tokenize(novel.title ?? '');
-        final tokenizedWriter = SearchTokenizer.tokenize(novel.writer ?? '');
-        final tokenizedStory = SearchTokenizer.tokenize(novel.story ?? '');
-        batch.customStatement(
-          'INSERT INTO novels_search(source, work_id, title, writer, story) '
-          'VALUES (?, ?, ?, ?, ?)',
-          [
-            novel.source.dbId,
-            novel.workId,
-            tokenizedTitle,
-            tokenizedWriter,
-            tokenizedStory,
-          ],
-        );
-      }
-    });
-  }
-
-  /// 小説の検索インデックスを更新
-  Future<void> _updateNovelSearchIndex(Novel novel) async {
-    final tokenizedTitle = SearchTokenizer.tokenize(novel.title ?? '');
-    final tokenizedWriter = SearchTokenizer.tokenize(novel.writer ?? '');
-    final tokenizedStory = SearchTokenizer.tokenize(novel.story ?? '');
-
-    await customStatement(
-      '''
-      INSERT OR REPLACE INTO novels_search(rowid, source, work_id, title, writer, story)
-      VALUES (
-        (SELECT rowid FROM novels_search WHERE source = ? AND work_id = ?),
-        ?, ?, ?, ?, ?
-      )
-      ''',
-      [
-        novel.source.dbId,
-        novel.workId,
-        novel.source.dbId,
-        novel.workId,
-        tokenizedTitle,
-        tokenizedWriter,
-        tokenizedStory,
-      ],
-    );
-  }
-
-  /// エピソードの検索インデックスを更新
+  /// v19 マイグレーション: novels_search FTS5 の撤去とファイルサイズの回収
   ///
-  /// v18で `episodes_search` を廃止したため何もしない。Hybrid `txt` での全文スキャンに置換。
-  Future<void> _updateEpisodeSearchIndex({
-    required NovelSource source,
-    required String workId,
-    required int episodeId,
-    required String? subtitle,
-    required List<NovelContentElement>? content,
-  }) async {
-    // episodes_search は廃止、索引更新は不要
-    return;
-  }
+  /// - 本文・サブタイトル検索は機能ごと削除し、小説検索は SQL の LIKE 部分一致へ
+  ///   置換するため、FTS5 仮想テーブル novels_search（および shadow テーブル）を
+  ///   DROP する。
+  /// - DROP だけでは解放されたページが物理ファイル内に残ってサイズが減らないため、
+  ///   続けて VACUUM を実行してファイルを切り詰める。
+  ///   （Drift の onCreate / onUpgrade はトランザクション外で実行されるため、
+  ///     VACUUM をそのまま呼び出せることを確認済み）
+  Future<void> _migrateToV19() async {
+    // novels_search を撤去（shadow テーブルも念のため個別に DROP）
+    await customStatement('DROP TABLE IF EXISTS novels_search');
+    await customStatement('DROP TABLE IF EXISTS novels_search_data');
+    await customStatement('DROP TABLE IF EXISTS novels_search_idx');
+    await customStatement('DROP TABLE IF EXISTS novels_search_content');
+    await customStatement('DROP TABLE IF EXISTS novels_search_docsize');
+    await customStatement('DROP TABLE IF EXISTS novels_search_config');
 
-  /// 小説の検索インデックスから削除
-  // ignore: unused_element
-  Future<void> _deleteNovelSearchIndex(
-    NovelSource source,
-    String workId,
-  ) async {
-    await customStatement(
-      'DELETE FROM novels_search WHERE source = ? AND work_id = ?',
-      [source.dbId, workId],
-    );
-  }
-
-  /// エピソードの検索インデックスから削除
-  ///
-  /// v18で `episodes_search` を廃止したため何もしない。
-  // ignore: unused_element
-  Future<void> _deleteEpisodeSearchIndex(
-    NovelSource source,
-    String workId,
-    int episodeId,
-  ) async {
-    return;
+    // 物理ファイルサイズを回収する。FTS 撤去で生じた空きページもここで詰められる。
+    await customStatement('VACUUM');
   }
 
   /// 小説情報の取得
@@ -1181,98 +1078,45 @@ class AppDatabase extends _$AppDatabase {
   }
 
   /// 小説の検索
+  ///
+  /// ライブラリ登録済みの小説を対象に、クエリ文字列をそのまま タイトル / 作者 /
+  /// あらすじ のいずれかに部分一致する小説を返す。
+  /// 並び順はライブラリ追加日時の新しい順とする（一覧表示と一致）。
+  ///
+  /// 全件をメモリにロードせず、SQL の LIKE で絞り込んでから返す。
   Future<List<Novel>> searchNovels(String query) async {
-    final tokenizedQuery = SearchTokenizer.tokenize(query);
-    if (tokenizedQuery.isEmpty) return [];
+    if (query.trim().isEmpty) return [];
+
+    // LIKE のワイルドカード（% / _）をエスケープし、クエリを文字通り検索する
+    final pattern = '%${_escapeLike(query)}%';
 
     final results = await customSelect(
-      '''
+      r'''
       SELECT n.* FROM novels n
-      JOIN novels_search ns ON n.source = ns.source AND n.work_id = ns.work_id
       JOIN library_entries le
         ON n.source = le.source AND n.work_id = le.work_id
-      WHERE ns.novels_search MATCH ?
-      ORDER BY ns.rank
+      WHERE n.title LIKE ? ESCAPE '\'
+         OR n.writer LIKE ? ESCAPE '\'
+         OR n.story LIKE ? ESCAPE '\'
+      ORDER BY le.added_at DESC
       ''',
-      variables: [Variable.withString(tokenizedQuery)],
+      variables: [
+        Variable.withString(pattern),
+        Variable.withString(pattern),
+        Variable.withString(pattern),
+      ],
       readsFrom: {novels, libraryEntries},
     ).get();
 
-    return results.map((row) => novels.map(row.data)).where((novel) {
-      return (novel.title?.contains(query) ?? false) ||
-          (novel.writer?.contains(query) ?? false) ||
-          (novel.story?.contains(query) ?? false);
-    }).toList();
+    return results.map((row) => novels.map(row.data)).toList();
   }
 
-  /// エピソードの検索
-  ///
-  /// v18で `episodes_search` を廃止し、Hybrid `txt` での全文スキャンに置換。
-  /// `wakachigaki.tokenize(query)` でクエリを分かち書きし、`txt` に対して `every` で絞り込む。
-  Future<List<EpisodeSearchResult>> searchEpisodes(String query) async {
-    if (query.isEmpty) return [];
-    final queryTokens = wakachigaki.tokenize(query);
-    if (queryTokens.isEmpty) return [];
-
-    final results = await customSelect(
-      '''
-      SELECT 
-        l.source,
-        l.work_id,
-        l.episode_id,
-        l.subtitle,
-        c.content,
-        n.title as novel_title
-      FROM episode_list_entries l
-      LEFT JOIN episode_contents c
-        ON c.source = l.source AND c.work_id = l.work_id
-        AND c.episode_id = l.episode_id
-      JOIN novels n ON l.source = n.source AND l.work_id = n.work_id
-      JOIN library_entries le
-        ON l.source = le.source AND l.work_id = le.work_id
-      ''',
-      readsFrom: {episodeListEntries, episodeContents, novels, libraryEntries},
-    ).get();
-
-    return results
-        .where((row) {
-          final subtitle = row.read<String?>('subtitle') ?? '';
-          if (queryTokens.every(subtitle.contains)) return true;
-
-          final contentJson = row.read<String?>('content');
-          if (contentJson == null) return false;
-
-          // Hybrid の txt に対してトークン毎の部分一致で判定する
-          try {
-            final contentList = const ContentConverter().fromSql(contentJson);
-            final buffer = StringBuffer();
-            for (final element in contentList) {
-              if (element is PlainText) {
-                buffer.write(element.text);
-              } else if (element is RubyText) {
-                buffer.write(element.base);
-              } else if (element is NewLine) {
-                buffer.write('\n');
-              }
-            }
-            final plain = buffer.toString();
-            if (queryTokens.every(plain.contains)) return true;
-          } on Exception catch (_) {
-            // 解析失敗は無視する
-          }
-          return false;
-        })
-        .map((row) {
-          return EpisodeSearchResult(
-            source: NovelSource.values.byName(row.read<String>('source')),
-            workId: row.read<String>('work_id'),
-            episodeId: row.read<int>('episode_id'),
-            subtitle: row.read<String?>('subtitle') ?? '',
-            novelTitle: row.read<String?>('novel_title') ?? '',
-          );
-        })
-        .take(100)
-        .toList();
+  /// LIKE パターン内で特別な意味を持つ文字を、ESCAPE 文字でエスケープする
+  String _escapeLike(String value) {
+    return value
+        .replaceAll(r'\', r'\\')
+        .replaceAll('%', r'\%')
+        .replaceAll('_', r'\_');
   }
 
   /// ライブラリに小説を追加
@@ -1345,37 +1189,11 @@ class AppDatabase extends _$AppDatabase {
 
   /// 小説情報の保存
   Future<int> insertNovel(NovelsCompanion novel) async {
-    // FTS更新が必要かどうかを判定するために既存データを取得
-    final existingNovel = await getNovel(
-      novel.source.value,
-      novel.workId.value,
-    );
-
+    // 小説検索は SQL の LIKE 部分一致のため、FTS インデックス更新は不要
     final id = await into(novels).insert(
       novel,
       mode: InsertMode.insertOrReplace,
     );
-
-    // 検索インデックスを更新
-    // タイトル、著者、あらすじが変更された場合のみインデックスを更新
-    var shouldUpdateIndex = true;
-    if (existingNovel != null) {
-      if (existingNovel.title == novel.title.value &&
-          existingNovel.writer == novel.writer.value &&
-          existingNovel.story == novel.story.value) {
-        shouldUpdateIndex = false;
-      }
-    }
-
-    if (shouldUpdateIndex) {
-      final insertedNovel = await getNovel(
-        novel.source.value,
-        novel.workId.value,
-      );
-      if (insertedNovel != null) {
-        await _updateNovelSearchIndex(insertedNovel);
-      }
-    }
 
     return id;
   }
@@ -1549,23 +1367,6 @@ class AppDatabase extends _$AppDatabase {
   ) async {
     if (newEpisodes.isEmpty) return;
 
-    // 最適化: 不要なFTS更新を避けるため、既存のサブタイトルを事前に取得する。
-    // このメソッドは通常、単一の小説のエピソードリストに対して呼び出されるため、
-    // 既存データを効率的に取得できる。
-    final source = newEpisodes.first.source.value;
-    final workId = newEpisodes.first.workId.value;
-    final existingRows =
-        await (select(
-              episodeListEntries,
-            )..where(
-              (t) => t.source.equalsValue(source) & t.workId.equals(workId),
-            ))
-            .get();
-
-    final existingSubtitles = {
-      for (final row in existingRows) row.episodeId: row.subtitle,
-    };
-
     // 目次の取得日時
     final now = DateTime.now().millisecondsSinceEpoch;
 
@@ -1578,38 +1379,6 @@ class AppDatabase extends _$AppDatabase {
         );
       }
     });
-
-    // サブタイトルの検索インデックスを更新
-    // 既存のエピソードで、サブタイトルが実際に変更された場合のみ更新するように最適化。
-    // 新規エピソードの場合、contentはnull（このメソッドはメタデータのみ更新するため）なので、
-    // いずれにせよ_updateEpisodeSearchIndexはスキップされるため、DBクエリを節約できる。
-    for (final episode in newEpisodes) {
-      final epId = episode.episodeId.value;
-      final newSubtitle = episode.subtitle.value;
-
-      // エピソードが存在し、かつサブタイトルが変更された場合のみ更新
-
-      if (existingSubtitles.containsKey(epId)) {
-        final oldSubtitle = existingSubtitles[epId];
-        if (oldSubtitle != newSubtitle) {
-          final contentRow =
-              await (select(episodeContents)..where(
-                    (t) =>
-                        t.source.equalsValue(episode.source.value) &
-                        t.workId.equals(episode.workId.value) &
-                        t.episodeId.equals(epId),
-                  ))
-                  .getSingleOrNull();
-          await _updateEpisodeSearchIndex(
-            source: episode.source.value,
-            workId: episode.workId.value,
-            episodeId: epId,
-            subtitle: newSubtitle,
-            content: contentRow?.content,
-          );
-        }
-      }
-    }
   }
 
   /// エピソード本文の保存
@@ -1624,24 +1393,6 @@ class AppDatabase extends _$AppDatabase {
     String? url,
     String? publishedAt,
   }) async {
-    // FTS更新が必要かどうかを判定するために既存データを取得
-    final existingContentRow =
-        await (select(episodeContents)..where(
-              (t) =>
-                  t.source.equalsValue(source) &
-                  t.workId.equals(workId) &
-                  t.episodeId.equals(episodeId),
-            ))
-            .getSingleOrNull();
-    final existingListRow =
-        await (select(episodeListEntries)..where(
-              (t) =>
-                  t.source.equalsValue(source) &
-                  t.workId.equals(workId) &
-                  t.episodeId.equals(episodeId),
-            ))
-            .getSingleOrNull();
-
     // メタデータが指定されている場合は目次テーブルも更新する
     // 指定されなかった項目は既存の値を保持する
     await customStatement(
@@ -1671,28 +1422,6 @@ class AppDatabase extends _$AppDatabase {
         revisedAt: revisedAt != null ? Value(revisedAt) : const Value.absent(),
       ),
     );
-
-    // コンテンツまたはサブタイトルが変更された場合のみインデックスを更新
-    var shouldUpdateIndex = true;
-    if (existingContentRow != null && existingListRow != null) {
-      final contentUnchanged =
-          existingContentRow.content != null &&
-          listEquals(existingContentRow.content, content);
-      final subtitleUnchanged = existingListRow.subtitle == subtitle;
-      if (contentUnchanged && subtitleUnchanged) {
-        shouldUpdateIndex = false;
-      }
-    }
-
-    if (shouldUpdateIndex) {
-      await _updateEpisodeSearchIndex(
-        source: source,
-        workId: workId,
-        episodeId: episodeId,
-        subtitle: subtitle ?? existingListRow?.subtitle,
-        content: content,
-      );
-    }
   }
 
   // ...
@@ -1932,33 +1661,6 @@ class AppDatabase extends _$AppDatabase {
       return summaries;
     });
   }
-}
-
-/// エピソード検索結果のDTO
-class EpisodeSearchResult {
-  /// コンストラクタ
-  EpisodeSearchResult({
-    required this.source,
-    required this.workId,
-    required this.episodeId,
-    required this.subtitle,
-    required this.novelTitle,
-  });
-
-  /// 提供サイト（プロバイダ）
-  final NovelSource source;
-
-  /// サイト共通の作品ID
-  final String workId;
-
-  /// エピソード番号
-  final int episodeId;
-
-  /// サブタイトル
-  final String subtitle;
-
-  /// 小説のタイトル
-  final String novelTitle;
 }
 
 LazyDatabase _openConnection() {

@@ -23,7 +23,6 @@ workspace:
   - packages/narou_parser
   - packages/novel_parser_core
   - packages/tategaki
-  - packages/wakachigaki
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
@@ -60,8 +59,6 @@ dependencies:
   tategaki:
     path: packages/tategaki
   url_launcher: ^6.3.2
-  wakachigaki:
-    path: packages/wakachigaki
 dev_dependencies:
   build_runner: 2.15.1
   crypto: ^3.0.6
