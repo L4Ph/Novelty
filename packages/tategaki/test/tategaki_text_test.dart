@@ -104,16 +104,16 @@ void main() {
       final elements = TategakiParser.parse('あいうえおかきくけこ');
 
       Widget buildWidget() => MaterialApp(
-            home: Scaffold(
-              body: DefaultTextStyle(
-                style: const TextStyle(fontSize: 20),
-                child: TategakiText(
-                  elements,
-                  height: 600,
-                ),
-              ),
+        home: Scaffold(
+          body: DefaultTextStyle(
+            style: const TextStyle(fontSize: 20),
+            child: TategakiText(
+              elements,
+              height: 600,
             ),
-          );
+          ),
+        ),
+      );
 
       final customPaint = find.descendant(
         of: find.byType(TategakiText),
@@ -136,16 +136,16 @@ void main() {
       final elements = TategakiParser.parse('あいうえおかきくけこ');
 
       Widget buildWidget(double height) => MaterialApp(
-            home: Scaffold(
-              body: DefaultTextStyle(
-                style: const TextStyle(fontSize: 20),
-                child: TategakiText(
-                  elements,
-                  height: height,
-                ),
-              ),
+        home: Scaffold(
+          body: DefaultTextStyle(
+            style: const TextStyle(fontSize: 20),
+            child: TategakiText(
+              elements,
+              height: height,
             ),
-          );
+          ),
+        ),
+      );
 
       final customPaint = find.descendant(
         of: find.byType(TategakiText),

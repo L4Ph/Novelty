@@ -114,8 +114,10 @@ class _TategakiTextPagedState extends State<TategakiTextPaged> {
           return Padding(
             padding: widget.padding,
             child: CustomPaint(
-              size: Size(widget.width - widget.padding.horizontal,
-                  widget.height - widget.padding.vertical),
+              size: Size(
+                widget.width - widget.padding.horizontal,
+                widget.height - widget.padding.vertical,
+              ),
               painter: TategakiPainter(metrics: pageMetrics),
             ),
           );
