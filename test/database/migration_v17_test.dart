@@ -326,14 +326,13 @@ void main() {
     // v18 で空配列 '[]' は Hybrid 空値へ正規化される
     expect(contents[1].read<String?>('content'), '{"txt":"","rb":[]}');
 
-    // FTSテーブルが再構築され、データが再投入されていること
-    // v18で episodes_search は廃止されたため novels_search のみ
-    final novelFtsCount = await db
+    // v19 で novels_search FTS も撤去されていること
+    final novelFtsTables = await db
         .customSelect(
-          'SELECT COUNT(*) AS c FROM novels_search',
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='novels_search'",
         )
-        .getSingle();
-    expect(novelFtsCount.read<int>('c'), 2);
+        .get();
+    expect(novelFtsTables, isEmpty);
 
     final episodeFtsTables = await db
         .customSelect(

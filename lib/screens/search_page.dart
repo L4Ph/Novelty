@@ -1,12 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
-import 'package:novelty/router/router.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 /// 小説検索画面
@@ -43,15 +40,9 @@ class SearchPage extends HookConsumerWidget {
       final searchText = query.value.word ?? '';
 
       var novels = <Novel>[];
-      var episodes = <EpisodeSearchResult>[];
 
       if (searchText.trim().isNotEmpty) {
-        final results = await Future.wait([
-          db.searchNovels(searchText),
-          db.searchEpisodes(searchText),
-        ]);
-        novels = results[0] as List<Novel>;
-        episodes = results[1] as List<EpisodeSearchResult>;
+        novels = await db.searchNovels(searchText);
       } else {
         // 検索テキストがなく他の絞り込みがある場合、条件に一致するライブラリ全件を表示する
         // ただし元の SearchPage は初期状態では空だった
@@ -59,7 +50,6 @@ class SearchPage extends HookConsumerWidget {
         final hasFilters = query.value != const NovelSearchQuery();
         if (hasFilters) {
           novels = await db.getLibraryNovels();
-          // キーワードなしのエピソード検索は非効率なため、現状はスキップ
         } else {
           return null;
         }
@@ -145,7 +135,7 @@ class SearchPage extends HookConsumerWidget {
         // novel.generalLastup は int? (タイムスタンプ?)
       }
 
-      return [filteredNovels, episodes];
+      return filteredNovels;
     }, [query.value, db]); // クエリ変更時に再実行
 
     final snapshot = useFuture(searchFuture);
@@ -185,7 +175,7 @@ class SearchPage extends HookConsumerWidget {
                   Icon(Icons.search, size: 64, color: Colors.grey),
                   SizedBox(height: 16),
                   Text(
-                    'タイトル、作者、あらすじ、\nエピソード本文から検索できます',
+                    'タイトル、作者、あらすじから検索できます',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey),
                   ),
@@ -198,7 +188,7 @@ class SearchPage extends HookConsumerWidget {
 
   Widget _buildResults(
     BuildContext context,
-    AsyncSnapshot<List<Object>?> snapshot,
+    AsyncSnapshot<List<Novel>?> snapshot,
   ) {
     if (snapshot.connectionState == ConnectionState.waiting) {
       return const Center(child: CircularProgressIndicator());
@@ -208,15 +198,12 @@ class SearchPage extends HookConsumerWidget {
       return Center(child: Text('Error: ${snapshot.error}'));
     }
 
-    final results = snapshot.data;
-    if (results == null) {
+    final novels = snapshot.data;
+    if (novels == null) {
       return const SizedBox.shrink(); // Should match empty state logic ideally
     }
 
-    final novels = results[0] as List<Novel>;
-    final episodes = results[1] as List<EpisodeSearchResult>;
-
-    if (novels.isEmpty && episodes.isEmpty) {
+    if (novels.isEmpty) {
       return const Center(child: Text('見つかりませんでした'));
     }
 
@@ -224,51 +211,15 @@ class SearchPage extends HookConsumerWidget {
       padding: const EdgeInsets.all(16),
       children: [
         // 小説の検索結果
-        if (novels.isNotEmpty) ...[
-          Text(
-            '小説 (${novels.length})',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          ...novels.map((novel) {
-            final novelData = novel.toModel();
-            return NovelListTile(item: novelData);
-          }),
-          const Divider(height: 32),
-        ],
-
-        // エピソードの検索結果
-        if (episodes.isNotEmpty) ...[
-          Text(
-            'エピソード (${episodes.length})',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          ...episodes.map((episode) {
-            return ListTile(
-              title: Text(
-                episode.subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Text(
-                episode.novelTitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              onTap: () {
-                // エピソードビューアーへ遷移
-                unawaited(
-                  NovelEpisodeRoute(
-                    source: episode.source.name,
-                    workId: episode.workId,
-                    episode: episode.episodeId,
-                  ).push(context),
-                );
-              },
-            );
-          }),
-        ],
+        Text(
+          '小説 (${novels.length})',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        ...novels.map((novel) {
+          final novelData = novel.toModel();
+          return NovelListTile(item: novelData);
+        }),
       ],
     );
   }

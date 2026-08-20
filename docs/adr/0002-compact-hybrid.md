@@ -1,8 +1,8 @@
 # ADR-0002: Hybrid JSON による本文キャッシュの軽量化と FTS 廃止
 
-- ステータス: 採択
+- ステータス: 採択（v19 で一部改訂）
 - 日付: 2026-08-20
-- 関連: DB肥大化対応（v18）、検索基盤の再設計
+- 関連: DB肥大化対応（v18）、検索基盤の再設計、小説検索の再設計（v19）
 
 ## 背景
 
@@ -14,7 +14,7 @@ Grillingでは「本文をどう持つか」「索引は要るのか」「`plain
 
 1. **Hybrid JSON `{"txt":"...","rb":[{"off":int,"base":String,"ruby":String}]}` を `episode_contents.content` の永続化形式とする。** `txt` は `PlainText.text` + `RubyText.base` + `"\n"` を連結した読み上げテキスト（検索対象）、`rb` はルビの注釈をオフセットで保持する。`newLine` は `txt` 内の `"\n"` として表現し、`rb` とは非対称に扱う。`off`/`base` の不整合は `txt.substring(off, off+base.length) == base` で検証し、ズレたら `FormatException`。`len` は `base.length` で導出するため持たない。旧 `runtimeType` 形式も `HybridConverter.fromHybridJson` で読込可能とし、マイグレーションの互換性を担保する。
 
-2. **DBマイグレーション v17→v18 で一括変換。** `currentSchemaVersion = 18` とし、`_migrateToV18` で `episode_contents` 11,077件を `HybridConverter` で再エンコードする。`content` が `'[]'` または `'{"txt":"","rb":[]}'` は空（失敗）として集計し、`success_count`/`failure_count` の SQL も両方を考慮する。`episodes_search` および shadow テーブルは `DROP` し、`_createFtsTables`/`_populateFtsTables` は `novels_search` のみに縮退する。新規インストールでは `episodes_search` を作成しない。
+2. **DBマイグレーション v17→v18 で一括変換。** `currentSchemaVersion = 18` とし、`_migrateToV18` で `episode_contents` 11,077件を `HybridConverter` で再エンコードする。`content` が `'[]'` または `'{"txt":"","rb":[]}'` は空（失敗）として集計し、`success_count`/`failure_count` の SQL も両方を考慮する。`episodes_search` および shadow テーブルは `DROP` し、`_createFtsTables`/`_populateFtsTables` は `novels_search` のみに縮退する。新規インストールでは `episodes_search` を作成しない。v19 ではさらに `_createFtsTables` および `_populateFtsTables` を削除し、`novels_search` も使用しない。
 
    - `wakachigaki` の `tokenize` は参照実装（`yuhsak/wakachigaki` TS / `wakachigaki-py`）と出力が完全一致することを、README 例・サロゲートペア・NFC 結合文字を含む複数ケースで検証している（`dart test packages/wakachigaki`）。
 
@@ -32,6 +32,20 @@ Grillingでは「本文をどう持つか」「索引は要るのか」「`plain
 - **2列分離 `plain` + `ruby`**: 本文概念が分裂し `UPDATE` が2列に跨る → Hybrid JSON 1列の方が取り回しが良いため却下
 - **Isar/Hive への索引分離**: 依存追加でバックアップ対象が増える → 却下
 - **FTS5の `content=''` 外部コンテンツ化**: 容量は減るが `wakachigaki` のカスタムトークナイザを C で書く必要 → 却下
+
+## v19 改訂（小説検索の再設計）
+
+v19 で以下の方針を改訂した。
+
+- `novels_search`（title/writer/story の FTS5）を撤去した（上記 決定4 を撤回）。
+  ライブラリ登録数の規模（数千件以内）では索引を要しないため、`wakachigaki` の
+  クエリ側分かち書きをやめ、**クエリ文字列をそのまま SQL の `LIKE` 部分一致**で
+  タイトル/作者/あらすじに絞り込む方式へ置換した。
+  結果はライブラリ追加日時の新しい順（`ORDER BY added_at DESC`）で返す。
+- これに伴い `packages/wakachigaki`（クエリ側トークナイザ）は不要となったため、
+  依存から削除し、ワークスペースパッケージも撤去した（上記 決定3 を撤回）。
+- エピソード本文検索（`searchEpisodes` / 本文対象）は v18 で廃止済みのまま維持し、
+  今回も復活させない。本文・サブタイトル検索 UI は削除する。
 
 ## 結果
 

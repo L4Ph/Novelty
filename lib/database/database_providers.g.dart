@@ -61,7 +61,7 @@ final class AppDatabaseProvider
   }
 }
 
-String _$appDatabaseHash() => r'879bfe1ad96d42751dfae1ace4af49c128830f95';
+String _$appDatabaseHash() => r'e7cdbaeef20854dbb076a41a7c97c867a2da0566';
 
 /// ライブラリに登録されている小説のリストを監視するプロバイダー。
 

@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/sites/novel_source.dart';
 
@@ -15,7 +14,19 @@ void main() {
     await db.close();
   });
 
-  test('Search novels returns correct results', () async {
+  Future<void> addToLibraryAt(String workId, int addedAt) async {
+    await db
+        .into(db.libraryEntries)
+        .insert(
+          LibraryEntriesCompanion.insert(
+            source: NovelSource.narou,
+            workId: workId,
+            addedAt: addedAt,
+          ),
+        );
+  }
+
+  test('タイトル・作者・あらすじのいずれかに部分一致すればヒットする', () async {
     // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
@@ -37,20 +48,7 @@ void main() {
       ),
     );
     await db.addToLibrary(NovelSource.narou, 'n5678b');
-    await db.addToLibrary(NovelSource.narou, 'n1234a');
 
-    await db.insertNovel(
-      NovelsCompanion.insert(
-        source: NovelSource.narou,
-        workId: 'n5678b',
-        title: const Value('無職転生'),
-        writer: const Value('理不尽な孫の手'),
-        story: const Value('異世界に行きたい。'),
-      ),
-    );
-    await db.addToLibrary(NovelSource.narou, 'n5678b');
-
-    // 実行と検証
     // タイトル検索
     final results1 = await db.searchNovels('スライム');
     expect(results1.length, 1);
@@ -71,128 +69,47 @@ void main() {
     expect(results4.isEmpty, true);
   });
 
-  test('Search episodes returns correct results', () async {
-    // 準備
+  test('クエリを分割せず部分一致する 東京都は東京と京都にヒットしない', () async {
     await db.insertNovel(
       NovelsCompanion.insert(
         source: NovelSource.narou,
-        workId: 'n1234a',
-        title: const Value('Test Novel'),
+        workId: 'n9999z',
+        title: const Value('東京と京都'),
+        writer: const Value('作者'),
+        story: const Value('あらすじ'),
       ),
     );
-    await db.addToLibrary(NovelSource.narou, 'n1234a');
-    await db.upsertEpisodes([
-      EpisodeListEntriesCompanion.insert(
-        source: NovelSource.narou,
-        workId: 'n1234a',
-        episodeId: 1,
-        subtitle: const Value('プロローグ'),
-      ),
-      EpisodeListEntriesCompanion.insert(
-        source: NovelSource.narou,
-        workId: 'n1234a',
-        episodeId: 2,
-        subtitle: const Value('旅立ち'),
-      ),
-    ]);
+    await db.addToLibrary(NovelSource.narou, 'n9999z');
 
-    // 本文を更新（updateEpisodeContent 経由で FTS も更新される）
-    await db.updateEpisodeContent(
-      source: NovelSource.narou,
-      workId: 'n1234a',
-      episodeId: 1,
-      content: [
-        NovelContentElement.plainText('昔々あるところに'),
-      ],
-      fetchedAt: 1234567890,
-      subtitle: 'プロローグ',
-      url: 'http://example.com/1',
-    );
-
-    await db.updateEpisodeContent(
-      source: NovelSource.narou,
-      workId: 'n1234a',
-      episodeId: 2,
-      content: [
-        NovelContentElement.plainText('勇者は旅に出た'),
-      ],
-      fetchedAt: 1234567890,
-      subtitle: '旅立ち',
-      url: 'http://example.com/2',
-    );
-
-    // 実行と検証
-    // サブタイトル検索
-    final results1 = await db.searchEpisodes('プロローグ');
-    expect(results1.length, 1);
-    expect(results1.first.subtitle, 'プロローグ');
-
-    // 本文検索
-    final results2 = await db.searchEpisodes('勇者は'); // 3文字で試す
-    expect(results2.length, 1);
-    expect(results2.first.subtitle, '旅立ち');
-
-    // 一致なし
-    final results3 = await db.searchEpisodes('魔王');
-    expect(results3.isEmpty, true);
+    // クエリ全体で部分一致するため、連続する「東京都」は「東京と京都」に含まれずヒットしない
+    final results = await db.searchNovels('東京都');
+    expect(results.isEmpty, true);
   });
 
-  test('サブタイトルが変更されても本文が同一でも検索インデックスが更新されること', () async {
-    // 準備
-    await db.insertNovel(
-      NovelsCompanion.insert(
-        source: NovelSource.narou,
-        workId: 'n1234a',
-        title: const Value('Test Novel'),
-      ),
+  test('検索結果はライブラリ追加日時の新しい順に並ぶ', () async {
+    // 追加日時を明示して 3件 登録する（n0001a が最も古く、n0003c が最新）
+    const seeds = [('n0001a', 1000), ('n0002b', 2000), ('n0003c', 3000)];
+    for (final (id, addedAt) in seeds) {
+      await db.insertNovel(
+        NovelsCompanion.insert(
+          source: NovelSource.narou,
+          workId: id,
+          title: const Value('ヒーロー物語'),
+          writer: const Value('作者'),
+          story: const Value('ヒーローが現れる'),
+        ),
+      );
+      await addToLibraryAt(id, addedAt);
+    }
+
+    final results = await db.searchNovels('ヒーロー');
+    expect(
+      results.map((n) => n.workId).toList(),
+      ['n0003c', 'n0002b', 'n0001a'],
     );
-    await db.addToLibrary(NovelSource.narou, 'n1234a');
-    await db.upsertEpisodes([
-      EpisodeListEntriesCompanion.insert(
-        source: NovelSource.narou,
-        workId: 'n1234a',
-        episodeId: 1,
-        subtitle: const Value('旧サブタイトル'),
-      ),
-    ]);
-
-    // 本文を保存してインデックスを作成
-    await db.updateEpisodeContent(
-      source: NovelSource.narou,
-      workId: 'n1234a',
-      episodeId: 1,
-      content: [
-        NovelContentElement.plainText('本文はそのまま'),
-      ],
-      fetchedAt: 1234567890,
-      subtitle: '旧サブタイトル',
-      url: 'http://example.com/1',
-    );
-    expect((await db.searchEpisodes('旧サブタイトル')).length, 1);
-
-    // サブタイトルのみ変更
-    await db.updateEpisodeContent(
-      source: NovelSource.narou,
-      workId: 'n1234a',
-      episodeId: 1,
-      content: [
-        NovelContentElement.plainText('本文はそのまま'),
-      ],
-      fetchedAt: 1234567891,
-      subtitle: '新サブタイトル',
-      url: 'http://example.com/1',
-    );
-
-    // 新サブタイトルで検索できるようになっていること
-    final results = await db.searchEpisodes('新サブタイトル');
-    expect(results.length, 1);
-    expect(results.first.subtitle, '新サブタイトル');
-
-    // 旧サブタイトルでは検索できないこと
-    expect((await db.searchEpisodes('旧サブタイトル')).isEmpty, true);
   });
 
-  test('Deleting novel removes from search index', () async {
+  test('Deleting novel removes from search results', () async {
     // 準備
     await db.insertNovel(
       NovelsCompanion.insert(
@@ -206,16 +123,7 @@ void main() {
     // 存在することを確認
     expect((await db.searchNovels('Delete')).length, 1);
 
-    // 実行
-    // AppDatabase にはまだ deleteNovel メソッドが無いが、
-    // removeFromLibrary がカスケード削除するか?
-    // 実際には removeFromLibrary は library_entries からしか削除しない。
-    // 'novels' テーブルのトリガーを検証する必要がある。
-    // テスト目的で customStatement を使用して削除するか、
-    // deleteNovel メソッドを追加する。
-    // カスケードするなら deleteHistory を使う? いや。
-
-    // テスト用の削除ヘルパーを追加するか、customStatement を使用する。
+    // 実行: novels テーブルから行を削除（ライブラリ検索は JOIN なので対象外になる）
     await db.customStatement(
       "DELETE FROM novels WHERE source = 'narou' AND work_id = ?",
       ['n1234a'],
@@ -226,7 +134,6 @@ void main() {
   });
 
   test('Search only returns novels in library', () async {
-    // 準備
     // ライブラリ内の小説
     await db.insertNovel(
       NovelsCompanion.insert(
@@ -246,30 +153,79 @@ void main() {
       ),
     );
 
-    // 実行
     final results = await db.searchNovels('Novel');
 
-    // 検証
     expect(results.length, 1);
     expect(results.first.workId, 'n1111a');
     expect(results.first.title, 'Library Novel');
   });
 
-  test('Search filters out Bigram noise', () async {
-    // 準備
+  test('LIKE の特殊文字 (% と _) はエスケープされ文字通りに検索される', () async {
+    // 準備: 100% を含む小説と、100 を含むが % を含まない小説を用意する
     await db.insertNovel(
       NovelsCompanion.insert(
         source: NovelSource.narou,
-        workId: 'n9999z',
-        title: const Value('東京と京都'),
+        workId: 'n1234a',
+        title: const Value('進捗100%達成'),
+        writer: const Value('作者'),
+        story: const Value('あらすじ'),
       ),
     );
-    await db.addToLibrary(NovelSource.narou, 'n9999z');
+    await db.addToLibrary(NovelSource.narou, 'n1234a');
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        source: NovelSource.narou,
+        workId: 'n5678b',
+        title: const Value('進捗100万台'),
+        writer: const Value('作者'),
+        story: const Value('あらすじ'),
+      ),
+    );
+    await db.addToLibrary(NovelSource.narou, 'n5678b');
 
-    // Act
-    final results = await db.searchNovels('東京都');
+    // % をワイルドカードとして解釈せず、文字通り「100%」を含むものだけにヒットする
+    final results = await db.searchNovels('100%');
+    expect(results.length, 1);
+    expect(results.first.workId, 'n1234a');
 
-    // Assert
-    expect(results.isEmpty, true);
+    // _ もワイルドカードとして解釈せず、文字通りに検索する
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        source: NovelSource.narou,
+        workId: 'n9999c',
+        title: const Value('第1_話'),
+        writer: const Value('作者'),
+        story: const Value('あらすじ'),
+      ),
+    );
+    await db.addToLibrary(NovelSource.narou, 'n9999c');
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        source: NovelSource.narou,
+        workId: 'n8888d',
+        title: const Value('第1X話'),
+        writer: const Value('作者'),
+        story: const Value('あらすじ'),
+      ),
+    );
+    await db.addToLibrary(NovelSource.narou, 'n8888d');
+
+    final underscoreResults = await db.searchNovels('1_話');
+    expect(underscoreResults.length, 1);
+    expect(underscoreResults.first.workId, 'n9999c');
+  });
+
+  test('空文字のクエリでは空リストを返す', () async {
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        source: NovelSource.narou,
+        workId: 'n1234a',
+        title: const Value('タイトル'),
+      ),
+    );
+    await db.addToLibrary(NovelSource.narou, 'n1234a');
+
+    expect(await db.searchNovels(''), isEmpty);
+    expect(await db.searchNovels('   '), isEmpty);
   });
 }
