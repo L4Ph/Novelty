@@ -1085,10 +1085,11 @@ class AppDatabase extends _$AppDatabase {
   ///
   /// 全件をメモリにロードせず、SQL の LIKE で絞り込んでから返す。
   Future<List<Novel>> searchNovels(String query) async {
-    if (query.trim().isEmpty) return [];
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return [];
 
     // LIKE のワイルドカード（% / _）をエスケープし、クエリを文字通り検索する
-    final pattern = '%${_escapeLike(query)}%';
+    final pattern = '%${_escapeLike(trimmed)}%';
 
     final results = await customSelect(
       r'''

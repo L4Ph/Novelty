@@ -187,6 +187,32 @@ void main() {
     final results = await db.searchNovels('100%');
     expect(results.length, 1);
     expect(results.first.workId, 'n1234a');
+
+    // _ もワイルドカードとして解釈せず、文字通りに検索する
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        source: NovelSource.narou,
+        workId: 'n9999c',
+        title: const Value('第1_話'),
+        writer: const Value('作者'),
+        story: const Value('あらすじ'),
+      ),
+    );
+    await db.addToLibrary(NovelSource.narou, 'n9999c');
+    await db.insertNovel(
+      NovelsCompanion.insert(
+        source: NovelSource.narou,
+        workId: 'n8888d',
+        title: const Value('第1X話'),
+        writer: const Value('作者'),
+        story: const Value('あらすじ'),
+      ),
+    );
+    await db.addToLibrary(NovelSource.narou, 'n8888d');
+
+    final underscoreResults = await db.searchNovels('1_話');
+    expect(underscoreResults.length, 1);
+    expect(underscoreResults.first.workId, 'n9999c');
   });
 
   test('空文字のクエリでは空リストを返す', () async {

@@ -14,7 +14,7 @@ Grillingでは「本文をどう持つか」「索引は要るのか」「`plain
 
 1. **Hybrid JSON `{"txt":"...","rb":[{"off":int,"base":String,"ruby":String}]}` を `episode_contents.content` の永続化形式とする。** `txt` は `PlainText.text` + `RubyText.base` + `"\n"` を連結した読み上げテキスト（検索対象）、`rb` はルビの注釈をオフセットで保持する。`newLine` は `txt` 内の `"\n"` として表現し、`rb` とは非対称に扱う。`off`/`base` の不整合は `txt.substring(off, off+base.length) == base` で検証し、ズレたら `FormatException`。`len` は `base.length` で導出するため持たない。旧 `runtimeType` 形式も `HybridConverter.fromHybridJson` で読込可能とし、マイグレーションの互換性を担保する。
 
-2. **DBマイグレーション v17→v18 で一括変換。** `currentSchemaVersion = 18` とし、`_migrateToV18` で `episode_contents` 11,077件を `HybridConverter` で再エンコードする。`content` が `'[]'` または `'{"txt":"","rb":[]}'` は空（失敗）として集計し、`success_count`/`failure_count` の SQL も両方を考慮する。`episodes_search` および shadow テーブルは `DROP` し、`_createFtsTables`/`_populateFtsTables` は `novels_search` のみに縮退する。新規インストールでは `episodes_search` を作成しない。
+2. **DBマイグレーション v17→v18 で一括変換。** `currentSchemaVersion = 18` とし、`_migrateToV18` で `episode_contents` 11,077件を `HybridConverter` で再エンコードする。`content` が `'[]'` または `'{"txt":"","rb":[]}'` は空（失敗）として集計し、`success_count`/`failure_count` の SQL も両方を考慮する。`episodes_search` および shadow テーブルは `DROP` し、`_createFtsTables`/`_populateFtsTables` は `novels_search` のみに縮退する。新規インストールでは `episodes_search` を作成しない。v19 ではさらに `_createFtsTables` および `_populateFtsTables` を削除し、`novels_search` も使用しない。
 
    - `wakachigaki` の `tokenize` は参照実装（`yuhsak/wakachigaki` TS / `wakachigaki-py`）と出力が完全一致することを、README 例・サロゲートペア・NFC 結合文字を含む複数ケースで検証している（`dart test packages/wakachigaki`）。
 
