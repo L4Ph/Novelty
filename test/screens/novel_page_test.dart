@@ -45,6 +45,16 @@ class HorizontalSettings extends Settings {
 
 /// NovelPageの履歴追加ロジックのテスト
 void main() {
+  // 各グループで共通して使用するテストデータ
+  const testNcode = 'n0001';
+  const testNovelInfo = NovelInfo(
+    ncode: testNcode,
+    title: 'テスト小説',
+    writer: 'テスト作者',
+    novelType: 1,
+    generalAllNo: 3,
+  );
+
   group('NovelPage 履歴追加ロジック', () {
     test('episode番号が正の場合はそのまま使用される', () {
       // episode番号が正の場合はそのまま使用される
@@ -206,22 +216,18 @@ void main() {
   });
 
   group('NovelPage AppBar表示切替', () {
-    const testNcode = 'n0001';
-    const testNovelInfo = NovelInfo(
-      ncode: testNcode,
-      title: 'テスト小説',
-      writer: 'テスト作者',
-      novelType: 1,
-      generalAllNo: 3,
-    );
-
     Future<void> pumpNovelPage(
       WidgetTester tester, {
       required Settings Function() createSettings,
+      Size size = const Size(400, 800),
+      FakeViewPadding? viewPadding,
     }) async {
       addTearDown(tester.view.reset);
       tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(400, 800);
+      tester.view.physicalSize = size;
+      if (viewPadding != null) {
+        tester.view.padding = viewPadding;
+      }
 
       final mockNovelRepository = MockNovelRepository();
       when(
@@ -313,57 +319,19 @@ void main() {
 
     testWidgets('AppBar非表示時は本文が上部セーフエリアを確保すること', (tester) async {
       // Arrange: ステータスバー領域を再現
-      addTearDown(tester.view.reset);
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(400, 800);
-      tester.view.padding = const FakeViewPadding(top: 24);
-
-      final mockNovelRepository = MockNovelRepository();
-      when(
-        mockNovelRepository.addToHistory(
-          source: anyNamed('source'),
-          workId: anyNamed('workId'),
-          title: anyNamed('title'),
-          writer: anyNamed('writer'),
-          lastEpisode: anyNamed('lastEpisode'),
-        ),
-      ).thenAnswer((_) async {});
-      when(mockNovelRepository.dispose()).thenReturn(null);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            novelRepositoryProvider.overrideWithValue(mockNovelRepository),
-            settingsProvider.overrideWith(HorizontalSettings.new),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(testNovelInfo),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            novelContentProvider.overrideWith(
-              (
-                ref,
-                ({
-                  NovelSource source,
-                  String workId,
-                  int episode,
-                  String? revised,
-                })
-                arg,
-              ) async => [],
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelPage(
-              source: NovelSource.narou,
-              workId: testNcode,
-              episode: 1,
-            ),
-          ),
-        ),
+      await pumpNovelPage(
+        tester,
+        createSettings: HorizontalSettings.new,
+        viewPadding: const FakeViewPadding(top: 24),
       );
-      await tester.pumpAndSettle();
+
+      // 本文側スクロールビュー（SafeArea適用後の実際の描画位置を検証する）
+      Finder bodyScrollView() => find
+          .descendant(
+            of: find.byType(NovelContentBody),
+            matching: find.byType(SingleChildScrollView),
+          )
+          .first;
 
       SafeArea novelContentSafeArea() => tester.widget<SafeArea>(
         find
@@ -374,30 +342,49 @@ void main() {
             .first,
       );
 
-      // Assert: AppBarが無い分、本文側のSafeAreaが上部セーフエリアを担う
+      // Assert: AppBarが無い分、本文側SafeAreaが上部セーフエリアを担い、
+      // 本文の上端がステータスバー直下（24px）から始まる
       expect(novelContentSafeArea().top, isTrue);
+      expect(tester.getTopLeft(bodyScrollView()).dy, 24);
 
       // Act: タップでAppBarを表示
       await tester.tap(find.byType(PageView));
       await tester.pumpAndSettle();
       expect(find.byType(AppBar), findsOneWidget);
 
-      // Assert: AppBarが上部セーフエリアを担うので本文側は上を空けない。
-      // SafeAreaが二重に効く（ダブルパディング）ことがないことの確認にもなる
+      // Assert: AppBar表示時は本文の上端がAppBarの下端に一致する。
+      // SafeAreaが二重に効く（ダブルパディング）ことがあれば
+      // 本文がAppBar下端より下にずれるため、この検証で検出できる
       expect(novelContentSafeArea().top, isFalse);
+      expect(
+        tester.getTopLeft(bodyScrollView()).dy,
+        tester.getBottomLeft(find.byType(AppBar)).dy,
+      );
+    });
+
+    testWidgets('縦書きモードでも本文タップでAppBarがトグルされること', (tester) async {
+      // Arrange
+      await pumpNovelPage(tester, createSettings: VerticalSettings.new);
+      expect(find.byType(GestureShield), findsOneWidget);
+      expect(find.byType(AppBar), findsNothing);
+
+      // Act: 本文中央をタップ
+      await tester.tap(find.byType(PageView));
+      await tester.pumpAndSettle();
+
+      // Assert: 縦書きモードでもタップでAppBarが表示される
+      expect(find.byType(AppBar), findsOneWidget);
+
+      // Act: GestureShield領域（画面下部）をタップしてもトグルが効く
+      await tester.tapAt(tester.getCenter(find.byType(GestureShield)));
+      await tester.pumpAndSettle();
+
+      // Assert: 再度非表示になり、シールドがタップを妨げない
+      expect(find.byType(AppBar), findsNothing);
     });
   });
 
   group('NovelPage GestureShield 統合テスト', () {
-    const testNcode = 'n0001';
-    const testNovelInfo = NovelInfo(
-      ncode: testNcode,
-      title: 'テスト小説',
-      writer: 'テスト作者',
-      novelType: 1,
-      generalAllNo: 3,
-    );
-
     testWidgets('縦書き設定の場合、GestureShieldが表示される', (tester) async {
       // Arrange
       addTearDown(tester.view.reset);
