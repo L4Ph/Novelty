@@ -47,6 +47,9 @@ class NovelPage extends HookConsumerWidget {
     // 初回履歴追加フラグ（重複追加を防ぐ）
     final hasAddedInitialHistory = useRef(false);
 
+    // AppBarの表示状態を管理（本文に集中できるよう初期状態は非表示）
+    final isAppBarVisible = useState(false);
+
     // 最初の履歴追加（novelInfoが読み込まれたら実行）
     useEffect(() {
       if (novelInfoAsync.hasValue && !hasAddedInitialHistory.value) {
@@ -120,65 +123,75 @@ class NovelPage extends HookConsumerWidget {
         return settings.when(
           data: (settings) {
             return Scaffold(
-              appBar: AppBar(
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                title: Text(
-                  buildTitle(
-                    novelInfo,
-                    currentEpisode.value,
-                    currentEpisodeData,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              body: Stack(
-                children: [
-                  PageView.builder(
-                    scrollDirection: settings.isVertical
-                        ? Axis.vertical
-                        : Axis.horizontal,
-                    controller: pageController,
-                    itemCount: itemCount,
-                    onPageChanged: (index) {
-                      _handlePageChanged(
-                        index,
-                        currentEpisode,
-                        totalEpisodes,
-                        pageController,
-                        ref,
-                        novelInfo,
-                      );
-                    },
-                    itemBuilder: (context, index) {
-                      final episodeNum = _getEpisodeNumber(
-                        index,
-                        currentEpisode.value,
-                        totalEpisodes,
-                      );
-
-                      // 指定されたエピソードかつ改稿日時が指定されている場合はそちらを優先
-                      // それ以外はNovelInfoから取得した改稿日時を使用
-                      final revisedDate =
-                          (episodeNum == episode && revised != null)
-                          ? revised
-                          : episodeMap[episodeNum];
-
-                      return RepaintBoundary(
-                        child: NovelContent(
-                          source: source,
-                          workId: workId,
-                          episode: episodeNum,
-                          revised: revisedDate,
+              appBar: isAppBarVisible.value
+                  ? AppBar(
+                      leading: IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      title: Text(
+                        buildTitle(
+                          novelInfo,
+                          currentEpisode.value,
+                          currentEpisodeData,
                         ),
-                      );
-                    },
-                  ),
-                  // 縦書きモード時、ホームジェスチャーとの競合を防ぐためシールドを表示
-                  if (settings.isVertical) const GestureShield(),
-                ],
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                  : null,
+              body: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                // 本文タップでAppBarの表示/非表示を切り替える
+                onTap: () {
+                  isAppBarVisible.value = !isAppBarVisible.value;
+                },
+                child: Stack(
+                  children: [
+                    PageView.builder(
+                      scrollDirection: settings.isVertical
+                          ? Axis.vertical
+                          : Axis.horizontal,
+                      controller: pageController,
+                      itemCount: itemCount,
+                      onPageChanged: (index) {
+                        _handlePageChanged(
+                          index,
+                          currentEpisode,
+                          totalEpisodes,
+                          pageController,
+                          ref,
+                          novelInfo,
+                        );
+                      },
+                      itemBuilder: (context, index) {
+                        final episodeNum = _getEpisodeNumber(
+                          index,
+                          currentEpisode.value,
+                          totalEpisodes,
+                        );
+
+                        // 指定されたエピソードかつ改稿日時が指定されている場合はそちらを優先
+                        // それ以外はNovelInfoから取得した改稿日時を使用
+                        final revisedDate =
+                            (episodeNum == episode && revised != null)
+                            ? revised
+                            : episodeMap[episodeNum];
+
+                        return RepaintBoundary(
+                          child: NovelContent(
+                            source: source,
+                            workId: workId,
+                            episode: episodeNum,
+                            revised: revisedDate,
+                            isAppBarVisible: isAppBarVisible.value,
+                          ),
+                        );
+                      },
+                    ),
+                    // 縦書きモード時、ホームジェスチャーとの競合を防ぐためシールドを表示
+                    if (settings.isVertical) const GestureShield(),
+                  ],
+                ),
               ),
             );
           },

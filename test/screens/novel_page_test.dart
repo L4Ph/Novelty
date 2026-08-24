@@ -10,6 +10,7 @@ import 'package:novelty/screens/novel_page.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/gesture_shield.dart';
+import 'package:novelty/widgets/novel_content.dart';
 
 @GenerateMocks([NovelRepository])
 import 'novel_page_test.mocks.dart';
@@ -201,6 +202,189 @@ void main() {
       expect(((100 - 1) ~/ 100) + 1, 1);
       // エピソード101 → ページ2
       expect(((101 - 1) ~/ 100) + 1, 2);
+    });
+  });
+
+  group('NovelPage AppBar表示切替', () {
+    const testNcode = 'n0001';
+    const testNovelInfo = NovelInfo(
+      ncode: testNcode,
+      title: 'テスト小説',
+      writer: 'テスト作者',
+      novelType: 1,
+      generalAllNo: 3,
+    );
+
+    Future<void> pumpNovelPage(
+      WidgetTester tester, {
+      required Settings Function() createSettings,
+    }) async {
+      addTearDown(tester.view.reset);
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(400, 800);
+
+      final mockNovelRepository = MockNovelRepository();
+      when(
+        mockNovelRepository.addToHistory(
+          source: anyNamed('source'),
+          workId: anyNamed('workId'),
+          title: anyNamed('title'),
+          writer: anyNamed('writer'),
+          lastEpisode: anyNamed('lastEpisode'),
+        ),
+      ).thenAnswer((_) async {});
+      when(mockNovelRepository.dispose()).thenReturn(null);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            novelRepositoryProvider.overrideWithValue(mockNovelRepository),
+            settingsProvider.overrideWith(createSettings),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, args) => Stream.value(testNovelInfo),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, args) => Stream.value(<Episode>[]),
+            ),
+            novelContentProvider.overrideWith(
+              (
+                ref,
+                ({
+                  NovelSource source,
+                  String workId,
+                  int episode,
+                  String? revised,
+                })
+                arg,
+              ) async => [],
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelPage(
+              source: NovelSource.narou,
+              workId: testNcode,
+              episode: 1,
+            ),
+          ),
+        ),
+      );
+
+      // NovelInfoのStreamが処理されるまで待機
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('読み込み完了後はAppBarが表示されないこと', (tester) async {
+      // Arrange
+      await pumpNovelPage(tester, createSettings: HorizontalSettings.new);
+
+      // Assert: 読み込み後はAppBarを非表示にして本文に集中させる
+      expect(find.byType(AppBar), findsNothing);
+    });
+
+    testWidgets('本文タップでAppBarが表示されること', (tester) async {
+      // Arrange
+      await pumpNovelPage(tester, createSettings: HorizontalSettings.new);
+      expect(find.byType(AppBar), findsNothing);
+
+      // Act: 本文をタップ
+      await tester.tap(find.byType(PageView));
+      await tester.pumpAndSettle();
+
+      // Assert: AppBarと戻るボタンが表示される
+      expect(find.byType(AppBar), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    });
+
+    testWidgets('もう一度タップするとAppBarが隠れること', (tester) async {
+      // Arrange
+      await pumpNovelPage(tester, createSettings: HorizontalSettings.new);
+
+      // Act: タップで表示 → もう一度タップで非表示
+      await tester.tap(find.byType(PageView));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppBar), findsOneWidget);
+
+      await tester.tap(find.byType(PageView));
+      await tester.pumpAndSettle();
+
+      // Assert: 再度AppBarが非表示になる
+      expect(find.byType(AppBar), findsNothing);
+    });
+
+    testWidgets('AppBar非表示時は本文が上部セーフエリアを確保すること', (tester) async {
+      // Arrange: ステータスバー領域を再現
+      addTearDown(tester.view.reset);
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.padding = const FakeViewPadding(top: 24);
+
+      final mockNovelRepository = MockNovelRepository();
+      when(
+        mockNovelRepository.addToHistory(
+          source: anyNamed('source'),
+          workId: anyNamed('workId'),
+          title: anyNamed('title'),
+          writer: anyNamed('writer'),
+          lastEpisode: anyNamed('lastEpisode'),
+        ),
+      ).thenAnswer((_) async {});
+      when(mockNovelRepository.dispose()).thenReturn(null);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            novelRepositoryProvider.overrideWithValue(mockNovelRepository),
+            settingsProvider.overrideWith(HorizontalSettings.new),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, args) => Stream.value(testNovelInfo),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, args) => Stream.value(<Episode>[]),
+            ),
+            novelContentProvider.overrideWith(
+              (
+                ref,
+                ({
+                  NovelSource source,
+                  String workId,
+                  int episode,
+                  String? revised,
+                })
+                arg,
+              ) async => [],
+            ),
+          ],
+          child: const MaterialApp(
+            home: NovelPage(
+              source: NovelSource.narou,
+              workId: testNcode,
+              episode: 1,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      SafeArea novelContentSafeArea() => tester.widget<SafeArea>(
+        find
+            .ancestor(
+              of: find.byType(NovelContentBody),
+              matching: find.byType(SafeArea),
+            )
+            .first,
+      );
+
+      // Assert: AppBarが無い分、本文側のSafeAreaが上部セーフエリアを担う
+      expect(novelContentSafeArea().top, isTrue);
+
+      // Act: タップでAppBarを表示
+      await tester.tap(find.byType(PageView));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppBar), findsOneWidget);
+
+      // Assert: AppBarが上部セーフエリアを担うので本文側は上を空けない。
+      // SafeAreaが二重に効く（ダブルパディング）ことがないことの確認にもなる
+      expect(novelContentSafeArea().top, isFalse);
     });
   });
 
