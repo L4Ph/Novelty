@@ -22,6 +22,7 @@ class NovelContent extends HookConsumerWidget {
     required this.workId,
     required this.episode,
     this.revised,
+    this.isAppBarVisible = false,
     super.key,
   });
 
@@ -37,6 +38,13 @@ class NovelContent extends HookConsumerWidget {
   /// 改稿日時
   final String? revised;
 
+  /// AppBarが表示されているかどうか。
+  ///
+  /// `true` の場合、上部のセーフエリアはAppBarが確保するため
+  /// 本文側では上部のパディングを不要にする。
+  /// `false` の場合、本文側で上部のセーフエリアを確保する。
+  final bool isAppBarVisible;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
@@ -50,7 +58,7 @@ class NovelContent extends HookConsumerWidget {
     );
 
     return SafeArea(
-      top: false, // AppBarがあるので上は不要
+      top: !isAppBarVisible, // AppBarが表示されている場合は上は不要
       child: NovelContentBody(
         source: source,
         workId: workId,
