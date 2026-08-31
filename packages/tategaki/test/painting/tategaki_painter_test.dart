@@ -55,9 +55,10 @@ void main() {
       // 1列を作成（幅20px）
       final item = MockPaintable();
       final column = TategakiColumn(
-        items: [item],
+        slots: [TategakiInlineItem(item)],
         width: 20,
         baseWidth: 20,
+        textStyle: const TextStyle(),
       );
 
       // 1列の場合、totalWidth = column.width = 20
@@ -90,14 +91,16 @@ void main() {
       final item2 = MockPaintable();
 
       final column1 = TategakiColumn(
-        items: [item1],
+        slots: [TategakiInlineItem(item1)],
         width: 20,
         baseWidth: 20,
+        textStyle: const TextStyle(),
       );
       final column2 = TategakiColumn(
-        items: [item2],
+        slots: [TategakiInlineItem(item2)],
         width: 20,
         baseWidth: 20,
+        textStyle: const TextStyle(),
       );
 
       // 2列の場合、totalWidth = 20 + 12 + 20 = 52
@@ -140,9 +143,10 @@ void main() {
       // 1列を作成（幅20px）
       final item = MockPaintable();
       final column = TategakiColumn(
-        items: [item],
+        slots: [TategakiInlineItem(item)],
         width: 20,
         baseWidth: 20,
+        textStyle: const TextStyle(),
       );
 
       final metrics = TategakiMetrics(

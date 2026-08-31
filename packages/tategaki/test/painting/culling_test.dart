@@ -45,9 +45,10 @@ void main() {
       mockItems.add(item);
       columns.add(
         TategakiColumn(
-          items: [item],
+          slots: [TategakiInlineItem(item)],
           width: 20,
           baseWidth: 20,
+          textStyle: const TextStyle(),
         ),
       );
     }

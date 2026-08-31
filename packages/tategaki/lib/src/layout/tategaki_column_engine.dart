@@ -7,17 +7,17 @@ import 'package:tategaki/src/layout/column.dart';
 import 'package:tategaki/src/layout/kinsoku.dart';
 import 'package:tategaki/src/layout/tategaki_layout.dart';
 import 'package:tategaki/src/painting/paintable.dart';
-import 'package:tategaki/src/painting/paintable_column_text.dart';
 import 'package:tategaki/src/painting/paintable_ruby.dart';
 import 'package:tategaki/src/painting/paintable_tcy.dart';
 import 'package:tategaki/src/utils/glyph_mapper.dart';
 
-/// 縦書きの列を遅延生成するエンジン
+/// 縦書きの列構造を遅延生成するエンジン
 ///
-/// 連続する通常文字は「\n 連結の単一 TextPainter」で一括計測し、行高
-/// （= `painter.height / 行数`）で列の折り返し位置を決定する。これにより
-/// 文字単位の TextPainter 生成を廃止し、計測コストを列あたり O(1) 回の
-/// レイアウトに抑える。
+/// 列の折り返しは**純粋な算術**（文字高 × 文字数）で決定するため、レイアウト
+/// 計算では TextPainter をほぼ生成しない。描画用の TextPainter は
+/// [TategakiColumn.items] の初回アクセス時にのみ生成される（**遅延
+/// マテリアライズ**）。これにより「未表示の列」の描画コストを排除し、
+/// ページめくりモードでは表示ページの列だけが TextPainter を持つ。
 class TategakiColumnEngine {
   /// コンストラクタ
   TategakiColumnEngine({
@@ -47,8 +47,8 @@ class TategakiColumnEngine {
   /// 1文字の高さ（遅延計測）
   double? _cachedCharHeight;
 
-  /// ルビ用スタイル（遅延生成）
-  TextStyle? _cachedRubyStyle;
+  /// 1文字の幅（遅延計測）
+  double? _cachedCharWidth;
 
   /// 縦中横の計測キャッシュ（同一テキストは1回だけ計測する）
   final Map<String, PaintableTcy> _tcyCache = {};
@@ -59,6 +59,40 @@ class TategakiColumnEngine {
   /// 計算済みの列数
   int get computedColumnCount => _columns.length;
 
+  /// 1文字の高さを計測する（推定用・キャッシュ）
+  double get charHeight {
+    final cached = _cachedCharHeight;
+    if (cached != null) {
+      return cached;
+    }
+    final painter = TextPainter(
+      text: TextSpan(text: 'あ', style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    _cachedCharHeight = painter.height;
+    return painter.height;
+  }
+
+  /// 1文字の幅を計測する（列幅の推定用・キャッシュ）
+  double get charWidth {
+    final cached = _cachedCharWidth;
+    if (cached != null) {
+      return cached;
+    }
+    final painter = TextPainter(
+      text: TextSpan(text: 'あ', style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    _cachedCharWidth = painter.width;
+    return painter.width;
+  }
+
+  /// ルビ用のスタイル
+  TextStyle get _rubyStyle {
+    return textStyle.copyWith(
+      fontSize: (textStyle.fontSize ?? 14) * TategakiLayout.rubyScale,
+    );
+  }
 
   /// 指定インデックスの列を返す
   ///
@@ -114,7 +148,12 @@ class TategakiColumnEngine {
 
   /// 段落間スペース用の空の列を返す
   TategakiColumn _emptyColumn() {
-    return const TategakiColumn(items: [], width: 0, baseWidth: 0);
+    return TategakiColumn(
+      slots: const [],
+      width: 0,
+      baseWidth: 0,
+      textStyle: textStyle,
+    );
   }
 
   /// 現在位置から1つの列を組み立てる
@@ -122,61 +161,43 @@ class TategakiColumnEngine {
   /// 改行で現在の列が空のまま終了した場合は null を返し、
   /// 空の列を [_pendingEmptyColumn] として保留する。
   TategakiColumn? _buildColumn() {
-    final items = <Paintable>[];
-    var columnHeight = 0.0;
+    final slots = <TategakiColumnSlot>[];
+    var usedHeight = 0.0;
     var baseWidth = 0.0;
-    var pendingText = <String>[];
-    var pendingHeight = 0.0;
+    var pendingChars = <String>[];
 
-    // pendingText と正確に一致する TextPainter（計測結果の再利用用）。
-    // 計測チャンクが丸ごと pendingText になった場合のみ非 null。
-    TextPainter? pendingPainter;
+    // バッファ中の文字の高さを含めた使用済み高さ
+    double usedHeightWithPending() =>
+        usedHeight + pendingChars.length * charHeight;
 
-    // バッファリング中の連続文字を列アイテムとして確定する
-    void flush() {
-      if (pendingText.isEmpty) {
-        pendingPainter = null;
+    // 連続する文字を文字ランとして確定する
+    void flushChars() {
+      if (pendingChars.isEmpty) {
         return;
       }
-      final reusable = pendingPainter;
-      if (reusable != null) {
-        // 計測済みの TextPainter をそのまま描画に使う（二重レイアウト回避）
-        items.add(PaintableColumnText(reusable));
-      } else {
-        final text = pendingText.join('\n');
-        final painter = TextPainter(
-          text: TextSpan(text: text, style: textStyle),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        items.add(PaintableColumnText(painter));
-      }
-      pendingPainter = null;
-      columnHeight += pendingHeight;
-      pendingText = [];
-      pendingHeight = 0.0;
+      slots.add(TategakiCharRun(pendingChars.join('\n')));
+      // 確定した文字ランの高さを列の使用済み高さへ加算する
+      usedHeight += pendingChars.length * charHeight;
+      pendingChars = [];
     }
 
-    // 現在の列の使用済み高さ
-    double usedHeight() => columnHeight + pendingHeight;
-
-    // 列を確定して返す
     TategakiColumn finishColumn() {
-      flush();
-      return _makeColumn(items, baseWidth);
+      flushChars();
+      return _makeColumn(slots, baseWidth);
     }
 
     // インライン要素（縦中横・ルビ）を列に追加する
     //
     // 収まらない場合は現在の列を確定して返し、この要素は次列で処理する
     // （_elementIndex は進めない）。収まる場合は null を返す。
-    TategakiColumn? addInlineItem(Paintable item) {
-      if (usedHeight() + item.height > maxHeight &&
-          (items.isNotEmpty || pendingText.isNotEmpty)) {
+    TategakiColumn? addInline(Paintable item) {
+      if (usedHeightWithPending() + item.height > maxHeight &&
+          (slots.isNotEmpty || pendingChars.isNotEmpty)) {
         return finishColumn();
       }
-      flush();
-      items.add(item);
-      columnHeight += item.height;
+      flushChars();
+      slots.add(TategakiInlineItem(item));
+      usedHeight += item.height;
       if (item.baseWidth > baseWidth) {
         baseWidth = item.baseWidth;
       }
@@ -188,106 +209,87 @@ class TategakiColumnEngine {
       final element = elements[_elementIndex];
       switch (element) {
         case TategakiChar():
-          // 連続する文字をこの列に収まる分だけ消費する
-          final startIndex = _elementIndex;
-          final remaining = maxHeight - usedHeight();
-          final estChars = math.max(1, (remaining / charHeight).floor());
+          // 算術でこの列に収まる文字数を決める
+          final remaining = maxHeight - usedHeightWithPending();
+          var fit = math.max(0, (remaining / charHeight).floor());
 
-          final collected = <String>[];
-          var cursor = startIndex;
-          while (cursor < elements.length && collected.length < estChars) {
-            final e = elements[cursor];
+          // 列が空なら最低1文字は入れる
+          if (fit == 0 && slots.isEmpty && pendingChars.isEmpty) {
+            fit = 1;
+          }
+
+          var collected = 0;
+          while (_elementIndex < elements.length && collected < fit) {
+            final e = elements[_elementIndex];
             if (e is! TategakiChar) {
               break;
             }
-            collected.add(e.char);
-            cursor++;
+            pendingChars.add(e.char);
+            _elementIndex++;
+            collected++;
           }
 
-          // \n 連結の単一 TextPainter で一括計測する
-          final text = collected.join('\n');
-          final painter = TextPainter(
-            text: TextSpan(text: text, style: textStyle),
-            textDirection: TextDirection.ltr,
-          )..layout();
-
-          // 各行（= 各文字）の高さは painter.height / 行数で求める。
-          // 注: getBoxesForSelection のボックス高さは行送り（line-height）を
-          // 含まないため、列の折り返し判定には使えない。
-          final perLineHeight = painter.height / collected.length;
-          final runWidth = painter.width;
-
-          // 収まる文字数を決定する（列が空の場合は最低1文字を入れる）
-          final columnHasContent = items.isNotEmpty || pendingText.isNotEmpty;
-          var acc = 0.0;
-          var fitCount = 0;
-          for (var k = 0; k < collected.length; k++) {
-            final overflows = acc + perLineHeight > remaining;
-            if (overflows && (fitCount > 0 || columnHasContent)) {
-              break;
-            }
-            acc += perLineHeight;
-            fitCount++;
-          }
-
-          // 列が満杯で文字が余る場合のみ禁則処理を適用する
-          if (fitCount < collected.length) {
-            fitCount = _applyKinsoku(
-              collected,
-              fitCount,
-              columnEmpty: !columnHasContent,
-            );
-          }
-
-          // 確定した文字をバッファへ追加する
-          final appendedToEmpty = pendingText.isEmpty;
-          for (var k = 0; k < fitCount; k++) {
-            pendingText.add(collected[k]);
-            pendingHeight += perLineHeight;
-          }
-          if (runWidth > baseWidth) {
-            baseWidth = runWidth;
-          }
-          _elementIndex = startIndex + fitCount;
-
-          // 計測チャンクが丸ごと pendingText になった場合は再利用可能
-          if (appendedToEmpty && fitCount == collected.length) {
-            pendingPainter = painter;
-          } else {
-            pendingPainter = null;
-          }
-
-          // 列を確定する条件:
-          // 1. 文字が余った（fitCount < collected.length）
-          // 2. 残り容量が1文字分未満（これ以上入らない）
-          final columnFull =
-              fitCount < collected.length ||
-              (maxHeight - usedHeight()) < charHeight;
-          if (columnFull) {
+          if (collected == 0) {
+            // 文字が収まらない（列は既に内容がある）→ 列を確定
             return finishColumn();
           }
-          // すべて収まって余裕がある場合は次の要素の処理へ進む
+
+          // 禁則処理
+          // 行末禁則: 末尾の開き括弧などを次列へ送る
+          while (pendingChars.isNotEmpty &&
+              Kinsoku.isTailProhibited(pendingChars.last)) {
+            pendingChars.removeLast();
+            _elementIndex--;
+          }
+          // 列が空になってしまう場合は最低1文字を戻す
+          if (pendingChars.isEmpty && slots.isEmpty) {
+            final c = elements[_elementIndex];
+            if (c is TategakiChar) {
+              pendingChars.add(c.char);
+              _elementIndex++;
+            }
+          }
+          // 行頭禁則: 次列の先頭になり得る句点などを現在の列へ押し込む
+          final next = _elementIndex < elements.length
+              ? elements[_elementIndex]
+              : null;
+          if (next is TategakiChar &&
+              Kinsoku.isHeadProhibited(next.char) &&
+              pendingChars.isNotEmpty) {
+            pendingChars.add(next.char);
+            _elementIndex++;
+          }
+
+          if (charWidth > baseWidth) {
+            baseWidth = charWidth;
+          }
+
+          // 列が満杯になった場合は確定する
+          if (usedHeightWithPending() >= maxHeight) {
+            return finishColumn();
+          }
+          // 余裕がある場合は次の要素の処理へ進む
           continue;
 
         case TategakiTcy(:final text):
-          final tcyResult = addInlineItem(_buildTcy(text));
+          final tcyResult = addInline(_buildTcy(text));
           if (tcyResult != null) {
             return tcyResult;
           }
 
         case TategakiRuby(:final base, :final ruby):
-          final rubyResult = addInlineItem(_buildRuby(base, ruby));
+          final rubyResult = addInline(_buildRuby(base, ruby));
           if (rubyResult != null) {
             return rubyResult;
           }
 
         case TategakiNewLine():
           // 改行: 現在の列を終了し、空の列を保留する
-          flush();
+          flushChars();
           _elementIndex++;
           _pendingEmptyColumn = true;
-          if (items.isNotEmpty) {
-            return _makeColumn(items, baseWidth);
+          if (slots.isNotEmpty) {
+            return _makeColumn(slots, baseWidth);
           }
           // 現在の列が空の場合: 空の列を保留したまま終了する
           return null;
@@ -298,45 +300,29 @@ class TategakiColumnEngine {
     return finishColumn();
   }
 
-  /// 禁則処理を適用して収まる文字数を調整する
-  int _applyKinsoku(
-    List<String> collected,
-    int fitCount, {
-    required bool columnEmpty,
-  }) {
-    var adjusted = fitCount;
-    // 行末禁則: 現在の列の末尾に来てはいけない文字を次列へ送る
-    while (adjusted > 0 && Kinsoku.isTailProhibited(collected[adjusted - 1])) {
-      adjusted--;
-    }
-    // 行頭禁則: 次列の先頭に来てはいけない文字を現在の列へ押し込む
-    if (adjusted > 0 &&
-        adjusted < collected.length &&
-        Kinsoku.isHeadProhibited(collected[adjusted])) {
-      adjusted++;
-    }
-    // 列が完全に空で文字が余る場合は最低1文字を入れる
-    // （空の列にまで禁則を適用すると列が永遠に生成できなくなるため）
-    if (adjusted == 0 && columnEmpty && collected.isNotEmpty) {
-      adjusted = 1;
-    }
-    return adjusted;
-  }
-
-  /// 列を作成する（幅はアイテムのオーバーハングを考慮して計算する）
-  TategakiColumn _makeColumn(List<Paintable> items, double baseWidth) {
+  /// 列を確定する（幅はアイテムのオーバーハングを考慮して計算する）
+  TategakiColumn _makeColumn(List<TategakiColumnSlot> slots, double baseWidth) {
     var requiredWidth = baseWidth;
-    for (final item in items) {
-      final baseOffset = (baseWidth - item.baseWidth) / 2;
-      final itemTotalWidth = baseOffset + item.width;
-      if (itemTotalWidth > requiredWidth) {
-        requiredWidth = itemTotalWidth;
+    for (final slot in slots) {
+      switch (slot) {
+        case TategakiCharRun():
+          // 文字ランは charWidth を幅として使う
+          if (charWidth > requiredWidth) {
+            requiredWidth = charWidth;
+          }
+        case TategakiInlineItem(:final item):
+          final baseOffset = (baseWidth - item.baseWidth) / 2;
+          final itemTotalWidth = baseOffset + item.width;
+          if (itemTotalWidth > requiredWidth) {
+            requiredWidth = itemTotalWidth;
+          }
       }
     }
     return TategakiColumn(
-      items: items,
+      slots: slots,
       width: requiredWidth,
       baseWidth: baseWidth,
+      textStyle: textStyle,
     );
   }
 
@@ -410,32 +396,5 @@ class TategakiColumnEngine {
       rubyWidth: rubyWidth,
       rubyHeight: rubyHeight,
     );
-  }
-
-  /// 1文字の高さを計測する（推定用・キャッシュ）
-  double get charHeight {
-    final cached = _cachedCharHeight;
-    if (cached != null) {
-      return cached;
-    }
-    final painter = TextPainter(
-      text: TextSpan(text: 'あ', style: textStyle),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    _cachedCharHeight = painter.height;
-    return painter.height;
-  }
-
-  /// ルビ用のスタイル（キャッシュ）
-  TextStyle get _rubyStyle {
-    final cached = _cachedRubyStyle;
-    if (cached != null) {
-      return cached;
-    }
-    final style = textStyle.copyWith(
-      fontSize: (textStyle.fontSize ?? 14) * TategakiLayout.rubyScale,
-    );
-    _cachedRubyStyle = style;
-    return style;
   }
 }
