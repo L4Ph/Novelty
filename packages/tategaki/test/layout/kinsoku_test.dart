@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tategaki/src/layout/kinsoku.dart';
+import 'package:tategaki/src/utils/glyph_mapper.dart';
 
 void main() {
   group('Kinsoku', () {
@@ -17,6 +18,13 @@ void main() {
         expect(Kinsoku.isHeadProhibited('｝'), isTrue);
         expect(Kinsoku.isHeadProhibited('」'), isTrue);
         expect(Kinsoku.isHeadProhibited('』'), isTrue);
+      });
+
+      test('縦書き字形の山括弧は行頭禁則', () {
+        final mapped = GlyphMapper.map('＞');
+
+        expect(mapped, '﹀');
+        expect(Kinsoku.isHeadProhibited(mapped), isTrue);
       });
 
       test('疑問符・感嘆符は行頭禁則', () {
