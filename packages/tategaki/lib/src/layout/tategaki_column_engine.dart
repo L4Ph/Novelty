@@ -50,8 +50,15 @@ class TategakiColumnEngine {
   /// ルビ用スタイル（遅延生成）
   TextStyle? _cachedRubyStyle;
 
+  /// 縦中横の計測キャッシュ（同一テキストは1回だけ計測する）
+  final Map<String, PaintableTcy> _tcyCache = {};
+
+  /// ルビの計測キャッシュ（同一の組み合わせは1回だけ計測する）
+  final Map<({String base, String ruby}), PaintableRuby> _rubyCache = {};
+
   /// 計算済みの列数
   int get computedColumnCount => _columns.length;
+
 
   /// 指定インデックスの列を返す
   ///
@@ -333,17 +340,35 @@ class TategakiColumnEngine {
     );
   }
 
-  /// 縦中横の描画要素を作成する
+  /// 縦中横の描画要素を作成する（同一テキストはキャッシュして再利用）
   PaintableTcy _buildTcy(String text) {
+    final cached = _tcyCache[text];
+    if (cached != null) {
+      return cached;
+    }
     final painter = TextPainter(
       text: TextSpan(text: text, style: textStyle),
       textDirection: TextDirection.ltr,
     )..layout();
-    return PaintableTcy(painter);
+    final item = PaintableTcy(painter);
+    _tcyCache[text] = item;
+    return item;
   }
 
-  /// ルビ付きテキストの描画要素を作成する
+  /// ルビ付きテキストの描画要素を作成する（同一の組み合わせはキャッシュ）
   PaintableRuby _buildRuby(String base, String ruby) {
+    final key = (base: base, ruby: ruby);
+    final cached = _rubyCache[key];
+    if (cached != null) {
+      return cached;
+    }
+    final item = _createRuby(base, ruby);
+    _rubyCache[key] = item;
+    return item;
+  }
+
+  /// ルビ付きテキストの描画要素を新規に作成する
+  PaintableRuby _createRuby(String base, String ruby) {
     final rubyStyle = _rubyStyle;
 
     final basePainters = <TextPainter>[];
