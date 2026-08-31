@@ -234,28 +234,43 @@ class TategakiColumnEngine {
             return finishColumn();
           }
 
+          final isWrapping =
+              collected == fit && _elementIndex < elements.length;
+
           // 禁則処理
-          // 行末禁則: 末尾の開き括弧などを次列へ送る
-          while (pendingChars.isNotEmpty &&
-              Kinsoku.isTailProhibited(pendingChars.last)) {
-            pendingChars.removeLast();
-            _elementIndex--;
-          }
-          // 列が空になってしまう場合は最低1文字を戻す
-          if (pendingChars.isEmpty && slots.isEmpty) {
-            final c = elements[_elementIndex];
-            if (c is TategakiChar) {
-              pendingChars.add(c.char);
-              _elementIndex++;
+          // 行末禁則: 列の折り返し時だけ末尾の開き括弧などを次列へ送る
+          var movedTailProhibited = false;
+          if (isWrapping) {
+            while (pendingChars.isNotEmpty &&
+                Kinsoku.isTailProhibited(pendingChars.last)) {
+              pendingChars.removeLast();
+              _elementIndex--;
+              movedTailProhibited = true;
             }
           }
+          if (movedTailProhibited) {
+            // 列が空になってしまう場合は最低1文字を戻す
+            if (pendingChars.isEmpty && slots.isEmpty) {
+              final c = elements[_elementIndex];
+              if (c is TategakiChar) {
+                pendingChars.add(c.char);
+                _elementIndex++;
+              }
+            }
+            if (charWidth > baseWidth) {
+              baseWidth = charWidth;
+            }
+            return finishColumn();
+          }
+
           // 行頭禁則: 次列の先頭になり得る句点などを現在の列へ押し込む
           final next = _elementIndex < elements.length
               ? elements[_elementIndex]
               : null;
           if (next is TategakiChar &&
               Kinsoku.isHeadProhibited(next.char) &&
-              pendingChars.isNotEmpty) {
+              pendingChars.isNotEmpty &&
+              usedHeightWithPending() + charHeight <= maxHeight) {
             pendingChars.add(next.char);
             _elementIndex++;
           }

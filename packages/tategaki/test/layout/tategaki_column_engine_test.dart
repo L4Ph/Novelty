@@ -116,29 +116,78 @@ void main() {
       expect(column.baseWidth, greaterThan(0));
     });
 
-    testWidgets('行頭禁則文字は列の先頭に置かず前の列に押し込む', (tester) async {
-      // 句点「。」を列の切れ目直後に置き、次の列の先頭にならないことを検証する
-      // maxHeight を小さくして強制的に列分割させる
-      final elements = <TategakiElement>[
-        ...List.generate(5, (_) => const TategakiChar('あ')),
-        const TategakiChar('。'), // 字形変換済み（︒）を想定した文字
+    testWidgets('行頭禁則文字の押し込みでmaxHeightを超えない', (tester) async {
+      final probe = TategakiColumnEngine(
+        elements: const [TategakiChar('あ')],
+        maxHeight: 100,
+        textStyle: style,
+      );
+      const elements = <TategakiElement>[
+        TategakiChar('あ'),
+        TategakiChar('い'),
+        TategakiChar('。'),
+        TategakiChar('。'),
       ];
 
       final engine = TategakiColumnEngine(
         elements: elements,
-        maxHeight: 100,
+        maxHeight: probe.charHeight * 2,
         textStyle: style,
       );
 
       final columns = engine.computeAll();
-      // 全列を走査し、句点が「列の先頭」にならないことを確認
       for (final column in columns) {
-        final firstItem = column.items.firstOrNull;
-        if (firstItem is PaintableColumnText) {
-          final firstLine = firstItem.text.split('\n').first;
-          expect(firstLine, isNot('。'));
-        }
+        final columnHeight = column.items.fold<double>(
+          0,
+          (sum, item) => sum + item.height,
+        );
+        expect(columnHeight, lessThanOrEqualTo(engine.maxHeight));
       }
+      final text = columns
+          .expand((column) => column.items)
+          .whereType<PaintableColumnText>()
+          .expand((item) => item.text.split('\n'));
+      expect(text, elements.map((element) => (element as TategakiChar).char));
+    });
+
+    testWidgets('空きがある列では行末禁則文字をそのまま収集する', (tester) async {
+      final engine = TategakiColumnEngine(
+        elements: const [
+          TategakiChar('あ'),
+          TategakiChar('（'),
+          TategakiTcy('12'),
+        ],
+        maxHeight: 600,
+        textStyle: style,
+      );
+
+      final columns = engine.computeAll();
+
+      expect(columns, hasLength(1));
+      expect((columns.single.items.first as PaintableColumnText).text, 'あ\n（');
+      expect(columns.single.items.last, isA<PaintableTcy>());
+    });
+
+    testWidgets('折り返し時に送り出した行末禁則文字を同じ列で再収集しない', (tester) async {
+      final probe = TategakiColumnEngine(
+        elements: const [TategakiChar('あ')],
+        maxHeight: 100,
+        textStyle: style,
+      );
+      final engine = TategakiColumnEngine(
+        elements: const [
+          TategakiChar('あ'),
+          TategakiChar('（'),
+          TategakiChar('い'),
+        ],
+        maxHeight: probe.charHeight * 2,
+        textStyle: style,
+      );
+
+      final columns = engine.computeAll();
+
+      expect((columns.first.items.single as PaintableColumnText).text, 'あ');
+      expect((columns.last.items.single as PaintableColumnText).text, '（\nい');
     });
 
     testWidgets('columnAtは同じ列に対して同一インスタンスを返す（メモ化）', (tester) async {

@@ -121,6 +121,8 @@ class _TategakiTextState extends State<TategakiText> {
       _extendColumns(engine, notify: false);
     }
 
+    final scrollPositionKey = PageStorageKey<Object>(widget.key ?? this);
+
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         // スクロール位置が末尾に近づいたら列を追加計算する
@@ -132,7 +134,7 @@ class _TategakiTextState extends State<TategakiText> {
       },
       child: ListView.separated(
         // PageStorageKey でスクロール位置を保持する
-        key: widget.key,
+        key: scrollPositionKey,
         scrollDirection: Axis.horizontal,
         itemCount: _computedCount,
         // 列間のスペース（旧実装の columnSpacing に相当）

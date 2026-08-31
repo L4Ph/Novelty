@@ -55,6 +55,30 @@ void main() {
       expect(customPaint, findsWidgets);
     });
 
+    testWidgets('外側のGlobalKeyをListViewと共有しない', (tester) async {
+      final key = GlobalKey();
+      final elements = TategakiParser.parse('あいうえお');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TategakiText(elements, key: key, height: 600),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(key.currentWidget, isA<TategakiText>());
+      final listView = tester.widget<ListView>(
+        find.descendant(
+          of: find.byType(TategakiText),
+          matching: find.byType(ListView),
+        ),
+      );
+      expect(listView.key, isA<PageStorageKey<Object>>());
+      expect(identical(listView.key, key), isFalse);
+    });
+
     testWidgets('空の要素リストでSizedBox.shrinkが表示される', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
