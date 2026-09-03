@@ -10,7 +10,7 @@ resolution: workspace
 
 dependencies:
   freezed_annotation:
-  html:
+  html: ^0.15.7
   json_annotation:
   meta: ^1.12.0
   novel_parser_core:
