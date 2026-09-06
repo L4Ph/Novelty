@@ -8,5 +8,3 @@ export const PLAY_BETA_URL =
 export const BETA_GROUP_URL = "https://groups.google.com/g/novelty-app";
 export const GITHUB_RELEASES_URL =
   "https://github.com/L4Ph/Novelty/releases/latest";
-// Obtainiumアプリが入っていればワンタップで追加できるディープリンク。
-export const OBTAINIUM_ADD_URL = "obtainium://add/https://github.com/L4Ph/Novelty";

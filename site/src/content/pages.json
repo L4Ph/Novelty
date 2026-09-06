@@ -1,0 +1,14 @@
+[
+  {
+    "id": "help",
+    "title": "よくある質問 - Novelty",
+    "description": "Noveltyに関するよくある質問（FAQ）と回答をまとめています。推奨環境、インストール方法、機能についてなど。",
+    "image": "/ogp-help.png",
+    "ogpEyebrow": "NOVELTY HELP",
+    "ogpTitleColumn1": "よくある",
+    "ogpTitleColumn2": "質問と回答",
+    "ogpDescription": "導入方法・ベータ参加・使い方の案内",
+    "ogpShot": "explorer.webp",
+    "ogpShotAlt": "作品探索画面"
+  }
+]

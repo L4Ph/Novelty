@@ -44,6 +44,22 @@ const template = (page: OgpPage, shotDataUri: string): string => `
 </div>
 `;
 
+interface HelpPageMeta {
+  id: string;
+  ogpEyebrow: string;
+  ogpTitleColumn1: string;
+  ogpTitleColumn2: string;
+  ogpDescription: string;
+  ogpShot: string;
+  ogpShotAlt: string;
+}
+
+// helpの文言はコンテンツJSONが真実（src/content/pages.json）。ここに直書きしない。
+const helpMeta = (
+  JSON.parse(readFileSync(join(root, "src/content/pages.json"), "utf-8")) as HelpPageMeta[]
+).find((p) => p.id === "help");
+if (!helpMeta) throw new Error("help page content is missing");
+
 const pages: OgpPage[] = [
   {
     out: "ogp.png",
@@ -56,12 +72,12 @@ const pages: OgpPage[] = [
   },
   {
     out: "ogp-help.png",
-    eyebrow: "NOVELTY HELP",
-    titleColumn1: "よくある",
-    titleColumn2: "質問と回答",
-    description: "導入方法・ベータ参加・使い方の案内",
-    shot: "explorer.webp",
-    shotAlt: "作品探索画面",
+    eyebrow: helpMeta.ogpEyebrow,
+    titleColumn1: helpMeta.ogpTitleColumn1,
+    titleColumn2: helpMeta.ogpTitleColumn2,
+    description: helpMeta.ogpDescription,
+    shot: helpMeta.ogpShot,
+    shotAlt: helpMeta.ogpShotAlt,
   },
 ];
 

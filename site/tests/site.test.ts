@@ -55,16 +55,38 @@ describe("site public contract", () => {
     expect(layout.includes("hero.png")).toBe(false);
   });
 
-  test("helpの古い表記が直っている", () => {
+  test("helpの文面がJSONコンテンツにありhelp.astroは直書きしない", () => {
+    const faqRaw = read("src/content/faq.json");
+    const faqs = JSON.parse(faqRaw) as Array<{
+      id: string;
+      order: number;
+      question: string;
+      answer: string;
+    }>;
+    // 9件の実在契約（件数・順序・必須項目）
+    expect(faqs.length).toBe(9);
+    expect(faqs.map((f) => f.order)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    for (const f of faqs) {
+      expect(f.question.length > 0, `${f.id} question`).toBe(true);
+      expect(f.answer.length > 0, `${f.id} answer`).toBe(true);
+    }
+    const pages = JSON.parse(read("src/content/pages.json")) as Array<{
+      id: string;
+    }>;
+    expect(pages.some((p) => p.id === "help")).toBe(true);
+    // help.astroは文面を持たずコレクションから読む
     const help = read("src/pages/help.astro");
-    const links = read("src/lib/store-links.ts");
+    expect(help.includes("const qas")).toBe(false);
     expect(help.includes("なろう専用")).toBe(false);
-    expect(help.includes("カクヨム")).toBe(true);
-    expect(help.includes(PLAY_BETA)).toBe(true);
-    expect(help.includes(BETA_GROUP)).toBe(true);
-    // Obtainiumのワンタップ追加リンク
-    expect(links.includes(OBTAINIUM_ADD)).toBe(true);
-    expect(help.includes(OBTAINIUM_ADD)).toBe(true);
+    expect(help.includes("getCollection")).toBe(true);
+    expect(faqRaw.includes("カクヨム")).toBe(true);
+    expect(help.includes(PLAY_BETA)).toBe(false);
+    expect(faqRaw.includes(PLAY_BETA)).toBe(true);
+    expect(faqRaw.includes(BETA_GROUP)).toBe(true);
+    expect(faqRaw.includes(OBTAINIUM_ADD)).toBe(true);
+    // OGPスクリプトも同じJSONを読む（文言の二重管理をしない）
+    const ogp = read("scripts/ogp.ts");
+    expect(ogp.includes("content/pages.json")).toBe(true);
   });
 
   test("OGP画像が1200x630のPNGで生成されている", () => {

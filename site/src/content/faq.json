@@ -1,0 +1,56 @@
+[
+  {
+    "id": "login",
+    "order": 1,
+    "question": "「小説家になろう」のアカウントでログインできますか？（ブックマーク連携はできますか？）",
+    "answer": "現在、Novelty はプライバシー保護とセキュリティの観点から、公式サイトへのログイン機能やブックマークの直接同期機能は提供していません。\nその代わり、強力な検索機能やローカルでのライブラリ管理、バックアップ機能を提供しています。"
+  },
+  {
+    "id": "ios",
+    "order": 2,
+    "question": "iOS(iPhone/iPad)版はありますか？",
+    "answer": "技術的には対応しており、ソースコードからビルドすることで基本的な動作は可能なはずですが、動作確認が取れていません。\nApp Store での公開も現在未定です。\n将来的には対応を検討しています。"
+  },
+  {
+    "id": "sites",
+    "order": 3,
+    "question": "「カクヨム」や「ハーメルン」など、他の小説サイトには対応していますか？",
+    "answer": "「小説家になろう」と「カクヨム」に対応しています。\n同じ操作感でランキングや検索、縦書き読書やオフライン保存が使えます。"
+  },
+  {
+    "id": "ads",
+    "order": 4,
+    "question": "アプリ内に広告は表示されますか？",
+    "answer": "一切表示されません。(作者本人が表示されてほしくありません。)\n読書への没入感を最優先し、余計なネットワーク通信をすべて排除しているため、今後も広告を導入する予定はありません。"
+  },
+  {
+    "id": "offline",
+    "order": 5,
+    "question": "オフラインで読むことはできますか？",
+    "answer": "はい、可能です。\n小説をダウンロードすることで、インターネット接続がない環境でも快適に読むことができます。"
+  },
+  {
+    "id": "tategaki",
+    "order": 6,
+    "question": "縦書き表示には対応していますか？",
+    "answer": "はい、対応しています。\n設定から「縦書き」モードに切り替えることで、文庫本のような縦書きスタイルで閲覧できます。\nフォントや文字サイズの変更も可能です。"
+  },
+  {
+    "id": "backup",
+    "order": 7,
+    "question": "データのバックアップは可能ですか？",
+    "answer": "はい、設定の「データとストレージ」から、ライブラリや閲覧履歴を含むすべてのデータをファイルとして書き出し（エクスポート）、復元（インポート）することができます。"
+  },
+  {
+    "id": "platform",
+    "order": 8,
+    "question": "推奨環境や対応プラットフォームを教えてください。",
+    "answer": "現在はAndroidを主対象として開発および動作確認を行っています。\nWindows、macOS、Linuxでもビルド・動作可能ですが、レイアウトの最適化はAndroidが優先されています。"
+  },
+  {
+    "id": "install",
+    "order": 9,
+    "question": "アプリのインストール・アップデート方法は？",
+    "answer": "Google Playでの配信準備中のため、現在はベータテストとして配布しています。手順は次の通りです。\n1. <a href='https://groups.google.com/g/novelty-app' target='_blank' rel='noopener noreferrer'>Googleグループに参加する</a>\n2. <a href='https://play.google.com/apps/testing/moe.l4ph.novelty' target='_blank' rel='noopener noreferrer'>テスト参加リンクを開いて参加する</a>\n3. Google Playからインストールする\n代替手段として、オープンソースのアプリストア「<a href='https://obtainium.imranr.dev/' target='_blank' rel='noopener noreferrer'>Obtainium</a>」でGitHub Releasesからの自動更新も使えます。\nObtainiumが入っていれば、<a href='obtainium://add/https://github.com/L4Ph/Novelty'>ワンタップで追加する</a>こともできます。"
+  }
+]

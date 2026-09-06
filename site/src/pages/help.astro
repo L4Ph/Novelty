@@ -2,64 +2,35 @@
 import Layout from '../layouts/Layout.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
+import { getCollection, getEntry } from 'astro:content';
 
-const qas = [
-  {
-    question: "「小説家になろう」のアカウントでログインできますか？（ブックマーク連携はできますか？）",
-    answer: "現在、Novelty はプライバシー保護とセキュリティの観点から、公式サイトへのログイン機能やブックマークの直接同期機能は提供していません。\nその代わり、強力な検索機能やローカルでのライブラリ管理、バックアップ機能を提供しています。"
-  },
-  {
-    question: "iOS(iPhone/iPad)版はありますか？",
-    answer: "技術的には対応しており、ソースコードからビルドすることで基本的な動作は可能なはずですが、動作確認が取れていません。\nApp Store での公開も現在未定です。\n将来的には対応を検討しています。"
-  },
-  {
-    question: "「カクヨム」や「ハーメルン」など、他の小説サイトには対応していますか？",
-    answer: "「小説家になろう」と「カクヨム」に対応しています。\n同じ操作感でランキングや検索、縦書き読書やオフライン保存が使えます。"
-  },
-  {
-    question: "アプリ内に広告は表示されますか？",
-    answer: "一切表示されません。(作者本人が表示されてほしくありません。)\n読書への没入感を最優先し、余計なネットワーク通信をすべて排除しているため、今後も広告を導入する予定はありません。"
-  },
-  {
-    question: "オフラインで読むことはできますか？",
-    answer: "はい、可能です。\n小説をダウンロードすることで、インターネット接続がない環境でも快適に読むことができます。"
-  },
-  {
-    question: "縦書き表示には対応していますか？",
-    answer: "はい、対応しています。\n設定から「縦書き」モードに切り替えることで、文庫本のような縦書きスタイルで閲覧できます。\nフォントや文字サイズの変更も可能です。"
-  },
-  {
-    question: "データのバックアップは可能ですか？",
-    answer: "はい、設定の「データとストレージ」から、ライブラリや閲覧履歴を含むすべてのデータをファイルとして書き出し（エクスポート）、復元（インポート）することができます。"
-  },
-  {
-    question: "推奨環境や対応プラットフォームを教えてください。",
-    answer: "現在はAndroidを主対象として開発および動作確認を行っています。\nWindows、macOS、Linuxでもビルド・動作可能ですが、レイアウトの最適化はAndroidが優先されています。"
-  },
-  {
-    question: "アプリのインストール・アップデート方法は？",
-    answer: "Google Playでの配信準備中のため、現在はベータテストとして配布しています。手順は次の通りです。\n1. <a href='https://groups.google.com/g/novelty-app' target='_blank' rel='noopener noreferrer'>Googleグループに参加する</a>\n2. <a href='https://play.google.com/apps/testing/moe.l4ph.novelty' target='_blank' rel='noopener noreferrer'>テスト参加リンクを開いて参加する</a>\n3. Google Playからインストールする\n代替手段として、オープンソースのアプリストア「<a href='https://obtainium.imranr.dev/' target='_blank' rel='noopener noreferrer'>Obtainium</a>」でGitHub Releasesからの自動更新も使えます。\nObtainiumが入っていれば、<a href='obtainium://add/https://github.com/L4Ph/Novelty'>ワンタップで追加する</a>こともできます。"
-  }
-];
+// ページ文面・FAQはJSONコンテンツが真実。ここに直書きしない。
+const helpMeta = await getEntry('pages', 'help');
+if (!helpMeta) throw new Error('help page content is missing');
+const faqs = (await getCollection('faq')).sort((a, b) => a.data.order - b.data.order);
+
+// 構造化データ用に回答HTMLからタグを落として平文にする。
+const plainText = (html: string) =>
+  html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 
 const schema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  "mainEntity": qas.map(qa => ({
+  "mainEntity": faqs.map(faq => ({
     "@type": "Question",
-    "name": qa.question,
+    "name": faq.data.question,
     "acceptedAnswer": {
       "@type": "Answer",
-      "text": qa.answer
+      "text": plainText(faq.data.answer)
     }
   }))
 };
 ---
 
 <Layout 
-  title="よくある質問 - Novelty"
-  description="Noveltyに関するよくある質問（FAQ）と回答をまとめています。推奨環境、インストール方法、機能についてなど。"
-  image="/ogp-help.png"
+  title={helpMeta.data.title}
+  description={helpMeta.data.description}
+  image={helpMeta.data.image}
 >
   <script type="application/ld+json" slot="head" set:html={JSON.stringify(schema)} />
   <Navbar />
@@ -67,15 +38,15 @@ const schema = {
     <h1 class="page-title">よくある質問</h1>
     
     <div class="qa-list">
-      {qas.map((qa) => (
+      {faqs.map((faq) => (
         <div class="qa-item">
           <h3 class="question">
             <span class="q-mark">Q.</span>
-            <span class="q-text">{qa.question}</span>
+            <span class="q-text">{faq.data.question}</span>
           </h3>
           <div class="answer">
             <span class="a-mark">A.</span>
-            <div class="a-text" set:html={qa.answer} />
+            <div class="a-text" set:html={faq.data.answer} />
           </div>
         </div>
       ))}
