@@ -1,38 +1,52 @@
-/* Global Styles & Variables */
+/* デザイントークン：primitive（値）→ semantic（用途）の二層構造 */
+/* コンポーネント側は必ず semantic 変数のみ参照すること */
 
 :root {
-  /* Color Palette (Extracted from previous DaisyUI theme) */
-  --color-base-100: oklch(100% 0 0);           /* #ffffff */
-  --color-base-200: oklch(98% 0 0);            /* #f9f9f9 */
-  --color-base-300: oklch(95% 0 0);            /* #f2f2f2 */
-  --color-base-content: oklch(21% 0.006 285.885); /* #2a2a2a - Main Text */
-  
-  --color-primary: oklch(45% 0.24 277.023);    /* #570df8 - Primary Brand */
-  --color-primary-content: oklch(93% 0.034 272.788); /* Text on Primary */
-  
-  --color-secondary: oklch(65% 0.241 354.308); /* #f000b8 */
-  --color-secondary-content: oklch(94% 0.028 342.258);
+  /* Primitive：ブランドパレット（oklch換算。元Hex: white #ffffff / mist #b3dce2 / sky #66b9d2 / steel #084887 / egyptian #0e34a0） */
+  --palette-white: oklch(100% 0 0);
+  --palette-mist: oklch(86.72% 0.0436 207.3);
+  --palette-sky: oklch(74.26% 0.0884 219.65);
+  --palette-steel: oklch(40.24% 0.1208 253.72);
+  --palette-egyptian: oklch(38.27% 0.1788 264.22);
 
-  --color-accent: oklch(77% 0.152 181.912);    /* #37cdbe */
-  --color-accent-content: oklch(38% 0.063 188.416);
+  /* Primitive：ニュートラル（青寄りグレー） */
+  --palette-ink: oklch(25% 0.02 260);
+  --palette-slate: oklch(55% 0.02 260);
+  --palette-line: oklch(90% 0.01 260);
+  --palette-sunken: oklch(97% 0.005 230);
 
-  --color-neutral: oklch(14% 0.005 285.823);   /* #1d232a */
-  --color-neutral-content: oklch(92% 0.004 286.32);
+  /* Semantic：表面 */
+  --surface-page: var(--palette-white);
+  --surface-raised: var(--palette-white);
+  --surface-soft: color-mix(in oklch, var(--palette-mist) 22%, white);
+  --surface-sunken: var(--palette-sunken);
 
-  /* Functional Colors */
-  --color-bg-body: var(--color-base-100);
-  --color-text-main: var(--color-base-content);
-  --color-text-muted: oklch(55% 0 0); /* Grayish */
+  /* Semantic：文字 */
+  --text-primary: var(--palette-ink);
+  --text-secondary: color-mix(in oklch, var(--palette-ink) 75%, white);
+  --text-muted: var(--palette-slate);
+  --text-on-brand: var(--palette-white);
 
-  /* Spacing & Layout */
-  --container-width: 1200px;
-  --spacing-section: 4rem;
+  /* Semantic：ブランド */
+  --brand-primary: var(--palette-steel);
+  --brand-primary-hover: var(--palette-egyptian);
+  --accent: var(--palette-sky);
 
-  /* Typography */
+  /* Semantic：罫線 */
+  --border-subtle: var(--palette-line);
+  --border-strong: color-mix(in oklch, var(--palette-steel) 25%, white);
+
+  /* Semantic：レイアウト・形状・書体 */
+  --container-max: 72rem;
+  --space-section: 4rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
   --font-sans: "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  --font-serif: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
 }
 
-/* Minimal Reset */
+/* 最小リセット */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -40,8 +54,8 @@
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background-color: var(--color-bg-body);
-  color: var(--color-text-main);
+  background-color: var(--surface-page);
+  color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -65,10 +79,10 @@ img, svg {
   max-width: 100%;
 }
 
-/* Utilities */
+/* 共有ユーティリティ */
 .container {
   width: 100%;
-  max-width: var(--container-width);
+  max-width: var(--container-max);
   margin-left: auto;
   margin-right: auto;
   padding-left: 1rem;

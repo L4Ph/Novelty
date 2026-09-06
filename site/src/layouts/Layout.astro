@@ -12,8 +12,8 @@ interface Props {
 
 const { 
 	title = "Novelty - Modern Novel Reader",
-	description = "モダンで、シンプルに。そして透明性高く。「小説家になろう」の読書体験を再定義する、Flutter製クロスプラットフォーム小説ビューアー。",
-	image = "/favicon.svg",
+	description = "なろう・カクヨム対応。広告なし・オフライン対応のFlutter製小説ビューアー。",
+	image = "/ogp.png",
 	type = "website"
 } = Astro.props;
 ---
@@ -31,12 +31,15 @@ const {
 		<title>{title}</title>
 		<meta name="title" content={title} />
 		<meta name="description" content={description} />
-		<meta name="keywords" content="小説家になろう, なろう, 読書アプリ, 小説ビューアー, ライトノベル, ラノベ, Flutter, オープンソース, Novelty" />
-		<link rel="canonical" href="https://novelty.l4ph.moe" />
+		<meta name="keywords" content="小説家になろう, なろう, カクヨム, 読書アプリ, 小説ビューアー, 縦書き, オフライン読書, Flutter, Novelty, Google Play" />
+		<meta name="theme-color" content="#084887" />
+		<link rel="canonical" href={Astro.url} />
 
 		<!-- Open Graph / Facebook -->
 		<meta property="og:type" content={type} />
-		<meta property="og:url" content="https://novelty.l4ph.moe" />
+		<meta property="og:url" content={Astro.url} />
+		<meta property="og:site_name" content="Novelty" />
+		<meta property="og:locale" content="ja_JP" />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		<meta property="og:image" content={new URL(image, Astro.url)} />
@@ -45,7 +48,7 @@ const {
 		<meta property="twitter:card" content="summary_large_image" />
 		<meta property="twitter:site" content="@R0u9h" />
 		<meta property="twitter:creator" content="@R0u9h" />
-		<meta property="twitter:url" content="https://novelty.l4ph.moe" />
+		<meta property="twitter:url" content={Astro.url} />
 		<meta property="twitter:title" content={title} />
 		<meta property="twitter:description" content={description} />
 		<meta property="twitter:image" content={new URL(image, Astro.url)} />
@@ -58,7 +61,7 @@ const {
 					"@type": "WebSite",
 					"name": "Novelty",
 					"url": "https://novelty.l4ph.moe",
-					"description": "モダンでシンプルな「小説家になろう」ビューアー",
+					"description": "なろう・カクヨム対応の小説ビューアー",
 					"publisher": {
 						"@type": "Organization",
 						"name": "Novelty Project",
@@ -74,7 +77,7 @@ const {
 					"name": "Novelty",
 					"operatingSystem": "iOS, Android, Windows, macOS, Linux",
 					"applicationCategory": "ReadingApplication",
-					"description": "「小説家になろう」を快適に読むための、モダンでシンプルな小説ビューアー。広告なし、オフライン対応、縦書き表示など多彩な機能を搭載。",
+					"description": "「小説家になろう」「カクヨム」を縦書きで快適に読むための小説ビューアー。広告なし、オフライン対応。",
 					"offers": {
 						"@type": "Offer",
 						"price": "0",
@@ -85,8 +88,13 @@ const {
 						"name": "Novelty Project",
 						"url": "https://github.com/L4Ph/Novelty"
 					},
-					"screenshot": "https://novelty.l4ph.moe/hero.png",
-					"featureList": "縦書き表示, オフライン読書, 広告ブロック, クロスプラットフォーム, ダークモード"
+					"screenshot": [
+						"https://novelty.l4ph.moe/tategaki.webp",
+						"https://novelty.l4ph.moe/explorer.webp",
+						"https://novelty.l4ph.moe/library.webp",
+						"https://novelty.l4ph.moe/history.webp"
+					],
+					"featureList": "縦書き表示, オフライン読書, なろう・カクヨム対応"
 				}
 			]
 		</script>
@@ -99,6 +107,6 @@ const {
 
 <style is:global>
   ::selection {
-    background-color: color-mix(in srgb, var(--color-primary) 30%, transparent);
+    background-color: color-mix(in oklch, var(--brand-primary) 25%, transparent);
   }
 </style>

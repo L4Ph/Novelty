@@ -1,8 +1,7 @@
 ---
-import { Github, ExternalLink, Code } from '@lucide/astro';
+import { GITHUB_RELEASES_URL, BETA_GROUP_URL } from "../lib/store-links";
 ---
 
-<!-- Legal Disclaimer Banner -->
 <div class="disclaimer-banner">
   <div class="container text-center">
     <p class="disclaimer-text">
@@ -12,36 +11,83 @@ import { Github, ExternalLink, Code } from '@lucide/astro';
 </div>
 
 <footer class="main-footer">
-  <div class="footer-grid">
+  <div class="container footer-grid">
     <aside class="footer-brand">
       <div class="logo-wrapper">
-        <img src="/favicon.svg" alt="Novelty - モダンでシンプルな小説ビューアー" class="logo-img" />
-        <span class="logo-text">
-          Novelty
-        </span>
+        <img src="/favicon.svg" alt="Novelty" class="logo-img" />
+        <span class="logo-text">Novelty</span>
       </div>
       <p class="brand-description">
-        モダンでシンプルな「小説家になろう」ビューアー<br/>
-        Providing the best reading experience since 2025.
+        なろう・カクヨム対応の小説ビューアー
       </p>
     </aside>
-    
-    <nav class="footer-nav">
+
+    <nav class="footer-nav" aria-label="アプリ">
       <h6 class="footer-title">アプリ</h6>
+      <a
+        href={GITHUB_RELEASES_URL}
+        class="link"
+      >
+        アプリをダウンロード
+      </a>
+      <a
+        href={BETA_GROUP_URL}
+        class="link"
+      >
+        ベータに参加
+      </a>
+      <a
+        href="https://obtainium.imranr.dev/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="link"
+      >
+        Obtainiumで更新（代替手段）
+      </a>
       <a href="/help" class="link">よくある質問</a>
-      <a href="https://github.com/L4Ph/Novelty/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="link">ライセンス</a>
-      <a href="https://github.com/L4Ph/Novelty/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener noreferrer" class="link">プライバシーポリシー</a>
+      <a
+        href="https://github.com/L4Ph/Novelty/blob/main/LICENSE"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="link"
+      >
+        ライセンス
+      </a>
+      <a
+        href="https://github.com/L4Ph/Novelty/blob/main/PRIVACY_POLICY.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="link"
+      >
+        プライバシーポリシー
+      </a>
     </nav>
-    
-    <nav class="footer-nav">
+
+    <nav class="footer-nav" aria-label="リンク">
       <h6 class="footer-title">リンク</h6>
-      <a href="https://github.com/L4Ph/Novelty" target="_blank" rel="noopener noreferrer" class="link link-icon">
-        <Github class="icon" />
+      <a
+        href="https://github.com/L4Ph/Novelty"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="link"
+      >
         GitHub
       </a>
-      <a href="https://syosetu.com" target="_blank" rel="noopener noreferrer" class="link link-icon">
-        <ExternalLink class="icon" />
+      <a
+        href="https://syosetu.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="link"
+      >
         小説家になろう
+      </a>
+      <a
+        href="https://kakuyomu.jp"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="link"
+      >
+        カクヨム
       </a>
     </nav>
   </div>
@@ -49,92 +95,64 @@ import { Github, ExternalLink, Code } from '@lucide/astro';
 
 <footer class="sub-footer">
   <div class="container footer-center">
-    <div class="copyright">
-      <Code class="icon" />
-      <p>© 2025 Novelty Project. Built with Astro, LightningCSS & Lucide.</p>
-    </div>
+    <p>© 2026 Novelty Project</p>
   </div>
 </footer>
 
 <style>
-  /* Utilities */
-  .container {
-    max-width: 80rem; /* 7xl */
-    margin: 0 auto;
-    padding: 0 1.5rem; /* px-6 */
+  .text-center {
+    text-align: center;
   }
 
-  .text-center { text-align: center; }
-
-  /* Disclaimer Banner */
   .disclaimer-banner {
     width: 100%;
-    background-color: color-mix(in srgb, var(--color-base-300) 30%, transparent);
-    padding: 1rem 0; /* py-4 */
-    border-top: 1px solid color-mix(in srgb, var(--color-base-content) 5%, transparent);
+    background-color: var(--surface-sunken);
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-subtle);
   }
 
   .disclaimer-text {
-    font-size: 0.6875rem; /* ~11px */
-    color: color-mix(in srgb, var(--color-base-content) 40%, transparent);
-    font-weight: 700;
-    font-style: italic;
-    letter-spacing: 0.05em; /* tracking-wide */
+    font-size: 0.75rem;
+    color: var(--text-muted);
     margin: 0;
   }
 
-  /* Main Footer */
   .main-footer {
-    padding: 2.5rem; /* p-10 */
-    background-color: var(--color-base-200);
-    color: var(--color-base-content);
-    border-top: 1px solid color-mix(in srgb, var(--color-base-content) 5%, transparent);
+    padding: 2.5rem 0;
+    background-color: var(--surface-page);
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-subtle);
   }
 
   .footer-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 2.5rem;
-    max-width: 80rem; /* 7xl */
-    margin: 0 auto;
-  }
-
-  /* Brand Area */
-  .footer-brand {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    gap: 2rem;
   }
 
   .logo-wrapper {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    margin-bottom: 0.75rem;
   }
 
   .logo-img {
-    width: 2.5rem; /* w-10 */
-    height: 2.5rem;
+    width: 2rem;
+    height: 2rem;
   }
 
   .logo-text {
-    font-size: 1.5rem; /* 2xl */
-    font-weight: 900;
-    letter-spacing: -0.05em; /* tracking-tighter */
-    background: linear-gradient(to right, var(--color-primary), #66B9D2);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--brand-primary);
   }
 
   .brand-description {
-    font-weight: 500;
-    color: color-mix(in srgb, var(--color-base-content) 60%, transparent);
+    color: var(--text-secondary);
     margin: 0;
-    line-height: 1.5;
   }
 
-  /* Nav Areas */
   .footer-nav {
     display: flex;
     flex-direction: column;
@@ -142,43 +160,32 @@ import { Github, ExternalLink, Code } from '@lucide/astro';
   }
 
   .footer-title {
-    margin-bottom: 0.5rem;
-    font-weight: 900;
+    margin: 0 0 0.5rem;
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--color-primary);
-    font-size: 0.75rem; /* slightly small */
-    letter-spacing: 0.05em;
+    color: var(--brand-primary);
   }
 
   .link {
-    cursor: pointer;
-    text-decoration: none;
     font-weight: 500;
-    transition: color 0.2s;
+    color: var(--text-secondary);
+    width: fit-content;
   }
   .link:hover {
+    color: var(--brand-primary);
     text-decoration: underline;
-    color: var(--color-primary);
   }
 
-  .link-icon {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .icon {
-    width: 1rem; /* w-4 */
-    height: 1rem;
-  }
-
-  /* Sub Footer */
   .sub-footer {
-    padding: 1.5rem; /* p-6 */
-    background-color: var(--color-base-300);
-    color: color-mix(in srgb, var(--color-base-content) 60%, transparent);
-    font-weight: 500;
-    line-height: 1.625;
+    padding: 1.25rem 0;
+    background-color: var(--surface-sunken);
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-subtle);
+  }
+  .sub-footer p {
+    margin: 0;
   }
 
   .footer-center {
@@ -186,21 +193,9 @@ import { Github, ExternalLink, Code } from '@lucide/astro';
     justify-content: center;
   }
 
-  .copyright {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .copyright p { margin: 0; }
-
-  /* Responsive */
-  @media (min-width: 640px) { /* sm */
+  @media (min-width: 640px) {
     .footer-grid {
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      /* To match footer-horizontal logic roughly, or just make it standard grid.
-         DaisyUI footer is responsive. Let's make it 3 columns on desktop.
-      */
-      grid-template-columns: 2fr 1fr 1fr; 
+      grid-template-columns: 2fr 1fr 1fr;
     }
   }
 </style>

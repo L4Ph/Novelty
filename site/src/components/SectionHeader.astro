@@ -1,0 +1,49 @@
+---
+// セクション見出しの共通形。ShowcaseとTechStackで形状が重複していたため共通化。
+// eyebrowは装飾的な英字ラベル、titleが見出し本文。
+interface Props {
+  eyebrow: string;
+  title: string;
+  withDivider?: boolean;
+}
+
+const { eyebrow, title, withDivider = false } = Astro.props;
+---
+
+<div class="section-header">
+  <p class="eyebrow">{eyebrow}</p>
+  <h2 class="heading">{title}</h2>
+  {withDivider && <div class="divider" aria-hidden="true"></div>}
+</div>
+
+<style>
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .eyebrow {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--brand-primary);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0 0 0.5rem;
+  }
+
+  .heading {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .divider {
+    height: 0.25rem;
+    width: 4rem;
+    background-color: var(--accent);
+    margin: 1rem auto 0;
+    border-radius: 9999px;
+  }
+</style>

@@ -6,12 +6,16 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "ogp": "bun scripts/ogp.ts"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.6.0",
+    "@astrojs/sitemap": "3.7.4",
     "@lucide/astro": "^0.562.0",
-    "astro": "^5.16.6",
+    "astro": "7.3.1",
     "lightningcss": "^1.30.2"
+  },
+  "devDependencies": {
+    "satoru-render": "^1.0.15"
   }
 }

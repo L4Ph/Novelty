@@ -2,7 +2,12 @@
 
 # Novelty
 
+[![Release](https://img.shields.io/badge/Download-%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89-084887)](https://github.com/L4Ph/Novelty/releases/latest)
+[![Beta](https://img.shields.io/badge/Beta-%E5%8F%82%E5%8A%A0-0e34a0)](https://groups.google.com/g/novelty-app)
+
 **モダンで、シンプルに。そして透明性高く。**
+
+![縦書き読書画面](https://novelty.l4ph.moe/tategaki.webp)
 
 「小説家になろう」「カクヨム」の作品を読むためにゼロから再設計された、Flutter製のクロスプラットフォーム小説ビューアーです。
 

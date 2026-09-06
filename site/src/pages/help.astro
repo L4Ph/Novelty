@@ -14,7 +14,7 @@ const qas = [
   },
   {
     question: "「カクヨム」や「ハーメルン」など、他の小説サイトには対応していますか？",
-    answer: "現時点では「小説家になろう」専用のクライアントとして、最高の体験を提供することに集中しています。\n他のサイトへの対応は将来的な検討事項です。"
+    answer: "「小説家になろう」と「カクヨム」に対応しています。\n同じ操作感でランキングや検索、縦書き読書やオフライン保存が使えます。"
   },
   {
     question: "アプリ内に広告は表示されますか？",
@@ -38,7 +38,7 @@ const qas = [
   },
   {
     question: "アプリのインストール・アップデート方法は？",
-    answer: "インストールやその後のアップデート管理には、オープンソースのアプリストア「<a href='https://obtainium.imranr.dev/' target='_blank' rel='noopener noreferrer'>Obtainium</a>」の利用を推奨しています。\nGitHub Releases から直接、最新版の検知とインストールを自動化できます。"
+    answer: "Google Playでの配信準備中のため、現在はベータテストとして配布しています。手順は次の通りです。\n1. <a href='https://groups.google.com/g/novelty-app' target='_blank' rel='noopener noreferrer'>Googleグループに参加する</a>\n2. <a href='https://play.google.com/apps/testing/moe.l4ph.novelty' target='_blank' rel='noopener noreferrer'>テスト参加リンクを開いて参加する</a>\n3. Google Playからインストールする\n代替手段として、オープンソースのアプリストア「<a href='https://obtainium.imranr.dev/' target='_blank' rel='noopener noreferrer'>Obtainium</a>」でGitHub Releasesからの自動更新も使えます。\nObtainiumが入っていれば、<a href='obtainium://add/https://github.com/L4Ph/Novelty'>ワンタップで追加する</a>こともできます。"
   }
 ];
 
@@ -59,6 +59,7 @@ const schema = {
 <Layout 
   title="よくある質問 - Novelty"
   description="Noveltyに関するよくある質問（FAQ）と回答をまとめています。推奨環境、インストール方法、機能についてなど。"
+  image="/ogp-help.png"
 >
   <script type="application/ld+json" slot="head" set:html={JSON.stringify(schema)} />
   <Navbar />
@@ -93,24 +94,25 @@ const schema = {
   }
 
   .page-title {
-    font-size: 1.875rem; /* 3xl */
+    font-size: 1.875rem;
     font-weight: 700;
     text-align: center;
-    margin-bottom: 3rem; /* mb-12 */
-    color: var(--color-base-content);
+    margin-bottom: 3rem;
+    color: var(--text-primary);
   }
 
   /* QA List */
   .qa-list {
     display: flex;
     flex-direction: column;
-    gap: 2rem; /* space-y-8 */
+    gap: 1.5rem;
   }
 
   .qa-item {
-    background-color: var(--color-base-200);
-    padding: 1.5rem; /* p-6 */
-    border-radius: 1rem; /* rounded-2xl */
+    background-color: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
   }
 
   /* Question */
@@ -125,7 +127,7 @@ const schema = {
   }
 
   .q-mark {
-    color: var(--color-primary);
+    color: var(--brand-primary);
     font-size: 1.5rem; /* 2xl */
     font-weight: 900;
     line-height: 1;
@@ -140,13 +142,13 @@ const schema = {
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
-    color: color-mix(in srgb, var(--color-base-content) 80%, transparent);
-    line-height: 1.625; /* relaxed */
+    color: var(--text-secondary);
+    line-height: 1.8;
     white-space: pre-line;
   }
 
   .a-mark {
-    color: var(--color-secondary);
+    color: var(--brand-primary-hover);
     font-size: 1.5rem; /* 2xl */
     font-weight: 900;
     line-height: 1;
@@ -158,7 +160,7 @@ const schema = {
 
   /* Link styles within Answer */
   .a-text :global(a) {
-    color: var(--color-primary) !important;
+    color: var(--brand-primary) !important;
     text-decoration: underline !important;
     font-weight: 600;
   }

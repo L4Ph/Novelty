@@ -1,31 +1,18 @@
 ---
-import { Menu, Github } from '@lucide/astro';
+import { GITHUB_RELEASES_URL } from "../lib/store-links";
 ---
 
 <header class="header">
   <div class="container">
-    <nav class="navbar">
-      <!-- Navbar Start: Mobile Menu & Logo -->
+    <nav class="navbar" aria-label="サイトナビゲーション">
       <div class="navbar-start">
-        <div class="dropdown">
-          <div tabindex="0" role="button" class="btn btn-ghost hide-lg" aria-label="Menu">
-            <Menu class="icon" />
-          </div>
-          <ul tabindex="0" class="menu-dropdown">
-            <li><a href="/#features">機能</a></li>
-            <li><a href="/#tech">技術</a></li>
-            <li><a href="/help">よくある質問</a></li>
-          </ul>
-        </div>
-        
         <a href="/" class="logo-link">
-          <img src="/favicon.svg" alt="Novelty - アプリロゴ" class="logo-img" />
+          <img src="/favicon.svg" alt="Novelty" class="logo-img" />
           <span class="logo-text">Novelty</span>
         </a>
       </div>
 
-      <!-- Navbar Center: Desktop Links -->
-      <div class="navbar-center show-lg">
+      <div class="navbar-center only-desktop">
         <ul class="menu-horizontal">
           <li><a href="/#features">機能</a></li>
           <li><a href="/#tech">技術</a></li>
@@ -33,17 +20,27 @@ import { Menu, Github } from '@lucide/astro';
         </ul>
       </div>
 
-      <!-- Navbar End: Call to Action -->
       <div class="navbar-end">
         <a
-          href="https://github.com/L4Ph/Novelty" 
-          target="_blank" 
-          rel="noopener noreferrer" 
+          href={GITHUB_RELEASES_URL}
           class="btn btn-primary"
         >
-          <Github /> GitHub
+          ダウンロード
+        </a>
+        <a
+          href="https://github.com/L4Ph/Novelty"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-ghost only-desktop"
+        >
+          GitHub
         </a>
       </div>
+    </nav>
+    <nav class="mobile-nav only-mobile" aria-label="モバイルナビゲーション">
+      <a href="/#features">機能</a>
+      <a href="/#tech">技術</a>
+      <a href="/help">よくある質問</a>
     </nav>
   </div>
 </header>
@@ -54,186 +51,128 @@ import { Menu, Github } from '@lucide/astro';
     top: 0;
     z-index: 50;
     width: 100%;
-    padding: 1rem 1rem 0;
-    pointer-events: none; /* Let clicks pass through outside navbar */
-  }
-
-  .container {
-    max-width: 80rem; /* max-w-7xl */
-    margin: 0 auto;
-    pointer-events: auto;
+    background-color: var(--surface-page);
+    border-bottom: 1px solid var(--border-subtle);
   }
 
   .navbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
     min-height: 4rem;
-    padding: 0 1rem;
-    
-    background-color: color-mix(in srgb, var(--color-base-100) 80%, transparent);
-    backdrop-filter: blur(24px);
-    border: 1px solid color-mix(in srgb, var(--color-base-content) 5%, transparent);
-    border-radius: 1.5rem; /* rounded-3xl */
-    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    padding: 0.5rem 0;
   }
 
-  .navbar-start, .navbar-end {
+  .navbar-start,
+  .navbar-end {
     display: flex;
     align-items: center;
-    width: 50%;
+    gap: 0.5rem;
   }
 
-  .navbar-end {
-    justify-content: flex-end;
-  }
-
-  .navbar-center {
-    flex: 0 0 auto;
-  }
-
-  /* Logo */
   .logo-link {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    user-select: none;
   }
 
   .logo-img {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2rem;
+    height: 2rem;
   }
 
   .logo-text {
     font-size: 1.25rem;
-    font-weight: 900;
-    letter-spacing: -0.05em;
-    
-    background: linear-gradient(to right, var(--color-primary), #66B9D2);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    font-weight: 800;
+    color: var(--brand-primary);
   }
 
-  /* Buttons */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    text-decoration: none;
-    line-height: 1;
+    min-height: 2.75rem;
+    padding: 0 1.25rem;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    border: 1px solid transparent;
+  }
+
+  .btn-primary {
+    background-color: var(--brand-primary);
+    color: var(--text-on-brand);
+  }
+  .btn-primary:hover {
+    background-color: var(--brand-primary-hover);
   }
 
   .btn-ghost {
     background: transparent;
-    color: inherit;
-    padding: 0.5rem;
+    color: var(--text-secondary);
   }
   .btn-ghost:hover {
-    background-color: color-mix(in srgb, var(--color-base-content) 10%, transparent);
+    background-color: var(--surface-sunken);
   }
 
-  .btn-primary {
-    background-color: var(--color-primary);
-    color: var(--color-primary-content);
-    border-radius: 1rem; /* rounded-2xl */
-    padding: 0.5rem 1.5rem;
-    font-weight: 700;
-    box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--color-primary) 20%, transparent);
-  }
-  .btn-primary:hover {
-    box-shadow: 0 10px 15px -3px color-mix(in srgb, var(--color-primary) 40%, transparent);
-    transform: translateY(-1px);
-  }
-
-  .icon {
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-
-  /* Menus */
   .menu-horizontal {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.25rem;
     padding: 0;
     margin: 0;
     list-style: none;
   }
   .menu-horizontal a {
     display: block;
-    padding: 0.5rem 1.25rem;
+    padding: 0.5rem 1rem;
     font-weight: 700;
-    border-radius: 0.5rem;
-    transition: color 0.2s;
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
   }
   .menu-horizontal a:hover {
-    color: var(--color-primary);
-    background-color: color-mix(in srgb, var(--color-primary) 5%, transparent);
+    color: var(--brand-primary);
+    background-color: var(--surface-soft);
   }
 
-  /* Dropdown (Mobile) */
-  .dropdown {
-    position: relative;
-    display: inline-block;
-  }
-  
-  .menu-dropdown {
-    visibility: hidden;
-    opacity: 0;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    z-index: 50;
-    min-width: 13rem; /* w-52 */
-    margin-top: 0.75rem;
-    padding: 0.5rem;
-    list-style: none;
-    
-    background-color: color-mix(in srgb, var(--color-base-200) 95%, transparent);
-    backdrop-filter: blur(12px);
-    border: 1px solid color-mix(in srgb, var(--color-base-content) 5%, transparent);
-    border-radius: 1rem;
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    
-    transform: translateY(10px);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  /* 1024px未満はモバイル表示、以上はデスクトップ表示 */
+  .only-desktop {
+    display: none;
   }
 
-  .dropdown:focus-within .menu-dropdown,
-  .dropdown:hover .menu-dropdown {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0);
+  .mobile-nav {
+    display: flex;
+    gap: 0.25rem;
+    padding-bottom: 0.5rem;
+  }
+  .mobile-nav a {
+    padding: 0.5rem 0.75rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
   }
 
-  .menu-dropdown li a {
-    display: block;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    font-weight: 500;
+  .only-mobile {
+    display: flex;
   }
-  .menu-dropdown li a:hover,
-  .menu-dropdown li a:focus {
-    background-color: color-mix(in srgb, var(--color-base-content) 10%, transparent);
-    outline: none;
+  nav.only-mobile.mobile-nav {
+    display: flex;
   }
 
-  /* Responsive Utilities */
-  .hide-lg { display: inline-flex; }
-  .show-lg { display: none; }
-
-  @media (min-width: 1024px) { /* lg breakpoint */
-    .hide-lg { display: none; }
-    .show-lg { display: flex; }
-    .navbar-start { width: auto; }
-    .navbar-end { width: auto; }
-    .navbar-center { flex: 1; justify-content: center; }
+  @media (min-width: 1024px) {
+    .only-desktop {
+      display: inline-flex;
+    }
+    ul.only-desktop {
+      display: flex;
+    }
+    .only-mobile {
+      display: none;
+    }
+    nav.only-mobile.mobile-nav {
+      display: none;
+    }
   }
 </style>

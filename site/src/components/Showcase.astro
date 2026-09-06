@@ -1,0 +1,127 @@
+---
+import SectionHeader from "./SectionHeader.astro";
+
+// 交互紹介1件分の形。image/alt/title/bodyの4点が常に一緒に旅するため型で束ねる。
+interface ShowcaseItem {
+  image: string;
+  alt: string;
+  title: string;
+  body: string;
+}
+
+const items: ShowcaseItem[] = [
+  {
+    image: "/tategaki.webp",
+    alt: "縦書きで小説を読む画面",
+    title: "縦書きで、紙の本のように読む",
+    body: "文庫本のような縦書き表示を中心に、フォントサイズや行間を調整できます。横書きへの切り替えもすぐできます。",
+  },
+  {
+    image: "/explorer.webp",
+    alt: "ランキングや検索で作品を探す画面",
+    title: "なろう・カクヨムを同じ操作で探す",
+    body: "ランキングやキーワード検索で気になる作品を見つけられます。サイトを切り替えても操作は変わりません。",
+  },
+  {
+    image: "/library.webp",
+    alt: "保存した作品を並べるライブラリ画面",
+    title: "保存すれば、圏外でも読める",
+    body: "一度保存した作品はオフラインで開けます。通勤や旅行中も通信を気にせず読み続けられます。",
+  },
+  {
+    image: "/history.webp",
+    alt: "読書の履歴を確認する画面",
+    title: "どこまで読んだか忘れない",
+    body: "読書の進み具合は自動で記録されます。続きからすぐに再開でき、機種変更時はバックアップで引き継げます。",
+  },
+];
+---
+
+<section id="features" class="section" aria-label="機能紹介">
+  <div class="container">
+    <SectionHeader eyebrow="Features" title="実際の画面で見るNovelty" />
+
+    <div class="items">
+      {items.map((item) => (
+        <article class="item">
+          <div class="shot">
+            <img
+              src={item.image}
+              alt={item.alt}
+              width="768"
+              height="1623"
+              loading="lazy"
+            />
+          </div>
+          <div class="copy">
+            <h3 class="item-title">{item.title}</h3>
+            <p class="item-body">{item.body}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .section {
+    padding: var(--space-section) 0;
+    background-color: var(--surface-sunken);
+  }
+
+  .items {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  .item {
+    display: grid;
+    gap: 1.5rem;
+    align-items: center;
+    background-color: var(--surface-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+  }
+
+  .shot {
+    display: flex;
+    justify-content: center;
+  }
+
+  .shot img {
+    width: min(100%, 15rem);
+    height: auto;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    background-color: var(--surface-sunken);
+  }
+
+  .item-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 0.75rem;
+  }
+
+  .item-body {
+    color: var(--text-secondary);
+    line-height: 1.9;
+    margin: 0;
+  }
+
+  @media (min-width: 1024px) {
+    .items {
+      gap: 2rem;
+    }
+    .item {
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      padding: 2.5rem;
+    }
+    .item:nth-child(even) .shot {
+      order: 2;
+    }
+  }
+</style>
