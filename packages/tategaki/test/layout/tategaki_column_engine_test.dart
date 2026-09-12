@@ -97,6 +97,30 @@ void main() {
       expect(after.text, 'え\nお');
     });
 
+    testWidgets('行間を拡大してもTCYの列幅は行送りで膨らまない', (tester) async {
+      // lineHeight を大きくすると TextPainter.height（行送り）だけが大きくなる。
+      // TCY は横書きのまま描画するため、列幅は行送りではなく
+      // 数字の実描画幅（painter.width）を基準にしなければならない。
+      const lineHeightStyle = TextStyle(fontSize: 16, height: 3);
+      final engine = TategakiColumnEngine(
+        elements: const [
+          TategakiChar('あ'),
+          TategakiTcy('12'),
+          TategakiChar('い'),
+        ],
+        maxHeight: 600,
+        textStyle: lineHeightStyle,
+      );
+
+      final column = engine.columnAt(0);
+      final tcy = column.items[1] as PaintableTcy;
+
+      // 列幅が行送り（charHeight）で膨らまない
+      expect(column.baseWidth, lessThan(engine.charHeight));
+      // TCYは1文字分の高さ（行送り）だけを消費する
+      expect(tcy.height, closeTo(engine.charHeight, 0.001));
+    });
+
     testWidgets('ルビを列に配置できる', (tester) async {
       final engine = TategakiColumnEngine(
         elements: const [
