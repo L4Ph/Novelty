@@ -14,10 +14,10 @@ class PaintableTcy extends Paintable {
   String get text => painter.text?.toPlainText() ?? '';
 
   @override
-  double get height => painter.width; // 横幅が縦の高さになる
+  double get height => painter.height;
 
   @override
-  double get width => painter.height; // 縦幅が横の幅になる
+  double get width => painter.width;
 
   @override
   void paint(Canvas canvas, Offset offset) {
