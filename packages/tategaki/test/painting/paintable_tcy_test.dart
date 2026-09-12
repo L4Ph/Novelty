@@ -72,8 +72,8 @@ void main() {
       });
     });
 
-    group('height/width の軸交換', () {
-      testWidgets('heightはpainterのwidthと等しい（縦中横の軸交換）', (tester) async {
+    group('描画サイズ（横書きのまま描画するため軸交換しない）', () {
+      testWidgets('heightはpainterのheightと等しい', (tester) async {
         await tester.pumpWidget(
           const ProviderScope(
             child: MaterialApp(home: SizedBox()),
@@ -87,10 +87,10 @@ void main() {
           textDirection: TextDirection.ltr,
         )..layout();
         final item = PaintableTcy(painter);
-        expect(item.height, painter.width);
+        expect(item.height, painter.height);
       });
 
-      testWidgets('widthはpainterのheightと等しい（縦中横の軸交換）', (tester) async {
+      testWidgets('widthとbaseWidthは実際の描画幅（painterのwidth）と等しい', (tester) async {
         await tester.pumpWidget(
           const ProviderScope(
             child: MaterialApp(home: SizedBox()),
@@ -104,7 +104,8 @@ void main() {
           textDirection: TextDirection.ltr,
         )..layout();
         final item = PaintableTcy(painter);
-        expect(item.width, painter.height);
+        expect(item.width, painter.width);
+        expect(item.baseWidth, painter.width);
       });
     });
   });
