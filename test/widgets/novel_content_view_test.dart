@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:narou_parser/narou_parser.dart';
+import 'package:novelty/widgets/kenten_text_widget.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
 import 'package:novelty/widgets/ruby_text_widget.dart';
 
@@ -198,6 +199,42 @@ void main() {
       final textSpan = spans[1];
       expect(textSpan, isA<TextSpan>());
       expect((textSpan as TextSpan).text, equals('テスト'));
+    });
+
+    test('buildSpansはKentenをWidgetSpan(KentenSpan)として生成する', () {
+      final elements = <NovelContentElement>[
+        PlainText('これは'),
+        Kenten('重要', '﹅'),
+        PlainText('です。'),
+      ];
+
+      const style = TextStyle(fontSize: 16);
+      final spans = NovelContentView.buildSpans(elements, style);
+
+      expect(spans, hasLength(3));
+      final widgetSpan = spans[1];
+      expect(widgetSpan, isA<WidgetSpan>());
+      expect(
+        (widgetSpan as WidgetSpan).child,
+        isA<KentenSpan>()
+            .having((w) => w.base, 'base', '重要')
+            .having((w) => w.mark, 'mark', '﹅'),
+      );
+    });
+
+    testWidgets('横書きで傍点が描画される', (tester) async {
+      final elements = <NovelContentElement>[Kenten('重要', '﹅')];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: NovelContentView(elements: elements)),
+        ),
+      );
+
+      expect(find.byType(KentenSpan), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      // 縦書きの傍点と比率を揃える
+      expect(kKentenMarkScale, 0.5);
     });
 
     test('buildSpansは複数のルビ要素を正しく処理する', () {

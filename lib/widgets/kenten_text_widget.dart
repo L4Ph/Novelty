@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// 傍点マークの文字サイズ比率（縦書きの `TategakiMeasurer.rubyScale` と揃える）
+const double kKentenMarkScale = 0.5;
+
 /// 傍点（圏点）付きテキストを横書きで表示するウィジェット。
 ///
 /// 横書きでは各文字の上に点を配置する（JLREQ §3.3.9）。縦書きの傍点は
@@ -25,7 +28,9 @@ class KentenSpan extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final markStyle = style.copyWith(
-      fontSize: style.fontSize != null ? style.fontSize! * 0.6 : null,
+      fontSize: style.fontSize != null
+          ? style.fontSize! * kKentenMarkScale
+          : null,
       height: 1,
     );
     final chars = [

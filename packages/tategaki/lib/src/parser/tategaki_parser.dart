@@ -77,16 +77,15 @@ class TategakiParser {
       }
 
       // 通常の文字。縦書き字形があればそれを使い、無ければ UTR #50 に従う。
-      // R（横倒し）と Tr（縦書き字形のフォールバックが横倒し）は回転する。
-      // Tu（フォールバックが正立）・U は正立する。
+      // CSS-WM-4 §5.1.2 / UTR #50 の mixed は U/Tu/Tr を正立、R のみ横倒し。
+      // Tr の縦書き字形は TategakiChar 側の vert で選択される。
       final mapped = GlyphMapper.map(char);
       if (mapped != char) {
         elements.add(TategakiChar(mapped));
       } else {
-        final orientation = VerticalOrientation.of(char.runes.first);
         final rotates =
-            orientation == TategakiOrientation.rotated ||
-            orientation == TategakiOrientation.transformedRotated;
+            VerticalOrientation.of(char.runes.first) ==
+            TategakiOrientation.rotated;
         elements.add(rotates ? TategakiRotated(char) : TategakiChar(char));
       }
       i++;

@@ -127,11 +127,12 @@ void main() {
         expect(result[0], isA<TategakiRotated>());
       });
 
-      test('Tr（縦書き字形のフォールバックが横倒し）の記号も回転する', () {
-        // U+2018 は Vertical_Orientation が Tr
+      test('Tr（縦書き字形を使う）の記号は正立する', () {
+        // U+2018 は Vertical_Orientation が Tr。mixed では正立し、
+        // 縦書き字形は vert で選択される（CSS-WM-4 §5.1.2）
         final result = TategakiParser.parse('‘');
         expect(result.length, 1);
-        expect(result[0], isA<TategakiRotated>());
+        expect(result[0], isA<TategakiChar>());
       });
     });
 
