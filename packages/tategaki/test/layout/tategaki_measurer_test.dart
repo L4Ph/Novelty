@@ -6,6 +6,9 @@ import 'package:tategaki/src/painting/paintable_rotated.dart';
 import 'package:tategaki/src/painting/paintable_ruby.dart';
 import 'package:tategaki/tategaki.dart';
 
+/// 実行時に別インスタンスの要素を生成するヘルパー（const 正準化を回避）
+TategakiElement runtimeChar(String char) => TategakiChar(char);
+
 void main() {
   const style = TextStyle(fontSize: 16);
   final measurer = TategakiMeasurer(style);
@@ -14,6 +17,25 @@ void main() {
     test('1文字の字送りはem', () {
       final measured = measurer.measure(const TategakiChar('あ'));
       expect(measured.advance, 16);
+    });
+
+    test('同じ内容の要素は計測結果を再利用する', () {
+      final first = runtimeChar('あ');
+      final second = runtimeChar('あ');
+
+      // 実行時生成なので別インスタンス（const 正準化されない）
+      expect(identical(first, second), isFalse);
+      expect(
+        identical(measurer.measure(first), measurer.measure(second)),
+        isTrue,
+      );
+    });
+
+    test('内容が異なる要素は計測結果を共有しない', () {
+      final first = measurer.measure(runtimeChar('あ'));
+      final second = measurer.measure(runtimeChar('い'));
+
+      expect(identical(first, second), isFalse);
     });
 
     test('モノルビ（親文字1字）', () {
