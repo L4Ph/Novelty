@@ -69,13 +69,20 @@ class TategakiMeasurer {
 
   final Map<TategakiElement, TategakiMeasuredItem> _cache = {};
 
-  /// 縦書き用字形（`vert`）を有効にしたスタイル（Q17）
+  /// 縦書き用字形（`vert`）を有効にした描画用スタイル（Q17）
+  ///
+  /// 行高は 1.0 にする。ユーザーの行間設定は列幅（行送り）として反映済みで、
+  /// セル内の行ボックスに行送りを含めると字面がセルからはみ出すため。
   late final TextStyle verticalStyle = textStyle.copyWith(
+    height: 1,
     fontFeatures: [
       ...?textStyle.fontFeatures,
       const FontFeature('vert'),
     ],
   );
+
+  /// 回転・縦中横の横書き描画用スタイル（行高 1.0、`vert` なし）
+  late final TextStyle horizontalStyle = textStyle.copyWith(height: 1);
 
   /// 要素を計測する（同一要素はキャッシュ）
   TategakiMeasuredItem measure(TategakiElement element) {
@@ -104,7 +111,7 @@ class TategakiMeasurer {
         );
       case TategakiTcy(:final text):
         // 縦中横は横書きのまま描画するため vert を適用しない
-        final painter = _painter(text, textStyle);
+        final painter = _painter(text, horizontalStyle);
         return TategakiMeasuredItem(
           element: element,
           advance: em,
@@ -116,7 +123,7 @@ class TategakiMeasurer {
         );
       case TategakiRotated(:final text):
         // 回転対象は横書き字形のまま計測する（vert を適用しない）
-        final painter = _painter(text, textStyle);
+        final painter = _painter(text, horizontalStyle);
         return TategakiMeasuredItem(
           element: element,
           advance: painter.width,
