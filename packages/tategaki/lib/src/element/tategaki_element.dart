@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
+
 /// 縦書きテキストの要素を表すsealed class
+@immutable
 sealed class TategakiElement {
   const TategakiElement();
 
@@ -35,6 +38,19 @@ class TategakiChar extends TategakiElement {
 
   /// 文字
   final String char;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TategakiChar &&
+          runtimeType == other.runtimeType &&
+          char == other.char;
+
+  @override
+  int get hashCode => Object.hash(TategakiChar, char);
+
+  @override
+  String toString() => 'TategakiChar($char)';
 }
 
 /// 縦中横（横書きで挿入する文字列）
@@ -44,6 +60,19 @@ class TategakiTcy extends TategakiElement {
 
   /// テキスト
   final String text;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TategakiTcy &&
+          runtimeType == other.runtimeType &&
+          text == other.text;
+
+  @override
+  int get hashCode => Object.hash(TategakiTcy, text);
+
+  @override
+  String toString() => 'TategakiTcy($text)';
 }
 
 /// 回転させる文字列（縦向きに組む数字・欧文）
@@ -53,12 +82,36 @@ class TategakiRotated extends TategakiElement {
 
   /// テキスト
   final String text;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TategakiRotated &&
+          runtimeType == other.runtimeType &&
+          text == other.text;
+
+  @override
+  int get hashCode => Object.hash(TategakiRotated, text);
+
+  @override
+  String toString() => 'TategakiRotated($text)';
 }
 
 /// 改行（次の列へ）
 class TategakiNewLine extends TategakiElement {
   /// コンストラクタ
   const TategakiNewLine();
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TategakiNewLine && runtimeType == other.runtimeType;
+
+  @override
+  int get hashCode => Object.hash(TategakiNewLine, 0);
+
+  @override
+  String toString() => 'TategakiNewLine()';
 }
 
 /// ルビの割り付け方式
@@ -93,6 +146,21 @@ class TategakiRuby extends TategakiElement {
 
   /// 割り付け方式
   final TategakiRubyAlign align;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TategakiRuby &&
+          runtimeType == other.runtimeType &&
+          base == other.base &&
+          ruby == other.ruby &&
+          align == other.align;
+
+  @override
+  int get hashCode => Object.hash(TategakiRuby, base, ruby, align);
+
+  @override
+  String toString() => 'TategakiRuby(base: $base, ruby: $ruby, align: $align)';
 }
 
 /// 傍点（圏点）付きテキスト
@@ -105,4 +173,18 @@ class TategakiKenten extends TategakiElement {
 
   /// 点の種類（1文字）
   final String mark;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TategakiKenten &&
+          runtimeType == other.runtimeType &&
+          base == other.base &&
+          mark == other.mark;
+
+  @override
+  int get hashCode => Object.hash(TategakiKenten, base, mark);
+
+  @override
+  String toString() => 'TategakiKenten(base: $base, mark: $mark)';
 }
