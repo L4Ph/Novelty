@@ -68,6 +68,43 @@ void main() {
       expect(result[4], isA<NewLine>());
     });
 
+    test('点のみのルビは傍点(Kenten)としてパースされる', () {
+      const html = '<p><ruby><rb>前</rb><rp>(</rp><rt>・</rt><rp>)</rp></ruby>世。</p>';
+      final result = parseNovelContent(html);
+
+      expect(result, hasLength(3));
+      expect(
+        result[0],
+        isA<Kenten>()
+            .having((e) => e.base, 'base', '前')
+            .having((e) => e.mark, 'mark', '・'),
+      );
+      expect(
+        result[1],
+        isA<PlainText>().having((e) => e.text, 'text', '世。'),
+      );
+      expect(result[2], isA<NewLine>());
+    });
+
+    test('親文字と同数の点ルビはまとめて傍点になる', () {
+      const html = '<p><ruby>重要<rp>(</rp><rt>・・</rt><rp>)</rp></ruby>だ。</p>';
+      final result = parseNovelContent(html);
+
+      expect(
+        result[0],
+        isA<Kenten>()
+            .having((e) => e.base, 'base', '重要')
+            .having((e) => e.mark, 'mark', '・'),
+      );
+    });
+
+    test('点の数が親文字数と一致しないルビは通常ルビのまま', () {
+      const html = '<p><ruby>天才<rp>(</rp><rt>・</rt><rp>)</rp></ruby>だ。</p>';
+      final result = parseNovelContent(html);
+
+      expect(result[0], isA<RubyText>());
+    });
+
     test('rpタグとrbタグなしのrubyを正しくパースできるか', () {
       const html = '<p><ruby>解放<rp>(</rp><rt>リリース</rt><rp>)</rp></ruby>する。</p>';
       final result = parseNovelContent(html);
