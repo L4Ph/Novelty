@@ -23,6 +23,10 @@ NovelContentElement _$NovelContentElementFromJson(
           return RubyText.fromJson(
             json
           );
+                case 'kenten':
+          return Kenten.fromJson(
+            json
+          );
                 case 'newLine':
           return NewLine.fromJson(
             json
@@ -85,12 +89,13 @@ extension NovelContentElementPatterns on NovelContentElement {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( PlainText value)?  plainText,TResult Function( RubyText value)?  rubyText,TResult Function( NewLine value)?  newLine,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( PlainText value)?  plainText,TResult Function( RubyText value)?  rubyText,TResult Function( Kenten value)?  kenten,TResult Function( NewLine value)?  newLine,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case PlainText() when plainText != null:
 return plainText(_that);case RubyText() when rubyText != null:
-return rubyText(_that);case NewLine() when newLine != null:
+return rubyText(_that);case Kenten() when kenten != null:
+return kenten(_that);case NewLine() when newLine != null:
 return newLine(_that);case _:
   return orElse();
 
@@ -109,12 +114,13 @@ return newLine(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( PlainText value)  plainText,required TResult Function( RubyText value)  rubyText,required TResult Function( NewLine value)  newLine,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( PlainText value)  plainText,required TResult Function( RubyText value)  rubyText,required TResult Function( Kenten value)  kenten,required TResult Function( NewLine value)  newLine,}){
 final _that = this;
 switch (_that) {
 case PlainText():
 return plainText(_that);case RubyText():
-return rubyText(_that);case NewLine():
+return rubyText(_that);case Kenten():
+return kenten(_that);case NewLine():
 return newLine(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -129,12 +135,13 @@ return newLine(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( PlainText value)?  plainText,TResult? Function( RubyText value)?  rubyText,TResult? Function( NewLine value)?  newLine,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( PlainText value)?  plainText,TResult? Function( RubyText value)?  rubyText,TResult? Function( Kenten value)?  kenten,TResult? Function( NewLine value)?  newLine,}){
 final _that = this;
 switch (_that) {
 case PlainText() when plainText != null:
 return plainText(_that);case RubyText() when rubyText != null:
-return rubyText(_that);case NewLine() when newLine != null:
+return rubyText(_that);case Kenten() when kenten != null:
+return kenten(_that);case NewLine() when newLine != null:
 return newLine(_that);case _:
   return null;
 
@@ -152,11 +159,12 @@ return newLine(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text)?  plainText,TResult Function( String base,  String ruby)?  rubyText,TResult Function()?  newLine,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text)?  plainText,TResult Function( String base,  String ruby)?  rubyText,TResult Function( String base,  String mark)?  kenten,TResult Function()?  newLine,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case PlainText() when plainText != null:
 return plainText(_that.text);case RubyText() when rubyText != null:
-return rubyText(_that.base,_that.ruby);case NewLine() when newLine != null:
+return rubyText(_that.base,_that.ruby);case Kenten() when kenten != null:
+return kenten(_that.base,_that.mark);case NewLine() when newLine != null:
 return newLine();case _:
   return orElse();
 
@@ -175,11 +183,12 @@ return newLine();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text)  plainText,required TResult Function( String base,  String ruby)  rubyText,required TResult Function()  newLine,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text)  plainText,required TResult Function( String base,  String ruby)  rubyText,required TResult Function( String base,  String mark)  kenten,required TResult Function()  newLine,}) {final _that = this;
 switch (_that) {
 case PlainText():
 return plainText(_that.text);case RubyText():
-return rubyText(_that.base,_that.ruby);case NewLine():
+return rubyText(_that.base,_that.ruby);case Kenten():
+return kenten(_that.base,_that.mark);case NewLine():
 return newLine();}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -194,11 +203,12 @@ return newLine();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text)?  plainText,TResult? Function( String base,  String ruby)?  rubyText,TResult? Function()?  newLine,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text)?  plainText,TResult? Function( String base,  String ruby)?  rubyText,TResult? Function( String base,  String mark)?  kenten,TResult? Function()?  newLine,}) {final _that = this;
 switch (_that) {
 case PlainText() when plainText != null:
 return plainText(_that.text);case RubyText() when rubyText != null:
-return rubyText(_that.base,_that.ruby);case NewLine() when newLine != null:
+return rubyText(_that.base,_that.ruby);case Kenten() when kenten != null:
+return kenten(_that.base,_that.mark);case NewLine() when newLine != null:
 return newLine();case _:
   return null;
 
@@ -348,6 +358,81 @@ class _$RubyTextCopyWithImpl<$Res>
   return _then(RubyText(
 null == base ? _self.base : base // ignore: cast_nullable_to_non_nullable
 as String,null == ruby ? _self.ruby : ruby // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class Kenten implements NovelContentElement {
+   Kenten(this.base, this.mark, {final  String? $type}): $type = $type ?? 'kenten';
+  factory Kenten.fromJson(Map<String, dynamic> json) => _$KentenFromJson(json);
+
+ final  String base;
+ final  String mark;
+
+@JsonKey(name: 'runtimeType')
+final String $type;
+
+
+/// Create a copy of NovelContentElement
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$KentenCopyWith<Kenten> get copyWith => _$KentenCopyWithImpl<Kenten>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$KentenToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Kenten&&(identical(other.base, base) || other.base == base)&&(identical(other.mark, mark) || other.mark == mark));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,base,mark);
+
+@override
+String toString() {
+  return 'NovelContentElement.kenten(base: $base, mark: $mark)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $KentenCopyWith<$Res> implements $NovelContentElementCopyWith<$Res> {
+  factory $KentenCopyWith(Kenten value, $Res Function(Kenten) _then) = _$KentenCopyWithImpl;
+@useResult
+$Res call({
+ String base, String mark
+});
+
+
+
+
+}
+/// @nodoc
+class _$KentenCopyWithImpl<$Res>
+    implements $KentenCopyWith<$Res> {
+  _$KentenCopyWithImpl(this._self, this._then);
+
+  final Kenten _self;
+  final $Res Function(Kenten) _then;
+
+/// Create a copy of NovelContentElement
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? base = null,Object? mark = null,}) {
+  return _then(Kenten(
+null == base ? _self.base : base // ignore: cast_nullable_to_non_nullable
+as String,null == mark ? _self.mark : mark // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

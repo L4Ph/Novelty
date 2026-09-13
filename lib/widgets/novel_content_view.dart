@@ -78,6 +78,10 @@ class NovelContentView extends HookWidget {
             // ルビ無効時: ベーステキストのみ表示
             spans.add(TextSpan(text: element.base, style: style));
           }
+        case Kenten():
+          // 横書き表示では傍点を簡易的にベース文字のみ表示する。
+          // 縦書きの傍点描画は TategakiElement.kenten 側で行う。
+          spans.add(TextSpan(text: element.base, style: style));
         case NewLine():
           spans.add(const TextSpan(text: '\n'));
       }

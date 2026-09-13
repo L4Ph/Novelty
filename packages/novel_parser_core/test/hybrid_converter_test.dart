@@ -75,6 +75,56 @@ void main() {
       expect((roundTrip[1] as RubyText).base, '前');
     });
 
+    test('kenten は txt に base が入り rb に type/base/mark が入る', () {
+      final elements = <NovelContentElement>[
+        NovelContentElement.plainText('これは'),
+        NovelContentElement.kenten('重要', '﹅'),
+        NovelContentElement.plainText('だ'),
+      ];
+      final jsonStr = elements.toHybridJson();
+      final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
+      expect(decoded['txt'], 'これは重要だ');
+      final rb = decoded['rb'] as List;
+      expect(rb, hasLength(1));
+      expect(rb[0]['type'], 'kenten');
+      expect(rb[0]['off'], 3); // "これは" 3文字の後
+      expect(rb[0]['base'], '重要');
+      expect(rb[0]['mark'], '﹅');
+
+      final roundTrip = HybridConverter.fromHybridJson(jsonStr);
+      expect(roundTrip, hasLength(3));
+      expect(roundTrip[1], isA<Kenten>());
+      expect((roundTrip[1] as Kenten).base, '重要');
+      expect((roundTrip[1] as Kenten).mark, '﹅');
+    });
+
+    test('type 省略の rb は ruby として読める（後方互換）', () {
+      final jsonStr = jsonEncode({
+        'txt': 'AB',
+        'rb': [
+          {'off': 0, 'base': 'A', 'ruby': 'えー'},
+        ],
+      });
+      final elements = HybridConverter.fromHybridJson(jsonStr);
+      expect(elements, hasLength(2));
+      expect(elements[0], isA<RubyText>());
+      expect((elements[0] as RubyText).base, 'A');
+    });
+
+    test('kenten と ruby の混在が往復できる', () {
+      final elements = <NovelContentElement>[
+        NovelContentElement.plainText('彼は'),
+        NovelContentElement.kenten('天才', '﹅'),
+        NovelContentElement.plainText('と呼ばれた'),
+        NovelContentElement.rubyText('最強', 'さいきょう'),
+        NovelContentElement.plainText('だ'),
+      ];
+      final roundTrip = HybridConverter.fromHybridJson(
+        elements.toHybridJson(),
+      );
+      expect(roundTrip, equals(elements));
+    });
+
     test('複合例が往復できる (docs/narou_html の抜粋)', () {
       final elements = <NovelContentElement>[
         NovelContentElement.plainText('人間、どんな清廉潔白'),
