@@ -135,6 +135,8 @@ void main() {
         print('Text: $text');
       case RubyText(:final base, :final ruby):
         print('Ruby: $base ($ruby)');
+      case Kenten(:final base, :final mark):
+        print('Kenten: $base ($mark)');
       case NewLine():
         print('NewLine');
     }

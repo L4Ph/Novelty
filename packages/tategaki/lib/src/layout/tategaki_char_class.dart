@@ -98,8 +98,11 @@ class TategakiCharClassifier {
   }
 
   /// 行頭禁則文字かどうか（JLREQ §3.1.7）
-  static bool isHeadProhibited(String char) {
-    return switch (of(char)) {
+  static bool isHeadProhibited(String char) => isHeadProhibitedClass(of(char));
+
+  /// 行頭禁則クラスかどうか
+  static bool isHeadProhibitedClass(TategakiCharClass value) {
+    return switch (value) {
       TategakiCharClass.closingBracket ||
       TategakiCharClass.comma ||
       TategakiCharClass.period ||
@@ -112,8 +115,11 @@ class TategakiCharClassifier {
   }
 
   /// 行末禁則文字かどうか（JLREQ §3.1.8）
-  static bool isTailProhibited(String char) {
-    return of(char) == TategakiCharClass.openingBracket;
+  static bool isTailProhibited(String char) => isTailProhibitedClass(of(char));
+
+  /// 行末禁則クラスかどうか
+  static bool isTailProhibitedClass(TategakiCharClass value) {
+    return value == TategakiCharClass.openingBracket;
   }
 
   static bool _isKana(int code) {

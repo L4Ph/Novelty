@@ -108,9 +108,13 @@ class TategakiColumnEngine {
 
       if (needed > maxHeight && placed.isNotEmpty) {
         // 行頭禁則文字は押し込む（追込み）。それ以外は折り返す。
-        if (!_isHeadProhibited(element)) {
+        if (!TategakiCharClassifier.isHeadProhibitedClass(
+          measured.firstClass,
+        )) {
           // 行末禁則: 末尾が開き括弧なら次列へ送る
-          if (_isTailProhibited(placed.last.item.element)) {
+          if (TategakiCharClassifier.isTailProhibitedClass(
+            placed.last.item.lastClass,
+          )) {
             placed.removeLast();
             _elementIndex--;
           }
@@ -234,29 +238,4 @@ class TategakiColumnEngine {
     );
   }
 
-  bool _isHeadProhibited(TategakiElement element) {
-    final char = _firstChar(element);
-    return char.isNotEmpty && TategakiCharClassifier.isHeadProhibited(char);
-  }
-
-  bool _isTailProhibited(TategakiElement element) {
-    final char = _firstChar(element);
-    return char.isNotEmpty && TategakiCharClassifier.isTailProhibited(char);
-  }
-
-  String _firstChar(TategakiElement element) {
-    return switch (element) {
-      TategakiChar(:final char) => char,
-      TategakiTcy(:final text) => _firstRune(text),
-      TategakiRotated(:final text) => _firstRune(text),
-      TategakiRuby(:final base) => _firstRune(base),
-      TategakiKenten(:final base) => _firstRune(base),
-      TategakiNewLine() => '',
-    };
-  }
-
-  String _firstRune(String value) {
-    if (value.isEmpty) return '';
-    return String.fromCharCode(value.runes.first);
-  }
 }

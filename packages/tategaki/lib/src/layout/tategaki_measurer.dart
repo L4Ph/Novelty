@@ -103,7 +103,8 @@ class TategakiMeasurer {
           paintable: PaintableColumnText(painter),
         );
       case TategakiTcy(:final text):
-        final painter = _painter(text);
+        // 縦中横は横書きのまま描画するため vert を適用しない
+        final painter = _painter(text, textStyle);
         return TategakiMeasuredItem(
           element: element,
           advance: em,
@@ -114,7 +115,8 @@ class TategakiMeasurer {
           paintable: PaintableTcy(painter),
         );
       case TategakiRotated(:final text):
-        final painter = _painter(text);
+        // 回転対象は横書き字形のまま計測する（vert を適用しない）
+        final painter = _painter(text, textStyle);
         return TategakiMeasuredItem(
           element: element,
           advance: painter.width,
