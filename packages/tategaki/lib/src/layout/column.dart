@@ -70,6 +70,9 @@ class TategakiColumn {
               TextPainter(
                 text: TextSpan(text: text, style: _textStyle),
                 textDirection: TextDirection.ltr,
+                // 各行（1文字）を最大行幅の中央に揃える。
+                // これにより半角数字・英字もセル中央に配置される。
+                textAlign: TextAlign.center,
               )..layout(),
             ),
           );

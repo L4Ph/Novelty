@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tategaki/src/layout/tategaki_column_engine.dart';
 import 'package:tategaki/src/layout/tategaki_layout.dart';
 import 'package:tategaki/src/painting/paintable_column_text.dart';
+import 'package:tategaki/src/painting/paintable_rotated.dart';
 import 'package:tategaki/src/painting/paintable_tcy.dart';
 import 'package:tategaki/tategaki.dart';
 
@@ -119,6 +120,46 @@ void main() {
       expect(column.baseWidth, lessThan(engine.charHeight));
       // TCYは1文字分の高さ（行送り）だけを消費する
       expect(tcy.height, closeTo(engine.charHeight, 0.001));
+    });
+
+    testWidgets('桁区切り付き数値トークンは列をまたいで分割されない', (tester) async {
+      final probe = TategakiColumnEngine(
+        elements: const [TategakiChar('あ')],
+        maxHeight: 100,
+        textStyle: style,
+      );
+      final engine = TategakiColumnEngine(
+        elements: TategakiParser.parse('あ16,844円'),
+        maxHeight: probe.charHeight * 2,
+        textStyle: style,
+      );
+
+      final columns = engine.computeAll();
+
+      // 「あ」の列、「16,844」の列、「円」の列に分かれ、
+      // 数値トークンが途中で分割されない
+      expect(columns.length, 3);
+      expect((columns[0].items.single as PaintableColumnText).text, 'あ');
+      expect(columns[1].items.single, isA<PaintableRotated>());
+      expect((columns[1].items.single as PaintableRotated).text, '16,844');
+      expect((columns[2].items.single as PaintableColumnText).text, '円');
+    });
+
+    testWidgets('半角文字を含む文字ランは中央寄せで描画される', (tester) async {
+      // flutter_test のテストフォントは全グリフ同幅のため line metrics では
+      // 中央寄せを観測できない。ここでは中央寄せを決める textAlign を検証する。
+      // （実フォントでの見た目は widget テスト/目視で確認する）
+      final engine = TategakiColumnEngine(
+        elements: TategakiParser.parse('あI'),
+        maxHeight: 600,
+        textStyle: style,
+      );
+
+      final column = engine.columnAt(0);
+      final text = column.items.single as PaintableColumnText;
+
+      expect(text.painter.textAlign, TextAlign.center);
+      expect(text.text, 'あ\nI');
     });
 
     testWidgets('ルビを列に配置できる', (tester) async {

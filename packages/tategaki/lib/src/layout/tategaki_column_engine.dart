@@ -7,6 +7,8 @@ import 'package:tategaki/src/layout/column.dart';
 import 'package:tategaki/src/layout/kinsoku.dart';
 import 'package:tategaki/src/layout/tategaki_layout.dart';
 import 'package:tategaki/src/painting/paintable.dart';
+import 'package:tategaki/src/painting/paintable_kenten.dart';
+import 'package:tategaki/src/painting/paintable_rotated.dart';
 import 'package:tategaki/src/painting/paintable_ruby.dart';
 import 'package:tategaki/src/painting/paintable_tcy.dart';
 import 'package:tategaki/src/utils/glyph_mapper.dart';
@@ -55,6 +57,12 @@ class TategakiColumnEngine {
 
   /// ルビの計測キャッシュ（同一の組み合わせは1回だけ計測する）
   final Map<({String base, String ruby}), PaintableRuby> _rubyCache = {};
+
+  /// 回転テキストの計測キャッシュ
+  final Map<String, PaintableRotated> _rotatedCache = {};
+
+  /// 傍点の計測キャッシュ
+  final Map<({String base, String mark}), PaintableKenten> _kentenCache = {};
 
   /// 計算済みの列数
   int get computedColumnCount => _columns.length;
@@ -292,6 +300,18 @@ class TategakiColumnEngine {
             return tcyResult;
           }
 
+        case TategakiRotated(:final text):
+          final rotatedResult = addInline(_buildRotated(text));
+          if (rotatedResult != null) {
+            return rotatedResult;
+          }
+
+        case TategakiKenten(:final base, :final mark):
+          final kentenResult = addInline(_buildKenten(base, mark));
+          if (kentenResult != null) {
+            return kentenResult;
+          }
+
         case TategakiRuby(:final base, :final ruby):
           final rubyResult = addInline(_buildRuby(base, ruby));
           if (rubyResult != null) {
@@ -353,6 +373,51 @@ class TategakiColumnEngine {
     )..layout();
     final item = PaintableTcy(painter);
     _tcyCache[text] = item;
+    return item;
+  }
+
+  /// 回転テキストの描画要素を作成する（同一テキストはキャッシュして再利用）
+  PaintableRotated _buildRotated(String text) {
+    final cached = _rotatedCache[text];
+    if (cached != null) {
+      return cached;
+    }
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final item = PaintableRotated(painter);
+    _rotatedCache[text] = item;
+    return item;
+  }
+
+  /// 傍点付きテキストの描画要素を作成する（同一の組み合わせはキャッシュ）
+  PaintableKenten _buildKenten(String base, String mark) {
+    final key = (base: base, mark: mark);
+    final cached = _kentenCache[key];
+    if (cached != null) {
+      return cached;
+    }
+    final basePainters = <TextPainter>[];
+    for (final rune in base.runes) {
+      final mapped = GlyphMapper.map(String.fromCharCode(rune));
+      basePainters.add(
+        TextPainter(
+          text: TextSpan(text: mapped, style: textStyle),
+          textDirection: TextDirection.ltr,
+        )..layout(),
+      );
+    }
+    final markPainter = TextPainter(
+      text: TextSpan(text: mark, style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final item = PaintableKenten(
+      basePainters: basePainters,
+      markPainter: markPainter,
+      charAdvance: charHeight,
+    );
+    _kentenCache[key] = item;
     return item;
   }
 

@@ -60,21 +60,34 @@ void main() {
         expect((result[1] as TategakiChar).char, '時');
       });
 
-      test('3桁の数字をTcyに変換する', () {
+      test('3桁の数字はトークン全体が回転要素になる', () {
         final result = TategakiParser.parse('123番');
         expect(result.length, 2);
-        expect(result[0], isA<TategakiTcy>());
-        expect((result[0] as TategakiTcy).text, '123');
+        expect(result[0], isA<TategakiRotated>());
+        expect((result[0] as TategakiRotated).text, '123');
+        expect((result[1] as TategakiChar).char, '番');
       });
 
-      test('4桁以上の数字は1文字ずつCharに変換する', () {
+      test('4桁以上の数字はトークン全体が回転要素になる', () {
         final result = TategakiParser.parse('2024年');
-        expect(result.length, 5);
-        expect(result[0], isA<TategakiChar>());
-        expect(result[1], isA<TategakiChar>());
-        expect(result[2], isA<TategakiChar>());
-        expect(result[3], isA<TategakiChar>());
-        expect(result[4], isA<TategakiChar>());
+        expect(result.length, 2);
+        expect(result[0], isA<TategakiRotated>());
+        expect((result[0] as TategakiRotated).text, '2024');
+        expect((result[1] as TategakiChar).char, '年');
+      });
+
+      test('桁区切り付きの数字はトークン全体が回転要素になる', () {
+        final result = TategakiParser.parse('16,844円');
+        expect(result.length, 2);
+        expect(result[0], isA<TategakiRotated>());
+        expect((result[0] as TategakiRotated).text, '16,844');
+        expect((result[1] as TategakiChar).char, '円');
+      });
+
+      test('小数点付きの数字はトークン全体が回転要素になる', () {
+        final result = TategakiParser.parse('1200.03');
+        expect(result.length, 1);
+        expect((result[0] as TategakiRotated).text, '1200.03');
       });
 
       test('1桁の数字はCharに変換する', () {
@@ -91,6 +104,21 @@ void main() {
         expect(result[1], isA<TategakiTcy>());
         expect((result[1] as TategakiTcy).text, '12');
         expect((result[2] as TategakiChar).char, '話');
+      });
+    });
+
+    group('欧文', () {
+      test('1文字の半角英字は正立のCharになる', () {
+        final result = TategakiParser.parse('I');
+        expect(result.length, 1);
+        expect((result[0] as TategakiChar).char, 'I');
+      });
+
+      test('2文字以上の半角英字はラン全体が回転要素になる', () {
+        final result = TategakiParser.parse('Web');
+        expect(result.length, 1);
+        expect(result[0], isA<TategakiRotated>());
+        expect((result[0] as TategakiRotated).text, 'Web');
       });
     });
 
