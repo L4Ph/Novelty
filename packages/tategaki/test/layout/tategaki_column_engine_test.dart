@@ -124,6 +124,29 @@ void main() {
       expect((columns[2].items.single as PaintableColumnText).text, '円');
     });
 
+    testWidgets('空行（改行の連続）で後続の内容が欠落しない', (tester) async {
+      // 回帰テスト: 空列(null)を返した際に computeAll が終了し、
+      // 残りの内容が欠落するバグがあった
+      final engine = TategakiColumnEngine(
+        elements: const [
+          TategakiChar('あ'),
+          TategakiNewLine(),
+          TategakiNewLine(),
+          TategakiChar('い'),
+        ],
+        maxHeight: 600,
+        textStyle: style,
+      );
+
+      final columns = engine.computeAll();
+
+      expect(columns.length, 4);
+      expect((columns.first.items.single as PaintableColumnText).text, 'あ');
+      expect(columns[1].items, isEmpty);
+      expect(columns[2].items, isEmpty);
+      expect((columns.last.items.single as PaintableColumnText).text, 'い');
+    });
+
     testWidgets('非最終行は行末調整でmaxHeightまで揃えられる', (tester) async {
       // maxHeight を 5 文字強にし、最終行以外が揃うことを確認する
       final elements = List.generate(12, (i) => const TategakiChar('あ'));

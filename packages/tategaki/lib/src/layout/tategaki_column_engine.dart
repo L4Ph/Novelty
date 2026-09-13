@@ -69,6 +69,14 @@ class TategakiColumnEngine {
       _columns.add(column);
       return column;
     }
+    // 空行の連続などで列が空になった場合も、保留中の空列を返す。
+    // これを返さないと computeAll が途中で終了し、残りの内容が欠落する。
+    if (_pendingEmptyColumn) {
+      _pendingEmptyColumn = false;
+      final empty = _emptyColumn();
+      _columns.add(empty);
+      return empty;
+    }
     return null;
   }
 
