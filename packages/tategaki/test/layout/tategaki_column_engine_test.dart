@@ -166,6 +166,26 @@ void main() {
       );
     });
 
+    testWidgets('列はmaxHeightを超えない（末尾の戻し）', (tester) async {
+      // 句読点の押し込みが発生しやすい内容でもクリッピングしない
+      final elements = TategakiParser.parse(
+        'あいうえおかきくけこさしすせそ、たちつてと。なにぬねの。',
+      );
+      const maxHeight = 16.0 * 5;
+      final engine = TategakiColumnEngine(
+        elements: elements,
+        maxHeight: maxHeight,
+        textStyle: style,
+      );
+      for (final column in engine.computeAll()) {
+        if (column.placedItems.isEmpty) continue;
+        final last = column.placedItems.last;
+        final bottom = last.inlineOffset + last.item.advance;
+        final fits = bottom <= maxHeight + 0.01;
+        expect(fits || column.placedItems.length == 1, isTrue);
+      }
+    });
+
     testWidgets('columnAtは同じ列に対して同一インスタンスを返す（メモ化）', (tester) async {
       final engine = TategakiColumnEngine(
         elements: const [TategakiChar('あ')],

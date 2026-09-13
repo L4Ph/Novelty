@@ -149,7 +149,22 @@ class TategakiColumnEngine {
     // 段落末（改行または要素終端）は行調整しない
     final isLast = endedByNewLine || _elementIndex >= elements.length;
     final adjusted = _adjust(placed, used, isLast);
+
+    // 追込みの押し込みや単一の長い要素で列高を超えたままの場合は、
+    // 末尾から要素を次列へ戻してクリッピングを防ぐ（単一要素は許容）。
+    var finalUsed = _columnBottom(adjusted);
+    while (adjusted.length > 1 && finalUsed > maxHeight + 0.01) {
+      adjusted.removeLast();
+      _elementIndex--;
+      finalUsed = _columnBottom(adjusted);
+    }
     return _makeColumn(adjusted);
+  }
+
+  double _columnBottom(List<TategakiPlacedItem> placed) {
+    if (placed.isEmpty) return 0;
+    final last = placed.last;
+    return last.inlineOffset + last.item.advance;
   }
 
   /// 行末調整（ジャスティフィケーション）
