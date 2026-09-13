@@ -28,6 +28,18 @@ void main() {
       expect(decoded.ruby, 'やまだ');
     });
 
+    test('kenten が JSON シリアライズ往復できる', () {
+      final element = Kenten('重要', '﹅');
+      final json = jsonEncode(element.toJson());
+      final decoded = NovelContentElement.fromJson(
+        jsonDecode(json) as Map<String, dynamic>,
+      );
+
+      expect(decoded, isA<Kenten>());
+      expect((decoded as Kenten).base, '重要');
+      expect(decoded.mark, '﹅');
+    });
+
     test('newLine が JSON シリアライズ往復できる', () {
       final element = NewLine();
       final json = jsonEncode(element.toJson());

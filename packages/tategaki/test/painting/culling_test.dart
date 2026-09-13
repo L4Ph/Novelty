@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
+import 'package:tategaki/src/element/tategaki_element.dart';
 import 'package:tategaki/src/layout/column.dart';
+import 'package:tategaki/src/layout/tategaki_char_class.dart';
+import 'package:tategaki/src/layout/tategaki_measurer.dart';
 import 'package:tategaki/src/painting/paintable.dart';
 import 'package:tategaki/src/painting/tategaki_painter.dart';
 
-// Simple Mock Class using Mockito-style manual mock
+/// `getLocalClipBounds` を差し替えられる Canvas
 class MockCanvas extends Mock implements Canvas {
   Rect testClipRect = Rect.largest;
 
@@ -13,6 +16,7 @@ class MockCanvas extends Mock implements Canvas {
   Rect getLocalClipBounds() => testClipRect;
 }
 
+/// 描画呼び出しを記録する Paintable
 class MockPaintable extends Mock implements Paintable {
   @override
   double get baseWidth => 20;
@@ -28,15 +32,21 @@ class MockPaintable extends Mock implements Paintable {
       super.noSuchMethod(Invocation.method(#paint, [canvas, offset]));
 }
 
+TategakiMeasuredItem makeMeasured(Paintable paintable) {
+  return TategakiMeasuredItem(
+    element: const TategakiChar('あ'),
+    advance: 100,
+    baseExtent: 20,
+    blockExtent: 20,
+    firstClass: TategakiCharClass.others,
+    lastClass: TategakiCharClass.others,
+    paintable: paintable,
+  );
+}
+
 void main() {
   test('TategakiPainter culls invisible columns', () {
-    // 1. Setup Data
-    // Create 5 columns. Each 20px wide + 12px spacing = 32px stride.
-    // Total width = 32 * 5 = 160px.
-    // X positions (Right to Left):
-    // Col 0: Right 160, Left 128
-    // Col 1: Right 128, Left 96
-    // ...
+    // 列幅20px・列間0で5列。右から左へ X=80,60,40,20,0。
     final columns = <TategakiColumn>[];
     final mockItems = <MockPaintable>[];
 
@@ -45,31 +55,30 @@ void main() {
       mockItems.add(item);
       columns.add(
         TategakiColumn(
-          slots: [TategakiInlineItem(item)],
+          placedItems: [
+            TategakiPlacedItem(
+              item: makeMeasured(item),
+              inlineOffset: 0,
+              blockOffset: 0,
+            ),
+          ],
           width: 20,
           baseWidth: 20,
-          textStyle: const TextStyle(),
         ),
       );
     }
 
-    // Total width calculation in painter:
-    // nextColumnX starts at size.width (160)
-    // Col 0: 160 - (20+12) = 128 (Left edge)
-
     final metrics = TategakiMetrics(
       columns: columns,
-      size: const Size(160, 600),
+      size: const Size(100, 600),
     );
 
     final painter = TategakiPainter(metrics: metrics);
     final canvas = MockCanvas()
-      ..testClipRect = const Rect.fromLTWH(0, 0, 160, 600);
+      ..testClipRect = const Rect.fromLTWH(0, 0, 100, 600);
 
-    // 2. Scenario A: Full Viewport (Everything visible)
-    painter.paint(canvas, const Size(160, 600));
-
-    // Verify ALL items painted
+    // 全列可視
+    painter.paint(canvas, const Size(100, 600));
     for (final item in mockItems) {
       verify(item.paint(canvas, argThat(isA<Offset>()))).called(1);
     }
@@ -77,27 +86,12 @@ void main() {
     clearInteractions(canvas);
     mockItems.forEach(reset);
 
-    // 3. Scenario B: Left Viewport (Only last 2 columns visible)
-    // Columns are RTL.
-    // Col 0 (Rightmost): X=128
-    // Col 1: X=96
-    // Col 2: X=64
-    // Col 3: X=32
-    // Col 4 (Leftmost): X=0
+    // 左端 0..40 のみ可視 → 列3(20..40) と 列4(0..20) のみ
+    canvas.testClipRect = const Rect.fromLTWH(0, 0, 40, 600);
+    painter.paint(canvas, const Size(100, 600));
 
-    // Viewport from 0 to 60 (Left side). Should show Col 4 and Col 3.
-    canvas.testClipRect = const Rect.fromLTWH(0, 0, 60, 600);
-    painter.paint(canvas, const Size(160, 600));
-
-    // Verify Col 3 and 4 are painted
-    verify(
-      mockItems[3].paint(canvas, argThat(isA<Offset>())),
-    ).called(1); // Col 3
-    verify(
-      mockItems[4].paint(canvas, argThat(isA<Offset>())),
-    ).called(1); // Col 4
-
-    // Verify Col 0, 1, 2 are NOT painted
+    verify(mockItems[3].paint(canvas, argThat(isA<Offset>()))).called(1);
+    verify(mockItems[4].paint(canvas, argThat(isA<Offset>()))).called(1);
     verifyNever(mockItems[0].paint(canvas, any));
     verifyNever(mockItems[1].paint(canvas, any));
     verifyNever(mockItems[2].paint(canvas, any));

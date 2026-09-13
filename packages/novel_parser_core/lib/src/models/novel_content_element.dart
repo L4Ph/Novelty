@@ -14,6 +14,9 @@ sealed class NovelContentElement with _$NovelContentElement {
   /// ルビ付きテキスト（base: 親文字, ruby: ルビ）
   factory NovelContentElement.rubyText(String base, String ruby) = RubyText;
 
+  /// 傍点（圏点）付きテキスト（base: 対象文字, mark: 点の種類）
+  factory NovelContentElement.kenten(String base, String mark) = Kenten;
+
   /// 改行
   factory NovelContentElement.newLine() = NewLine;
 

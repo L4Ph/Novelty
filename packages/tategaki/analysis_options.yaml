@@ -9,3 +9,5 @@ analyzer:
   exclude:
     - lib/src/models/*.g.dart
     - lib/src/models/*.freezed.dart
+    # Unicode UAX #50 から生成される範囲表
+    - lib/src/layout/vertical_orientation_data.dart

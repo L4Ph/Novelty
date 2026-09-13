@@ -44,6 +44,43 @@ void main() {
       expect(result[3], isA<NewLine>());
     });
 
+    test('emphasisDots は傍点(Kenten)としてパースされる', () {
+      const span1 = '<span>山</span>';
+      const span2 = '<span>へ</span>';
+      const html =
+          '<p>おじいさんは<em class="emphasisDots">$span1$span2</em>に出かけた。</p>';
+
+      final result = parseKakuyomuEpisodeBody(html);
+
+      expect(result, hasLength(4));
+      expect(
+        result[0],
+        isA<PlainText>().having((e) => e.text, 'text', 'おじいさんは'),
+      );
+      expect(
+        result[1],
+        isA<Kenten>()
+            .having((e) => e.base, 'base', '山へ')
+            .having((e) => e.mark, 'mark', '﹅'),
+      );
+      expect(
+        result[2],
+        isA<PlainText>().having((e) => e.text, 'text', 'に出かけた。'),
+      );
+      expect(result[3], isA<NewLine>());
+    });
+
+    test('emphasisDots 以外の em は子要素を再帰処理する', () {
+      const html = '<p><em>そのまま</em>表示。</p>';
+
+      final result = parseKakuyomuEpisodeBody(html);
+
+      expect(
+        result[0],
+        isA<PlainText>().having((e) => e.text, 'text', 'そのまま'),
+      );
+    });
+
     test('blank段落は改行要素1つになる', () {
       const html = '<p class="blank"><br /></p>';
 

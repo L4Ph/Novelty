@@ -21,7 +21,12 @@ class HybridConverter {
           off += text.length;
         },
         rubyText: (base, ruby) {
-          rb.add({'off': off, 'base': base, 'ruby': ruby});
+          rb.add({'type': 'ruby', 'off': off, 'base': base, 'ruby': ruby});
+          buffer.write(base);
+          off += base.length;
+        },
+        kenten: (base, mark) {
+          rb.add({'type': 'kenten', 'off': off, 'base': base, 'mark': mark});
           buffer.write(base);
           off += base.length;
         },
@@ -70,10 +75,12 @@ class HybridConverter {
     // rb を off でソート
     final spans = rbList.map((e) {
       final m = e as Map<String, dynamic>;
-      return _RubySpan(
+      return _AnnotationSpan(
+        type: m['type'] as String? ?? 'ruby',
         off: m['off'] as int,
         base: m['base'] as String,
-        ruby: m['ruby'] as String,
+        ruby: m['ruby'] as String?,
+        mark: m['mark'] as String?,
       );
     }).toList()
       ..sort((a, b) => a.off.compareTo(b.off));
@@ -122,7 +129,15 @@ class HybridConverter {
       if (rbIndex < spans.length && txtIndex == spans[rbIndex].off) {
         flushPlain();
         final span = spans[rbIndex];
-        result.add(NovelContentElement.rubyText(span.base, span.ruby));
+        if (span.type == 'kenten') {
+          result.add(
+            NovelContentElement.kenten(span.base, span.mark ?? '﹅'),
+          );
+        } else {
+          result.add(
+            NovelContentElement.rubyText(span.base, span.ruby ?? ''),
+          );
+        }
         txtIndex += span.base.length;
         rbIndex++;
         continue;
@@ -156,11 +171,19 @@ class HybridConverter {
   }
 }
 
-class _RubySpan {
-  const _RubySpan({required this.off, required this.base, required this.ruby});
+class _AnnotationSpan {
+  const _AnnotationSpan({
+    required this.type,
+    required this.off,
+    required this.base,
+    this.ruby,
+    this.mark,
+  });
+  final String type;
   final int off;
   final String base;
-  final String ruby;
+  final String? ruby;
+  final String? mark;
 }
 
 /// `List<NovelContentElement>` に対する Hybrid 変換拡張

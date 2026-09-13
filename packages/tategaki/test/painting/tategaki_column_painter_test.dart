@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:tategaki/src/layout/column.dart';
-import 'package:tategaki/src/painting/paintable_tcy.dart';
+import 'package:tategaki/src/layout/tategaki_measurer.dart';
 import 'package:tategaki/src/painting/tategaki_column_painter.dart';
+import 'package:tategaki/tategaki.dart';
 
 /// `drawParagraph` に渡された描画位置を記録する Canvas
 class _RecordingCanvas extends Mock implements Canvas {
@@ -19,24 +20,22 @@ class _RecordingCanvas extends Mock implements Canvas {
 }
 
 void main() {
-  testWidgets('縦中横は実際の描画幅で列の中央に描画される', (tester) async {
-    // lineHeight を大きくすると TextPainter.height（行送り）だけが大きくなる。
-    // TCY は横書きのまま描画するため、中央寄せは行送りではなく
-    // 数字の実描画幅（painter.width）を基準にしなければ左に偏る。
+  testWidgets('縦中横は列の中心軸に描画される', (tester) async {
+    // 行送りを大きくし、列幅（=行送り）の中で TCY が中央に来ることを検証する
     const style = TextStyle(fontSize: 16, height: 3);
-    final tcyPainter = TextPainter(
-      text: const TextSpan(text: '12', style: style),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    final tcy = PaintableTcy(tcyPainter);
+    final measurer = TategakiMeasurer(style);
+    final measured = measurer.measure(const TategakiTcy('12'));
 
-    // 数字の描画幅より広い基準幅を持たせ、dx > 0 の中央寄せを検証する
-    const columnBaseWidth = 60.0;
     final column = TategakiColumn(
-      slots: [TategakiInlineItem(tcy)],
-      width: columnBaseWidth,
-      baseWidth: columnBaseWidth,
-      textStyle: style,
+      placedItems: [
+        TategakiPlacedItem(
+          item: measured,
+          inlineOffset: 0,
+          blockOffset: (measurer.linePitch - measured.baseExtent) / 2,
+        ),
+      ],
+      width: measurer.linePitch,
+      baseWidth: measurer.linePitch,
     );
 
     final canvas = _RecordingCanvas();
@@ -46,10 +45,9 @@ void main() {
     final offset = canvas.paragraphOffsets.single;
 
     // 実際に描画された数字の中心が列の中心軸に一致する
-    final expectedWidth = (TextPainter(
-      text: const TextSpan(text: '12', style: style),
-      textDirection: TextDirection.ltr,
-    )..layout()).width;
-    expect(offset.dx + expectedWidth / 2, closeTo(columnBaseWidth / 2, 0.001));
+    expect(
+      offset.dx + measured.baseExtent / 2,
+      closeTo(measurer.linePitch / 2, 0.001),
+    );
   });
 }

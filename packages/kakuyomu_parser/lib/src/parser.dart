@@ -45,6 +45,16 @@ void _parseInline(dom.Node node, List<NovelContentElement> elements) {
           } else if (base != null && base.isNotEmpty) {
             _addPlainText(elements, base);
           }
+        case 'em':
+          // カクヨムの傍点は <em class="emphasisDots"><span>字</span>…</em>
+          if (child.classes.contains('emphasisDots')) {
+            final base = child.text.trim();
+            if (base.isNotEmpty) {
+              elements.add(NovelContentElement.kenten(base, '﹅'));
+            }
+          } else {
+            _parseInline(child, elements);
+          }
         case 'br':
           elements.add(NovelContentElement.newLine());
         default:

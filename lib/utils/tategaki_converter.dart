@@ -25,6 +25,8 @@ class TategakiConverter {
             // ルビ無効時: ベーステキストのみをパース
             result.addAll(TategakiParser.parse(base));
           }
+        case Kenten(:final base, :final mark):
+          result.add(TategakiElement.kenten(base: base, mark: mark));
         case NewLine():
           result.add(const TategakiElement.newLine());
       }

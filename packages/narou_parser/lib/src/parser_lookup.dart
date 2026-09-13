@@ -127,15 +127,46 @@ void _processRubyContent(String inner, List<NovelContentElement> elements) {
     if (rtEnd != -1) {
       final rubyText = inner.substring(rtContentStart, rtEnd);
       final baseText = _cleanRubyBase(baseTextPart);
+      final decodedBase = _decodeEntity(baseText);
+      final decodedRuby = _decodeEntity(rubyText);
 
-      elements.add(
-        NovelContentElement.rubyText(
-          _decodeEntity(baseText),
-          _decodeEntity(rubyText),
-        ),
-      );
+      // 傍点: ルビ文字が点のみで、親文字数と点数が一致する場合は Kenten にする
+      final mark = _kentenMark(decodedBase, decodedRuby);
+      if (mark != null) {
+        elements.add(NovelContentElement.kenten(decodedBase, mark));
+      } else {
+        elements.add(NovelContentElement.rubyText(decodedBase, decodedRuby));
+      }
     }
   }
+}
+
+/// 傍点として扱える点文字の集合
+const _kentenChars = <String>{
+  '・', // U+30FB 中黒
+  '･', // U+FF65 半角中黒
+  '•', // U+2022 ビュレット
+  '﹅', // U+FE45 ゴマ点
+  '﹆', // U+FE46 白ゴマ点
+  '●', // U+25CF 黒丸
+  '○', // U+25CB 白丸
+  '▲', // U+25B2 黒三角
+  '△', // U+25B3 白三角
+};
+
+/// 傍点とみなせる場合は点文字を返す。みなせない場合は null。
+///
+/// 親文字数と点の数が一致し、すべての点が [_kentenChars] に含まれる場合のみ
+/// 傍点とする（点のみの正当なルビを誤検出しないため）。
+String? _kentenMark(String base, String ruby) {
+  if (base.isEmpty || ruby.isEmpty) return null;
+  final baseCount = base.runes.length;
+  final rubyRunes = ruby.runes.toList();
+  if (baseCount != rubyRunes.length) return null;
+  for (final rune in rubyRunes) {
+    if (!_kentenChars.contains(String.fromCharCode(rune))) return null;
+  }
+  return String.fromCharCode(rubyRunes.first);
 }
 
 /// `<rb>`, `</rb>`, `<rp>...</rp>` などを除去してベーステキストを抽出

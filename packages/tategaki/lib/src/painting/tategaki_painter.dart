@@ -54,15 +54,11 @@ class TategakiPainter extends CustomPainter {
         continue;
       }
 
-      if (column.items.isNotEmpty) {
-        var dy = 0.0;
-        for (final item in column.items) {
-          // ベース文字が column.baseWidth の中で中央に来るように dx を計算
-          // 列は currentColumnX から始まり、その右側にスペースがある
-          final dx = currentColumnX + (column.baseWidth - item.baseWidth) / 2;
-          item.paint(canvas, Offset(dx, dy));
-          dy += item.height;
-        }
+      for (final placed in column.placedItems) {
+        placed.item.paintable.paint(
+          canvas,
+          Offset(currentColumnX + placed.blockOffset, placed.inlineOffset),
+        );
       }
       nextColumnX = currentColumnX;
     }
