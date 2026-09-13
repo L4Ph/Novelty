@@ -10,12 +10,9 @@ class TategakiLayout {
 
   /// 列間のスペース
   ///
-  /// N列ある場合、スペースは N-1 個になる。
-  /// 例: 2列の場合、totalWidth = column1.width + columnSpacing + column2.width
-  static const double columnSpacing = 12;
-
-  /// ルビのフォントサイズ比率
-  static const double rubyScale = 0.6;
+  /// 行送り（fontSize × lineHeight）が列幅に含まれるため、追加の列間
+  /// スペースは 0 とする（Q23: 軸の取り違えを修正）。
+  static const double columnSpacing = 0;
 
   /// 列リストの合計幅を計算する
   ///

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
+import 'package:tategaki/src/element/tategaki_element.dart';
 import 'package:tategaki/src/layout/column.dart';
+import 'package:tategaki/src/layout/tategaki_char_class.dart';
 import 'package:tategaki/src/layout/tategaki_layout.dart';
+import 'package:tategaki/src/layout/tategaki_measurer.dart';
 import 'package:tategaki/src/painting/paintable.dart';
 import 'package:tategaki/src/painting/tategaki_painter.dart';
 
-// MockCanvas: getLocalClipBounds をオーバーライド
+/// `getLocalClipBounds` を差し替えられる Canvas
 class MockCanvas extends Mock implements Canvas {
   Rect testClipRect = Rect.largest;
 
@@ -14,7 +17,7 @@ class MockCanvas extends Mock implements Canvas {
   Rect getLocalClipBounds() => testClipRect;
 }
 
-// MockPaintable: 描画位置を記録する
+/// 描画位置を記録する Paintable
 class MockPaintable extends Mock implements Paintable {
   MockPaintable({
     double baseWidth = 20,
@@ -37,7 +40,6 @@ class MockPaintable extends Mock implements Paintable {
   @override
   double get height => _height;
 
-  // 記録された描画位置
   final List<Offset> paintedOffsets = [];
 
   @override
@@ -49,127 +51,86 @@ class MockPaintable extends Mock implements Paintable {
   }
 }
 
+TategakiMeasuredItem makeMeasured(Paintable paintable) {
+  return TategakiMeasuredItem(
+    element: const TategakiChar('あ'),
+    advance: 100,
+    baseExtent: 20,
+    blockExtent: 20,
+    firstClass: TategakiCharClass.others,
+    lastClass: TategakiCharClass.others,
+    paintable: paintable,
+  );
+}
+
+TategakiColumn makeColumn(MockPaintable item, {double baseWidth = 20}) {
+  return TategakiColumn(
+    placedItems: [
+      TategakiPlacedItem(
+        item: makeMeasured(item),
+        inlineOffset: 0,
+        blockOffset: (baseWidth - item.baseWidth) / 2,
+      ),
+    ],
+    width: baseWidth,
+    baseWidth: baseWidth,
+  );
+}
+
 void main() {
   group('TategakiPainter 描画位置', () {
     test('1列の場合、列はキャンバス中央に描画される', () {
-      // 1列を作成（幅20px）
       final item = MockPaintable();
-      final column = TategakiColumn(
-        slots: [TategakiInlineItem(item)],
-        width: 20,
-        baseWidth: 20,
-        textStyle: const TextStyle(),
-      );
-
-      // 1列の場合、totalWidth = column.width = 20
-      // （columnSpacing は含まれない）
       final metrics = TategakiMetrics(
-        columns: [column],
-        size: const Size(20, 600), // スペースなしの幅
-      );
-
-      final painter = TategakiPainter(metrics: metrics);
-      final canvas = MockCanvas();
-
-      // キャンバスサイズ 100x600 で描画
-      // 中央揃え: horizontalPadding = (100 - 20) / 2 = 40
-      // 右端開始位置 = 100 - 40 = 60
-      painter.paint(canvas, const Size(100, 600));
-
-      // 描画された位置を確認
-      expect(item.paintedOffsets.length, 1);
-      // dx = currentColumnX + (column.baseWidth - item.baseWidth) / 2
-      // currentColumnX = 60 - 20 = 40
-      // dx = 40 + (20 - 20) / 2 = 40
-      expect(item.paintedOffsets[0].dx, 40);
-      expect(item.paintedOffsets[0].dy, 0);
-    });
-
-    test('2列の場合、列間のスペースが正しく適用される', () {
-      // 2列を作成（各幅20px）
-      final item1 = MockPaintable();
-      final item2 = MockPaintable();
-
-      final column1 = TategakiColumn(
-        slots: [TategakiInlineItem(item1)],
-        width: 20,
-        baseWidth: 20,
-        textStyle: const TextStyle(),
-      );
-      final column2 = TategakiColumn(
-        slots: [TategakiInlineItem(item2)],
-        width: 20,
-        baseWidth: 20,
-        textStyle: const TextStyle(),
-      );
-
-      // 2列の場合、totalWidth = 20 + 12 + 20 = 52
-      const contentWidth = 20 + TategakiLayout.columnSpacing + 20;
-      final metrics = TategakiMetrics(
-        columns: [column1, column2],
-        size: const Size(contentWidth, 600),
-      );
-
-      final painter = TategakiPainter(metrics: metrics);
-      final canvas = MockCanvas();
-
-      // キャンバスサイズをコンテンツ幅と同じに設定（中央揃えなし）
-      painter.paint(canvas, const Size(contentWidth, 600));
-
-      // 期待される描画位置:
-      // 右端から開始: nextColumnX = 52
-      // 1列目: columnTotalWidth = 20 (最初の列なのでスペースなし)
-      //        currentColumnX = 52 - 20 = 32
-      //        dx = 32 + 0 = 32
-      // 2列目: columnTotalWidth = 20 + 12 = 32 (2列目以降はスペースあり)
-      //        currentColumnX = 32 - 32 = 0
-      //        dx = 0 + 12 = 12 (スペース分のオフセット)
-      //
-      // 実際の正しい動作:
-      // 右端から開始: nextColumnX = 52
-      // 1列目: currentColumnX = 52 - 20 = 32, dx = 32
-      // 2列目: currentColumnX = 32 - 12 - 20 = 0, dx = 0
-      expect(item1.paintedOffsets.length, 1);
-      expect(item2.paintedOffsets.length, 1);
-
-      // item1 は右端の列（1列目）
-      // item2 は左端の列（2列目）
-      // 両者の間に columnSpacing 分のスペースがあるべき
-      final gap = item1.paintedOffsets[0].dx - item2.paintedOffsets[0].dx;
-      expect(gap, 20 + TategakiLayout.columnSpacing);
-    });
-
-    test('コンテンツがキャンバスより小さい場合、左右の余白が均等になる', () {
-      // 1列を作成（幅20px）
-      final item = MockPaintable();
-      final column = TategakiColumn(
-        slots: [TategakiInlineItem(item)],
-        width: 20,
-        baseWidth: 20,
-        textStyle: const TextStyle(),
-      );
-
-      final metrics = TategakiMetrics(
-        columns: [column],
+        columns: [makeColumn(item)],
         size: const Size(20, 600),
       );
 
       final painter = TategakiPainter(metrics: metrics);
       final canvas = MockCanvas();
+      painter.paint(canvas, const Size(100, 600));
 
-      // キャンバスサイズ 200x600 で描画
-      // 中央揃え: horizontalPadding = (200 - 20) / 2 = 90
-      painter.paint(canvas, const Size(200, 600));
+      // horizontalPadding = (100-20)/2 = 40, 右端開始 = 60, 列左端 = 40
+      expect(item.paintedOffsets, hasLength(1));
+      expect(item.paintedOffsets[0].dx, 40);
+      expect(item.paintedOffsets[0].dy, 0);
+    });
 
-      expect(item.paintedOffsets.length, 1);
+    test('2列の場合、列間のスペースが正しく適用される', () {
+      final item1 = MockPaintable();
+      final item2 = MockPaintable();
 
-      // 列が中央に配置されているか確認
+      const contentWidth = 20 + TategakiLayout.columnSpacing + 20;
+      final metrics = TategakiMetrics(
+        columns: [makeColumn(item1), makeColumn(item2)],
+        size: const Size(contentWidth, 600),
+      );
+
+      TategakiPainter(
+        metrics: metrics,
+      ).paint(MockCanvas(), const Size(contentWidth, 600));
+
+      expect(item1.paintedOffsets, hasLength(1));
+      expect(item2.paintedOffsets, hasLength(1));
+      final gap = item1.paintedOffsets[0].dx - item2.paintedOffsets[0].dx;
+      expect(gap, 20 + TategakiLayout.columnSpacing);
+    });
+
+    test('コンテンツがキャンバスより小さい場合、左右の余白が均等になる', () {
+      final item = MockPaintable();
+      final metrics = TategakiMetrics(
+        columns: [makeColumn(item)],
+        size: const Size(20, 600),
+      );
+
+      TategakiPainter(
+        metrics: metrics,
+      ).paint(MockCanvas(), const Size(200, 600));
+
+      expect(item.paintedOffsets, hasLength(1));
       final dx = item.paintedOffsets[0].dx;
-      // 左の余白
       final leftMargin = dx;
-      // 右の余白 = canvasWidth - (dx + columnWidth)
       final rightMargin = 200 - (dx + 20);
-
       expect(leftMargin, rightMargin);
       expect(leftMargin, 90);
     });

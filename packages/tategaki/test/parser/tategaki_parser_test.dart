@@ -120,6 +120,12 @@ void main() {
         expect(result[0], isA<TategakiRotated>());
         expect((result[0] as TategakiRotated).text, 'Web');
       });
+
+      test('縦書き字形が無くUTR50で横倒しと判定される記号は回転する', () {
+        final result = TategakiParser.parse('%');
+        expect(result.length, 1);
+        expect(result[0], isA<TategakiRotated>());
+      });
     });
 
     group('空文字列', () {

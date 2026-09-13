@@ -1,4 +1,5 @@
 import 'package:tategaki/src/element/tategaki_element.dart';
+import 'package:tategaki/src/layout/vertical_orientation.dart';
 import 'package:tategaki/src/utils/glyph_mapper.dart';
 
 /// 文字列を縦書き要素に変換するパーサー
@@ -75,8 +76,16 @@ class TategakiParser {
         continue;
       }
 
-      // 通常の文字（字形変換を適用）
-      elements.add(TategakiChar(GlyphMapper.map(char)));
+      // 通常の文字。縦書き字形があればそれを使い、無ければ UTR #50 で
+      // 横倒し（R）と判定される文字は回転する。
+      final mapped = GlyphMapper.map(char);
+      if (mapped != char) {
+        elements.add(TategakiChar(mapped));
+      } else if (VerticalOrientation.isRotated(char.runes.first)) {
+        elements.add(TategakiRotated(char));
+      } else {
+        elements.add(TategakiChar(char));
+      }
       i++;
     }
 

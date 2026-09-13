@@ -45,9 +45,10 @@ void main() {
     });
 
     test('emphasisDots は傍点(Kenten)としてパースされる', () {
-      const html = '<p>おじいさんは'
-          '<em class="emphasisDots"><span>山</span><span>へ</span></em>'
-          'に出かけた。</p>';
+      const span1 = '<span>山</span>';
+      const span2 = '<span>へ</span>';
+      const html =
+          '<p>おじいさんは<em class="emphasisDots">$span1$span2</em>に出かけた。</p>';
 
       final result = parseKakuyomuEpisodeBody(html);
 

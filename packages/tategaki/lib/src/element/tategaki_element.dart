@@ -18,6 +18,7 @@ sealed class TategakiElement {
   const factory TategakiElement.ruby({
     required String base,
     required String ruby,
+    TategakiRubyAlign align,
   }) = TategakiRuby;
 
   /// 傍点（圏点）付きテキスト
@@ -60,16 +61,38 @@ class TategakiNewLine extends TategakiElement {
   const TategakiNewLine();
 }
 
+/// ルビの割り付け方式
+enum TategakiRubyAlign {
+  /// 親文字数・ルビ文字数から自動判定する
+  auto,
+
+  /// JIS X 4051 の 2:1 配分（グループルビ）
+  jis,
+
+  /// 中央寄せ
+  center,
+
+  /// 両端揃え
+  justify,
+}
+
 /// ルビ付きテキスト
 class TategakiRuby extends TategakiElement {
   /// コンストラクタ
-  const TategakiRuby({required this.base, required this.ruby});
+  const TategakiRuby({
+    required this.base,
+    required this.ruby,
+    this.align = TategakiRubyAlign.auto,
+  });
 
   /// ベーステキスト
   final String base;
 
   /// ルビテキスト
   final String ruby;
+
+  /// 割り付け方式
+  final TategakiRubyAlign align;
 }
 
 /// 傍点（圏点）付きテキスト

@@ -197,17 +197,16 @@ SingleChildScrollView(
 - 半角数字3桁以上、または小数点・位取りコンマを含む → トークン全体が `TategakiRotated`
 - 半角英字1文字 → `TategakiChar`、2文字以上 → `TategakiRotated`
 
-### 3. 禁則処理（レイアウト時に適用）
+### 3. 禁則・アキ・行調整（レイアウト時に適用）
 
-**行頭禁則文字**:
-```
-。、．，：；？！）］｝」』】〉》ー～…‥
-```
-
-**行末禁則文字**:
-```
-（［｛「『【〈《
-```
+- 文字クラス（`TategakiCharClassifier`）は JLREQ の文字クラスを集約し、
+  行頭禁則・行末禁則を判定する。字形変換後の縦書き変体（`︒` `︑` `﹁` 等）も含む。
+- アキ量（`TategakiAki`）は文字クラスペアごとの空き量を em で返す
+  （読点・句点の後ろ 0.5em、中点の前後 0.25em、和欧間 0.25em、括弧はベタ）。
+- 行調整（`TategakiColumnEngine._adjust`）は、段落末以外の行で
+  余りを分離可能なギャップへ均等配分（トラッキング）し、不足時はアキを詰める。
+- 字送り（インライン方向）は `fontSize`（em）、行送り（列幅）は
+  `fontSize × lineHeight` とする。
 
 ---
 
@@ -247,16 +246,26 @@ packages/tategaki/
 │       │   └── tategaki_parser.dart  # 文字列パーサー
 │       ├── layout/
 │       │   ├── tategaki_layout.dart  # レイアウト計算
-│       │   ├── column.dart           # 列データ
-│       │   └── kinsoku.dart          # 禁則処理
+│       │   ├── tategaki_column_engine.dart # 列分割・行調整
+│       │   ├── column.dart           # 列データ・配置済みアイテム
+│       │   ├── tategaki_measurer.dart # 要素の計測・描画要素生成
+│       │   ├── tategaki_char_class.dart # JLREQ 文字クラス
+│       │   ├── tategaki_aki.dart     # アキ量テーブル
+│       │   ├── vertical_orientation.dart # UAX #50 向き解決
+│       │   └── vertical_orientation_data.dart # 生成済み範囲表
 │       ├── painting/
 │       │   ├── tategaki_painter.dart # CustomPainter
 │       │   ├── paintable.dart        # 描画要素の基底
-│       │   ├── paintable_char.dart   # 文字描画
+│       │   ├── paintable_rotated.dart # 回転描画
 │       │   ├── paintable_ruby.dart   # ルビ描画
+│       │   ├── paintable_kenten.dart # 傍点描画
 │       │   └── paintable_tcy.dart    # 縦中横描画
 │       └── utils/
 │           └── glyph_mapper.dart     # 字形マッピング
+├── data/
+│   └── VerticalOrientation.txt       # Unicode UAX #50 データ
+├── tool/
+│   └── gen_vertical_orientation.dart # 範囲表の生成スクリプト
 ├── test/
 │   ├── element/
 │   │   └── tategaki_element_test.dart

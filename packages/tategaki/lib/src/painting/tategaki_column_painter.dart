@@ -4,8 +4,8 @@ import 'package:tategaki/src/layout/column.dart';
 
 /// 縦書きの1列を描画する CustomPainter
 ///
-/// 列ごとに独立した Canvas（幅 = column.width、高さ = maxHeight）に
-/// アイテムを縦に積み上げて描画する。
+/// 列ごとに独立した Canvas（幅 = column.width、高さ = maxHeight）に、
+/// 配置済みアイテムを座標どおりに描画する。
 class TategakiColumnPainter extends CustomPainter {
   /// コンストラクタ
   const TategakiColumnPainter({
@@ -17,13 +17,11 @@ class TategakiColumnPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    var dy = 0.0;
-    for (final item in column.items) {
-      // ベース文字が column.baseWidth の中で中央に来るように dx を計算
-      // （ルビなどのオーバーハングは右側へはみ出す）
-      final dx = (column.baseWidth - item.baseWidth) / 2;
-      item.paint(canvas, Offset(dx, dy));
-      dy += item.height;
+    for (final placed in column.placedItems) {
+      placed.item.paintable.paint(
+        canvas,
+        Offset(placed.blockOffset, placed.inlineOffset),
+      );
     }
   }
 

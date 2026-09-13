@@ -1,87 +1,60 @@
 import 'package:flutter/painting.dart';
 
+import 'package:tategaki/src/layout/tategaki_measurer.dart';
 import 'package:tategaki/src/painting/paintable.dart';
-import 'package:tategaki/src/painting/paintable_column_text.dart';
 
-/// 列内の内容スロット
-///
-/// レイアウト計算時は文字の構造だけを持ち、描画時に [TategakiColumn.items]
-/// が初めて TextPainter を生成する（遅延マテリアライズ）。
-sealed class TategakiColumnSlot {
-  const TategakiColumnSlot();
-}
-
-/// 連続する通常文字（\n 区切りのテキスト）
-class TategakiCharRun extends TategakiColumnSlot {
+/// 列内に配置された要素（計測結果＋インライン位置）
+class TategakiPlacedItem {
   /// コンストラクタ
-  const TategakiCharRun(this.text);
+  const TategakiPlacedItem({
+    required this.item,
+    required this.inlineOffset,
+    required this.blockOffset,
+  });
 
-  /// 各行 = 1文字の \n 区切りテキスト
-  final String text;
-}
+  /// 計測済みの要素
+  final TategakiMeasuredItem item;
 
-/// キャッシュ済みのインライン要素（縦中横・ルビ）
-class TategakiInlineItem extends TategakiColumnSlot {
-  /// コンストラクタ
-  const TategakiInlineItem(this.item);
+  /// インライン方向（縦）の開始位置
+  final double inlineOffset;
 
-  /// 描画要素（TextPainter 保持）
-  final Paintable item;
+  /// ブロック方向（横）の開始位置
+  final double blockOffset;
+
+  /// 計測結果を複製して位置を差し替えたものを返す
+  TategakiPlacedItem copyWith({double? inlineOffset, double? blockOffset}) {
+    return TategakiPlacedItem(
+      item: item,
+      inlineOffset: inlineOffset ?? this.inlineOffset,
+      blockOffset: blockOffset ?? this.blockOffset,
+    );
+  }
 }
 
 /// 縦書きの1列を表すクラス
 class TategakiColumn {
   /// コンストラクタ
   TategakiColumn({
-    required List<TategakiColumnSlot> slots,
+    required this.placedItems,
     required this.width,
     required this.baseWidth,
-    required TextStyle textStyle,
-  }) : _slots = slots,
-       _textStyle = textStyle;
+  });
 
-  /// 内容スロット（未マテリアライズ）
-  final List<TategakiColumnSlot> _slots;
+  /// 配置済みの要素
+  final List<TategakiPlacedItem> placedItems;
 
-  /// 描画用 TextPainter の生成に使うスタイル
-  final TextStyle _textStyle;
-
-  /// 列の総幅（ベース + ルビを含む）
+  /// 列の総幅（ルビなどのオーバーハングを含む）
   final double width;
 
-  /// ベーステキストの最大幅
+  /// ベーステキストの基準幅（行送り）
   final double baseWidth;
 
-  List<Paintable>? _items;
+  /// 描画要素のリスト（配置順）
+  List<Paintable> get items =>
+      [for (final p in placedItems) p.item.paintable];
 
-  /// 描画要素リスト（初回アクセス時にマテリアライズされる）
-  ///
-  /// 未表示の列はこの getter が呼ばれないため、TextPainter は
-  /// 描画する列の分だけしか生成されない。
-  List<Paintable> get items => _items ??= _materialize();
-
-  List<Paintable> _materialize() {
-    final result = <Paintable>[];
-    for (final slot in _slots) {
-      switch (slot) {
-        case TategakiCharRun(:final text):
-          result.add(
-            PaintableColumnText(
-              TextPainter(
-                text: TextSpan(text: text, style: _textStyle),
-                textDirection: TextDirection.ltr,
-                // 各行（1文字）を最大行幅の中央に揃える。
-                // これにより半角数字・英字もセル中央に配置される。
-                textAlign: TextAlign.center,
-              )..layout(),
-            ),
-          );
-        case TategakiInlineItem(:final item):
-          result.add(item);
-      }
-    }
-    return result;
-  }
+  /// 内容が空かどうか
+  bool get isEmpty => placedItems.isEmpty;
 }
 
 /// レイアウト計算結果のメトリクス

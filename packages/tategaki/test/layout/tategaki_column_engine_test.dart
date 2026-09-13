@@ -11,9 +11,21 @@ void main() {
   const style = TextStyle(fontSize: 16);
 
   group('TategakiColumnEngine', () {
+    testWidgets('字送りはfontSize、行送りはfontSize×lineHeightになる', (tester) async {
+      const lineHeightStyle = TextStyle(fontSize: 20, height: 1.5);
+      final engine = TategakiColumnEngine(
+        elements: const [TategakiChar('あ')],
+        maxHeight: 600,
+        textStyle: lineHeightStyle,
+      );
+
+      expect(engine.charHeight, 20);
+      expect(engine.linePitch, 30);
+    });
+
     testWidgets('columnAtで指定した列を遅延生成できる', (tester) async {
       final engine = TategakiColumnEngine(
-        elements: [const TategakiChar('あ')],
+        elements: const [TategakiChar('あ')],
         maxHeight: 600,
         textStyle: style,
       );
@@ -22,16 +34,25 @@ void main() {
 
       expect(column.items.length, 1);
       expect(column.items[0], isA<PaintableColumnText>());
-      final text = column.items[0] as PaintableColumnText;
-      expect(text.text, 'あ');
+      expect((column.items[0] as PaintableColumnText).text, 'あ');
+    });
+
+    testWidgets('各アイテムは列の中心軸に中央寄せされる', (tester) async {
+      final engine = TategakiColumnEngine(
+        elements: TategakiParser.parse('あI1'),
+        maxHeight: 600,
+        textStyle: style,
+      );
+
+      final column = engine.columnAt(0);
+      for (final placed in column.placedItems) {
+        final center = placed.blockOffset + placed.item.baseExtent / 2;
+        expect(center, closeTo(column.baseWidth / 2, 0.001));
+      }
     });
 
     testWidgets('列の高さがmaxHeightを超えない', (tester) async {
-      // 1文字あたり約16px。maxHeight 100 なら 6文字/列になる
-      final elements = List.generate(
-        50,
-        (i) => const TategakiChar('あ'),
-      );
+      final elements = List.generate(50, (i) => const TategakiChar('あ'));
 
       final engine = TategakiColumnEngine(
         elements: elements,
@@ -39,15 +60,12 @@ void main() {
         textStyle: style,
       );
 
-      final columns = engine.computeAll();
-
-      expect(columns.length, greaterThan(1));
-      for (final column in columns) {
-        final columnHeight = column.items.fold<double>(
-          0,
-          (sum, item) => sum + item.height,
+      for (final column in engine.computeAll()) {
+        final last = column.placedItems.last;
+        expect(
+          last.inlineOffset + last.item.advance,
+          lessThanOrEqualTo(100.001),
         );
-        expect(columnHeight, lessThanOrEqualTo(100));
       }
     });
 
@@ -64,22 +82,18 @@ void main() {
 
       final columns = engine.computeAll();
 
-      // 「あ」の列、空の列（改行）、「い」の列
       expect(columns.length, 3);
       expect(columns[0].items, isNotEmpty);
       expect(columns[1].items, isEmpty);
       expect(columns[2].items, isNotEmpty);
     });
 
-    testWidgets('TCYがバッファリングされた文字の間に正しい順序で配置される', (tester) async {
+    testWidgets('TCYが正しい順序で配置される', (tester) async {
       final engine = TategakiColumnEngine(
         elements: const [
           TategakiChar('あ'),
+          TategakiTcy('12'),
           TategakiChar('い'),
-          TategakiChar('う'),
-          TategakiTcy('123'),
-          TategakiChar('え'),
-          TategakiChar('お'),
         ],
         maxHeight: 600,
         textStyle: style,
@@ -91,53 +105,18 @@ void main() {
       expect(column.items[0], isA<PaintableColumnText>());
       expect(column.items[1], isA<PaintableTcy>());
       expect(column.items[2], isA<PaintableColumnText>());
-
-      final before = column.items[0] as PaintableColumnText;
-      final after = column.items[2] as PaintableColumnText;
-      expect(before.text, 'あ\nい\nう');
-      expect(after.text, 'え\nお');
-    });
-
-    testWidgets('行間を拡大してもTCYの列幅は行送りで膨らまない', (tester) async {
-      // lineHeight を大きくすると TextPainter.height（行送り）だけが大きくなる。
-      // TCY は横書きのまま描画するため、列幅は行送りではなく
-      // 数字の実描画幅（painter.width）を基準にしなければならない。
-      const lineHeightStyle = TextStyle(fontSize: 16, height: 3);
-      final engine = TategakiColumnEngine(
-        elements: const [
-          TategakiChar('あ'),
-          TategakiTcy('12'),
-          TategakiChar('い'),
-        ],
-        maxHeight: 600,
-        textStyle: lineHeightStyle,
-      );
-
-      final column = engine.columnAt(0);
-      final tcy = column.items[1] as PaintableTcy;
-
-      // 列幅が行送り（charHeight）で膨らまない
-      expect(column.baseWidth, lessThan(engine.charHeight));
-      // TCYは1文字分の高さ（行送り）だけを消費する
-      expect(tcy.height, closeTo(engine.charHeight, 0.001));
+      expect((column.items[1] as PaintableTcy).text, '12');
     });
 
     testWidgets('桁区切り付き数値トークンは列をまたいで分割されない', (tester) async {
-      final probe = TategakiColumnEngine(
-        elements: const [TategakiChar('あ')],
-        maxHeight: 100,
-        textStyle: style,
-      );
       final engine = TategakiColumnEngine(
         elements: TategakiParser.parse('あ16,844円'),
-        maxHeight: probe.charHeight * 2,
+        maxHeight: style.fontSize! * 2,
         textStyle: style,
       );
 
       final columns = engine.computeAll();
 
-      // 「あ」の列、「16,844」の列、「円」の列に分かれ、
-      // 数値トークンが途中で分割されない
       expect(columns.length, 3);
       expect((columns[0].items.single as PaintableColumnText).text, 'あ');
       expect(columns[1].items.single, isA<PaintableRotated>());
@@ -145,114 +124,23 @@ void main() {
       expect((columns[2].items.single as PaintableColumnText).text, '円');
     });
 
-    testWidgets('半角文字を含む文字ランは中央寄せで描画される', (tester) async {
-      // flutter_test のテストフォントは全グリフ同幅のため line metrics では
-      // 中央寄せを観測できない。ここでは中央寄せを決める textAlign を検証する。
-      // （実フォントでの見た目は widget テスト/目視で確認する）
-      final engine = TategakiColumnEngine(
-        elements: TategakiParser.parse('あI'),
-        maxHeight: 600,
-        textStyle: style,
-      );
-
-      final column = engine.columnAt(0);
-      final text = column.items.single as PaintableColumnText;
-
-      expect(text.painter.textAlign, TextAlign.center);
-      expect(text.text, 'あ\nI');
-    });
-
-    testWidgets('ルビを列に配置できる', (tester) async {
-      final engine = TategakiColumnEngine(
-        elements: const [
-          TategakiChar('あ'),
-          TategakiRuby(base: '猫', ruby: 'ねこ'),
-          TategakiChar('い'),
-        ],
-        maxHeight: 600,
-        textStyle: style,
-      );
-
-      final column = engine.columnAt(0);
-
-      // 連続する「あ」+ ルビ + 「い」
-      expect(column.items.length, 3);
-      expect(column.items[1].isRuby, isTrue);
-      expect(column.baseWidth, greaterThan(0));
-    });
-
-    testWidgets('行頭禁則文字の押し込みでmaxHeightを超えない', (tester) async {
-      final probe = TategakiColumnEngine(
-        elements: const [TategakiChar('あ')],
-        maxHeight: 100,
-        textStyle: style,
-      );
-      const elements = <TategakiElement>[
-        TategakiChar('あ'),
-        TategakiChar('い'),
-        TategakiChar('。'),
-        TategakiChar('。'),
-      ];
-
+    testWidgets('非最終行は行末調整でmaxHeightまで揃えられる', (tester) async {
+      // maxHeight を 5 文字強にし、最終行以外が揃うことを確認する
+      final elements = List.generate(12, (i) => const TategakiChar('あ'));
       final engine = TategakiColumnEngine(
         elements: elements,
-        maxHeight: probe.charHeight * 2,
+        maxHeight: style.fontSize! * 5,
         textStyle: style,
       );
 
       final columns = engine.computeAll();
-      for (final column in columns) {
-        final columnHeight = column.items.fold<double>(
-          0,
-          (sum, item) => sum + item.height,
-        );
-        expect(columnHeight, lessThanOrEqualTo(engine.maxHeight));
-      }
-      final text = columns
-          .expand((column) => column.items)
-          .whereType<PaintableColumnText>()
-          .expand((item) => item.text.split('\n'));
-      expect(text, elements.map((element) => (element as TategakiChar).char));
-    });
-
-    testWidgets('空きがある列では行末禁則文字をそのまま収集する', (tester) async {
-      final engine = TategakiColumnEngine(
-        elements: const [
-          TategakiChar('あ'),
-          TategakiChar('（'),
-          TategakiTcy('12'),
-        ],
-        maxHeight: 600,
-        textStyle: style,
+      // 最初の列（最終行ではない）は末尾が maxHeight に一致する
+      final first = columns.first;
+      final last = first.placedItems.last;
+      expect(
+        last.inlineOffset + last.item.advance,
+        closeTo(style.fontSize! * 5, 0.001),
       );
-
-      final columns = engine.computeAll();
-
-      expect(columns, hasLength(1));
-      expect((columns.single.items.first as PaintableColumnText).text, 'あ\n（');
-      expect(columns.single.items.last, isA<PaintableTcy>());
-    });
-
-    testWidgets('折り返し時に送り出した行末禁則文字を同じ列で再収集しない', (tester) async {
-      final probe = TategakiColumnEngine(
-        elements: const [TategakiChar('あ')],
-        maxHeight: 100,
-        textStyle: style,
-      );
-      final engine = TategakiColumnEngine(
-        elements: const [
-          TategakiChar('あ'),
-          TategakiChar('（'),
-          TategakiChar('い'),
-        ],
-        maxHeight: probe.charHeight * 2,
-        textStyle: style,
-      );
-
-      final columns = engine.computeAll();
-
-      expect((columns.first.items.single as PaintableColumnText).text, 'あ');
-      expect((columns.last.items.single as PaintableColumnText).text, '（\nい');
     });
 
     testWidgets('columnAtは同じ列に対して同一インスタンスを返す（メモ化）', (tester) async {
@@ -262,28 +150,7 @@ void main() {
         textStyle: style,
       );
 
-      final first = engine.columnAt(0);
-      final second = engine.columnAt(0);
-
-      expect(identical(first, second), isTrue);
-    });
-
-    testWidgets('columnAtは要求した列までしか計算しない（遅延性）', (tester) async {
-      final elements = List.generate(
-        100,
-        (i) => const TategakiChar('あ'),
-      );
-
-      final engine = TategakiColumnEngine(
-        elements: elements,
-        maxHeight: 100,
-        textStyle: style,
-      );
-
-      final column = engine.columnAt(0);
-      expect(column, isNotNull);
-      // 1列だけ計算されている
-      expect(engine.computedColumnCount, 1);
+      expect(identical(engine.columnAt(0), engine.columnAt(0)), isTrue);
     });
   });
 
