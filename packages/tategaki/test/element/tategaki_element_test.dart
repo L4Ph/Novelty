@@ -118,6 +118,7 @@ void main() {
 
       test('種類が異なる要素は等しくない', () {
         expect(TategakiChar('1'), isNot(TategakiTcy('1')));
+        expect(TategakiTcy('1'), isNot(TategakiRotated('1')));
         expect(
           TategakiRuby(base: '1', ruby: '1'),
           isNot(TategakiChar('1')),

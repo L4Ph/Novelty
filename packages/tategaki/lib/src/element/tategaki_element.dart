@@ -108,7 +108,7 @@ class TategakiNewLine extends TategakiElement {
       other is TategakiNewLine && runtimeType == other.runtimeType;
 
   @override
-  int get hashCode => Object.hash(TategakiNewLine, 0);
+  int get hashCode => Object.hashAll([TategakiNewLine]);
 
   @override
   String toString() => 'TategakiNewLine()';

@@ -26,6 +26,9 @@ class TategakiMeasuredItem {
   });
 
   /// 元の要素
+  ///
+  /// [TategakiMeasurer] のキャッシュヒット時は、渡されたインスタンスと
+  /// 値は等しいが同一ではない代表インスタンスを指す場合がある。
   final TategakiElement element;
 
   /// インライン方向（縦）の字送り
