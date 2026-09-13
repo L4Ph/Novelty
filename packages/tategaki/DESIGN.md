@@ -62,7 +62,7 @@ sealed class TategakiElement {
   const factory TategakiElement.ruby({
     required String base,
     required String ruby,
-    TategakiRubyAlign align,
+    TategakiRubyAlign align = TategakiRubyAlign.auto,
   }) = TategakiRuby;
 
   /// 傍点（圏点）付きテキスト

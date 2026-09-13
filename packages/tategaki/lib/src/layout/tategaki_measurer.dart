@@ -53,10 +53,13 @@ class TategakiMeasuredItem {
 /// `fontSize × lineHeight` を基準にする（Q23: 軸の取り違えを修正）。
 class TategakiMeasurer {
   /// コンストラクタ
-  TategakiMeasurer(this.textStyle);
+  TategakiMeasurer(this.textStyle, {this.maxAdvance});
 
   /// 本文スタイル
   final TextStyle textStyle;
+
+  /// 1要素が収まるべき最大の字送り（列高）。超える回転トークンは縮小する。
+  final double? maxAdvance;
 
   /// 1文字分の字送り（em）
   late final double em = textStyle.fontSize ?? 16.0;
@@ -124,14 +127,19 @@ class TategakiMeasurer {
       case TategakiRotated(:final text):
         // 回転対象は横書き字形のまま計測する（vert を適用しない）
         final painter = _painter(text, horizontalStyle);
+        // 列高を超える分割不可トークンは縮小して収める
+        final limit = maxAdvance;
+        final scale = (limit != null && painter.width > limit)
+            ? limit / painter.width
+            : 1.0;
         return TategakiMeasuredItem(
           element: element,
-          advance: painter.width,
-          baseExtent: painter.height,
-          blockExtent: painter.height,
+          advance: painter.width * scale,
+          baseExtent: painter.height * scale,
+          blockExtent: painter.height * scale,
           firstClass: TategakiCharClassifier.of(text[0]),
           lastClass: TategakiCharClassifier.of(text[text.length - 1]),
-          paintable: PaintableRotated(painter),
+          paintable: PaintableRotated(painter, scale: scale),
         );
       case TategakiRuby(:final base, :final ruby, :final align):
         return _measureRuby(element, base, ruby, align);
@@ -233,7 +241,8 @@ class TategakiMeasurer {
       basePainters.add(painter);
       baseWidth = math.max(baseWidth, painter.width);
     }
-    final markPainter = _painter(mark);
+    final markStyle = verticalStyle.copyWith(fontSize: em * rubyScale);
+    final markPainter = _painter(mark, markStyle);
 
     return TategakiMeasuredItem(
       element: element,

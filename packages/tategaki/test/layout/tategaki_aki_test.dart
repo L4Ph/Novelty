@@ -46,5 +46,22 @@ void main() {
         0,
       );
     });
+
+    test('括弧のベタ組は行末調整でも広げない', () {
+      expect(
+        TategakiAki.canExpand(
+          TategakiCharClass.openingBracket,
+          TategakiCharClass.kanji,
+        ),
+        isFalse,
+      );
+      expect(
+        TategakiAki.canExpand(
+          TategakiCharClass.kanji,
+          TategakiCharClass.closingBracket,
+        ),
+        isFalse,
+      );
+    });
   });
 }

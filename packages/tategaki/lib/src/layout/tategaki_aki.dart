@@ -67,6 +67,11 @@ class TategakiAki {
     TategakiCharClass previous,
     TategakiCharClass next,
   ) {
+    // 始め括弧の直後・終わり括弧の直前はベタ組を維持する
+    if (previous == TategakiCharClass.openingBracket ||
+        next == TategakiCharClass.closingBracket) {
+      return false;
+    }
     // 欧文同士・連数字同士は分割・分離禁止
     if (previous == TategakiCharClass.latin &&
         next == TategakiCharClass.latin) {

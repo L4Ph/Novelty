@@ -17,7 +17,7 @@
 
 | 値 | ブロックフロー方向 | 書字方向モード | 組版モード |
 |---|---|---|---|
-| `horizontal-tb` | 下→上（横書き） | horizontal | horizontal |
+| `horizontal-tb` | 上→下（横書き） | horizontal | horizontal |
 | `vertical-rl` | 右→左（縦書き・日本語で一般的） | vertical | vertical |
 | `vertical-lr` | 左→右（モンゴル文字など） | vertical | vertical |
 | `sideways-rl` | 右→左 | vertical | horizontal |
@@ -55,7 +55,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| 値 | `none | all | [ digits <integer>? ]`（CSS-WM-4 §9.1） |
+| 値 | `none` \| `all` \| `[ digits <integer>? ]`（CSS-WM-4 §9.1） |
 | 初期値 | `none`、**継承あり** |
 | 適用対象 | non-replaced inline elements |
 | computed value | specified keyword + integer（digits の場合） |

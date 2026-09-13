@@ -126,6 +126,13 @@ void main() {
         expect(result.length, 1);
         expect(result[0], isA<TategakiRotated>());
       });
+
+      test('Tr（縦書き字形のフォールバックが横倒し）の記号も回転する', () {
+        // U+2018 は Vertical_Orientation が Tr
+        final result = TategakiParser.parse('‘');
+        expect(result.length, 1);
+        expect(result[0], isA<TategakiRotated>());
+      });
     });
 
     group('空文字列', () {

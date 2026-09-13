@@ -186,6 +186,25 @@ void main() {
       }
     });
 
+    testWidgets('開き括弧が唯一の要素でも列が空にならず内容が欠落しない', (tester) async {
+      // 回帰テスト: 行末禁則で唯一の要素を送り出すと列が空になり、
+      // computeAll が残りを破棄し columnAt が無限ループしていた
+      final engine = TategakiColumnEngine(
+        elements: const [TategakiChar('（'), TategakiChar('あ')],
+        maxHeight: 16,
+        textStyle: style,
+      );
+
+      final columns = engine.computeAll();
+
+      expect(columns, isNotEmpty);
+      final placed = columns.fold<int>(
+        0,
+        (sum, c) => sum + c.placedItems.length,
+      );
+      expect(placed, 2);
+    });
+
     testWidgets('columnAtは同じ列に対して同一インスタンスを返す（メモ化）', (tester) async {
       final engine = TategakiColumnEngine(
         elements: const [TategakiChar('あ')],

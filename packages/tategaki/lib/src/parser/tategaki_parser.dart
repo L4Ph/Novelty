@@ -76,15 +76,18 @@ class TategakiParser {
         continue;
       }
 
-      // 通常の文字。縦書き字形があればそれを使い、無ければ UTR #50 で
-      // 横倒し（R）と判定される文字は回転する。
+      // 通常の文字。縦書き字形があればそれを使い、無ければ UTR #50 に従う。
+      // R（横倒し）と Tr（縦書き字形のフォールバックが横倒し）は回転する。
+      // Tu（フォールバックが正立）・U は正立する。
       final mapped = GlyphMapper.map(char);
       if (mapped != char) {
         elements.add(TategakiChar(mapped));
-      } else if (VerticalOrientation.isRotated(char.runes.first)) {
-        elements.add(TategakiRotated(char));
       } else {
-        elements.add(TategakiChar(char));
+        final orientation = VerticalOrientation.of(char.runes.first);
+        final rotates =
+            orientation == TategakiOrientation.rotated ||
+            orientation == TategakiOrientation.transformedRotated;
+        elements.add(rotates ? TategakiRotated(char) : TategakiChar(char));
       }
       i++;
     }

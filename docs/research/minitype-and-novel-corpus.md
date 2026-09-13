@@ -147,7 +147,7 @@ qt = [latin]
 | `canSplit(prev,next)` | `hi` @15,246 | `!fi.includes(N(prev)) && !ui.includes(N(next)) && !(Jt.includes(prev)&&Jt.includes(next)) && !(qt.includes(N(prev))&&qt.includes(N(next)))` |
 | `canInsertTracking(prev,next)` | `yi` | `!(Jt 両方) && !(latin 両方)` |
 | `containsJapanese(line)` | `gi` | クラスが `kana/kanji/sutegana/openingBracket/closingBracket/comma/period/middleDot/dividing/prolongedSound` のいずれかを含む |
-| `canBurasage(char)` | `bi` | `N(char) === "comma" || "period"` |
+| `canBurasage(char)` | `bi` | `N(char) === "comma" \|\| "period"` |
 | `isLineHeadForbidden(char)` | `xi` | `ui.includes(N(char))` |
 | `isLineEndForbidden(char)` | `ki` | `fi.includes(N(char))` |
 

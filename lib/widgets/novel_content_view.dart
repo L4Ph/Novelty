@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:narou_parser/narou_parser.dart';
+import 'package:novelty/widgets/kenten_text_widget.dart';
 import 'package:novelty/widgets/ruby_text_widget.dart';
 
 /// 小説のコンテンツを表示するウィジェット。
@@ -79,9 +80,16 @@ class NovelContentView extends HookWidget {
             spans.add(TextSpan(text: element.base, style: style));
           }
         case Kenten():
-          // 横書き表示では傍点を簡易的にベース文字のみ表示する。
-          // 縦書きの傍点描画は TategakiElement.kenten 側で行う。
-          spans.add(TextSpan(text: element.base, style: style));
+          // 横書きでは各文字の上に点を表示する
+          spans.add(
+            WidgetSpan(
+              child: KentenSpan(
+                base: element.base,
+                mark: element.mark,
+                style: style,
+              ),
+            ),
+          );
         case NewLine():
           spans.add(const TextSpan(text: '\n'));
       }

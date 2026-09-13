@@ -19,7 +19,7 @@ class TategakiColumnEngine {
     required this.elements,
     required this.maxHeight,
     required this.textStyle,
-  }) : _measurer = TategakiMeasurer(textStyle);
+  }) : _measurer = TategakiMeasurer(textStyle, maxAdvance: maxHeight);
 
   /// 表示する要素のリスト
   final List<TategakiElement> elements;
@@ -119,12 +119,17 @@ class TategakiColumnEngine {
         if (!TategakiCharClassifier.isHeadProhibitedClass(
           measured.firstClass,
         )) {
-          // 行末禁則: 末尾が開き括弧なら次列へ送る
-          if (TategakiCharClassifier.isTailProhibitedClass(
-            placed.last.item.lastClass,
-          )) {
+          // 行末禁則: 末尾が開き括弧なら次列へ送る。
+          // ただしその 1 文字だけの列になってしまう場合は送り出さない
+          // （列が空になると内容欠落や columnAt の無限ループを招く）。
+          if (placed.length > 1 &&
+              TategakiCharClassifier.isTailProhibitedClass(
+                placed.last.item.lastClass,
+              )) {
             placed.removeLast();
             _elementIndex--;
+            // 送り出しで使用済み高さが変わるため再計算する
+            used = _columnBottom(placed);
           }
           break;
         }
