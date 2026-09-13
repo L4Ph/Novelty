@@ -49,8 +49,11 @@ sealed class TategakiElement {
   /// 通常の文字（1文字、字形変換済み）
   const factory TategakiElement.char(String char) = TategakiChar;
 
-  /// 縦中横（横書きで挿入する文字列）
+  /// 縦中横（横書きで挿入する文字列。既定は2桁の半角数字）
   const factory TategakiElement.tcy(String text) = TategakiTcy;
+
+  /// 回転させる文字列（3桁以上の数字トークン・2文字以上の欧文）
+  const factory TategakiElement.rotated(String text) = TategakiRotated;
 
   /// 改行（次の列へ）
   const factory TategakiElement.newLine() = TategakiNewLine;
@@ -60,6 +63,12 @@ sealed class TategakiElement {
     required String base,
     required String ruby,
   }) = TategakiRuby;
+
+  /// 傍点（圏点）付きテキスト
+  const factory TategakiElement.kenten({
+    required String base,
+    required String mark,
+  }) = TategakiKenten;
 }
 ```
 
@@ -71,7 +80,9 @@ class TategakiParser {
   /// 文字列をパースして要素リストに変換
   ///
   /// - 改行（\n）を検出して TategakiNewLine に
-  /// - 連続する半角数字（2〜3桁）を検出して TategakiTcy に
+  /// - 半角数字トークン（小数点・位取りコンマを含む）を向きのラダーで
+  ///   TategakiChar / TategakiTcy / TategakiRotated に
+  /// - 半角英字ランを TategakiChar（1文字） / TategakiRotated（2文字以上）に
   /// - 残りの文字を1文字ずつ TategakiChar に（字形変換適用）
   static List<TategakiElement> parse(String text);
 }
@@ -181,8 +192,10 @@ SingleChildScrollView(
 ```
 
 **検出ルール**:
-- 半角数字が2〜3文字連続 → `TategakiTcy`
-- 4文字以上 → 1文字ずつ `TategakiChar`
+- 半角数字1桁 → `TategakiChar`（正立）
+- 半角数字2桁（区切りなし）→ `TategakiTcy`
+- 半角数字3桁以上、または小数点・位取りコンマを含む → トークン全体が `TategakiRotated`
+- 半角英字1文字 → `TategakiChar`、2文字以上 → `TategakiRotated`
 
 ### 3. 禁則処理（レイアウト時に適用）
 

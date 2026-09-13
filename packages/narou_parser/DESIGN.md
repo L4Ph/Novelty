@@ -18,6 +18,7 @@ HTMLから以下の要素を抽出：
 
 - プレーンテキスト
 - ルビテキスト（`<ruby>`, `<rb>`, `<rt>`, `<rp>` タグ）
+- 傍点（ルビ文字が点のみで親文字数と点数が一致する場合は `Kenten` に変換）
 - 改行（`<br>`, `<p>` タグ）
 
 ---
@@ -35,6 +36,9 @@ sealed class NovelContentElement with _$NovelContentElement {
   /// ルビ付きテキスト（base: 親文字, ruby: ルビ）
   factory NovelContentElement.rubyText(String base, String ruby) = RubyText;
 
+  /// 傍点（圏点）付きテキスト（base: 対象文字, mark: 点の種類）
+  factory NovelContentElement.kenten(String base, String mark) = Kenten;
+
   /// 改行
   factory NovelContentElement.newLine() = NewLine;
 
@@ -47,6 +51,7 @@ sealed class NovelContentElement with _$NovelContentElement {
 ```json
 {"runtimeType": "plainText", "text": "吾輩は猫である"}
 {"runtimeType": "rubyText", "base": "猫", "ruby": "ねこ"}
+{"runtimeType": "kenten", "base": "重要", "mark": "・"}
 {"runtimeType": "newLine"}
 ```
 
