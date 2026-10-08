@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          cache: true
+
+      - name: Get Flutter packages
+        run: mise run get
+
+      - name: Analyze
+        run: |
+          mise run analyze
+          (cd packages/tategaki && mise exec -- flutter analyze)
+          for package in narou_parser kakuyomu_parser novel_parser_core; do
+            (cd "packages/$package" && mise exec -- dart analyze)
+          done
+
+      - name: Test (root)
+        run: mise run test
+
+      - name: Test (packages)
+        run: |
+          (cd packages/tategaki && mise exec -- flutter test)
+          for package in narou_parser kakuyomu_parser novel_parser_core; do
+            (cd "packages/$package" && mise exec -- dart test)
+          done
+
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          cache: true
+
+      # 注意: v4.0.4 未満は既定で廃止済みの tools パッケージを
+      # インストールしようとして失敗する
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+
+      - name: Get Flutter packages
+        run: mise run get
+
+      # リリースCIと同じ経路（key.properties + release 署名設定）を通すため、
+      # CI用の使い捨てキーストアで release ビルドを検証する
+      - name: Create signing config for CI
+        run: |
+          mise exec -- keytool -genkeypair \
+            -keystore android/app/ci-keystore.jks \
+            -storepass android -keypass android \
+            -alias androiddebugkey -keyalg RSA -keysize 2048 \
+            -validity 10000 -dname "CN=CI, O=Novelty, C=JP"
+          cat > android/app/key.properties <<'EOF'
+          storePassword=android
+          keyPassword=android
+          keyAlias=androiddebugkey
+          storeFile=ci-keystore.jks
+          EOF
+
+      - name: Build Android APK (release)
+        run: mise exec -- flutter build apk --release
