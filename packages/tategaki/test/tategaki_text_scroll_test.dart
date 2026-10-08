@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tategaki/src/layout/tategaki_column_engine.dart';
 import 'package:tategaki/src/layout/tategaki_layout.dart';
+import 'package:tategaki/src/layout/tategaki_measurer.dart';
 import 'package:tategaki/tategaki.dart';
 
 /// 再ビルドをトリガーするためのヘルパーウィジェット
@@ -231,6 +232,42 @@ void main() {
           .length;
 
       expect(shortCount, greaterThan(tallCount));
+    });
+
+    testWidgets('初期表示は可視列分の文字だけを描画要素化する', (tester) async {
+      const total = 30000;
+      const height = 600.0;
+      final elements = List.generate(
+        total,
+        (i) => TategakiChar(String.fromCharCode(0x20000 + i)),
+      );
+      TategakiMeasurer.debugPainterCreationCount = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DefaultTextStyle(
+              style: style,
+              child: TategakiText(elements, height: height),
+            ),
+          ),
+        ),
+      );
+
+      final customPaint = find.descendant(
+        of: find.byType(TategakiText),
+        matching: find.byType(CustomPaint),
+      );
+      final builtColumns = tester.widgetList(customPaint).length;
+      final charsPerColumn = (height / style.fontSize!).ceil();
+
+      // 計算済みの全列（60）ではなく、ビルドされた列の文字数以下しか計測しない
+      expect(builtColumns, lessThan(60));
+      expect(TategakiMeasurer.debugPainterCreationCount, greaterThan(0));
+      expect(
+        TategakiMeasurer.debugPainterCreationCount,
+        lessThanOrEqualTo(builtColumns * charsPerColumn),
+      );
     });
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tategaki/src/layout/tategaki_column_engine.dart';
 import 'package:tategaki/src/layout/tategaki_layout.dart';
+import 'package:tategaki/src/layout/tategaki_measurer.dart';
 import 'package:tategaki/tategaki.dart';
 
 void main() {
@@ -164,6 +165,30 @@ void main() {
 
       expect(find.byType(TategakiTextPaged), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('初回表示は可視ページ分の文字だけを描画要素化する', (tester) async {
+      const total = 30000;
+      final elements = List.generate(
+        total,
+        (i) => TategakiChar(String.fromCharCode(0x20000 + i)),
+      );
+      TategakiMeasurer.debugPainterCreationCount = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DefaultTextStyle(
+              style: style,
+              child: TategakiTextPaged(elements, width: 300, height: 600),
+            ),
+          ),
+        ),
+      );
+
+      // 全異なり文字（30000）ではなく、可視ページの列の文字だけを計測する
+      expect(TategakiMeasurer.debugPainterCreationCount, greaterThan(0));
+      expect(TategakiMeasurer.debugPainterCreationCount, lessThan(1000));
     });
   });
 }

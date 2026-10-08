@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tategaki/src/layout/tategaki_column_engine.dart';
 import 'package:tategaki/src/layout/tategaki_layout.dart';
+import 'package:tategaki/src/layout/tategaki_measurer.dart';
 import 'package:tategaki/src/painting/paintable_column_text.dart';
 import 'package:tategaki/src/painting/paintable_rotated.dart';
 import 'package:tategaki/src/painting/paintable_tcy.dart';
@@ -213,6 +214,25 @@ void main() {
       );
 
       expect(identical(engine.columnAt(0), engine.columnAt(0)), isTrue);
+    });
+
+    testWidgets('computeAllは通常文字の描画要素を生成しない（描画時まで遅延）', (tester) async {
+      TategakiMeasurer.debugPainterCreationCount = 0;
+      final elements = List.generate(
+        500,
+        (i) => TategakiChar(String.fromCharCode(0x3041 + i % 80)),
+      );
+      final engine = TategakiColumnEngine(
+        elements: elements,
+        maxHeight: 100,
+        textStyle: style,
+      )..computeAll();
+      expect(TategakiMeasurer.debugPainterCreationCount, 0);
+
+      // 描画要素に触れた列だけが計測される
+      final items = engine.columnAt(0).items;
+      expect(items, isNotEmpty);
+      expect(TategakiMeasurer.debugPainterCreationCount, greaterThan(0));
     });
   });
 

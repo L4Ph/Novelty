@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tategaki/src/layout/tategaki_measurer.dart';
+import 'package:tategaki/src/painting/paintable_column_text.dart';
 import 'package:tategaki/src/painting/paintable_kenten.dart';
 import 'package:tategaki/src/painting/paintable_rotated.dart';
 import 'package:tategaki/src/painting/paintable_ruby.dart';
@@ -84,6 +85,38 @@ void main() {
       final measured = limited.measure(const TategakiRotated('1234567890'));
       expect(measured.advance, lessThanOrEqualTo(20.001));
       expect((measured.paintable as PaintableRotated).scale, lessThan(1));
+    });
+  });
+
+  group('遅延マテリアライズ', () {
+    setUp(() => TategakiMeasurer.debugPainterCreationCount = 0);
+
+    test('全角文字の計測は TextPainter を生成しない', () {
+      TategakiMeasurer(style).measure(const TategakiChar('あ'));
+
+      expect(TategakiMeasurer.debugPainterCreationCount, 0);
+    });
+
+    test('半角文字の幅は実測にフォールバックする', () {
+      TategakiMeasurer(style).measure(const TategakiChar('1'));
+
+      expect(TategakiMeasurer.debugPainterCreationCount, 1);
+    });
+
+    test('描画要素は初回アクセス時まで生成されない', () {
+      final measurer = TategakiMeasurer(style);
+      final measured = measurer.measure(const TategakiChar('あ'));
+      expect(TategakiMeasurer.debugPainterCreationCount, 0);
+
+      final paintable = measured.paintable;
+
+      expect(paintable, isA<PaintableColumnText>());
+      expect((paintable as PaintableColumnText).text, 'あ');
+      expect(TategakiMeasurer.debugPainterCreationCount, 1);
+
+      // 2回目以降は生成済みの描画要素を再利用する
+      expect(identical(measured.paintable, paintable), isTrue);
+      expect(TategakiMeasurer.debugPainterCreationCount, 1);
     });
   });
 }
