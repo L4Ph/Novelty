@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
 import 'package:tategaki/src/element/tategaki_element.dart';
@@ -15,15 +16,15 @@ import 'package:tategaki/src/utils/glyph_mapper.dart';
 /// レイアウトに必要な計測結果と描画要素
 class TategakiMeasuredItem {
   /// コンストラクタ
-  const TategakiMeasuredItem({
+  TategakiMeasuredItem({
     required this.element,
     required this.advance,
     required this.baseExtent,
     required this.blockExtent,
     required this.firstClass,
     required this.lastClass,
-    required this.paintable,
-  });
+    required Paintable Function() buildPaintable,
+  }) : _buildPaintable = buildPaintable;
 
   /// 元の要素
   ///
@@ -46,8 +47,14 @@ class TategakiMeasuredItem {
   /// 末尾文字のクラス
   final TategakiCharClass lastClass;
 
+  final Paintable Function() _buildPaintable;
+
   /// 描画要素
-  final Paintable paintable;
+  ///
+  /// 生成は初回アクセス時まで遅延する。レイアウト時に全異なり要素分の
+  /// [TextPainter] を生成すると、エピソードを開くだけで異なり文字数分の
+  /// 計測が走るため。
+  late final Paintable paintable = _buildPaintable();
 }
 
 /// 要素を計測し、字送り・前後幅・描画要素を生成する
@@ -73,6 +80,12 @@ class TategakiMeasurer {
   /// ルビ・傍点の文字サイズ比率
   static const double rubyScale = 0.5;
 
+  /// テスト用: [TextPainter] を生成した回数
+  ///
+  /// 「レイアウト時は生成せず、描画時に遅延生成する」契約を検証する。
+  @visibleForTesting
+  static int debugPainterCreationCount = 0;
+
   final Map<TategakiElement, TategakiMeasuredItem> _cache = {};
 
   /// 縦書き用字形（`vert`）を有効にした描画用スタイル（Q17）
@@ -96,24 +109,55 @@ class TategakiMeasurer {
   }
 
   TextPainter _painter(String text, [TextStyle? style]) {
+    debugPainterCreationCount++;
     return TextPainter(
       text: TextSpan(text: text, style: style ?? verticalStyle),
       textDirection: TextDirection.ltr,
     )..layout();
   }
 
+  final Map<String, double> _charExtentCache = {};
+
+  /// 1文字のブロック方向の幅（列幅と中央寄せの基準）
+  ///
+  /// 全角文字は字面幅 = em として算術で求める。ここで [TextPainter] を
+  /// 生成すると、レイアウト時に異なり文字数分の計測が走るため。
+  /// 半角・ASCII など em とみなせない文字だけ実測し、文字ごとに再利用する。
+  double _charExtent(String char) {
+    final runes = char.runes;
+    if (runes.length == 1 && _isFullWidth(runes.first)) {
+      return em;
+    }
+    return _charExtentCache.putIfAbsent(char, () => _painter(char).width);
+  }
+
+  /// 字面幅が em になる Unicode 範囲かどうか
+  static bool _isFullWidth(int code) {
+    return (code >= 0x3000 && code <= 0x303F) || // 全角約物・和字間隔
+        (code >= 0x3041 && code <= 0x30FF) || // かな・長音記号
+        (code >= 0x3400 && code <= 0x4DBF) || // 拡張漢字A
+        (code >= 0x4E00 && code <= 0x9FFF) || // 漢字
+        (code >= 0xF900 && code <= 0xFAFF) || // 互換漢字
+        (code >= 0xFE10 && code <= 0xFE4F) || // 縦書き変体
+        (code >= 0xFF01 && code <= 0xFF60) || // 全角英数記号
+        (code >= 0xFFE0 && code <= 0xFFE6) || // 全角記号
+        (code >= 0x20000 && code <= 0x2FFFF); // 拡張漢字B以降
+  }
+
   TategakiMeasuredItem _measure(TategakiElement element) {
     switch (element) {
       case TategakiChar(:final char):
-        final painter = _painter(char);
+        final charClass = TategakiCharClassifier.of(char);
+        final extent = _charExtent(char);
         return TategakiMeasuredItem(
           element: element,
           advance: em,
-          baseExtent: painter.width,
-          blockExtent: painter.width,
-          firstClass: TategakiCharClassifier.of(char),
-          lastClass: TategakiCharClassifier.of(char),
-          paintable: PaintableColumnText(painter),
+          baseExtent: extent,
+          blockExtent: extent,
+          firstClass: charClass,
+          lastClass: charClass,
+          // 描画用の TextPainter は初回描画時まで生成しない
+          buildPaintable: () => PaintableColumnText(_painter(char)),
         );
       case TategakiTcy(:final text):
         // 縦中横は横書きのまま描画するため vert を適用しない
@@ -125,7 +169,7 @@ class TategakiMeasurer {
           blockExtent: painter.width,
           firstClass: TategakiCharClass.digit,
           lastClass: TategakiCharClass.digit,
-          paintable: PaintableTcy(painter),
+          buildPaintable: () => PaintableTcy(painter),
         );
       case TategakiRotated(:final text):
         // 回転対象は横書き字形のまま計測する（vert を適用しない）
@@ -142,7 +186,7 @@ class TategakiMeasurer {
           blockExtent: painter.height * scale,
           firstClass: TategakiCharClassifier.of(text[0]),
           lastClass: TategakiCharClassifier.of(text[text.length - 1]),
-          paintable: PaintableRotated(painter, scale: scale),
+          buildPaintable: () => PaintableRotated(painter, scale: scale),
         );
       case TategakiRuby(:final base, :final ruby, :final align):
         return _measureRuby(element, base, ruby, align);
@@ -156,7 +200,7 @@ class TategakiMeasurer {
           blockExtent: 0,
           firstClass: TategakiCharClass.others,
           lastClass: TategakiCharClass.others,
-          paintable: _EmptyPaintable(),
+          buildPaintable: _EmptyPaintable.new,
         );
     }
   }
@@ -204,7 +248,7 @@ class TategakiMeasurer {
       lastClass: TategakiCharClassifier.of(
         String.fromCharCode(baseRunes.last),
       ),
-      paintable: PaintableRuby(
+      buildPaintable: () => PaintableRuby(
         basePainters: basePainters,
         rubyPainters: rubyPainters,
         baseAdvance: em,
@@ -258,7 +302,7 @@ class TategakiMeasurer {
       lastClass: TategakiCharClassifier.of(
         String.fromCharCode(baseRunes.last),
       ),
-      paintable: PaintableKenten(
+      buildPaintable: () => PaintableKenten(
         basePainters: basePainters,
         markPainter: markPainter,
         charAdvance: em,

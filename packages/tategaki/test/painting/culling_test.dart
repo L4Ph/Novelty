@@ -40,7 +40,7 @@ TategakiMeasuredItem makeMeasured(Paintable paintable) {
     blockExtent: 20,
     firstClass: TategakiCharClass.others,
     lastClass: TategakiCharClass.others,
-    paintable: paintable,
+    buildPaintable: () => paintable,
   );
 }
 
