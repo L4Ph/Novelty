@@ -80,6 +80,34 @@ void main() {
       expect(markPainter.text?.style?.fontSize, 16 * 0.5);
     });
 
+    test('傍点マークは縦書き用字形に変換される', () {
+      // 長音記号などの横線系のマークは、縦書き字形(丨)へ変換して描画する。
+      // 変換せずに描画すると縦組みでも横棒のままになり、傍点として機能しない。
+      final kenten = measurer.measure(
+        const TategakiKenten(base: '重要', mark: 'ー'),
+      );
+      final markPainter = (kenten.paintable as PaintableKenten).markPainter;
+      expect(markPainter.text?.toPlainText(), '丨');
+    });
+
+    test('傍点マークの中黒は縦書き用字形(｜)に変換される', () {
+      // なろうの点ルビで一般的な中黒(・)は、縦書きでは縦線(｜)として描画する。
+      final kenten = measurer.measure(
+        const TategakiKenten(base: '重要', mark: '・'),
+      );
+      final markPainter = (kenten.paintable as PaintableKenten).markPainter;
+      expect(markPainter.text?.toPlainText(), '｜');
+    });
+
+    test('縦書き字形を持たないマークはそのまま描画される', () {
+      // 変換表にないマーク(カクヨムのゴマ点など)は変更しない。
+      final kenten = measurer.measure(
+        const TategakiKenten(base: '重要', mark: '﹅'),
+      );
+      final markPainter = (kenten.paintable as PaintableKenten).markPainter;
+      expect(markPainter.text?.toPlainText(), '﹅');
+    });
+
     test('列高を超える回転トークンは縮小されて収まる', () {
       final limited = TategakiMeasurer(style, maxAdvance: 20);
       final measured = limited.measure(const TategakiRotated('1234567890'));
