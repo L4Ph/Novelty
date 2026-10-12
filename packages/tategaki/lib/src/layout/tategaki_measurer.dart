@@ -289,7 +289,9 @@ class TategakiMeasurer {
       baseWidth = math.max(baseWidth, painter.width);
     }
     final markStyle = verticalStyle.copyWith(fontSize: em * rubyScale);
-    final markPainter = _painter(mark, markStyle);
+    // 横線系のマーク(長音記号など)は縦書き用字形へ変換する。変換しないと
+    // 縦組みでも横棒のまま描画され、傍点として機能しない。
+    final markPainter = _painter(GlyphMapper.map(mark), markStyle);
 
     return TategakiMeasuredItem(
       element: element,
