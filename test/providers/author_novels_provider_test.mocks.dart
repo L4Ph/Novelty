@@ -52,31 +52,6 @@ class MockApiService extends _i1.Mock implements _i5.ApiService {
   }
 
   @override
-  _i6.Future<Map<String, _i2.NovelInfo>> fetchMultipleNovelsInfo(
-    List<String>? ncodes,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#fetchMultipleNovelsInfo, [ncodes]),
-            returnValue: _i6.Future<Map<String, _i2.NovelInfo>>.value(
-              <String, _i2.NovelInfo>{},
-            ),
-          )
-          as _i6.Future<Map<String, _i2.NovelInfo>>);
-
-  @override
-  _i6.Future<_i2.NovelInfo> fetchBasicNovelInfo(String? ncode) =>
-      (super.noSuchMethod(
-            Invocation.method(#fetchBasicNovelInfo, [ncode]),
-            returnValue: _i6.Future<_i2.NovelInfo>.value(
-              _FakeNovelInfo_0(
-                this,
-                Invocation.method(#fetchBasicNovelInfo, [ncode]),
-              ),
-            ),
-          )
-          as _i6.Future<_i2.NovelInfo>);
-
-  @override
   _i6.Future<List<_i3.Episode>> fetchEpisodeList(String? ncode, int? page) =>
       (super.noSuchMethod(
             Invocation.method(#fetchEpisodeList, [ncode, page]),

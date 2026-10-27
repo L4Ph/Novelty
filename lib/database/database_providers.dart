@@ -52,13 +52,6 @@ Stream<List<dynamic>> libraryNovels(Ref ref) {
 }
 
 @riverpod
-/// 閲覧履歴のリストを監視するプロバイダー。
-Stream<List<HistoryData>> history(Ref ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return db.watchHistory();
-}
-
-@riverpod
 /// 現在時刻を提供するプロバイダー。主に履歴のグループ化に使用される。
 DateTime currentTime(Ref ref) => DateTime.now();
 

@@ -1,4 +1,4 @@
-// ignore_for_file: depend_on_referenced_packages, prefer_foreach, lines_longer_than_80_chars, avoid_redundant_argument_values, prefer_const_declarations, reason: テスト支援のため
+// ignore_for_file: prefer_foreach, lines_longer_than_80_chars, avoid_redundant_argument_values, prefer_const_declarations, reason: テスト支援のため
 
 import 'dart:io';
 

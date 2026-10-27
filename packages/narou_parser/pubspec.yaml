@@ -12,7 +12,6 @@ dependencies:
   freezed_annotation:
   html:
   json_annotation:
-  meta: ^1.12.0
   novel_parser_core:
     path: ../novel_parser_core
 

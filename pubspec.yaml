@@ -51,6 +51,8 @@ dependencies:
     path: packages/kakuyomu_parser
   narou_parser:
     path: packages/narou_parser
+  novel_parser_core:
+    path: packages/novel_parser_core
   path: ^1.9.0
   path_provider: ^2.1.6
   riverpod: ^3.3.2
@@ -61,7 +63,6 @@ dependencies:
   url_launcher: ^6.3.2
 dev_dependencies:
   build_runner: 2.15.1
-  crypto: ^3.0.6
   drift_dev: ^2.34.0
   flutter_test:
     sdk: flutter

@@ -381,16 +381,6 @@ class NovelRepository {
     }
   }
 
-  /// 小説の情報を取得するメソッド。
-  Future<void> downloadEpisode(
-    NovelSource source,
-    String workId,
-    int episode,
-  ) async {
-    // 既存のdownloadSingleEpisodeを利用するように変更
-    await downloadSingleEpisode(source, workId, episode);
-  }
-
   /// 小説のダウンロードを行うメソッド。
   ///
   /// 各エピソードのダウンロードを試み、失敗したエピソードがあっても継続する。
@@ -527,18 +517,6 @@ class NovelRepository {
             content: Value<List<NovelContentElement>?>(null),
           ),
         );
-  }
-
-  /// ダウンロードパスを取得するメソッド。
-  Stream<bool> isEpisodeDownloaded(
-    NovelSource source,
-    String workId,
-    int episode,
-  ) async* {
-    final cached = await _db.getEpisodeData(source, workId, episode);
-    yield cached != null &&
-        cached.content != null &&
-        cached.content!.isNotEmpty;
   }
 
   /// 小説のダウンロードを行うメソッド。
@@ -896,7 +874,7 @@ Stream<DownloadProgress?> downloadProgress(
 @riverpod
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
-/// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
+/// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
 class DownloadStatus extends _$DownloadStatus {
   @override
   Stream<bool> build(NovelInfo novelInfo) {
@@ -925,26 +903,6 @@ class DownloadStatus extends _$DownloadStatus {
       state = AsyncValue.error(e, st);
       await Future<void>.delayed(const Duration(seconds: 2));
       state = previousState;
-      return DownloadResult.error(e.toString());
-    }
-  }
-
-  /// 小説の削除を実行するメソッド。
-  ///
-  /// 削除確認はUIレイヤーで行うため、このメソッドは削除のみを実行する。
-  Future<DownloadResult> executeDelete(NovelInfo novelInfo) async {
-    final repo = ref.read(novelRepositoryProvider);
-    state = const AsyncValue.loading();
-
-    try {
-      await repo.deleteDownloadedNovel(
-        novelInfo.source,
-        novelInfo.workId ?? novelInfo.ncode!,
-      );
-      ref.invalidateSelf();
-      return const DownloadResult.success();
-    } on Exception catch (e, st) {
-      state = AsyncValue.error(e, st);
       return DownloadResult.error(e.toString());
     }
   }
