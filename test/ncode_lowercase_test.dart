@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
-import 'package:novelty/models/ranking_response.dart';
 
 void main() {
   group('ncodeを小文字で扱うテスト', () {
@@ -15,17 +14,6 @@ void main() {
 
       final novelInfo = NovelInfo.fromJson(json);
       expect(novelInfo.workId, equals('n1234ab'));
-    });
-
-    test('RankingResponse.fromJsonでncodeが小文字化される', () {
-      final json = {
-        'ncode': 'N5678CD',
-        'title': 'ランキング小説',
-        'rank': '1',
-      };
-
-      final rankingResponse = RankingResponse.fromJson(json);
-      expect(rankingResponse.ncode, equals('n5678cd'));
     });
 
     test('Episode.fromJsonでncodeが小文字化される', () {

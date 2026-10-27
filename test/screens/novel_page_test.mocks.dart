@@ -189,19 +189,6 @@ class MockNovelRepository extends _i1.Mock implements _i4.NovelRepository {
           as _i8.Future<List<_i11.NovelContentElement>>);
 
   @override
-  _i8.Future<void> downloadEpisode(
-    _i10.NovelSource? source,
-    String? workId,
-    int? episode,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#downloadEpisode, [source, workId, episode]),
-            returnValue: _i8.Future<void>.value(),
-            returnValueForMissingStub: _i8.Future<void>.value(),
-          )
-          as _i8.Future<void>);
-
-  @override
   _i8.Future<void> downloadNovel(
     _i10.NovelSource? source,
     String? workId,
@@ -242,18 +229,6 @@ class MockNovelRepository extends _i1.Mock implements _i4.NovelRepository {
             returnValueForMissingStub: _i8.Future<void>.value(),
           )
           as _i8.Future<void>);
-
-  @override
-  _i8.Stream<bool> isEpisodeDownloaded(
-    _i10.NovelSource? source,
-    String? workId,
-    int? episode,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#isEpisodeDownloaded, [source, workId, episode]),
-            returnValue: _i8.Stream<bool>.empty(),
-          )
-          as _i8.Stream<bool>);
 
   @override
   _i8.Future<_i3.DownloadResult> downloadNovelWithResult(

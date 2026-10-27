@@ -5,7 +5,6 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 import 'package:narou_parser/narou_parser.dart';
-// ignore: depend_on_referenced_packages, reason: workspace パッケージのため
 import 'package:novel_parser_core/novel_parser_core.dart';
 import 'package:novelty/database/migration_helper.dart';
 import 'package:novelty/models/episode.dart';
@@ -1199,22 +1198,6 @@ class AppDatabase extends _$AppDatabase {
     return id;
   }
 
-  /// 小説の非公開フラグを更新する
-  Future<int> updateNovelPrivateFlag(
-    NovelSource source,
-    String workId, {
-    required bool isPrivate,
-  }) {
-    return (update(
-          novels,
-        )..where((t) => t.source.equalsValue(source) & t.workId.equals(workId)))
-        .write(
-          NovelsCompanion(
-            isPrivate: Value(isPrivate),
-          ),
-        );
-  }
-
   /// 小説の取得状態を確保する
   ///
   /// 指定したsource/workIdの行が存在しない場合はプレースホルダー行を挿入し、
@@ -1253,35 +1236,6 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
-  /// 指定範囲の目次データのうち、最も古い取得日時を返す
-  ///
-  /// 対象範囲に取得日時が未設定(fetched_at IS NULL)の行が含まれる場合は
-  /// 期限切れとして扱えるようNULLを返す。
-  Future<int?> getEpisodeListOldestFetchedAt(
-    NovelSource source,
-    String workId,
-    int start,
-    int end,
-  ) async {
-    final result = await customSelect(
-      'SELECT '
-      'CASE '
-      'WHEN COUNT(*) = COUNT(fetched_at) THEN MIN(fetched_at) '
-      'ELSE NULL '
-      'END as oldest '
-      'FROM episode_list_entries '
-      'WHERE source = ? AND work_id = ? AND episode_id BETWEEN ? AND ?',
-      variables: [
-        Variable.withString(source.dbId),
-        Variable.withString(workId),
-        Variable.withInt(start),
-        Variable.withInt(end),
-      ],
-      readsFrom: {episodeListEntries},
-    ).getSingleOrNull();
-    return result?.read<int?>('oldest');
-  }
-
   /// 履歴の追加
   Future<int> addToHistory(ReadingHistoryCompanion history) {
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -1292,34 +1246,6 @@ class AppDatabase extends _$AppDatabase {
       ),
       mode: InsertMode.insertOrReplace,
     );
-  }
-
-  /// 履歴の取得（JOIN）
-  Future<List<HistoryData>> getHistory() async {
-    final query = select(readingHistory).join([
-      innerJoin(
-        novels,
-        novels.source.equalsExp(readingHistory.source) &
-            novels.workId.equalsExp(readingHistory.workId),
-      ),
-    ])..orderBy([OrderingTerm.desc(readingHistory.viewedAt)]);
-
-    final results = await query.get();
-
-    return results.map((row) {
-      final novel = row.readTable(novels);
-      final history = row.readTable(readingHistory);
-
-      return HistoryData(
-        source: novel.source,
-        workId: novel.workId,
-        title: novel.title,
-        writer: novel.writer,
-        lastEpisode: history.lastEpisodeId,
-        viewedAt: history.viewedAt,
-        updatedAt: history.updatedAt,
-      );
-    }).toList();
   }
 
   /// 履歴の監視（JOIN）
@@ -1355,11 +1281,6 @@ class AppDatabase extends _$AppDatabase {
           readingHistory,
         )..where((t) => t.source.equalsValue(source) & t.workId.equals(workId)))
         .go();
-  }
-
-  /// 履歴の全削除
-  Future<int> clearHistory() {
-    return delete(readingHistory).go();
   }
 
   /// エピソード情報（目次）の保存
@@ -1449,16 +1370,6 @@ class AppDatabase extends _$AppDatabase {
     ).watchSingleOrNull();
   }
 
-  /// 特定エピソードのデータ（目次 + 本文）を監視
-  @Deprecated('watchEpisodeDataを使用してください')
-  Stream<EpisodeData?> watchEpisodeEntity(
-    NovelSource source,
-    String workId,
-    int episodeId,
-  ) {
-    return watchEpisodeData(source, workId, episodeId);
-  }
-
   /// 目次と本文を結合したエピソードデータを取得するSELECT
   Selectable<EpisodeData> _episodeDataSelect(
     NovelSource source,
@@ -1497,11 +1408,6 @@ class AppDatabase extends _$AppDatabase {
         fetchedAt: row.read<int?>('fetched_at'),
       );
     });
-  }
-
-  /// エピソード一覧を取得
-  Future<List<Episode>> getEpisodes(NovelSource source, String workId) {
-    return _episodeListSelect(source, workId).get();
   }
 
   /// 指定エピソードのURLを取得する。

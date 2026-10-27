@@ -443,19 +443,19 @@ final class DownloadProgressFamily extends $Family
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
-/// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
+/// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
 
 @ProviderFor(DownloadStatus)
 final downloadStatusProvider = DownloadStatusFamily._();
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
-/// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
+/// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
 final class DownloadStatusProvider
     extends $StreamNotifierProvider<DownloadStatus, bool> {
   /// 小説のダウンロード状態を管理するプロバイダー。
   ///
-  /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
+  /// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
   DownloadStatusProvider._({
     required DownloadStatusFamily super.from,
     required NovelInfo super.argument,
@@ -492,11 +492,11 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'b502bb55d3d695bda32e6a54b7db4a40c235945f';
+String _$downloadStatusHash() => r'ebc1e2f30debe5326c3e2895bb2f92b423134db2';
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
-/// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
+/// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
 
 final class DownloadStatusFamily extends $Family
     with
@@ -518,7 +518,7 @@ final class DownloadStatusFamily extends $Family
 
   /// 小説のダウンロード状態を管理するプロバイダー。
   ///
-  /// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
+  /// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
 
   DownloadStatusProvider call(NovelInfo novelInfo) =>
       DownloadStatusProvider._(argument: novelInfo, from: this);
@@ -529,7 +529,7 @@ final class DownloadStatusFamily extends $Family
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
-/// 小説のダウンロード状態を監視し、ダウンロードの開始や削除を行うためのプロバイダー。
+/// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
 
 abstract class _$DownloadStatus extends $StreamNotifier<bool> {
   late final _$args = ref.$arg as NovelInfo;

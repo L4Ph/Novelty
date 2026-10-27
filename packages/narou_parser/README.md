@@ -4,22 +4,16 @@
 
 「小説家になろう」の小説HTML（`<p>`, `<br>`, `<ruby>` タグなど）を、Novelty アプリで使用する `NovelContentElement` リストにパースするパッケージです。
 
-## パーサーの種類
+## パーサー
 
-- **Stable Parser** (`parseNovelContent`) - 安定版。package:html を使用した DOMベースのパーサー
-- **Fast Parser** (`parseNovelContentFast`) - 実験版。正規表現ベースの高速パーサー
-- **Ultra Parser** (`parseNovelContentUltra`) - 実験版。文字列スキャンベースの超高速パーサー
+公開APIは `parseNovelContent` です。実装はルックアップテーブル方式の `parser_lookup` を使います。
 
 ## ベンチマーク
 
 ### 実行方法
 
 ```bash
-# 通常パーサーのベンチマーク
 dart run benchmark/stable_parser_benchmark.dart
-
-# 全パーサーの比較ベンチマーク
-dart run benchmark/all_parsers_benchmark.dart
 ```
 
 ### ベンチマーク結果
