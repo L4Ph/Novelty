@@ -9,7 +9,7 @@ environment:
 resolution: workspace
 
 dependencies:
-  html:
+  html: ^0.15.7
   novel_parser_core:
     path: ../novel_parser_core
 
