@@ -16,8 +16,8 @@ class NovelListTile extends HookWidget {
     super.key,
     this.rank,
     this.onTap,
-    this.onLongPress,
     this.enrichedData,
+    this.trailing,
   });
 
   /// 小説の情報。
@@ -32,8 +32,11 @@ class NovelListTile extends HookWidget {
   /// タップ時のコールバック。
   final VoidCallback? onTap;
 
-  /// 長押し時のコールバック。
-  final VoidCallback? onLongPress;
+  /// 行の右端に表示するウィジェット。
+  ///
+  /// ライブラリの削除メニューなど、行ごとの操作はここに置く。
+  /// 長押しでは操作を提供しない。
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -148,11 +151,10 @@ class NovelListTile extends HookWidget {
       ),
     };
 
-    return InkWell(
+    final content = InkWell(
       onTap: onTap ?? defaultOnTap,
-      onLongPress: onLongPress,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.fromLTRB(16, 12, trailing == null ? 16 : 4, 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -220,6 +222,18 @@ class NovelListTile extends HookWidget {
           ],
         ),
       ),
+    );
+
+    final endSlot = trailing;
+    if (endSlot == null) {
+      return content;
+    }
+
+    return Row(
+      children: [
+        Expanded(child: content),
+        endSlot,
+      ],
     );
   }
 }

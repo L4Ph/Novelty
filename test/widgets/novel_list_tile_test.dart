@@ -276,5 +276,41 @@ void main() {
       final widget = tester.widget(find.byType(NovelListTile));
       expect(widget, isA<HookWidget>());
     });
+
+    testWidgets('長押しでは操作せず、trailingを行の右端に表示する', (tester) async {
+      const item = NovelInfo(
+        ncode: 'N1234AB',
+        title: 'テストタイトル',
+        novelType: 1,
+        end: 0,
+        genreId: '1',
+        writer: 'テスト作者',
+      );
+      var tapped = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NovelListTile(
+              item: item,
+              onTap: () => tapped = true,
+              trailing: const Icon(Icons.more_vert),
+            ),
+          ),
+        ),
+      );
+
+      final inkWell = tester.widget<InkWell>(find.byType(InkWell));
+      expect(inkWell.onLongPress, isNull);
+
+      final titleRect = tester.getRect(find.text('テストタイトル'));
+      final trailingRect = tester.getRect(find.byIcon(Icons.more_vert));
+      expect(trailingRect.left, greaterThan(titleRect.right));
+
+      final gesture = await tester.startGesture(titleRect.center);
+      await tester.pump(const Duration(milliseconds: 800));
+      expect(tapped, isFalse);
+      await gesture.cancel();
+    });
   });
 }
