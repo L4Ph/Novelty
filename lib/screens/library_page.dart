@@ -162,44 +162,24 @@ class LibraryPage extends ConsumerWidget {
 
                     return NovelListTile(
                       item: novelData,
-                      onLongPress: () {
-                        unawaited(
-                          showDialog<void>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('削除の確認'),
-                              content: Text('"${novel.title}"をライブラリから削除しますか？'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('キャンセル'),
-                                ),
-                                TextButton(
-                                  onPressed: () async {
-                                    await ref
-                                        .read(novelRepositoryProvider)
-                                        .removeFromLibrary(
-                                          novel.source,
-                                          novel.workId,
-                                        );
-                                    if (context.mounted) {
-                                      Navigator.pop(context);
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('ライブラリから削除しました'),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  child: const Text('削除'),
-                                ),
-                              ],
-                            ),
+                      trailing: PopupMenuButton<String>(
+                        tooltip: 'メニュー',
+                        icon: const Icon(Icons.more_vert),
+                        onSelected: (value) {
+                          if (value != 'remove') {
+                            return;
+                          }
+                          unawaited(
+                            _confirmRemoveFromLibrary(context, ref, novel),
+                          );
+                        },
+                        itemBuilder: (_) => const [
+                          PopupMenuItem<String>(
+                            value: 'remove',
+                            child: Text('ライブラリから削除'),
                           ),
-                        );
-                      },
+                        ],
+                      ),
                     );
                   },
                 );
@@ -212,4 +192,45 @@ class LibraryPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// ライブラリからの削除を確認し、承認されたときだけ削除する。
+Future<void> _confirmRemoveFromLibrary(
+  BuildContext context,
+  WidgetRef ref,
+  Novel novel,
+) {
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('削除の確認'),
+      content: Text('"${novel.title}"をライブラリから削除しますか？'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: const Text('キャンセル'),
+        ),
+        TextButton(
+          onPressed: () async {
+            await ref
+                .read(novelRepositoryProvider)
+                .removeFromLibrary(
+                  novel.source,
+                  novel.workId,
+                );
+            if (!dialogContext.mounted) {
+              return;
+            }
+            Navigator.pop(dialogContext);
+            ScaffoldMessenger.of(dialogContext).showSnackBar(
+              const SnackBar(
+                content: Text('ライブラリから削除しました'),
+              ),
+            );
+          },
+          child: const Text('削除'),
+        ),
+      ],
+    ),
+  );
 }

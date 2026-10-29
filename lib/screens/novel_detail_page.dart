@@ -828,12 +828,20 @@ class _EpisodeListTile extends ConsumerWidget {
               ),
             )
           : null,
-      trailing: isDownloaded
-          ? Icon(
-              Icons.check_circle,
-              color: colorScheme.primary,
-            )
-          : null,
+      trailing: IconButton(
+        tooltip: isDownloaded ? 'ダウンロードを削除' : 'ダウンロード',
+        onPressed: () => _onEpisodeActionPressed(
+          context,
+          ref,
+          episodeNumber,
+          isDownloaded: isDownloaded,
+          isOfflineMode: isOfflineMode,
+        ),
+        icon: Icon(
+          isDownloaded ? Icons.check_circle : Icons.download,
+          color: isDownloaded ? colorScheme.primary : null,
+        ),
+      ),
       onTap: () {
         unawaited(
           NovelEpisodeRoute(
@@ -844,85 +852,59 @@ class _EpisodeListTile extends ConsumerWidget {
           ).push(context),
         );
       },
-      onLongPress: isOfflineMode
-          ? () => showOfflineDisabledSnackBar(context)
-          : () => _showEpisodeMenu(context, ref, episodeNumber, isDownloaded),
     );
   }
 
-  /// エピソードの長押しメニューを表示
-  Future<void> _showEpisodeMenu(
+  /// 右端のアイコンが押されたときの処理。
+  ///
+  /// 未ダウンロードならその話をダウンロードし、ダウンロード済みなら
+  /// 確認のあと削除する。オフライン中はどちらも行わず、従来と同じ
+  /// 案内を出す。
+  void _onEpisodeActionPressed(
+    BuildContext context,
+    WidgetRef ref,
+    int episodeNumber, {
+    required bool isDownloaded,
+    required bool isOfflineMode,
+  }) {
+    if (isOfflineMode) {
+      showOfflineDisabledSnackBar(context);
+      return;
+    }
+    if (isDownloaded) {
+      unawaited(_confirmDeleteEpisode(context, ref, episodeNumber));
+      return;
+    }
+    unawaited(handleDownload(context, ref, episodeNumber));
+  }
+
+  /// ダウンロード済みエピソードの削除を確認し、承認されたときだけ削除する。
+  Future<void> _confirmDeleteEpisode(
     BuildContext context,
     WidgetRef ref,
     int episodeNumber,
-    bool isDownloaded,
   ) async {
-    if (!context.mounted) return;
-
-    try {
-      await showModalBottomSheet<void>(
-        context: context,
-        useSafeArea: true,
-        builder: (bottomSheetContext) => SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!isDownloaded)
-                ListTile(
-                  leading: const Icon(Icons.download),
-                  title: const Text('ダウンロード'),
-                  onTap: () async {
-                    Navigator.pop(bottomSheetContext);
-                    try {
-                      await handleDownload(context, ref, episodeNumber);
-                    } on Object catch (e, stackTrace) {
-                      debugPrint('予期しないエラー: $e\n$stackTrace');
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('予期しないエラーが発生しました')),
-                        );
-                      }
-                    }
-                  },
-                ),
-              if (isDownloaded)
-                ListTile(
-                  leading: Icon(
-                    Icons.delete,
-                    color: Theme.of(bottomSheetContext).colorScheme.error,
-                  ),
-                  title: Text(
-                    '削除',
-                    style: TextStyle(
-                      color: Theme.of(bottomSheetContext).colorScheme.error,
-                    ),
-                  ),
-                  onTap: () async {
-                    Navigator.pop(bottomSheetContext);
-                    try {
-                      await handleDelete(context, ref, episodeNumber);
-                    } on Object catch (e, stackTrace) {
-                      debugPrint('予期しないエラー: $e\n$stackTrace');
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('予期しないエラーが発生しました')),
-                        );
-                      }
-                    }
-                  },
-                ),
-            ],
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('削除の確認'),
+        content: Text('第$episodeNumber話のダウンロードを削除しますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('キャンセル'),
           ),
-        ),
-      );
-    } on Exception catch (e) {
-      debugPrint('メニュー表示エラー: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('メニューを表示できませんでした')),
-        );
-      }
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) {
+      return;
     }
+    await handleDelete(context, ref, episodeNumber);
   }
 
   Future<void> handleDelete(
