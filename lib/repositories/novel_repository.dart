@@ -124,8 +124,22 @@ class NovelRepository {
   }
 
   /// 小説をライブラリから削除する。
-  Future<void> removeFromLibrary(NovelSource source, String workId) async {
-    await _db.removeFromLibrary(source, workId);
+  ///
+  /// [deleteDownloads] が true の場合は、ダウンロード済みの本文も削除する。
+  /// 作品情報・目次・閲覧履歴は残す。
+  Future<void> removeFromLibrary(
+    NovelSource source,
+    String workId, {
+    bool deleteDownloads = false,
+  }) async {
+    // ライブラリ登録とダウンロード本文の削除を不可分に行う
+    await _db.transaction(() async {
+      await _db.removeFromLibrary(source, workId);
+
+      if (deleteDownloads) {
+        await deleteDownloadedNovel(source, workId);
+      }
+    });
 
     // Providersを無効化してUIを更新
     ref.invalidate(libraryNovelsProvider);
@@ -831,6 +845,10 @@ class LibraryStatus extends _$LibraryStatus {
   }
 
   /// ライブラリの状態をトグルするメソッド。
+  ///
+  /// 登録解除はダウンロード済み本文の削除を伴う確認が必要なため、
+  /// 画面からは [NovelRepository.removeFromLibrary] を直接呼ぶこと。
+  /// このメソッドの削除分岐は確認ダイアログを経由しない点に注意する。
   Future<void> toggle(NovelInfo novelInfo) async {
     final db = ref.read(appDatabaseProvider);
     final isInLibrary = state.value ?? false;

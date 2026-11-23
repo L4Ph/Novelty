@@ -113,10 +113,15 @@ class MockNovelRepository extends _i1.Mock implements _i4.NovelRepository {
   @override
   _i8.Future<void> removeFromLibrary(
     _i10.NovelSource? source,
-    String? workId,
-  ) =>
+    String? workId, {
+    bool? deleteDownloads = false,
+  }) =>
       (super.noSuchMethod(
-            Invocation.method(#removeFromLibrary, [source, workId]),
+            Invocation.method(
+              #removeFromLibrary,
+              [source, workId],
+              {#deleteDownloads: deleteDownloads},
+            ),
             returnValue: _i8.Future<void>.value(),
             returnValueForMissingStub: _i8.Future<void>.value(),
           )
