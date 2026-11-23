@@ -157,6 +157,10 @@ class _AboutPageState extends State<AboutPage> {
             title: const Text('ベータ版のGoogleグループ'),
             onTap: () => _launchUrl('https://groups.google.com/g/novelty-app'),
           ),
+          ListTile(
+            title: const Text('Obtainium（GitHub Releasesから自動更新）'),
+            onTap: () => _launchUrl('https://obtainium.imranr.dev/'),
+          ),
           const Divider(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
