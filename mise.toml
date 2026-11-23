@@ -1,4 +1,5 @@
 [tools]
+android-cli = "latest"
 flutter = "3.44.8"
 java = "temurin-21"
 "aqua:evilmartians/lefthook" = "latest"
