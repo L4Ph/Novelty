@@ -71,7 +71,7 @@ const List<({String question, List<String> answer})> _faqItems = [
     answer: [
       'Google Playでの配信準備中のため、現在はベータテストとして配布しています。',
       '参加には Google グループへの登録が必要です。',
-      '「Obtainium」などのアプリストアから GitHub Releases の自動更新も使えます。',
+      'Obtainium などのオープンソースアプリから GitHub Releases の自動更新も使えます。',
     ],
   ),
 ];
