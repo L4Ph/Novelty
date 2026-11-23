@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:novelty/router/router.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
@@ -29,14 +28,11 @@ class _MorePageState extends ConsumerState<MorePage> {
               background: ColoredBox(
                 color: Theme.of(context).colorScheme.surface,
                 child: Center(
-                  child: SvgPicture.asset(
-                    'assets/app_icon/base.svg',
+                  child: Image.asset(
+                    'assets/app_icon/base.webp',
                     width: 120,
                     height: 120,
-                    colorFilter: ColorFilter.mode(
-                      Theme.of(context).colorScheme.primary,
-                      BlendMode.srcIn,
-                    ),
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
