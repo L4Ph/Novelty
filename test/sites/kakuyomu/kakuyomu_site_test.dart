@@ -1,14 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/sites/kakuyomu/kakuyomu_site.dart';
 import 'package:novelty/sites/novel_source.dart';
+import 'package:tiny_http/tiny_http.dart';
 
-/// パスごとにフィクスチャを返すHTTPアダプタ。
-class _FixtureAdapter implements HttpClientAdapter {
+/// パスごとにフィクスチャを返す偽の transport。
+class _FixtureAdapter implements HttpTransport {
   _FixtureAdapter(this._fixtures);
 
   /// key: パス（例: `/works/123`）、value: HTML文字列
@@ -20,33 +20,35 @@ class _FixtureAdapter implements HttpClientAdapter {
   final List<String> requestedUris = <String>[];
 
   @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async {
-    final uri = Uri.parse(options.path);
+  Future<RawHttpResponse> send(
+    Uri uri, {
+    Map<String, String> headers = const <String, String>{},
+  }) async {
     requestedPaths.add(uri.path);
-    requestedUris.add(options.path);
+    requestedUris.add(uri.toString());
     final html = _fixtures[uri.path];
     if (html == null) {
-      return ResponseBody.fromString('not found', 404);
+      return RawHttpResponse(
+        statusCode: 404,
+        headers: const <String, List<String>>{},
+        bytes: utf8.encode('not found'),
+      );
     }
-    return ResponseBody.fromString(
-      html,
-      200,
-      headers: <String, List<String>>{
-        Headers.contentTypeHeader: <String>['text/html; charset=utf-8'],
+    return RawHttpResponse(
+      statusCode: 200,
+      headers: const <String, List<String>>{
+        'content-type': <String>['text/html; charset=utf-8'],
       },
+      bytes: utf8.encode(html),
     );
   }
 
   @override
-  void close({bool force = false}) {}
+  void close() {}
 }
 
-/// 指定URLへの初回アクセスで307を返し、リダイレクト先ではHTMLを返すアダプタ。
-class _RedirectAdapter implements HttpClientAdapter {
+/// 指定URLへの初回アクセスで307を返し、リダイレクト先ではHTMLを返す transport。
+class _RedirectAdapter implements HttpTransport {
   _RedirectAdapter({
     required this.redirectFrom,
     required this.redirectTo,
@@ -60,32 +62,31 @@ class _RedirectAdapter implements HttpClientAdapter {
   final List<String> requestedUris = <String>[];
 
   @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async {
-    requestedUris.add(options.path);
-    if (options.path == redirectFrom) {
-      return ResponseBody.fromString(
-        '',
-        307,
+  Future<RawHttpResponse> send(
+    Uri uri, {
+    Map<String, String> headers = const <String, String>{},
+  }) async {
+    requestedUris.add(uri.toString());
+    if (uri.toString() == redirectFrom) {
+      return RawHttpResponse(
+        statusCode: 307,
         headers: <String, List<String>>{
           'location': <String>[redirectTo],
         },
+        bytes: const <int>[],
       );
     }
-    return ResponseBody.fromString(
-      targetHtml,
-      200,
-      headers: <String, List<String>>{
-        Headers.contentTypeHeader: <String>['text/html; charset=utf-8'],
+    return RawHttpResponse(
+      statusCode: 200,
+      headers: const <String, List<String>>{
+        'content-type': <String>['text/html; charset=utf-8'],
       },
+      bytes: utf8.encode(targetHtml),
     );
   }
 
   @override
-  void close({bool force = false}) {}
+  void close() {}
 }
 
 const String _workId = '16818023211929539879';
@@ -94,13 +95,9 @@ const String _firstEpisodeId = '16818023211929635009';
 String _fixture(String name) =>
     File('test/fixtures/kakuyomu/$name').readAsStringSync();
 
-KakuyomuSite _createSite(_FixtureAdapter adapter) {
-  final dio = Dio()..httpClientAdapter = adapter;
-  return KakuyomuSite(
-    dio: dio,
-    rateLimiter: KakuyomuRateLimiter(interval: Duration.zero),
-  );
-}
+KakuyomuSite _createSite(_FixtureAdapter adapter) => KakuyomuSite(
+  http: TinyHttp(transport: adapter, minInterval: Duration.zero),
+);
 
 void main() {
   group('KakuyomuSite', () {
@@ -146,8 +143,9 @@ void main() {
       test('episode_sidebarの目次から全エピソードを目次順連番で返す', () async {
         final adapter = _FixtureAdapter(<String, String>{
           '/works/$_workId': _fixture('work_page.html'),
-          '/works/$_workId/episodes/$_firstEpisodeId/episode_sidebar':
-              _fixture('toc.html'),
+          '/works/$_workId/episodes/$_firstEpisodeId/episode_sidebar': _fixture(
+            'toc.html',
+          ),
         });
         final site = _createSite(adapter);
 
@@ -170,8 +168,7 @@ void main() {
 
     group('fetchEpisode', () {
       test('エピソードページから本文とタイトルをパースできる', () async {
-        const episodePath =
-            '/works/$_workId/episodes/$_firstEpisodeId';
+        const episodePath = '/works/$_workId/episodes/$_firstEpisodeId';
         final adapter = _FixtureAdapter(<String, String>{
           episodePath: _fixture('episode_page.html'),
         });
@@ -192,12 +189,12 @@ void main() {
       });
 
       test('url省略時は目次からURLを解決して本文を取得する', () async {
-        const episodePath =
-            '/works/$_workId/episodes/$_firstEpisodeId';
+        const episodePath = '/works/$_workId/episodes/$_firstEpisodeId';
         final adapter = _FixtureAdapter(<String, String>{
           '/works/$_workId': _fixture('work_page.html'),
-          '/works/$_workId/episodes/$_firstEpisodeId/episode_sidebar':
-              _fixture('toc.html'),
+          '/works/$_workId/episodes/$_firstEpisodeId/episode_sidebar': _fixture(
+            'toc.html',
+          ),
           episodePath: _fixture('episode_page.html'),
         });
         final site = _createSite(adapter);
@@ -224,23 +221,6 @@ void main() {
         );
         // リクエストが一切発行されないこと
         expect(adapter.requestedPaths, isEmpty);
-      });
-
-      test('レートリミッターがリクエスト間隔を保証する', () async {
-        // タイマー解像度の影響を考慮し、間隔300msに対して250ms以上を検証する
-        final limiter = KakuyomuRateLimiter(
-          interval: const Duration(milliseconds: 300),
-        );
-        final stopwatch = Stopwatch()..start();
-
-        await limiter.wait();
-        await limiter.wait();
-
-        stopwatch.stop();
-        expect(
-          stopwatch.elapsed,
-          greaterThanOrEqualTo(const Duration(milliseconds: 250)),
-        );
       });
     });
 
@@ -383,10 +363,11 @@ void main() {
               'https://kakuyomu.jp/rankings/all/daily?work_variation=long',
           targetHtml: _fixture('ranking_page.html'),
         );
-        final dio = Dio()..httpClientAdapter = redirectAdapter;
         final site = KakuyomuSite(
-          dio: dio,
-          rateLimiter: KakuyomuRateLimiter(interval: Duration.zero),
+          http: TinyHttp(
+            transport: redirectAdapter,
+            minInterval: Duration.zero,
+          ),
         );
 
         final page = await site.fetchRanking('daily');

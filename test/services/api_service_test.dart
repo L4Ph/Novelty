@@ -1,39 +1,37 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:tiny_http/tiny_http.dart';
 
-/// 固定のJSON文字列をgzip圧縮して返すHTTPアダプタ。
+/// 固定のJSON文字列をgzip圧縮して返す偽の transport。
 ///
-/// なろう小説APIは`gzip=5`指定時に圧縮済みボディを返すため、
+/// なろう小説APIは `gzip=5` 指定時に圧縮済みボディを返すため、
 /// その経路が正しく展開されることを確認するために使う。
-class _GzipAdapter implements HttpClientAdapter {
+class _GzipAdapter implements HttpTransport {
   _GzipAdapter(this.json);
 
   /// gzip圧縮前のJSON文字列。
   final String json;
 
   @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async {
-    return ResponseBody.fromBytes(
-      gzip.encode(utf8.encode(json)),
-      200,
-      headers: <String, List<String>>{
-        Headers.contentTypeHeader: <String>['application/json'],
+  Future<RawHttpResponse> send(
+    Uri uri, {
+    Map<String, String> headers = const <String, String>{},
+  }) async {
+    return RawHttpResponse(
+      statusCode: 200,
+      headers: const <String, List<String>>{
+        'content-type': <String>['application/json'],
       },
+      bytes: gzip.encode(utf8.encode(json)),
     );
   }
 
   @override
-  void close({bool force = false}) {}
+  void close() {}
 }
 
 void main() {
@@ -67,7 +65,9 @@ void main() {
             <String, Object?>{'ncode': 'N1234AB', 'title': 'テスト作品'},
           ]),
         );
-        final service = ApiService(dio: Dio()..httpClientAdapter = adapter);
+        final service = ApiService(
+          http: TinyHttp(transport: adapter, minInterval: Duration.zero),
+        );
 
         final result = await service.searchNovels(
           const NovelSearchQuery(word: 'テスト'),

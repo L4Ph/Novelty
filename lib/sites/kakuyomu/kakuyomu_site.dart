@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:dio/dio.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
@@ -9,53 +8,7 @@ import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/models/ranking_page.dart';
 import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_source.dart';
-
-/// カクヨムへのリクエスト間隔を制御するレートリミッター。
-///
-/// サーバー負荷軽減のため、連続リクエスト間に最低限の間隔を設ける。
-/// 壁時計（DateTime）ではなくモノトニッククロック（Stopwatch）を
-/// 使用することで、システム時刻の変更の影響を受けない。
-class KakuyomuRateLimiter {
-  /// コンストラクタ。
-  KakuyomuRateLimiter({
-    this.interval = const Duration(seconds: 1),
-  });
-
-  /// リクエスト間隔。
-  final Duration interval;
-
-  final Stopwatch _stopwatch = Stopwatch();
-
-  /// 直前のリクエストから [interval] 以上経過するまで待機する。
-  Future<void> wait() async {
-    if (_stopwatch.isRunning) {
-      final elapsed = _stopwatch.elapsed;
-      if (elapsed < interval) {
-        await Future<void>.delayed(interval - elapsed);
-      }
-      _stopwatch
-        ..reset()
-        ..start();
-    } else {
-      _stopwatch.start();
-    }
-  }
-}
-
-/// カクヨムからのHTTP取得に失敗した場合の例外。
-class KakuyomuHttpException implements Exception {
-  /// コンストラクタ。
-  const KakuyomuHttpException(this.statusCode, this.url);
-
-  /// HTTPステータスコード。
-  final int statusCode;
-
-  /// リクエストURL。
-  final String url;
-
-  @override
-  String toString() => 'KakuyomuHttpException($statusCode): $url';
-}
+import 'package:tiny_http/tiny_http.dart';
 
 /// カクヨムのサイト定義。
 ///
@@ -64,18 +17,15 @@ class KakuyomuHttpException implements Exception {
 ///
 /// アクセス方針:
 /// - robots.txt で取得禁止のパス（`/read` ページ等）は取得しない
-/// - レートリミッターによりリクエスト間隔を制御する
+/// - リクエスト間隔は [TinyHttp] が強制する（リトライを含む）
 /// - 本文キャッシュはレポジトリ層（DB）でキャッシュファースト運用する
 class KakuyomuSite implements NovelSite {
   /// コンストラクタ。
   ///
-  /// [dio] と [rateLimiter] はテスト時に注入できる。
-  KakuyomuSite({Dio? dio, KakuyomuRateLimiter? rateLimiter})
-    : _dio = dio ?? Dio(),
-      _rateLimiter = rateLimiter ?? KakuyomuRateLimiter();
+  /// [http] はテスト時に注入できる。
+  KakuyomuSite({TinyHttp? http}) : _http = http ?? TinyHttp();
 
-  final Dio _dio;
-  final KakuyomuRateLimiter _rateLimiter;
+  final TinyHttp _http;
 
   /// カクヨムのUser-Agent。
   static const String _userAgent =
@@ -269,19 +219,11 @@ class KakuyomuSite implements NovelSite {
     final url = uri.hasScheme ? pathOrUrl : '${source.baseUrl}$pathOrUrl';
     _assertAllowed(Uri.parse(url).path);
 
-    await _rateLimiter.wait();
-    final response = await _dio.get<String>(
-      url,
-      options: Options(
-        headers: <String, String>{'User-Agent': _userAgent},
-        responseType: ResponseType.plain,
-        followRedirects: true,
-      ),
+    final response = await _http.get(
+      Uri.parse(url),
+      headers: <String, String>{'User-Agent': _userAgent},
     );
-    if (response.statusCode != 200) {
-      throw KakuyomuHttpException(response.statusCode ?? -1, url);
-    }
-    return response.data ?? '';
+    return response.text;
   }
 
   /// 作品ページの `__NEXT_DATA__` から [NovelInfo] を組み立てる。

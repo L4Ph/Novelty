@@ -31,7 +31,6 @@ workspace:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  dio: ^5.11.0
   drift: ^2.34.0
   dynamic_color: ^1.7.0
   file_picker: ^10.3.7
@@ -59,6 +58,8 @@ dependencies:
   shared_preferences: ^2.5.3
   tategaki:
     path: packages/tategaki
+  tiny_http:
+    path: packages/tiny_http
   url_launcher: ^6.3.2
 dev_dependencies:
   build_runner: 2.15.1

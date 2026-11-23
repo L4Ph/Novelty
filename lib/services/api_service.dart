@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io' show gzip;
 
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as parser;
@@ -11,6 +10,7 @@ import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:tiny_http/tiny_http.dart';
 
 part 'api_service.g.dart';
 
@@ -47,27 +47,26 @@ const String userAgent =
 
 @Riverpod(keepAlive: true)
 /// APIサービスのプロバイダー
-ApiService apiService(Ref ref) => ApiService();
+ApiService apiService(Ref ref) {
+  final service = ApiService();
+  ref.onDispose(service.close);
+  return service;
+}
 
 /// APIサービスクラス。
 class ApiService {
-  /// [dio] を外部から注入可能にする。テスト時はモックを渡すことができる。
-  ApiService({Dio? dio}) : _dio = dio ?? Dio();
+  /// [http] を外部から注入可能にする。テスト時は偽の transport を渡せる。
+  ApiService({TinyHttp? http}) : _http = http ?? TinyHttp();
 
-  final Dio _dio;
+  final TinyHttp _http;
 
-  Future<Response<String>> _fetchWithCache(String url) async {
-    final response = await _dio.get<String>(
-      url,
-      options: Options(
-        headers: {
-          'User-Agent': userAgent,
-        },
-        responseType: ResponseType.plain,
-      ),
-    );
-    return response;
-  }
+  /// 保持している接続を閉じる。
+  void close() => _http.close();
+
+  Future<TinyHttpResponse> _get(String url) => _http.get(
+    Uri.parse(url),
+    headers: <String, String>{'User-Agent': userAgent},
+  );
 
   List<Episode> _parseEpisodes(dom.Document document) {
     final elements = document.querySelectorAll('.p-eplist__sublist');
@@ -142,16 +141,8 @@ class ApiService {
         ? 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/'
         : 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/?p=$page';
 
-    final response = await _fetchWithCache(pageUrl);
-
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to fetch episodes page $page: '
-        '${response.statusCode} ${response.statusMessage}',
-      );
-    }
-
-    final html = response.data!;
+    final response = await _get(pageUrl);
+    final html = response.text;
     final document = parser.parse(html);
     return _parseEpisodes(document);
   }
@@ -186,16 +177,8 @@ class ApiService {
 
     final firstPageUrl =
         'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/';
-    final firstPageResponse = await _fetchWithCache(firstPageUrl);
-
-    if (firstPageResponse.statusCode != 200) {
-      throw Exception(
-        'Failed to fetch URL: '
-        '${firstPageResponse.statusCode} ${firstPageResponse.statusMessage}',
-      );
-    }
-
-    final firstPageHtml = firstPageResponse.data!;
+    final firstPageResponse = await _get(firstPageUrl);
+    final firstPageHtml = firstPageResponse.text;
     final document = parser.parse(firstPageHtml);
 
     final allEpisodes = _parseEpisodes(document);
@@ -267,15 +250,8 @@ class ApiService {
         ? 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/'
         : 'https://ncode.syosetu.com/${ncode.toNormalizedNcode()}/$episode/';
 
-    final response = await _fetchWithCache(url);
-
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to fetch URL: ${response.statusCode} ${response.statusMessage}',
-      );
-    }
-
-    final html = response.data!;
+    final response = await _get(url);
+    final html = response.text;
     final document = parser.parse(html);
 
     final episodeTitle = isShortStory
@@ -315,25 +291,8 @@ class ApiService {
   }
 
   Future<List<dynamic>> _fetchData(String url) async {
-    final response = await _dio.get<List<int>>(
-      url,
-      options: Options(
-        headers: {
-          'User-Agent': userAgent,
-        },
-        responseType: ResponseType.bytes,
-      ),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to fetch data: '
-        '${response.statusCode} ${response.statusMessage}',
-      );
-    }
-
-    final bytes = response.data!;
-    return compute(_parseJson, bytes);
+    final response = await _get(url);
+    return compute(_parseJson, response.bytes);
   }
 
   /// 小説を検索するメソッド。
