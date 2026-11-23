@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
@@ -451,4 +452,256 @@ void main() {
       expect(find.text('第$kakuyomuWorkId話'), findsNothing);
     });
   });
+
+  group('エピソード行のダウンロード操作', () {
+    const workId = 'n1234ab';
+
+    List<Episode> episodes({required bool firstDownloaded}) {
+      return [
+        Episode(
+          index: 1,
+          subtitle: '第一話',
+          isDownloaded: firstDownloaded,
+        ),
+        const Episode(
+          index: 2,
+          subtitle: '第二話',
+        ),
+      ];
+    }
+
+    Future<void> pumpDetail(
+      WidgetTester tester, {
+      required bool offline,
+      required List<Episode> episodeList,
+      required NovelRepository repository,
+    }) async {
+      tester.view.physicalSize = const Size(800, 2000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const NovelDetailPage(
+              source: NovelSource.narou,
+              workId: workId,
+            ),
+          ),
+          GoRoute(
+            path: '/novel/narou/$workId/1',
+            builder: (_, _) => const Scaffold(body: Text('エピソード閲覧画面')),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isOfflineModeProvider.overrideWithValue(offline),
+            novelRepositoryProvider.overrideWithValue(repository),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, args) => Stream.value(
+                NovelInfo(
+                  source: args.$1,
+                  workId: args.$2,
+                  ncode: args.$2,
+                  title: '操作テスト小説',
+                  generalAllNo: episodeList.length,
+                ),
+              ),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, args) => Stream.value(episodeList),
+            ),
+            downloadProgressProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
+            lastReadEpisodeProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('未ダウンロードの話はダウンロードボタンを押すとその話を保存する', (tester) async {
+      final repository = _RecordingRepository();
+      await pumpDetail(
+        tester,
+        offline: false,
+        episodeList: episodes(firstDownloaded: false),
+        repository: repository,
+      );
+
+      expect(find.byTooltip('ダウンロード'), findsNWidgets(2));
+      expect(find.byIcon(Icons.check_circle), findsNothing);
+
+      await tester.tap(find.byTooltip('ダウンロード').first);
+      await tester.pumpAndSettle();
+
+      expect(repository.downloads, [1]);
+      expect(repository.deletes, isEmpty);
+      expect(find.text('ダウンロードしました'), findsOneWidget);
+      expect(find.byType(BottomSheet), findsNothing);
+    });
+
+    testWidgets('ダウンロードに失敗したときは失敗を知らせる', (tester) async {
+      final repository = _RecordingRepository()..downloadSucceeds = false;
+      await pumpDetail(
+        tester,
+        offline: false,
+        episodeList: episodes(firstDownloaded: false),
+        repository: repository,
+      );
+
+      await tester.tap(find.byTooltip('ダウンロード').first);
+      await tester.pumpAndSettle();
+
+      expect(repository.downloads, [1]);
+      expect(find.text('ダウンロードに失敗しました'), findsOneWidget);
+    });
+
+    testWidgets('ダウンロード済みの話は確認してから削除する', (tester) async {
+      final repository = _RecordingRepository();
+      await pumpDetail(
+        tester,
+        offline: false,
+        episodeList: episodes(firstDownloaded: true),
+        repository: repository,
+      );
+
+      expect(find.byTooltip('ダウンロードを削除'), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle), findsOneWidget);
+
+      await tester.tap(find.byTooltip('ダウンロードを削除'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('削除の確認'), findsOneWidget);
+      expect(find.text('第1話のダウンロードを削除しますか？'), findsOneWidget);
+      expect(repository.deletes, isEmpty);
+
+      await tester.tap(find.text('削除'));
+      await tester.pumpAndSettle();
+
+      expect(repository.deletes, [1]);
+      expect(find.text('削除しました'), findsOneWidget);
+      expect(find.text('削除の確認'), findsNothing);
+    });
+
+    testWidgets('削除確認をキャンセルするとダウンロードは残る', (tester) async {
+      final repository = _RecordingRepository();
+      await pumpDetail(
+        tester,
+        offline: false,
+        episodeList: episodes(firstDownloaded: true),
+        repository: repository,
+      );
+
+      await tester.tap(find.byTooltip('ダウンロードを削除'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+
+      expect(repository.deletes, isEmpty);
+      expect(find.text('削除の確認'), findsNothing);
+    });
+
+    testWidgets('オフライン中はダウンロードできない', (tester) async {
+      final repository = _RecordingRepository();
+      await pumpDetail(
+        tester,
+        offline: true,
+        episodeList: episodes(firstDownloaded: false),
+        repository: repository,
+      );
+
+      await tester.tap(find.byTooltip('ダウンロード').first);
+      await tester.pumpAndSettle();
+
+      expect(repository.downloads, isEmpty);
+      expect(
+        find.text('オフラインモード中はエピソードのダウンロード・削除ができません'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('オフライン中はダウンロード済みの話を削除できない', (tester) async {
+      final repository = _RecordingRepository();
+      await pumpDetail(
+        tester,
+        offline: true,
+        episodeList: episodes(firstDownloaded: true),
+        repository: repository,
+      );
+
+      await tester.tap(find.byTooltip('ダウンロードを削除'));
+      await tester.pumpAndSettle();
+
+      expect(repository.deletes, isEmpty);
+      expect(find.text('削除の確認'), findsNothing);
+      expect(
+        find.text('オフラインモード中はエピソードのダウンロード・削除ができません'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('エピソード行は長押しして離しても遷移せず、タップで閲覧画面を開く', (tester) async {
+      final repository = _RecordingRepository();
+      await pumpDetail(
+        tester,
+        offline: false,
+        episodeList: episodes(firstDownloaded: false),
+        repository: repository,
+      );
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('第一話')),
+      );
+      await tester.pump(const Duration(milliseconds: 800));
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text('エピソード閲覧画面'), findsNothing);
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(repository.downloads, isEmpty);
+      expect(repository.deletes, isEmpty);
+
+      await tester.tap(find.text('第一話'));
+      await tester.pumpAndSettle();
+      expect(find.text('エピソード閲覧画面'), findsOneWidget);
+    });
+  });
+}
+
+class _RecordingRepository extends Fake implements NovelRepository {
+  final downloads = <int>[];
+  final deletes = <int>[];
+  bool downloadSucceeds = true;
+
+  @override
+  Future<bool> downloadSingleEpisode(
+    NovelSource source,
+    String workId,
+    int episode, {
+    String? revised,
+  }) async {
+    downloads.add(episode);
+    return downloadSucceeds;
+  }
+
+  @override
+  Future<void> deleteDownloadedEpisode(
+    NovelSource source,
+    String workId,
+    int episode,
+  ) async {
+    deletes.add(episode);
+  }
 }
