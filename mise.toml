@@ -1,8 +1,7 @@
 [tools]
-bun = "latest"
+android-cli = "latest"
 flutter = "3.44.8"
 java = "temurin-21"
-node = "latest"
 "aqua:evilmartians/lefthook" = "latest"
 pinact = "latest"
 
@@ -24,6 +23,10 @@ echo "android/local.properties has been updated with SDK path: $FLUTTER_SDK"
 description = "パッケージの依存関係を取得します"
 depends = ["setup"]
 run = "flutter pub get"
+
+[tasks.emulator-list]
+description = "利用可能なエミュレータ(AVD)を一覧表示します（Android CLI）"
+run = "android emulator list"
 
 [tasks.emulator]
 description = "Androidエミュレータを起動します"

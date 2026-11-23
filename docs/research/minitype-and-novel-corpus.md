@@ -2,7 +2,8 @@
 
 - 調査日: 2026-09-13
 - 対象: `@minitype/minitype` v0.1.6 / `@minitype/tsx` v0.1.2 / なろう・カクヨム HTML / 青空文庫注記 / AozoraEpub3 / TxtMiru・読書尚友 / JIS X 4051:2004
-- 本リポジトリ内の参照: `site/repomix-output-minitype-project-tsx.xml`、`packages/narou_parser`、`packages/kakuyomu_parser`、`packages/novel_parser_core`、`packages/tategaki`、`docs/narou_html`、`docs/kakuyomu_html`、`docs/examples`
+- 本リポジトリ内の参照: `packages/narou_parser`、`packages/kakuyomu_parser`、`packages/novel_parser_core`、`packages/tategaki`、`docs/narou_html`、`docs/kakuyomu_html`、`docs/examples`
+- 注記: `site/` 配下（`package.json`・repomix 出力）は PR #313 で削除済み。repomix 出力はローカル取得物でリポジトリには含まれない
 
 ---
 
@@ -13,7 +14,7 @@
 | 対象 | 取得方法 | 版 |
 | --- | --- | --- |
 | エンジン本体 | `npm pack @minitype/minitype@0.1.6`（レジストリ API `https://registry.npmjs.org/@minitype/minitype`） | 0.1.6 |
-| TSX ラッパ | 本リポジトリ `site/repomix-output-minitype-project-tsx.xml` | `@minitype/tsx` 0.1.2（`"@minitype/minitype": "^0.1.6"`、repomix 4324-4382 行） |
+| TSX ラッパ | ローカルで repomix 取得（リポジトリ外） | `@minitype/tsx` 0.1.2（`"@minitype/minitype": "^0.1.6"`、repomix 4324-4382 行） |
 | 公式サイト | https://typeset.jp / https://typeset.jp/references/ | — |
 | なろう HTML | `docs/narou_html/{ncode}.md`, `docs/narou_html/{ncode}/{episodes}.md` | — |
 | カクヨム HTML | `docs/kakuyomu_html/episode.md` | — |
@@ -495,7 +496,7 @@ checkTcyPrev/Next:
 - `@minitype/minitype` v0.1.6 tarball: `https://registry.npmjs.org/@minitype/minitype/-/minitype-0.1.6.tgz`（`npm pack @minitype/minitype@0.1.6`）
 - 公式: https://typeset.jp / https://typeset.jp/references/ / `dist/llms.txt`
 - 配布 `.d.ts`: `dist/lib/inline.d.ts`, `dist/typesetting/{char-class,space,typesetter,typesetter-cjk,typesetter-knuth,vertical-preprocess,default-space}.d.ts`, `dist/plugin/built-in/{kenten,siunitx,inline-extender}.d.ts`, `dist/style/{style,figure,unit}.d.ts`, `dist/index.d.ts`
-- TSX ラッパ: `site/repomix-output-minitype-project-tsx.xml`（`@minitype/tsx` 0.1.2、`site/package.json`）
+- TSX ラッパ: ローカルで repomix 取得（`@minitype/tsx` 0.1.2）。`site/package.json` は PR #313 で削除済み
 - 青空文庫注記: https://www.aozora.gr.jp/annotation/ / `etc.html` / `emphasis.html`
 - AozoraEpub3: https://github.com/hmdev/AozoraEpub3 (`src/com/github/hmdev/converter/AozoraEpub3Converter.java`, `src/com/github/hmdev/util/CharUtils.java`, `README.md`)
 - TxtMiru: https://so-zou.jp/software/tool/document/txt-miru/ / https://rd.vector.co.jp/download/file/win95/util/fh215781.html / http://www.hi-ho.ne.jp/makoto_watanabe/ve/style_basis.html
