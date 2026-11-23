@@ -70,7 +70,7 @@ const List<({String question, List<String> answer})> _faqItems = [
     question: 'アプリのインストール・アップデート方法は？',
     answer: [
       'Google Playでの配信準備中のため、現在はベータテストとして配布しています。',
-      'Google グループに参加し、テスト参加リンクから Play に参加してください。',
+      '参加には Google グループへの登録が必要です。',
       '「Obtainium」などのアプリストアから GitHub Releases の自動更新も使えます。',
     ],
   ),
@@ -147,6 +147,16 @@ class _AboutPageState extends State<AboutPage> {
               'https://github.com/L4Ph/Novelty/blob/main/PRIVACY_POLICY.md',
             ),
           ),
+          ListTile(
+            title: const Text('ベータ版に参加（Google Play）'),
+            onTap: () => _launchUrl(
+              'https://play.google.com/apps/testing/moe.l4ph.novelty',
+            ),
+          ),
+          ListTile(
+            title: const Text('ベータ版のGoogleグループ'),
+            onTap: () => _launchUrl('https://groups.google.com/g/novelty-app'),
+          ),
           const Divider(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -160,6 +170,8 @@ class _AboutPageState extends State<AboutPage> {
           ),
           for (final faq in _faqItems)
             ExpansionTile(
+              // 展開状態を復元できるよう、項目ごとに一意なキーを付ける
+              key: PageStorageKey(faq.question),
               title: Text(faq.question),
               childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               expandedCrossAxisAlignment: CrossAxisAlignment.start,

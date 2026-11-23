@@ -5,6 +5,10 @@ custom_lint.log
 .env
 mise.local.toml
 
+# エージェントのローカル設定（個人用のためコミットしない）
+.claude/*.local.*
+.claude/settings.local.json
+
 # IDE
 .idea/
 *.iml
