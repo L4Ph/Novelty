@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:novelty/router/router.dart';
 import 'package:novelty/utils/settings_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// "もっと"ページ（設定ハブ）のウィジェット。
 class MorePage extends ConsumerStatefulWidget {
@@ -150,16 +149,6 @@ class _MorePageState extends ConsumerState<MorePage> {
           leading: const Icon(Icons.info_outline),
           title: const Text('アプリについて'),
           onTap: () => const AboutRoute().go(context),
-        ),
-        ListTile(
-          leading: const Icon(Icons.help_outline),
-          title: const Text('ヘルプ'),
-          onTap: () async {
-            const url = 'https://novelty.l4ph.moe/help';
-            if (!await launchUrl(Uri.parse(url))) {
-              throw Exception('Could not launch $url');
-            }
-          },
         ),
       ],
     );
