@@ -13,14 +13,14 @@ void main() {
       expect(result, hasLength(2));
       expect(
         result[0],
-        isA<PlainText>()
-            .having((e) => e.text, 'text', '炎の海と土の津波が眼前を覆っていた。'),
+        isA<PlainText>().having((e) => e.text, 'text', '炎の海と土の津波が眼前を覆っていた。'),
       );
       expect(result[1], isA<NewLine>());
     });
 
     test('ルビ付きテキストを rubyText としてパースする', () {
-      const html = '<p>その頂点に座する蛮行を、' //
+      const html =
+          '<p>その頂点に座する蛮行を、' //
           '<ruby><rb>熾天使</rb><rp>（</rp><rt>セラフ</rt><rp>）</rp></ruby>' //
           'の名に置き断罪する。</p>';
 
@@ -124,7 +124,8 @@ void main() {
     });
 
     test('widget-episodeBody を含む完全なページHTMLから本文を抽出できる', () {
-      const html = '<html><body>'
+      const html =
+          '<html><body>'
           ' <div class="widget-episodeBody js-episode-body">'
           ' <p id="p1">本文です。</p>'
           ' <p id="p2" class="blank"><br /></p>'
@@ -148,8 +149,7 @@ void main() {
       // 先頭: 1段落目テキスト + 改行
       expect(
         result[0],
-        isA<PlainText>()
-            .having((e) => e.text, 'text', '炎の海と土の津波が眼前を覆っていた。'),
+        isA<PlainText>().having((e) => e.text, 'text', '炎の海と土の津波が眼前を覆っていた。'),
       );
       expect(result[1], isA<NewLine>());
 

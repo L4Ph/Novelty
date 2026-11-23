@@ -351,11 +351,11 @@ class SearchModal extends HookConsumerWidget {
                         ...defaultNovelSiteRegistry[NovelSource.kakuyomu]!
                             .genres
                             .map(
-                          (g) => DropdownMenuItem(
-                            value: g.id,
-                            child: Text(g.name),
-                          ),
-                        ),
+                              (g) => DropdownMenuItem(
+                                value: g.id,
+                                child: Text(g.name),
+                              ),
+                            ),
                       ],
                       onChanged: (value) {
                         query.value = query.value.copyWith(

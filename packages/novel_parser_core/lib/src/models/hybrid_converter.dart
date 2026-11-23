@@ -82,8 +82,7 @@ class HybridConverter {
         ruby: m['ruby'] as String?,
         mark: m['mark'] as String?,
       );
-    }).toList()
-      ..sort((a, b) => a.off.compareTo(b.off));
+    }).toList()..sort((a, b) => a.off.compareTo(b.off));
 
     // 検証: txt と base の一致、およびスパン同士の重なり
     var prevEnd = -1;

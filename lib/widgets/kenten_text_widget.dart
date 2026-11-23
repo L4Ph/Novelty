@@ -45,7 +45,9 @@ class KentenSpan extends StatelessWidget {
             clipBehavior: Clip.none,
             alignment: Alignment.center,
             children: [
-              RichText(text: TextSpan(text: char, style: style)),
+              RichText(
+                text: TextSpan(text: char, style: style),
+              ),
               Positioned(
                 top: -(markStyle.fontSize ?? 10) * 0.6,
                 child: RichText(

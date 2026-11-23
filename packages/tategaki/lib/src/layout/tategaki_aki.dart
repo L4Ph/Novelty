@@ -31,8 +31,7 @@ class TategakiAki {
 
     // 終わり括弧・読点・句点の後ろ
     if (_isClosingPunctuation(previous)) {
-      if (_isClosingPunctuation(next) ||
-          next == TategakiCharClass.middleDot) {
+      if (_isClosingPunctuation(next) || next == TategakiCharClass.middleDot) {
         return 0;
       }
       return _afterClosing;

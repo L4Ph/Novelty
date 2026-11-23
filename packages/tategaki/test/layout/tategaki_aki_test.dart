@@ -17,7 +17,10 @@ void main() {
 
     test('約物が連続する場合はベタ', () {
       expect(
-        TategakiAki.em(TategakiCharClass.comma, TategakiCharClass.closingBracket),
+        TategakiAki.em(
+          TategakiCharClass.comma,
+          TategakiCharClass.closingBracket,
+        ),
         0,
       );
     });
@@ -42,7 +45,10 @@ void main() {
 
     test('始め括弧の後ろはベタ', () {
       expect(
-        TategakiAki.em(TategakiCharClass.openingBracket, TategakiCharClass.kanji),
+        TategakiAki.em(
+          TategakiCharClass.openingBracket,
+          TategakiCharClass.kanji,
+        ),
         0,
       );
     });
