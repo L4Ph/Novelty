@@ -1,6 +1,6 @@
 import 'dart:convert';
+import 'dart:io' show gzip;
 
-import 'package:archive/archive.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:html/dom.dart' as dom;
@@ -305,16 +305,12 @@ class ApiService {
   }
 
   static List<dynamic> _parseJson(List<int> bytes) {
-    try {
-      final decoded = utf8.decode(const GZipDecoder().decodeBytes(bytes));
-      final decodedJson = json.decode(decoded);
-      if (decodedJson is List) {
-        return decodedJson;
-      } else {
-        return [decodedJson];
-      }
-    } catch (e) {
-      rethrow;
+    final decoded = utf8.decode(gzip.decode(bytes));
+    final decodedJson = json.decode(decoded);
+    if (decodedJson is List) {
+      return decodedJson;
+    } else {
+      return [decodedJson];
     }
   }
 

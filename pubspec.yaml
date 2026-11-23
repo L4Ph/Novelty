@@ -30,7 +30,6 @@ workspace:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  archive: ^4.0.7
   dio: ^5.11.0
   drift: ^2.34.0
   dynamic_color: ^1.7.0
