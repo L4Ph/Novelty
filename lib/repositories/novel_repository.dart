@@ -844,32 +844,24 @@ class LibraryStatus extends _$LibraryStatus {
     return db.watchIsInLibrary(source, workId);
   }
 
-  /// ライブラリの状態をトグルするメソッド。
+  /// ライブラリに登録するメソッド。
   ///
+  /// 登録は冪等なので、登録済みでも呼び出して問題ない。
   /// 登録解除はダウンロード済み本文の削除を伴う確認が必要なため、
-  /// 画面からは [NovelRepository.removeFromLibrary] を直接呼ぶこと。
-  /// このメソッドの削除分岐は確認ダイアログを経由しない点に注意する。
-  Future<void> toggle(NovelInfo novelInfo) async {
+  /// 画面からは [NovelRepository.removeFromLibrary] を
+  /// 確認ダイアログ経由で呼ぶこと。
+  Future<void> addToLibrary(NovelInfo novelInfo) async {
     final db = ref.read(appDatabaseProvider);
-    final isInLibrary = state.value ?? false;
-    final newStatus = !isInLibrary;
 
     state = const AsyncValue.loading();
     try {
-      if (newStatus) {
-        // 事前にNovelsテーブルに小説情報が存在することを保証する必要がある。
-        // 通常はfetchNovelInfoによって挿入済み。
-        await db.insertNovel(novelInfo.toDbCompanion());
-        await db.addToLibrary(
-          novelInfo.source,
-          novelInfo.workId ?? novelInfo.ncode!,
-        );
-      } else {
-        await db.removeFromLibrary(
-          novelInfo.source,
-          novelInfo.workId ?? novelInfo.ncode!,
-        );
-      }
+      // 事前にNovelsテーブルに小説情報が存在することを保証する必要がある。
+      // 通常はfetchNovelInfoによって挿入済み。
+      await db.insertNovel(novelInfo.toDbCompanion());
+      await db.addToLibrary(
+        novelInfo.source,
+        novelInfo.workId ?? novelInfo.ncode!,
+      );
 
       ref.invalidate(libraryNovelsProvider);
     } on Exception catch (e, st) {

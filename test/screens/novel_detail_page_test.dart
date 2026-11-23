@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
@@ -22,6 +23,17 @@ class FakeLibraryStatus extends LibraryStatus {
 class FakeInLibraryStatus extends LibraryStatus {
   @override
   Stream<bool> build(NovelSource source, String workId) => Stream.value(true);
+}
+
+/// ダウンロード完了時にライブラリ追加を促す結果を返すテスト用のNotifier
+class FakeDownloadStatus extends DownloadStatus {
+  @override
+  Stream<bool> build(NovelInfo novelInfo) => Stream.value(false);
+
+  @override
+  Future<DownloadResult> executeDownload(NovelInfo novelInfo) async {
+    return const DownloadResult.success(needsLibraryAddition: true);
+  }
 }
 
 /// テスト用の設定Notifier
@@ -517,6 +529,9 @@ void main() {
             libraryStatusProvider.overrideWith2(
               (_) => FakeInLibraryStatus(),
             ),
+            downloadStatusProvider.overrideWith2(
+              (_) => FakeDownloadStatus(),
+            ),
             lastReadEpisodeProvider.overrideWith(
               (ref, args) => Stream.value(null),
             ),
@@ -592,6 +607,30 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+
+      expect(
+        await database.isInLibrary(NovelSource.narou, testNcode),
+        isTrue,
+      );
+      final episode = await database.getEpisodeData(
+        NovelSource.narou,
+        testNcode,
+        1,
+      );
+      expect(episode!.content, isNotNull);
+    });
+
+    testWidgets('ダウンロード完了後の「追加」で登録済みの作品は外れない', (tester) async {
+      final database = await pumpLibraryRegisteredPage(tester);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('一括ダウンロード'));
+      await tester.pumpAndSettle();
+
+      // ダウンロード完了によりライブラリ追加を促す SnackBar が出る
+      await tester.tap(find.widgetWithText(SnackBarAction, '追加'));
       await tester.pumpAndSettle();
 
       expect(

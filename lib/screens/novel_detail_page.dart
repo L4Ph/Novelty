@@ -81,7 +81,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
           .read(
             libraryStatusProvider(widget.source, widget.workId).notifier,
           )
-          .toggle(novelInfo);
+          .addToLibrary(novelInfo);
       return;
     }
 
@@ -764,7 +764,7 @@ Future<void> _handleDownload(
                           novelInfo.workId ?? novelInfo.ncode!,
                         ).notifier,
                       )
-                      .toggle(novelInfo),
+                      .addToLibrary(novelInfo),
                 );
               },
             ),
