@@ -124,8 +124,22 @@ class NovelRepository {
   }
 
   /// 小説をライブラリから削除する。
-  Future<void> removeFromLibrary(NovelSource source, String workId) async {
-    await _db.removeFromLibrary(source, workId);
+  ///
+  /// [deleteDownloads] が true の場合は、ダウンロード済みの本文も削除する。
+  /// 作品情報・目次・閲覧履歴は残す。
+  Future<void> removeFromLibrary(
+    NovelSource source,
+    String workId, {
+    bool deleteDownloads = false,
+  }) async {
+    // ライブラリ登録とダウンロード本文の削除を不可分に行う
+    await _db.transaction(() async {
+      await _db.removeFromLibrary(source, workId);
+
+      if (deleteDownloads) {
+        await deleteDownloadedNovel(source, workId);
+      }
+    });
 
     // Providersを無効化してUIを更新
     ref.invalidate(libraryNovelsProvider);
@@ -830,28 +844,24 @@ class LibraryStatus extends _$LibraryStatus {
     return db.watchIsInLibrary(source, workId);
   }
 
-  /// ライブラリの状態をトグルするメソッド。
-  Future<void> toggle(NovelInfo novelInfo) async {
+  /// ライブラリに登録するメソッド。
+  ///
+  /// 登録は冪等なので、登録済みでも呼び出して問題ない。
+  /// 登録解除はダウンロード済み本文の削除を伴う確認が必要なため、
+  /// 画面からは [NovelRepository.removeFromLibrary] を
+  /// 確認ダイアログ経由で呼ぶこと。
+  Future<void> addToLibrary(NovelInfo novelInfo) async {
     final db = ref.read(appDatabaseProvider);
-    final isInLibrary = state.value ?? false;
-    final newStatus = !isInLibrary;
 
     state = const AsyncValue.loading();
     try {
-      if (newStatus) {
-        // 事前にNovelsテーブルに小説情報が存在することを保証する必要がある。
-        // 通常はfetchNovelInfoによって挿入済み。
-        await db.insertNovel(novelInfo.toDbCompanion());
-        await db.addToLibrary(
-          novelInfo.source,
-          novelInfo.workId ?? novelInfo.ncode!,
-        );
-      } else {
-        await db.removeFromLibrary(
-          novelInfo.source,
-          novelInfo.workId ?? novelInfo.ncode!,
-        );
-      }
+      // 事前にNovelsテーブルに小説情報が存在することを保証する必要がある。
+      // 通常はfetchNovelInfoによって挿入済み。
+      await db.insertNovel(novelInfo.toDbCompanion());
+      await db.addToLibrary(
+        novelInfo.source,
+        novelInfo.workId ?? novelInfo.ncode!,
+      );
 
       ref.invalidate(libraryNovelsProvider);
     } on Exception catch (e, st) {

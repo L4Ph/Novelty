@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:narou_parser/narou_parser.dart';
+import 'package:novelty/database/database.dart';
+import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
@@ -14,6 +17,39 @@ import '../helpers/clipboard.dart';
 class FakeLibraryStatus extends LibraryStatus {
   @override
   Stream<bool> build(NovelSource source, String workId) => Stream.value(false);
+}
+
+/// ライブラリ登録済みを返すテスト用のNotifier
+class FakeInLibraryStatus extends LibraryStatus {
+  @override
+  Stream<bool> build(NovelSource source, String workId) => Stream.value(true);
+}
+
+/// ダウンロード完了時にライブラリ追加を促す結果を返すテスト用のNotifier
+class FakeDownloadStatus extends DownloadStatus {
+  @override
+  Stream<bool> build(NovelInfo novelInfo) => Stream.value(false);
+
+  @override
+  Future<DownloadResult> executeDownload(NovelInfo novelInfo) async {
+    return const DownloadResult.success(needsLibraryAddition: true);
+  }
+}
+
+/// テスト用の設定Notifier
+class FakeSettings extends Settings {
+  @override
+  Future<AppSettings> build() async {
+    return const AppSettings(
+      fontSize: 16,
+      isVertical: false,
+      themeMode: ThemeMode.system,
+      lineHeight: 1.5,
+      isIncognito: false,
+      isPageFlip: false,
+      isRubyEnabled: true,
+    );
+  }
 }
 
 void main() {
@@ -449,6 +485,164 @@ void main() {
       expect(find.text('第3話'), findsOneWidget);
       // 作品IDが話数として表示されないこと
       expect(find.text('第$kakuyomuWorkId話'), findsNothing);
+    });
+
+    Future<AppDatabase> pumpLibraryRegisteredPage(
+      WidgetTester tester,
+    ) async {
+      final database = AppDatabase.memory();
+      addTearDown(database.close);
+
+      await database.insertNovel(
+        const NovelInfo(ncode: testNcode, title: 'テスト作品').toDbCompanion(),
+      );
+      await database.addToLibrary(NovelSource.narou, testNcode);
+      await database.updateEpisodeContent(
+        source: NovelSource.narou,
+        workId: testNcode,
+        episodeId: 1,
+        content: [NovelContentElement.plainText('ダウンロード済みの本文')],
+        fetchedAt: 1234567890,
+        subtitle: '第1話',
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            isOfflineModeProvider.overrideWithValue(false),
+            novelInfoWithCacheProvider.overrideWith(
+              (ref, args) => Stream.value(
+                NovelInfo(
+                  source: args.$1,
+                  workId: args.$2,
+                  ncode: args.$2,
+                  title: 'テスト作品',
+                ),
+              ),
+            ),
+            episodeListProvider.overrideWith(
+              (ref, args) => Stream.value(<Episode>[]),
+            ),
+            downloadProgressProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+            libraryStatusProvider.overrideWith2(
+              (_) => FakeInLibraryStatus(),
+            ),
+            downloadStatusProvider.overrideWith2(
+              (_) => FakeDownloadStatus(),
+            ),
+            lastReadEpisodeProvider.overrideWith(
+              (ref, args) => Stream.value(null),
+            ),
+            appDatabaseProvider.overrideWithValue(database),
+            settingsProvider.overrideWith(FakeSettings.new),
+          ],
+          child: const MaterialApp(
+            home: NovelDetailPage(
+              source: NovelSource.narou,
+              workId: testNcode,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return database;
+    }
+
+    testWidgets('ライブラリ登録済みの作品を外すときダウンロード削除を確認する', (tester) async {
+      final database = await pumpLibraryRegisteredPage(tester);
+
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'ライブラリ登録済み'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('ダウンロード済みの話も削除しますか？'), findsOneWidget);
+
+      await tester.tap(find.text('ダウンロードも削除'));
+      await tester.pumpAndSettle();
+
+      expect(
+        await database.isInLibrary(NovelSource.narou, testNcode),
+        isFalse,
+      );
+      final episode = await database.getEpisodeData(
+        NovelSource.narou,
+        testNcode,
+        1,
+      );
+      expect(episode!.content, isNull);
+    });
+
+    testWidgets('ダウンロード済みの話を残してライブラリから外せる', (tester) async {
+      final database = await pumpLibraryRegisteredPage(tester);
+
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'ライブラリ登録済み'),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('ライブラリからのみ外す'));
+      await tester.pumpAndSettle();
+
+      expect(
+        await database.isInLibrary(NovelSource.narou, testNcode),
+        isFalse,
+      );
+      final episode = await database.getEpisodeData(
+        NovelSource.narou,
+        testNcode,
+        1,
+      );
+      expect(episode!.content, isNotNull);
+    });
+
+    testWidgets('キャンセルするとライブラリに残る', (tester) async {
+      final database = await pumpLibraryRegisteredPage(tester);
+
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'ライブラリ登録済み'),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+
+      expect(
+        await database.isInLibrary(NovelSource.narou, testNcode),
+        isTrue,
+      );
+      final episode = await database.getEpisodeData(
+        NovelSource.narou,
+        testNcode,
+        1,
+      );
+      expect(episode!.content, isNotNull);
+    });
+
+    testWidgets('ダウンロード完了後の「追加」で登録済みの作品は外れない', (tester) async {
+      final database = await pumpLibraryRegisteredPage(tester);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('一括ダウンロード'));
+      await tester.pumpAndSettle();
+
+      // ダウンロード完了によりライブラリ追加を促す SnackBar が出る
+      await tester.tap(find.widgetWithText(SnackBarAction, '追加'));
+      await tester.pumpAndSettle();
+
+      expect(
+        await database.isInLibrary(NovelSource.narou, testNcode),
+        isTrue,
+      );
+      final episode = await database.getEpisodeData(
+        NovelSource.narou,
+        testNcode,
+        1,
+      );
+      expect(episode!.content, isNotNull);
     });
   });
 }

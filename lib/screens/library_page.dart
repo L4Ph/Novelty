@@ -13,6 +13,7 @@ import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/app_bar_source_dropdown.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
+import 'package:novelty/widgets/remove_from_library_dialog.dart';
 import 'package:novelty/widgets/search_modal.dart';
 
 /// "ライブラリ"ページのウィジェット。
@@ -162,43 +163,42 @@ class LibraryPage extends ConsumerWidget {
 
                     return NovelListTile(
                       item: novelData,
-                      onLongPress: () {
-                        unawaited(
-                          showDialog<void>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('削除の確認'),
-                              content: Text('"${novel.title}"をライブラリから削除しますか？'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('キャンセル'),
-                                ),
-                                TextButton(
-                                  onPressed: () async {
-                                    await ref
-                                        .read(novelRepositoryProvider)
-                                        .removeFromLibrary(
-                                          novel.source,
-                                          novel.workId,
-                                        );
-                                    if (context.mounted) {
-                                      Navigator.pop(context);
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('ライブラリから削除しました'),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  child: const Text('削除'),
-                                ),
-                              ],
-                            ),
-                          ),
+                      onLongPress: () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        final repository = ref.read(novelRepositoryProvider);
+
+                        final action = await showRemoveFromLibraryDialog(
+                          context,
+                          novelTitle: novel.title ?? 'タイトルなし',
                         );
+                        if (action == null ||
+                            action == RemoveFromLibraryAction.cancel) {
+                          return;
+                        }
+
+                        try {
+                          await repository.removeFromLibrary(
+                            novel.source,
+                            novel.workId,
+                            deleteDownloads:
+                                action ==
+                                RemoveFromLibraryAction.deleteDownloads,
+                          );
+
+                          if (!messenger.mounted) return;
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('ライブラリから削除しました'),
+                            ),
+                          );
+                        } on Object catch (e) {
+                          if (!messenger.mounted) return;
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text('ライブラリから削除できませんでした: $e'),
+                            ),
+                          );
+                        }
                       },
                     );
                   },

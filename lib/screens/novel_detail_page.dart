@@ -11,6 +11,7 @@ import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/clipboard_helper.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/utils/work_url.dart';
+import 'package:novelty/widgets/remove_from_library_dialog.dart';
 
 /// 小説の詳細ページ
 class NovelDetailPage extends ConsumerStatefulWidget {
@@ -66,6 +67,54 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
     messenger.showSnackBar(
       const SnackBar(content: Text('コピーしました')),
     );
+  }
+
+  /// ライブラリ登録ボタンの処理。
+  ///
+  /// 登録解除の場合は、ダウンロード済みの話も削除するか確認する。
+  Future<void> _handleLibraryToggle(
+    NovelInfo novelInfo,
+    bool isInLibrary,
+  ) async {
+    if (!isInLibrary) {
+      await ref
+          .read(
+            libraryStatusProvider(widget.source, widget.workId).notifier,
+          )
+          .addToLibrary(novelInfo);
+      return;
+    }
+
+    final action = await showRemoveFromLibraryDialog(
+      context,
+      novelTitle: novelInfo.title ?? 'タイトルなし',
+    );
+    if (!mounted ||
+        action == null ||
+        action == RemoveFromLibraryAction.cancel) {
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref
+          .read(novelRepositoryProvider)
+          .removeFromLibrary(
+            widget.source,
+            widget.workId,
+            deleteDownloads: action == RemoveFromLibraryAction.deleteDownloads,
+          );
+
+      if (!messenger.mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('ライブラリから削除しました')),
+      );
+    } on Object catch (e) {
+      if (!messenger.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('ライブラリから削除できませんでした: $e')),
+      );
+    }
   }
 
   void _loadMoreEpisodes() {
@@ -429,14 +478,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                           ? FilledButton.tonalIcon(
                               onPressed: () {
                                 unawaited(
-                                  ref
-                                      .read(
-                                        libraryStatusProvider(
-                                          widget.source,
-                                          widget.workId,
-                                        ).notifier,
-                                      )
-                                      .toggle(novelInfo),
+                                  _handleLibraryToggle(novelInfo, true),
                                 );
                               },
                               icon: const Icon(Icons.favorite),
@@ -450,14 +492,7 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                           : FilledButton.icon(
                               onPressed: () {
                                 unawaited(
-                                  ref
-                                      .read(
-                                        libraryStatusProvider(
-                                          widget.source,
-                                          widget.workId,
-                                        ).notifier,
-                                      )
-                                      .toggle(novelInfo),
+                                  _handleLibraryToggle(novelInfo, false),
                                 );
                               },
                               icon: const Icon(Icons.favorite_border),
@@ -729,7 +764,7 @@ Future<void> _handleDownload(
                           novelInfo.workId ?? novelInfo.ncode!,
                         ).notifier,
                       )
-                      .toggle(novelInfo),
+                      .addToLibrary(novelInfo),
                 );
               },
             ),
