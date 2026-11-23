@@ -35,6 +35,8 @@ class IoHttpTransport implements HttpTransport {
       throw HttpTransportException(e);
     } on HttpException catch (e) {
       throw HttpTransportException(e);
+    } on TlsException catch (e) {
+      throw HttpTransportException(e);
     }
   }
 

@@ -47,46 +47,20 @@ class _FixtureAdapter implements HttpTransport {
   void close() {}
 }
 
-/// 指定URLへの初回アクセスで307を返し、リダイレクト先ではHTMLを返す transport。
-class _RedirectAdapter implements HttpTransport {
-  _RedirectAdapter({
-    required this.redirectFrom,
-    required this.redirectTo,
-    required this.targetHtml,
-  });
+/// リクエストの接続先だけをテスト用のローカルサーバーに置き換える。
+class _LoopbackTransport extends IoHttpTransport {
+  _LoopbackTransport(this.port);
 
-  final String redirectFrom;
-  final String redirectTo;
-  final String targetHtml;
-
-  final List<String> requestedUris = <String>[];
+  final int port;
 
   @override
   Future<RawHttpResponse> send(
     Uri uri, {
     Map<String, String> headers = const <String, String>{},
-  }) async {
-    requestedUris.add(uri.toString());
-    if (uri.toString() == redirectFrom) {
-      return RawHttpResponse(
-        statusCode: 307,
-        headers: <String, List<String>>{
-          'location': <String>[redirectTo],
-        },
-        bytes: const <int>[],
-      );
-    }
-    return RawHttpResponse(
-      statusCode: 200,
-      headers: const <String, List<String>>{
-        'content-type': <String>['text/html; charset=utf-8'],
-      },
-      bytes: utf8.encode(targetHtml),
-    );
-  }
-
-  @override
-  void close() {}
+  }) => super.send(
+    uri.replace(scheme: 'http', host: '127.0.0.1', port: port),
+    headers: headers,
+  );
 }
 
 const String _workId = '16818023211929539879';
@@ -357,27 +331,44 @@ void main() {
 
     group('fetchRanking', () {
       test('307リダイレクトをフォローしてランキングを取得できる', () async {
-        final redirectAdapter = _RedirectAdapter(
-          redirectFrom: 'https://kakuyomu.jp/rankings/all/daily',
-          redirectTo:
-              'https://kakuyomu.jp/rankings/all/daily?work_variation=long',
-          targetHtml: _fixture('ranking_page.html'),
+        final html = _fixture('ranking_page.html');
+        final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+        addTearDown(() => server.close(force: true));
+        final http = TinyHttp(
+          transport: _LoopbackTransport(server.port),
+          minInterval: Duration.zero,
+          retryLimit: 0,
         );
-        final site = KakuyomuSite(
-          http: TinyHttp(
-            transport: redirectAdapter,
-            minInterval: Duration.zero,
-          ),
-        );
+        addTearDown(http.close);
+        const initial = '/rankings/all/daily?work_variation=long';
+        const target = '/rankings/all/daily?work_variation=long&redirected=1';
+        final requestedUris = <String>[];
+        server.listen((request) async {
+          final uri = request.uri.toString();
+          requestedUris.add(uri);
+          final response = request.response;
+          if (uri == initial) {
+            response.statusCode = HttpStatus.temporaryRedirect;
+            response.headers.set(HttpHeaders.locationHeader, target);
+          } else if (uri == target) {
+            response.headers.contentType = ContentType(
+              'text',
+              'html',
+              charset: 'utf-8',
+            );
+            response.write(html);
+          } else {
+            response.statusCode = HttpStatus.notFound;
+          }
+          await response.close();
+        });
 
-        final page = await site.fetchRanking('daily');
+        final page = await KakuyomuSite(http: http).fetchRanking('daily');
 
-        expect(page.novels, isNotEmpty);
-        // リダイレクト先が1回リクエストされている
-        expect(
-          redirectAdapter.requestedUris,
-          anyElement(contains('work_variation=long')),
-        );
+        expect(requestedUris, [initial, target]);
+        expect(page.novels, hasLength(2));
+        expect(page.novels.first.workId, '2912051603474311296');
+        expect(page.novels.first.title, '宮廷魔導師選抜試験を記念受験した田舎者');
       });
 
       test('ランキングページのrankedWorksから作品一覧をパースできる', () async {

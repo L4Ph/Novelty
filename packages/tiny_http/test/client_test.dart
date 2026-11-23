@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show SocketException;
+import 'dart:io'
+    show HandshakeException, HttpClient, HttpClientRequest, SocketException;
 import 'dart:math';
 
 import 'package:test/test.dart';
@@ -27,8 +28,11 @@ class _FakeTransport implements HttpTransport {
     requestedUris.add(uri);
     return switch (_script.removeAt(0)) {
       final RawHttpResponse response => response,
+      final Future<RawHttpResponse> response => await response,
       final Exception error => throw error,
-      _ => throw StateError('script must contain a response or an exception'),
+      _ => throw StateError(
+        'script must contain a response, future or exception',
+      ),
     };
   }
 
@@ -70,6 +74,35 @@ TinyHttp _client(
 
 void main() {
   final uri = Uri.parse('https://example.test/works/1');
+
+  group('IoHttpTransport', () {
+    test('wraps a TLS handshake failure and preserves its cause', () async {
+      const failure = HandshakeException('TLS handshake failed');
+      final transport = IoHttpTransport(
+        client: _FailingHttpClient(() => throw failure),
+      );
+
+      await expectLater(
+        transport.send(uri),
+        throwsA(
+          isA<HttpTransportException>().having(
+            (error) => error.cause,
+            'cause',
+            same(failure),
+          ),
+        ),
+      );
+    });
+
+    test('does not wrap programming errors', () async {
+      final failure = StateError('invalid client state');
+      final transport = IoHttpTransport(
+        client: _FailingHttpClient(() => throw failure),
+      );
+
+      await expectLater(transport.send(uri), throwsA(same(failure)));
+    });
+  });
 
   group('TinyHttp', () {
     test('returns the status and body for a 2xx response', () async {
@@ -360,24 +393,79 @@ void main() {
     );
 
     test('waits between requests that are closer than minInterval', () async {
-      final delays = <Duration>[];
-      final transport = _FakeTransport(<Object>[_ok('1'), _ok('2')]);
+      const interval = Duration(milliseconds: 100);
+      var elapsed = Duration.zero;
+      final transport = _FakeTransport(<Object>[_ok('1'), _ok('2'), _ok('3')]);
       final client = TinyHttp(
         transport: transport,
-        minInterval: const Duration(milliseconds: 100),
-        sleep: (duration) async => delays.add(duration),
+        minInterval: interval,
+        elapsed: () => elapsed,
+        sleep: (duration) async {
+          elapsed += duration;
+        },
       );
 
       await client.get(uri);
+      expect(elapsed, Duration.zero);
+      elapsed += const Duration(milliseconds: 40);
       await client.get(uri);
+      expect(elapsed, interval);
 
-      expect(delays, hasLength(1));
-      expect(delays.single, greaterThan(Duration.zero));
-      expect(
-        delays.single,
-        lessThanOrEqualTo(const Duration(milliseconds: 100)),
-      );
+      elapsed += interval;
+      await client.get(uri);
+      expect(elapsed, interval * 2);
     });
+
+    test(
+      'spaces concurrent sends while the first response is pending',
+      () async {
+        const interval = Duration(milliseconds: 100);
+        var elapsed = Duration.zero;
+        final waits = <(Duration, Completer<void>)>[];
+        final firstResponse = Completer<RawHttpResponse>();
+        final transport = _FakeTransport(<Object>[
+          firstResponse.future,
+          _ok('2'),
+          _ok('3'),
+        ]);
+        final client = TinyHttp(
+          transport: transport,
+          minInterval: interval,
+          elapsed: () => elapsed,
+          sleep: (duration) {
+            final wake = Completer<void>();
+            waits.add((elapsed + duration, wake));
+            return wake.future;
+          },
+        );
+
+        Future<void> advanceTo(Duration time) async {
+          elapsed = time;
+          for (final (deadline, wake) in waits) {
+            if (deadline <= elapsed && !wake.isCompleted) wake.complete();
+          }
+          await Future<void>.delayed(Duration.zero);
+        }
+
+        final secondUri = uri.resolve('2');
+        final thirdUri = uri.resolve('3');
+        final first = client.get(uri);
+        final second = client.get(secondUri);
+        final third = client.get(thirdUri);
+
+        try {
+          await advanceTo(const Duration(milliseconds: 99));
+          expect(transport.requestedUris, [uri]);
+          await advanceTo(interval);
+          expect(transport.requestedUris, [uri, secondUri]);
+          await advanceTo(interval * 2);
+          expect(transport.requestedUris, [uri, secondUri, thirdUri]);
+        } finally {
+          firstResponse.complete(_ok('1'));
+        }
+        await Future.wait([first, second, third]);
+      },
+    );
 
     test('enforces minInterval with real waiting', () async {
       // Allow for timer resolution: assert 250ms out of a 300ms interval.
@@ -404,6 +492,21 @@ void main() {
       expect(transport.closed, isTrue);
     });
   });
+}
+
+class _FailingHttpClient implements HttpClient {
+  _FailingHttpClient(this.fail);
+
+  final Never Function() fail;
+
+  @override
+  bool autoUncompress = false;
+
+  @override
+  Future<HttpClientRequest> getUrl(Uri url) async => fail();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 /// A fake [HttpTransport] that never responds.

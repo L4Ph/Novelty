@@ -21,7 +21,8 @@ const Set<int> afterStatusCodes = <int>{413, 429, 503};
 class TinyHttp {
   /// Creates a client.
   ///
-  /// [transport], [sleep] and [random] are injectable for tests.
+  /// [transport], [sleep], [random] and [elapsed] are injectable for tests.
+  /// [elapsed] must be monotonic; it defaults to a running [Stopwatch].
   TinyHttp({
     HttpTransport? transport,
     this.minInterval = const Duration(milliseconds: 300),
@@ -30,11 +31,11 @@ class TinyHttp {
     this.baseDelay = const Duration(milliseconds: 300),
     Future<void> Function(Duration)? sleep,
     Random? random,
+    Duration Function()? elapsed,
   }) : _transport = transport ?? IoHttpTransport(),
        _sleep = sleep ?? _defaultSleep,
-       _random = random ?? Random() {
-    _stopwatch.start();
-  }
+       _random = random ?? Random(),
+       _elapsed = elapsed ?? _startClock();
 
   /// Minimum spacing between requests, applied before every attempt,
   /// retries included.
@@ -52,9 +53,8 @@ class TinyHttp {
   final HttpTransport _transport;
   final Future<void> Function(Duration) _sleep;
   final Random _random;
-  final Stopwatch _stopwatch = Stopwatch();
-  Duration _lastAttemptAt = Duration.zero;
-  bool _hasAttempted = false;
+  final Duration Function() _elapsed;
+  Duration? _lastReservedAt;
 
   /// Sends a GET request.
   ///
@@ -127,14 +127,14 @@ class TinyHttp {
   }
 
   Future<void> _throttle() async {
-    if (_hasAttempted) {
-      final sinceLast = _stopwatch.elapsed - _lastAttemptAt;
-      if (sinceLast < minInterval) {
-        await _sleep(minInterval - sinceLast);
-      }
+    final now = _elapsed();
+    final last = _lastReservedAt;
+    final earliest = last == null ? now : last + minInterval;
+    // Reserve before yielding so concurrent attempts get separate slots.
+    _lastReservedAt = earliest > now ? earliest : now;
+    if (earliest > now) {
+      await _sleep(earliest - now);
     }
-    _hasAttempted = true;
-    _lastAttemptAt = _stopwatch.elapsed;
   }
 
   /// Delay before the next attempt.
@@ -173,6 +173,11 @@ class TinyHttp {
 
   static Future<void> _defaultSleep(Duration duration) =>
       Future<void>.delayed(duration);
+
+  static Duration Function() _startClock() {
+    final stopwatch = Stopwatch()..start();
+    return () => stopwatch.elapsed;
+  }
 }
 
 /// Carries a retryable failure along with its retry hint.
