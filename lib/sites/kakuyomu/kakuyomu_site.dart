@@ -144,7 +144,7 @@ class KakuyomuSite implements NovelSite {
     final episodes = await fetchToc(workId);
     final episode = episodes.where((e) => e.index == index).firstOrNull;
     if (episode?.url == null) {
-      throw StateError('エピソード $index が見つかりません: $workId');
+      throw EpisodeNotFoundException(workId, index);
     }
     return episode!.url!;
   }

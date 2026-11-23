@@ -8,6 +8,7 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
+import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:tiny_http/tiny_http.dart';
@@ -242,7 +243,7 @@ class ApiService {
 
     // 短編小説の場合、episode が 1 以外は無効
     if (isShortStory && episode != 1) {
-      throw Exception('短編小説にはエピソード番号 $episode は存在しません');
+      throw EpisodeNotFoundException(ncode.toNormalizedNcode(), episode);
     }
 
     // 短編小説の場合は、エピソード番号を含まないURLを使用する

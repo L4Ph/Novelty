@@ -6,6 +6,23 @@ import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/models/ranking_page.dart';
 import 'package:novelty/sites/novel_source.dart';
 
+/// 要求された話が存在しない場合の例外。
+///
+/// 作品自体が存在しない場合とは区別する。
+class EpisodeNotFoundException implements Exception {
+  /// コンストラクタ。
+  const EpisodeNotFoundException(this.workId, this.index);
+
+  /// サイト共通の作品ID。
+  final String workId;
+
+  /// 要求された話番号。
+  final int index;
+
+  @override
+  String toString() => 'EpisodeNotFoundException($workId/$index)';
+}
+
 /// ジャンルのマスタデータ。
 ///
 /// なろう・カクヨム双方のジャンル体系を表現できるよう、
