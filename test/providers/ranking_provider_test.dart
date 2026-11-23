@@ -188,8 +188,6 @@ void main() {
       // 例外が投げられていなければ成功（破棄後のstate更新でエラーにならない）
       verify(mockApiService.searchNovels(any)).called(1);
     });
-
-
   });
 
   group('RankingNotifier（カクヨムのサイト実装経路）', () {

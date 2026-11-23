@@ -1,14 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/sites/kakuyomu/kakuyomu_site.dart';
 import 'package:novelty/sites/novel_source.dart';
+import 'package:tiny_http/tiny_http.dart';
 
-/// パスごとにフィクスチャを返すHTTPアダプタ。
-class _FixtureAdapter implements HttpClientAdapter {
+/// パスごとにフィクスチャを返す偽の transport。
+class _FixtureAdapter implements HttpTransport {
   _FixtureAdapter(this._fixtures);
 
   /// key: パス（例: `/works/123`）、value: HTML文字列
@@ -20,72 +20,47 @@ class _FixtureAdapter implements HttpClientAdapter {
   final List<String> requestedUris = <String>[];
 
   @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async {
-    final uri = Uri.parse(options.path);
+  Future<RawHttpResponse> send(
+    Uri uri, {
+    Map<String, String> headers = const <String, String>{},
+  }) async {
     requestedPaths.add(uri.path);
-    requestedUris.add(options.path);
+    requestedUris.add(uri.toString());
     final html = _fixtures[uri.path];
     if (html == null) {
-      return ResponseBody.fromString('not found', 404);
-    }
-    return ResponseBody.fromString(
-      html,
-      200,
-      headers: <String, List<String>>{
-        Headers.contentTypeHeader: <String>['text/html; charset=utf-8'],
-      },
-    );
-  }
-
-  @override
-  void close({bool force = false}) {}
-}
-
-/// 指定URLへの初回アクセスで307を返し、リダイレクト先ではHTMLを返すアダプタ。
-class _RedirectAdapter implements HttpClientAdapter {
-  _RedirectAdapter({
-    required this.redirectFrom,
-    required this.redirectTo,
-    required this.targetHtml,
-  });
-
-  final String redirectFrom;
-  final String redirectTo;
-  final String targetHtml;
-
-  final List<String> requestedUris = <String>[];
-
-  @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async {
-    requestedUris.add(options.path);
-    if (options.path == redirectFrom) {
-      return ResponseBody.fromString(
-        '',
-        307,
-        headers: <String, List<String>>{
-          'location': <String>[redirectTo],
-        },
+      return RawHttpResponse(
+        statusCode: 404,
+        headers: const <String, List<String>>{},
+        bytes: utf8.encode('not found'),
       );
     }
-    return ResponseBody.fromString(
-      targetHtml,
-      200,
-      headers: <String, List<String>>{
-        Headers.contentTypeHeader: <String>['text/html; charset=utf-8'],
+    return RawHttpResponse(
+      statusCode: 200,
+      headers: const <String, List<String>>{
+        'content-type': <String>['text/html; charset=utf-8'],
       },
+      bytes: utf8.encode(html),
     );
   }
 
   @override
-  void close({bool force = false}) {}
+  void close() {}
+}
+
+/// リクエストの接続先だけをテスト用のローカルサーバーに置き換える。
+class _LoopbackTransport extends IoHttpTransport {
+  _LoopbackTransport(this.port);
+
+  final int port;
+
+  @override
+  Future<RawHttpResponse> send(
+    Uri uri, {
+    Map<String, String> headers = const <String, String>{},
+  }) => super.send(
+    uri.replace(scheme: 'http', host: '127.0.0.1', port: port),
+    headers: headers,
+  );
 }
 
 const String _workId = '16818023211929539879';
@@ -94,13 +69,9 @@ const String _firstEpisodeId = '16818023211929635009';
 String _fixture(String name) =>
     File('test/fixtures/kakuyomu/$name').readAsStringSync();
 
-KakuyomuSite _createSite(_FixtureAdapter adapter) {
-  final dio = Dio()..httpClientAdapter = adapter;
-  return KakuyomuSite(
-    dio: dio,
-    rateLimiter: KakuyomuRateLimiter(interval: Duration.zero),
-  );
-}
+KakuyomuSite _createSite(_FixtureAdapter adapter) => KakuyomuSite(
+  http: TinyHttp(transport: adapter, minInterval: Duration.zero),
+);
 
 void main() {
   group('KakuyomuSite', () {
@@ -146,8 +117,9 @@ void main() {
       test('episode_sidebarの目次から全エピソードを目次順連番で返す', () async {
         final adapter = _FixtureAdapter(<String, String>{
           '/works/$_workId': _fixture('work_page.html'),
-          '/works/$_workId/episodes/$_firstEpisodeId/episode_sidebar':
-              _fixture('toc.html'),
+          '/works/$_workId/episodes/$_firstEpisodeId/episode_sidebar': _fixture(
+            'toc.html',
+          ),
         });
         final site = _createSite(adapter);
 
@@ -170,8 +142,7 @@ void main() {
 
     group('fetchEpisode', () {
       test('エピソードページから本文とタイトルをパースできる', () async {
-        const episodePath =
-            '/works/$_workId/episodes/$_firstEpisodeId';
+        const episodePath = '/works/$_workId/episodes/$_firstEpisodeId';
         final adapter = _FixtureAdapter(<String, String>{
           episodePath: _fixture('episode_page.html'),
         });
@@ -192,12 +163,12 @@ void main() {
       });
 
       test('url省略時は目次からURLを解決して本文を取得する', () async {
-        const episodePath =
-            '/works/$_workId/episodes/$_firstEpisodeId';
+        const episodePath = '/works/$_workId/episodes/$_firstEpisodeId';
         final adapter = _FixtureAdapter(<String, String>{
           '/works/$_workId': _fixture('work_page.html'),
-          '/works/$_workId/episodes/$_firstEpisodeId/episode_sidebar':
-              _fixture('toc.html'),
+          '/works/$_workId/episodes/$_firstEpisodeId/episode_sidebar': _fixture(
+            'toc.html',
+          ),
           episodePath: _fixture('episode_page.html'),
         });
         final site = _createSite(adapter);
@@ -224,23 +195,6 @@ void main() {
         );
         // リクエストが一切発行されないこと
         expect(adapter.requestedPaths, isEmpty);
-      });
-
-      test('レートリミッターがリクエスト間隔を保証する', () async {
-        // タイマー解像度の影響を考慮し、間隔300msに対して250ms以上を検証する
-        final limiter = KakuyomuRateLimiter(
-          interval: const Duration(milliseconds: 300),
-        );
-        final stopwatch = Stopwatch()..start();
-
-        await limiter.wait();
-        await limiter.wait();
-
-        stopwatch.stop();
-        expect(
-          stopwatch.elapsed,
-          greaterThanOrEqualTo(const Duration(milliseconds: 250)),
-        );
       });
     });
 
@@ -377,26 +331,44 @@ void main() {
 
     group('fetchRanking', () {
       test('307リダイレクトをフォローしてランキングを取得できる', () async {
-        final redirectAdapter = _RedirectAdapter(
-          redirectFrom: 'https://kakuyomu.jp/rankings/all/daily',
-          redirectTo:
-              'https://kakuyomu.jp/rankings/all/daily?work_variation=long',
-          targetHtml: _fixture('ranking_page.html'),
+        final html = _fixture('ranking_page.html');
+        final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+        addTearDown(() => server.close(force: true));
+        final http = TinyHttp(
+          transport: _LoopbackTransport(server.port),
+          minInterval: Duration.zero,
+          retryLimit: 0,
         );
-        final dio = Dio()..httpClientAdapter = redirectAdapter;
-        final site = KakuyomuSite(
-          dio: dio,
-          rateLimiter: KakuyomuRateLimiter(interval: Duration.zero),
-        );
+        addTearDown(http.close);
+        const initial = '/rankings/all/daily?work_variation=long';
+        const target = '/rankings/all/daily?work_variation=long&redirected=1';
+        final requestedUris = <String>[];
+        server.listen((request) async {
+          final uri = request.uri.toString();
+          requestedUris.add(uri);
+          final response = request.response;
+          if (uri == initial) {
+            response.statusCode = HttpStatus.temporaryRedirect;
+            response.headers.set(HttpHeaders.locationHeader, target);
+          } else if (uri == target) {
+            response.headers.contentType = ContentType(
+              'text',
+              'html',
+              charset: 'utf-8',
+            );
+            response.write(html);
+          } else {
+            response.statusCode = HttpStatus.notFound;
+          }
+          await response.close();
+        });
 
-        final page = await site.fetchRanking('daily');
+        final page = await KakuyomuSite(http: http).fetchRanking('daily');
 
-        expect(page.novels, isNotEmpty);
-        // リダイレクト先が1回リクエストされている
-        expect(
-          redirectAdapter.requestedUris,
-          anyElement(contains('work_variation=long')),
-        );
+        expect(requestedUris, [initial, target]);
+        expect(page.novels, hasLength(2));
+        expect(page.novels.first.workId, '2912051603474311296');
+        expect(page.novels.first.title, '宮廷魔導師選抜試験を記念受験した田舎者');
       });
 
       test('ランキングページのrankedWorksから作品一覧をパースできる', () async {

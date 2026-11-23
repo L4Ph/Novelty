@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// よくある質問の一覧。旧サイト（ヘルプページ）から移植した。
@@ -107,14 +106,11 @@ class _AboutPageState extends State<AboutPage> {
         children: [
           const SizedBox(height: 32),
           Center(
-            child: SvgPicture.asset(
-              'assets/app_icon/base.svg',
+            child: Image.asset(
+              'assets/app_icon/base.webp',
               width: 100,
               height: 100,
-              colorFilter: ColorFilter.mode(
-                Theme.of(context).colorScheme.primary,
-                BlendMode.srcIn,
-              ),
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(height: 32),

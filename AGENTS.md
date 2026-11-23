@@ -7,7 +7,7 @@ The project uses a modern and robust technology stack, including:
 - **State Management:** Riverpod
 - **Routing:** GoRouter
 - **Database:** Drift (SQLite)
-- **API Client:** Dio
+- **API Client:** tiny_http
 - **CI/CD:** GitHub Actions
 
 ## Building and Running
@@ -37,21 +37,6 @@ To set up the development environment and run the project, follow these steps:
 ```bash
 mise run run
 ```
-
-## Development Conventions
-
-First, create a work plan and do not start implementation until the plan is approved.
-Then, follow t_wada's TDD cycle to create tests and continuously verify the plan during implementation.
-Once each phase is completed, confirm that there are always zero Lint issues (including those classified as `info`).
-After that, you will be asked whether you want to commit.
-If approved, write a commit message in Japanese and commit.
-When interacting with the user, please provide final responses, implementation plans, and walkthroughs in Japanese to ensure clear communication.
-
-## Language
-
-- **User Interaction:** Please use Japanese for all final communication, including plans, progress updates, and final answers. Ensure the Japanese is natural, polite, and easy to understand.
-- **Code Comments:** Please write code comments in Japanese.
-- **Internal Reasoning:** You may keep things that don't require user visibility, such as your own thoughts, planning drafts, and internal logs, in English to optimize token usage.
 
 ## Agent skills
 

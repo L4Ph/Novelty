@@ -1,7 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,37 +14,40 @@ import 'package:novelty/sites/kakuyomu/kakuyomu_site.dart';
 import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:tiny_http/tiny_http.dart';
 
 import '../providers/novel_info_offline_test.mocks.dart';
 
-/// パスごとにフィクスチャを返すHTTPアダプタ。
-class _FixtureAdapter implements HttpClientAdapter {
+/// パスごとにフィクスチャを返す偽の transport。
+class _FixtureAdapter implements HttpTransport {
   _FixtureAdapter(this._fixtures);
 
   final Map<String, String> _fixtures;
 
   @override
-  Future<ResponseBody> fetch(
-    RequestOptions options,
-    Stream<Uint8List>? requestStream,
-    Future<void>? cancelFuture,
-  ) async {
-    final path = Uri.parse(options.path).path;
-    final html = _fixtures[path];
+  Future<RawHttpResponse> send(
+    Uri uri, {
+    Map<String, String> headers = const <String, String>{},
+  }) async {
+    final html = _fixtures[uri.path];
     if (html == null) {
-      return ResponseBody.fromString('not found', 404);
+      return RawHttpResponse(
+        statusCode: 404,
+        headers: const <String, List<String>>{},
+        bytes: utf8.encode('not found'),
+      );
     }
-    return ResponseBody.fromString(
-      html,
-      200,
-      headers: <String, List<String>>{
-        Headers.contentTypeHeader: <String>['text/html; charset=utf-8'],
+    return RawHttpResponse(
+      statusCode: 200,
+      headers: const <String, List<String>>{
+        'content-type': <String>['text/html; charset=utf-8'],
       },
+      bytes: utf8.encode(html),
     );
   }
 
   @override
-  void close({bool force = false}) {}
+  void close() {}
 }
 
 const String _workId = '16818023211929539879';
@@ -70,14 +72,15 @@ void main() {
       mockApiService = MockApiService();
       final adapter = _FixtureAdapter(<String, String>{
         '/works/$_workId': _fixture('work_page.html'),
-        '/works/$_workId/episodes/$_firstEpisodeId/episode_sidebar':
-            _fixture('toc.html'),
-        '/works/$_workId/episodes/$_firstEpisodeId':
-            _fixture('episode_page.html'),
+        '/works/$_workId/episodes/$_firstEpisodeId/episode_sidebar': _fixture(
+          'toc.html',
+        ),
+        '/works/$_workId/episodes/$_firstEpisodeId': _fixture(
+          'episode_page.html',
+        ),
       });
       kakuyomuSite = KakuyomuSite(
-        dio: Dio()..httpClientAdapter = adapter,
-        rateLimiter: KakuyomuRateLimiter(interval: Duration.zero),
+        http: TinyHttp(transport: adapter, minInterval: Duration.zero),
       );
       container = ProviderContainer(
         overrides: [

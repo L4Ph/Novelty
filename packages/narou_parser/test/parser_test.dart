@@ -69,7 +69,8 @@ void main() {
     });
 
     test('点のみのルビは傍点(Kenten)としてパースされる', () {
-      const html = '<p><ruby><rb>前</rb><rp>(</rp><rt>・</rt><rp>)</rp></ruby>世。</p>';
+      const html =
+          '<p><ruby><rb>前</rb><rp>(</rp><rt>・</rt><rp>)</rp></ruby>世。</p>';
       final result = parseNovelContent(html);
 
       expect(result, hasLength(3));

@@ -89,7 +89,11 @@ class TategakiColumnEngine {
   }
 
   TategakiColumn _emptyColumn() {
-    return TategakiColumn(placedItems: const [], width: 0, baseWidth: linePitch);
+    return TategakiColumn(
+      placedItems: const [],
+      width: 0,
+      baseWidth: linePitch,
+    );
   }
 
   /// 現在位置から1つの列を組み立てる（空の改行列なら null）
@@ -111,7 +115,8 @@ class TategakiColumnEngine {
       final measured = _measurer.measure(element);
       final aki = placed.isEmpty
           ? 0.0
-          : TategakiAki.em(placed.last.item.lastClass, measured.firstClass) * _measurer.em;
+          : TategakiAki.em(placed.last.item.lastClass, measured.firstClass) *
+                _measurer.em;
       final needed = used + aki + measured.advance;
 
       if (needed > maxHeight && placed.isNotEmpty) {
@@ -220,7 +225,8 @@ class TategakiColumnEngine {
     final capacities = <int, double>{};
     var totalCapacity = 0.0;
     for (var i = 1; i < placed.length; i++) {
-      final capacity = TategakiAki.maxShrink(
+      final capacity =
+          TategakiAki.maxShrink(
             placed[i - 1].item.lastClass,
             placed[i].item.firstClass,
           ) *
@@ -265,5 +271,4 @@ class TategakiColumnEngine {
       baseWidth: linePitch,
     );
   }
-
 }

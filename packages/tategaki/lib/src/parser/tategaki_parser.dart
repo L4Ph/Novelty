@@ -99,9 +99,7 @@ class TategakiParser {
     String token, {
     required bool hasSeparator,
   }) {
-    final digitCount = token.runes
-        .where((r) => r >= 0x30 && r <= 0x39)
-        .length;
+    final digitCount = token.runes.where((r) => r >= 0x30 && r <= 0x39).length;
     if (!hasSeparator && digitCount == 1) {
       return TategakiChar(token);
     }

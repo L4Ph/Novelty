@@ -14,9 +14,7 @@ const _valueMap = <String, int>{
 };
 
 void main(List<String> args) {
-  final inputPath = args.isNotEmpty
-      ? args[0]
-      : 'data/VerticalOrientation.txt';
+  final inputPath = args.isNotEmpty ? args[0] : 'data/VerticalOrientation.txt';
   final outputPath = args.length > 1
       ? args[1]
       : 'lib/src/layout/vertical_orientation_data.dart';
@@ -54,8 +52,10 @@ void main(List<String> args) {
     ..writeln('// GENERATED CODE - DO NOT MODIFY BY HAND')
     ..writeln('//')
     ..writeln('// Unicode UAX #50 Vertical_Orientation の範囲表。')
-    ..writeln('// 生成: tool/gen_vertical_orientation.dart '
-        '(data/VerticalOrientation.txt)')
+    ..writeln(
+      '// 生成: tool/gen_vertical_orientation.dart '
+      '(data/VerticalOrientation.txt)',
+    )
     ..writeln('// 値: 0=U, 1=R, 2=Tu, 3=Tr')
     ..writeln()
     ..writeln('/// 範囲の開始コードポイント（昇順）')

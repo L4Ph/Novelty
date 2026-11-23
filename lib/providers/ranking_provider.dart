@@ -21,8 +21,6 @@ void _logRanking(String message) {
   debugPrint('[Novelty][Ranking] $message');
 }
 
-
-
 /// ランキングの状態を管理するクラス
 @immutable
 class RankingState {
@@ -111,7 +109,6 @@ class RankingNotifier extends _$RankingNotifier {
   RankingState build(NovelSource source, String rankingType) {
     // Watch filter state to trigger rebuild when it changes
     ref.watch(rankingFilterStateProvider(source, rankingType));
-
 
     // Initial fetch
     unawaited(Future.microtask(fetchNextPage));

@@ -118,10 +118,9 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      container
-          .read(
-            rankingFilterStateProvider(NovelSource.kakuyomu, 'daily').notifier,
-          )
+      container.read(
+          rankingFilterStateProvider(NovelSource.kakuyomu, 'daily').notifier,
+        )
         ..setSelectedGenreId('FANTASY')
         ..setShowOnlyOngoing(value: true);
 
@@ -136,10 +135,9 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      container
-          .read(
-            rankingFilterStateProvider(NovelSource.kakuyomu, 'daily').notifier,
-          )
+      container.read(
+          rankingFilterStateProvider(NovelSource.kakuyomu, 'daily').notifier,
+        )
         ..setSelectedGenreId('FANTASY')
         ..setShowOnlyOngoing(value: true)
         ..reset();

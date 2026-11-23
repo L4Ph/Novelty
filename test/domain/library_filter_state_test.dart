@@ -96,8 +96,7 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      container
-          .read(libraryFilterStateProvider.notifier)
+      container.read(libraryFilterStateProvider.notifier)
         ..setSelectedGenreId('FANTASY')
         ..setShowOnlyOngoing(value: true)
         ..setSource(NovelSource.kakuyomu);
@@ -113,8 +112,7 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      container
-          .read(libraryFilterStateProvider.notifier)
+      container.read(libraryFilterStateProvider.notifier)
         ..setSource(NovelSource.narou)
         ..setSelectedGenreId('201')
         ..setShowOnlyOngoing(value: true);
@@ -129,8 +127,7 @@ void main() {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      container
-          .read(libraryFilterStateProvider.notifier)
+      container.read(libraryFilterStateProvider.notifier)
         ..setSource(NovelSource.kakuyomu)
         ..setSelectedGenreId('FANTASY')
         ..reset();

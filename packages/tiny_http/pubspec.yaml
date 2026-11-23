@@ -1,0 +1,11 @@
+name: tiny_http
+description: A small GET-only HTTP client with retries, timeouts and typed exceptions.
+version: 0.1.0
+publish_to: "none" # Internal package, not published.
+environment:
+  sdk: ^3.8.1
+resolution: workspace
+
+dev_dependencies:
+  test:
+  very_good_analysis: ^10.3.0

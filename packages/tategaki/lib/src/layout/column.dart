@@ -50,8 +50,7 @@ class TategakiColumn {
   final double baseWidth;
 
   /// 描画要素のリスト（配置順）
-  List<Paintable> get items =>
-      [for (final p in placedItems) p.item.paintable];
+  List<Paintable> get items => [for (final p in placedItems) p.item.paintable];
 
   /// 内容が空かどうか
   bool get isEmpty => placedItems.isEmpty;

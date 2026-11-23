@@ -67,7 +67,7 @@ ExplorePage (source 切替)
 ## アクセス方針（カクヨム）
 
 - **robots.txt 遵守**: `KakuyomuSite` がリクエスト前に禁止パス（`/read` ページ等）を検証して拒否
-- **レート制限**: リクエスト間隔1秒（`KakuyomuRateLimiter`、モノトニッククロック使用）
+- **レート制限**: リクエスト間隔300ms（`tiny_http` の `TinyHttp.minInterval` がリトライを含む全試行の直前に強制する）
 - **キャッシュファースト**: 本文は DB（`EpisodeContents`）にキャッシュし、差分（改稿日時）でのみ再取得
 
 ## パーサーパッケージ

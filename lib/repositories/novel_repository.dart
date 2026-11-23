@@ -18,6 +18,7 @@ import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:tiny_http/tiny_http.dart';
 
 part 'novel_repository.g.dart';
 
@@ -295,17 +296,19 @@ class NovelRepository {
       );
 
       return true;
-    } on Exception {
-      // データベースに保存（失敗）
-      // フェッチに失敗した場合、空の本文で失敗記録を残す。
-      // subtitle/urlは指定せず、既存の目次メタデータを上書きしない。
+    } on Object catch (error) {
+      if (!_isRetrievalFailure(error)) {
+        rethrow;
+      }
 
+      // 取得に失敗した話は、空の本文で失敗記録として残す。
+      // subtitle/urlは指定せず、既存の目次メタデータを上書きしない。
       try {
         await _db.updateEpisodeContent(
           source: source,
           workId: workId,
           episodeId: episode,
-          content: const [], // 空の本文
+          content: const [],
           fetchedAt: now,
           revisedAt: revised,
         );
@@ -339,7 +342,7 @@ class NovelRepository {
           cached.content!.isNotEmpty) {
         return cached.content!;
       }
-      throw Exception('Offline: No cached content available');
+      throw const OfflineException();
     }
 
     // 2. オンラインでも、キャッシュがあり、かつ改稿日時が一致する場合はキャッシュを使用（通信しない）
@@ -370,7 +373,11 @@ class NovelRepository {
         publishedAt: ep.update,
       );
       return content;
-    } on Exception {
+    } on Object catch (error) {
+      if (!_isRetrievalFailure(error)) {
+        rethrow;
+      }
+
       // 失敗時はキャッシュがあればフォールバックして返す
       if (cached != null &&
           cached.content != null &&
@@ -433,7 +440,10 @@ class NovelRepository {
             revisedMap[ep.index!] = ep.revised;
           }
         }
-      } on Exception {
+      } on Object catch (error) {
+        if (!_isRetrievalFailure(error)) {
+          rethrow;
+        }
         // 目次取得失敗時はrevised情報なしで進める（全件チェックになるが、キャッシュがあればスキップされる）
         // ただし、キャッシュが古くてもスキップされてしまう可能性がある
       }
@@ -577,7 +587,7 @@ class NovelRepository {
         return cachedEpisodes;
       }
       // オフラインでキャッシュもない場合はエラー
-      throw Exception('Offline: No cached episode list available');
+      throw const OfflineException();
     }
 
     try {
@@ -673,7 +683,11 @@ class NovelRepository {
         isPrivate: true,
         cachedAt: DateTime.now().millisecondsSinceEpoch,
       );
-    } on Exception {
+    } on Object catch (error) {
+      if (!_isRetrievalFailure(error)) {
+        rethrow;
+      }
+
       // ネットワークエラー等はキャッシュがあればフォールバックし、
       // キャッシュが無い場合はエラーを呼び出し元に伝える
       final cached = await _db.getNovel(source, workId);
@@ -766,7 +780,11 @@ class NovelRepository {
         );
       }).toList();
       await _db.upsertEpisodes(companions);
-    } on Exception {
+    } on Object catch (error) {
+      if (!_isRetrievalFailure(error)) {
+        rethrow;
+      }
+
       // ネットワークエラー等はキャッシュがあればフォールバックし、
       // キャッシュが無い場合はエラーを呼び出し元に伝える
       final cached = await _db.getEpisodesRange(
@@ -791,6 +809,15 @@ class NovelRepository {
         .watchSingleOrNull()
         .map((history) => history?.lastEpisodeId);
   }
+
+  /// 取得の過程で想定される失敗かどうか。
+  ///
+  /// これ以外（DB障害やプログラミングエラー）は握り潰さず伝播させる。
+  bool _isRetrievalFailure(Object error) =>
+      error is TinyHttpException ||
+      error is FormatException ||
+      error is NovelNotFoundException ||
+      error is EpisodeNotFoundException;
 
   /// フォールバックイベントを発行する。
   void _emitFallbackEvent(String message) {

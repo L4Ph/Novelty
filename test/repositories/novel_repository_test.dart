@@ -13,6 +13,7 @@ import 'package:novelty/services/api_service.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:tiny_http/tiny_http.dart';
 
 import '../providers/novel_info_offline_test.mocks.dart';
 
@@ -125,7 +126,7 @@ void main() {
 
       when(
         mockApiService.fetchEpisodeList(normalizedNcode, page),
-      ).thenThrow(Exception('Network Error'));
+      ).thenThrow(_networkFailure());
 
       when(
         mockDatabase.getEpisodesRange(
@@ -245,7 +246,7 @@ void main() {
 
       when(
         mockApiService.fetchNovelInfo(normalizedNcode),
-      ).thenThrow(Exception('network error'));
+      ).thenThrow(_networkFailure());
 
       final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
@@ -333,16 +334,14 @@ void main() {
     test('キャッシュが無い状態でネットワークエラー時はストリームエラーとして伝播する', () async {
       when(
         mockApiService.fetchNovelInfo(normalizedNcode),
-      ).thenThrow(Exception('network error'));
+      ).thenThrow(_networkFailure());
 
       final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
 
       await expectLater(
         stream,
-        emitsError(
-          predicate<Exception>((e) => e.toString().contains('network error')),
-        ),
+        emitsError(isA<TinyHttpStatusException>()),
       );
 
       final novel = await database.getNovel(NovelSource.narou, normalizedNcode);
@@ -418,7 +417,12 @@ void main() {
 
       when(
         mockApiService.fetchEpisode(normalizedNcode, episodeId),
-      ).thenThrow(Exception('network error'));
+      ).thenThrow(
+        TinyHttpStatusException(
+          uri: Uri.parse('https://ncode.syosetu.com/$normalizedNcode/1/'),
+          statusCode: 500,
+        ),
+      );
 
       final repository = container.read(novelRepositoryProvider);
       final result = await repository.downloadSingleEpisode(
@@ -436,6 +440,35 @@ void main() {
       );
       expect(data?.subtitle, '元のサブタイトル');
       expect(data?.content, isEmpty);
+    });
+
+    test('想定外の例外は失敗記録にせず伝播する', () async {
+      await database.insertNovel(
+        NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
+      );
+
+      when(
+        mockApiService.fetchEpisode(normalizedNcode, episodeId),
+      ).thenThrow(const _UnexpectedFailure());
+
+      final repository = container.read(novelRepositoryProvider);
+
+      await expectLater(
+        repository.downloadSingleEpisode(
+          NovelSource.narou,
+          testNcode,
+          episodeId,
+        ),
+        throwsA(isA<_UnexpectedFailure>()),
+      );
+
+      // 失敗記録も残していない
+      final data = await database.getEpisodeData(
+        NovelSource.narou,
+        normalizedNcode,
+        episodeId,
+      );
+      expect(data, isNull);
     });
   });
 
@@ -536,7 +569,7 @@ void main() {
 
       when(
         mockApiService.fetchEpisodeList(normalizedNcode, page),
-      ).thenThrow(Exception('network error'));
+      ).thenThrow(_networkFailure());
 
       final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchEpisodeList(
@@ -602,7 +635,7 @@ void main() {
 
       when(
         mockApiService.fetchEpisodeList(normalizedNcode, page),
-      ).thenThrow(Exception('network error'));
+      ).thenThrow(_networkFailure());
 
       final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchEpisodeList(
@@ -613,9 +646,7 @@ void main() {
 
       await expectLater(
         stream,
-        emitsError(
-          predicate<Exception>((e) => e.toString().contains('network error')),
-        ),
+        emitsError(isA<TinyHttpStatusException>()),
       );
     });
 
@@ -721,7 +752,7 @@ void main() {
 
       when(
         mockApiService.fetchEpisode(normalizedNcode, episodeId),
-      ).thenThrow(Exception('network error'));
+      ).thenThrow(_networkFailure());
 
       final repository = container.read(novelRepositoryProvider);
       final content = await repository.getEpisode(
@@ -755,4 +786,15 @@ class FakeSettings extends Settings {
       isRubyEnabled: true,
     );
   }
+}
+
+/// 通信失敗を模す例外。
+TinyHttpStatusException _networkFailure() => TinyHttpStatusException(
+  uri: Uri.parse('https://ncode.syosetu.com/n1234ab/'),
+  statusCode: 500,
+);
+
+/// 想定外の失敗を模す例外。
+class _UnexpectedFailure implements Exception {
+  const _UnexpectedFailure();
 }
