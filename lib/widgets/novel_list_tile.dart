@@ -152,6 +152,8 @@ class NovelListTile extends HookWidget {
     };
 
     final content = InkWell(
+      // 長押し後に指を離してもタップとして扱わない。
+      onLongPress: () {},
       onTap: onTap ?? defaultOnTap,
       child: Padding(
         padding: EdgeInsets.fromLTRB(16, 12, trailing == null ? 16 : 4, 12),

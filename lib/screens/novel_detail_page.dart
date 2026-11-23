@@ -842,6 +842,8 @@ class _EpisodeListTile extends ConsumerWidget {
           color: isDownloaded ? colorScheme.primary : null,
         ),
       ),
+      // 長押し後に指を離してもタップとして扱わない。
+      onLongPress: () {},
       onTap: () {
         unawaited(
           NovelEpisodeRoute(

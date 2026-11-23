@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
@@ -480,6 +481,23 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => const NovelDetailPage(
+              source: NovelSource.narou,
+              workId: workId,
+            ),
+          ),
+          GoRoute(
+            path: '/novel/narou/$workId/1',
+            builder: (_, _) => const Scaffold(body: Text('エピソード閲覧画面')),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -507,12 +525,7 @@ void main() {
               (ref, args) => Stream.value(null),
             ),
           ],
-          child: const MaterialApp(
-            home: NovelDetailPage(
-              source: NovelSource.narou,
-              workId: workId,
-            ),
-          ),
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
       await tester.pumpAndSettle();
@@ -639,7 +652,7 @@ void main() {
       );
     });
 
-    testWidgets('エピソード行を長押ししても操作メニューは出ない', (tester) async {
+    testWidgets('エピソード行は長押しして離しても遷移せず、タップで閲覧画面を開く', (tester) async {
       final repository = _RecordingRepository();
       await pumpDetail(
         tester,
@@ -648,20 +661,21 @@ void main() {
         repository: repository,
       );
 
-      for (final tile in tester.widgetList<ListTile>(find.byType(ListTile))) {
-        expect(tile.onLongPress, isNull);
-      }
-
       final gesture = await tester.startGesture(
         tester.getCenter(find.text('第一話')),
       );
       await tester.pump(const Duration(milliseconds: 800));
+      await gesture.up();
+      await tester.pumpAndSettle();
 
+      expect(find.text('エピソード閲覧画面'), findsNothing);
       expect(find.byType(BottomSheet), findsNothing);
       expect(repository.downloads, isEmpty);
       expect(repository.deletes, isEmpty);
 
-      await gesture.cancel();
+      await tester.tap(find.text('第一話'));
+      await tester.pumpAndSettle();
+      expect(find.text('エピソード閲覧画面'), findsOneWidget);
     });
   });
 }

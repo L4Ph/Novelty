@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,10 +10,12 @@ import 'package:novelty/sites/novel_source.dart';
 
 class _RecordingRepository extends Fake implements NovelRepository {
   final removed = <(NovelSource, String)>[];
+  Completer<void>? removal;
 
   @override
   Future<void> removeFromLibrary(NovelSource source, String workId) async {
     removed.add((source, workId));
+    await removal?.future;
   }
 }
 
@@ -72,10 +76,11 @@ void main() {
         repository: repository,
       );
 
-      expect(find.byTooltip('メニュー'), findsNWidgets(2));
+      expect(find.byTooltip('最初の小説のメニュー'), findsOneWidget);
+      expect(find.byTooltip('次の小説のメニュー'), findsOneWidget);
       expect(find.text('ライブラリから削除'), findsNothing);
 
-      await tester.tap(find.byTooltip('メニュー').first);
+      await tester.tap(find.byTooltip('最初の小説のメニュー'));
       await tester.pumpAndSettle();
 
       expect(find.text('ライブラリから削除'), findsOneWidget);
@@ -98,7 +103,7 @@ void main() {
         repository: repository,
       );
 
-      await tester.tap(find.byTooltip('メニュー'));
+      await tester.tap(find.byTooltip('最初の小説のメニュー'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('ライブラリから削除'));
       await tester.pumpAndSettle();
@@ -120,7 +125,7 @@ void main() {
         repository: repository,
       );
 
-      await tester.tap(find.byTooltip('メニュー'));
+      await tester.tap(find.byTooltip('最初の小説のメニュー'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('ライブラリから削除'));
       await tester.pumpAndSettle();
@@ -129,6 +134,37 @@ void main() {
 
       expect(repository.removed, isEmpty);
       expect(find.text('削除の確認'), findsNothing);
+    });
+
+    testWidgets('削除の完了時に確認ダイアログより上のルートを閉じない', (tester) async {
+      final removal = Completer<void>();
+      final repository = _RecordingRepository()..removal = removal;
+      await _pumpLibrary(
+        tester,
+        novels: [_novel(workId: 'n1111aa', title: '最初の小説')],
+        repository: repository,
+      );
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ライブラリから削除'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('削除'));
+      await tester.pumpAndSettle();
+      expect(repository.removed, [(NovelSource.narou, 'n1111aa')]);
+
+      unawaited(
+        showDialog<void>(
+          context: tester.element(find.byType(AlertDialog)),
+          builder: (_) => const AlertDialog(title: Text('別のダイアログ')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      removal.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('別のダイアログ'), findsOneWidget);
     });
 
     testWidgets('行を長押ししても削除確認は出ない', (tester) async {

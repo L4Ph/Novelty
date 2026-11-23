@@ -300,17 +300,18 @@ void main() {
         ),
       );
 
-      final inkWell = tester.widget<InkWell>(find.byType(InkWell));
-      expect(inkWell.onLongPress, isNull);
-
       final titleRect = tester.getRect(find.text('テストタイトル'));
       final trailingRect = tester.getRect(find.byIcon(Icons.more_vert));
       expect(trailingRect.left, greaterThan(titleRect.right));
 
       final gesture = await tester.startGesture(titleRect.center);
       await tester.pump(const Duration(milliseconds: 800));
+      await gesture.up();
+      await tester.pumpAndSettle();
       expect(tapped, isFalse);
-      await gesture.cancel();
+
+      await tester.tapAt(titleRect.center);
+      expect(tapped, isTrue);
     });
   });
 }

@@ -163,7 +163,7 @@ class LibraryPage extends ConsumerWidget {
                     return NovelListTile(
                       item: novelData,
                       trailing: PopupMenuButton<String>(
-                        tooltip: 'メニュー',
+                        tooltip: '${novel.title}のメニュー',
                         icon: const Icon(Icons.more_vert),
                         onSelected: (value) {
                           if (value != 'remove') {
@@ -218,7 +218,8 @@ Future<void> _confirmRemoveFromLibrary(
                   novel.source,
                   novel.workId,
                 );
-            if (!dialogContext.mounted) {
+            if (!dialogContext.mounted ||
+                ModalRoute.of(dialogContext)?.isCurrent != true) {
               return;
             }
             Navigator.pop(dialogContext);
