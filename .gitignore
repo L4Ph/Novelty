@@ -3,8 +3,11 @@
 
 custom_lint.log
 .env
-.claude/*.local.*
 mise.local.toml
+
+# IDE
+.idea/
+*.iml
 
 ### Flutter ###
 # Flutter/Dart/Pub related
