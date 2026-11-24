@@ -1,12 +1,12 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:json_annotation/json_annotation.dart';
 
-/// JSONからString?を変換するコンバーター。
+/// Converts a JSON value to a `String?`.
 ///
-/// なろうAPIの `genre` は作品によって `"101"`（文字列）と
-/// `101`（数値）のどちらでも返り得るため、両方を受け付けて
-/// 文字列へ正規化する。
+/// The narou API's `genre` is documented as an integer but some works return it
+/// as a string, so both are accepted and normalised to a string. Any other type
+/// is treated as a shape change and reported.
 class IntOrStringConverter implements JsonConverter<String?, Object?> {
-  /// コンストラクタ。
+  /// Constructor.
   const IntOrStringConverter();
 
   @override
@@ -17,8 +17,10 @@ class IntOrStringConverter implements JsonConverter<String?, Object?> {
     if (json is String) {
       return json;
     }
-    // int / double / その他の数値は文字列表現へ変換する
-    return json.toString();
+    if (json is num) {
+      return json.toString();
+    }
+    throw FormatException('Neither a string nor a number: ${json.runtimeType}');
   }
 
   @override
