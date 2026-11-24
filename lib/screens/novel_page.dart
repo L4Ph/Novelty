@@ -72,14 +72,11 @@ class NovelPage extends HookConsumerWidget {
 
         // 改稿日時マップを作成
         final episodeMap = useMemoized(() {
-          // エピソードリストがnullの場合は空のMapを返す
-          if (novelInfo.episodes == null) {
+          final episodes = novelInfo.episodes;
+          if (episodes == null) {
             return <int, String?>{};
           }
-          return {
-            for (final e in novelInfo.episodes!)
-              if (e.index != null) e.index!: e.revised,
-          };
+          return {for (final e in episodes) ?e.index: e.revised};
         }, [novelInfo]);
 
         // 現在のエピソード番号が含まれるページを計算

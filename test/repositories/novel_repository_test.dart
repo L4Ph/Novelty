@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart' as db;
+import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/network_fallback_event_provider.dart';
@@ -442,6 +443,33 @@ void main() {
       expect(data?.content, isEmpty);
     });
 
+    test('records a decoding failure as a failed episode', () async {
+      await database.insertNovel(
+        NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
+      );
+
+      // The path where guardDecode normalises a shape change.
+      when(
+        mockApiService.fetchEpisode(normalizedNcode, episodeId),
+      ).thenThrow(const FormatException('レスポンスの形式が不正です'));
+
+      final repository = container.read(novelRepositoryProvider);
+      final result = await repository.downloadSingleEpisode(
+        NovelSource.narou,
+        testNcode,
+        episodeId,
+      );
+
+      expect(result, isFalse);
+
+      final data = await database.getEpisodeData(
+        NovelSource.narou,
+        normalizedNcode,
+        episodeId,
+      );
+      expect(data?.content, isEmpty);
+    });
+
     test('想定外の例外は失敗記録にせず伝播する', () async {
       await database.insertNovel(
         NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
@@ -769,6 +797,53 @@ void main() {
         fallbackEvent?.message,
         '最新のエピソードを取得できませんでした。キャッシュを表示しています。',
       );
+    });
+  });
+
+  group('DownloadStatus executeDownload', () {
+    late MockAppDatabase mockDatabase;
+    late MockApiService mockApiService;
+    late ProviderContainer container;
+
+    setUp(() {
+      mockDatabase = MockAppDatabase();
+      mockApiService = MockApiService();
+      container = ProviderContainer(
+        overrides: [
+          db.appDatabaseProvider.overrideWithValue(mockDatabase),
+          apiServiceProvider.overrideWithValue(mockApiService),
+          settingsProvider.overrideWith(FakeSettings.new),
+          novelRepositoryProvider.overrideWith(
+            (ref) => NovelRepository(
+              ref: ref,
+              apiService: mockApiService,
+              settings: ref.watch(settingsProvider),
+              db: mockDatabase,
+            ),
+          ),
+        ],
+      );
+    });
+
+    tearDown(() => container.dispose());
+
+    test('reports an error when the episode count is unknown', () async {
+      // generalAllNo deliberately absent.
+      const novel = NovelInfo(ncode: 'n1234ab', workId: 'n1234ab');
+
+      final notifier = container.read(
+        downloadStatusProvider(novel).notifier,
+      );
+      final result = await notifier.executeDownload(novel);
+
+      final message = result.when(
+        success: (_) => fail('expected an error, got success'),
+        cancelled: () => fail('expected an error, got cancelled'),
+        error: (message) => message,
+      );
+      expect(message, isNotEmpty);
+      // No download was attempted.
+      verifyNever(mockApiService.fetchEpisode(any, any));
     });
   });
 }

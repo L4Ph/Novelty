@@ -6,50 +6,164 @@ part of 'novel_info.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => _NovelInfo(
-  source:
-      $enumDecodeNullable(_$NovelSourceEnumMap, json['source']) ??
-      NovelSource.narou,
-  workId: json['workId'] as String?,
-  title: const HtmlEscapeConverter().fromJson(json['title'] as String?),
-  ncode: json['ncode'] as String?,
-  writer: const HtmlEscapeConverter().fromJson(json['writer'] as String?),
-  userId: const StringToIntConverter().fromJson(json['userid']),
-  story: const HtmlEscapeConverter().fromJson(json['story'] as String?),
-  novelType: const StringToIntConverter().fromJson(json['novel_type']),
-  end: const StringToIntConverter().fromJson(json['end']),
-  generalAllNo: const StringToIntConverter().fromJson(json['general_all_no']),
-  genreId: const IntOrStringConverter().fromJson(json['genre']),
-  keyword: const HtmlEscapeConverter().fromJson(json['keyword'] as String?),
-  generalFirstup: json['general_firstup'] as String?,
-  generalLastup: json['general_lastup'] as String?,
-  globalPoint: const StringToIntConverter().fromJson(json['global_point']),
-  dailyPoint: const StringToIntConverter().fromJson(json['daily_point']),
-  weeklyPoint: const StringToIntConverter().fromJson(json['weekly_point']),
-  monthlyPoint: const StringToIntConverter().fromJson(json['monthly_point']),
-  quarterPoint: const StringToIntConverter().fromJson(json['quarter_point']),
-  yearlyPoint: const StringToIntConverter().fromJson(json['yearly_point']),
-  favNovelCnt: const StringToIntConverter().fromJson(json['fav_novel_cnt']),
-  impressionCnt: const StringToIntConverter().fromJson(json['impression_cnt']),
-  reviewCnt: const StringToIntConverter().fromJson(json['review_cnt']),
-  allPoint: const StringToIntConverter().fromJson(json['all_point']),
-  allHyokaCnt: const StringToIntConverter().fromJson(json['all_hyoka_cnt']),
-  sasieCnt: const StringToIntConverter().fromJson(json['sasie_cnt']),
-  kaiwaritu: const StringToIntConverter().fromJson(json['kaiwaritu']),
-  novelupdatedAt: const StringToIntConverter().fromJson(
-    json['novelupdated_at'],
-  ),
-  updatedAt: const StringToIntConverter().fromJson(json['updated_at']),
-  episodes: (json['episodes'] as List<dynamic>?)
-      ?.map((e) => Episode.fromJson(e as Map<String, dynamic>))
-      .toList(),
-  isr15: const StringToIntConverter().fromJson(json['isr15']),
-  isbl: const StringToIntConverter().fromJson(json['isbl']),
-  isgl: const StringToIntConverter().fromJson(json['isgl']),
-  iszankoku: const StringToIntConverter().fromJson(json['iszankoku']),
-  istensei: const StringToIntConverter().fromJson(json['istensei']),
-  istenni: const StringToIntConverter().fromJson(json['istenni']),
-  isPrivate: json['isPrivate'] as bool? ?? false,
+_NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => $checkedCreate(
+  '_NovelInfo',
+  json,
+  ($checkedConvert) {
+    final val = _NovelInfo(
+      source: $checkedConvert(
+        'source',
+        (v) =>
+            $enumDecodeNullable(_$NovelSourceEnumMap, v) ?? NovelSource.narou,
+      ),
+      workId: $checkedConvert('workId', (v) => v as String?),
+      title: $checkedConvert(
+        'title',
+        (v) => const HtmlEscapeConverter().fromJson(v as String?),
+      ),
+      ncode: $checkedConvert('ncode', (v) => v as String?),
+      writer: $checkedConvert(
+        'writer',
+        (v) => const HtmlEscapeConverter().fromJson(v as String?),
+      ),
+      userId: $checkedConvert(
+        'userid',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      story: $checkedConvert(
+        'story',
+        (v) => const HtmlEscapeConverter().fromJson(v as String?),
+      ),
+      novelType: $checkedConvert(
+        'novel_type',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      end: $checkedConvert(
+        'end',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      generalAllNo: $checkedConvert(
+        'general_all_no',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      genreId: $checkedConvert(
+        'genre',
+        (v) => const IntOrStringConverter().fromJson(v),
+      ),
+      keyword: $checkedConvert(
+        'keyword',
+        (v) => const HtmlEscapeConverter().fromJson(v as String?),
+      ),
+      generalFirstup: $checkedConvert('general_firstup', (v) => v as String?),
+      generalLastup: $checkedConvert('general_lastup', (v) => v as String?),
+      globalPoint: $checkedConvert(
+        'global_point',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      dailyPoint: $checkedConvert(
+        'daily_point',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      weeklyPoint: $checkedConvert(
+        'weekly_point',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      monthlyPoint: $checkedConvert(
+        'monthly_point',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      quarterPoint: $checkedConvert(
+        'quarter_point',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      yearlyPoint: $checkedConvert(
+        'yearly_point',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      favNovelCnt: $checkedConvert(
+        'fav_novel_cnt',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      impressionCnt: $checkedConvert(
+        'impression_cnt',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      reviewCnt: $checkedConvert(
+        'review_cnt',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      allPoint: $checkedConvert(
+        'all_point',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      allHyokaCnt: $checkedConvert(
+        'all_hyoka_cnt',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      sasieCnt: $checkedConvert(
+        'sasie_cnt',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      kaiwaritu: $checkedConvert(
+        'kaiwaritu',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      novelupdatedAt: $checkedConvert('novelupdated_at', (v) => v as String?),
+      episodes: $checkedConvert(
+        'episodes',
+        (v) => (v as List<dynamic>?)
+            ?.map((e) => Episode.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      ),
+      isr15: $checkedConvert(
+        'isr15',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      isbl: $checkedConvert(
+        'isbl',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      isgl: $checkedConvert(
+        'isgl',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      iszankoku: $checkedConvert(
+        'iszankoku',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      istensei: $checkedConvert(
+        'istensei',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      istenni: $checkedConvert(
+        'istenni',
+        (v) => const StringToIntConverter().fromJson(v),
+      ),
+      isPrivate: $checkedConvert('isPrivate', (v) => v as bool? ?? false),
+    );
+    return val;
+  },
+  fieldKeyMap: const {
+    'userId': 'userid',
+    'novelType': 'novel_type',
+    'generalAllNo': 'general_all_no',
+    'genreId': 'genre',
+    'generalFirstup': 'general_firstup',
+    'generalLastup': 'general_lastup',
+    'globalPoint': 'global_point',
+    'dailyPoint': 'daily_point',
+    'weeklyPoint': 'weekly_point',
+    'monthlyPoint': 'monthly_point',
+    'quarterPoint': 'quarter_point',
+    'yearlyPoint': 'yearly_point',
+    'favNovelCnt': 'fav_novel_cnt',
+    'impressionCnt': 'impression_cnt',
+    'reviewCnt': 'review_cnt',
+    'allPoint': 'all_point',
+    'allHyokaCnt': 'all_hyoka_cnt',
+    'sasieCnt': 'sasie_cnt',
+    'novelupdatedAt': 'novelupdated_at',
+  },
 );
 
 Map<String, dynamic> _$NovelInfoToJson(
@@ -82,10 +196,7 @@ Map<String, dynamic> _$NovelInfoToJson(
   'all_hyoka_cnt': const StringToIntConverter().toJson(instance.allHyokaCnt),
   'sasie_cnt': const StringToIntConverter().toJson(instance.sasieCnt),
   'kaiwaritu': const StringToIntConverter().toJson(instance.kaiwaritu),
-  'novelupdated_at': const StringToIntConverter().toJson(
-    instance.novelupdatedAt,
-  ),
-  'updated_at': const StringToIntConverter().toJson(instance.updatedAt),
+  'novelupdated_at': instance.novelupdatedAt,
   'episodes': instance.episodes,
   'isr15': const StringToIntConverter().toJson(instance.isr15),
   'isbl': const StringToIntConverter().toJson(instance.isbl),

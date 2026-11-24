@@ -125,14 +125,10 @@ abstract class NovelInfo with _$NovelInfo {
     @StringToIntConverter() int? kaiwaritu,
 
     /// 作品の更新日時。
-    @StringToIntConverter()
-    @JsonKey(name: 'novelupdated_at')
-    int? novelupdatedAt,
-
-    /// 最終更新日時。
     ///
-    /// システム用で作品更新時とは関係ない。
-    @StringToIntConverter() @JsonKey(name: 'updated_at') int? updatedAt,
+    /// The API returns a date string such as `2026-03-22 23:00:26`.
+    /// It used to be decoded as int, which always produced null.
+    @JsonKey(name: 'novelupdated_at') String? novelupdatedAt,
 
     /// エピソードのリスト。
     List<Episode>? episodes,
@@ -188,14 +184,23 @@ abstract class NovelInfo with _$NovelInfo {
   });
 }
 
-/// [NovelInfo]をデータベースの[NovelsCompanion]に変換する拡張メソッド。
+/// Helpers for the fields that every site is expected to populate.
 extension NovelInfoEx on NovelInfo {
-  /// [NovelInfo]をデータベースの[NovelsCompanion]に変換するメソッド。
+  /// The site-wide work id.
+  ///
+  /// Narou derives it from the ncode when the payload has no explicit workId.
+  /// Null means the payload was unusable, which is worth failing on rather
+  /// than letting a null reach a NOT NULL column.
+  String? get resolvedWorkId => workId ?? ncode;
+
+  /// Maps this model onto the row it came from.
   NovelsCompanion toDbCompanion() {
     return NovelsCompanion(
       source: Value(source),
-      // なろうの場合はworkId未設定でもncodeから補完する
-      workId: Value(workId ?? ncode!),
+      workId: Value(
+        resolvedWorkId ??
+            (throw StateError('NovelInfo has neither workId nor ncode')),
+      ),
       title: Value(title),
       writer: Value(writer),
       userId: Value(userId),
@@ -217,7 +222,7 @@ extension NovelInfoEx on NovelInfo {
       monthlyPoint: Value(monthlyPoint),
       quarterPoint: Value(quarterPoint),
       yearlyPoint: Value(yearlyPoint),
-      novelUpdatedAt: Value(novelupdatedAt?.toString()),
+      novelUpdatedAt: Value(novelupdatedAt),
       cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
       isr15: Value(isr15),
       isbl: Value(isbl),

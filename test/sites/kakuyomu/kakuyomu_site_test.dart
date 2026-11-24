@@ -76,6 +76,34 @@ KakuyomuSite _createSite(_FixtureAdapter adapter) => KakuyomuSite(
 void main() {
   group('KakuyomuSite', () {
     group('fetchNovelInfo', () {
+      test('turns a retyped Apollo field into a FormatException', () async {
+        // publicEpisodeCount is typed as int? but the payload carries a string.
+        final nextData = jsonEncode(<String, Object?>{
+          'props': <String, Object?>{
+            'pageProps': <String, Object?>{
+              '__APOLLO_STATE__': <String, Object?>{
+                'Work:$_workId': <String, Object?>{
+                  'id': _workId,
+                  'title': 't',
+                  'publicEpisodeCount': '123',
+                },
+              },
+            },
+          },
+        });
+        final adapter = _FixtureAdapter(<String, String>{
+          '/works/$_workId':
+              '<html><body><script id="__NEXT_DATA__">$nextData'
+              '</script></body></html>',
+        });
+        final site = _createSite(adapter);
+
+        await expectLater(
+          site.fetchNovelInfo(_workId),
+          throwsA(isA<FormatException>()),
+        );
+      });
+
       test('作品ページの__NEXT_DATA__から作品情報をパースできる', () async {
         final adapter = _FixtureAdapter(<String, String>{
           '/works/$_workId': _fixture('work_page.html'),

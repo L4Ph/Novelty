@@ -9,6 +9,7 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/sites/novel_site.dart';
+import 'package:novelty/utils/decode_guard.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:tiny_http/tiny_http.dart';
@@ -133,7 +134,18 @@ class ApiService {
     // デバッグ: APIレスポンスを確認
 
     final processedData = _processNovelType(novelData);
-    return NovelInfo.fromJson(processedData);
+    final info = guardDecode(() => NovelInfo.fromJson(processedData));
+
+    // Every narou payload carries these; their absence (or an empty id) means
+    // the response is not usable, so fail here rather than storing a partial
+    // row.
+    final resolvedNcode = info.ncode;
+    if (resolvedNcode == null ||
+        resolvedNcode.isEmpty ||
+        info.generalAllNo == null) {
+      throw const FormatException('APIレスポンスに必須項目がありません');
+    }
+    return info;
   }
 
   /// 小説のエピソードを取得するメソッド。
@@ -154,7 +166,7 @@ class ApiService {
 
     // novelTypeがnullの場合、general_all_noを使って判断
     if (info.novelType == null) {
-      if (info.generalAllNo != null && info.generalAllNo! <= 1) {
+      if ((info.generalAllNo ?? 2) <= 1) {
         info = info.copyWith(novelType: 2); // 短編小説
       } else {
         info = info.copyWith(novelType: 1); // 連載小説
@@ -231,7 +243,7 @@ class ApiService {
 
     // novelTypeがnullの場合、general_all_noを使って判断
     if (info.novelType == null) {
-      if (info.generalAllNo != null && info.generalAllNo! <= 1) {
+      if ((info.generalAllNo ?? 2) <= 1) {
         info = info.copyWith(novelType: 2); // 短編小説
       } else {
         info = info.copyWith(novelType: 1); // 連載小説
@@ -326,8 +338,10 @@ class ApiService {
       final novels = data
           .sublist(1)
           .map(
-            (item) => NovelInfo.fromJson(
-              _processNovelType(item as Map<String, dynamic>),
+            (item) => guardDecode(
+              () => NovelInfo.fromJson(
+                _processNovelType(item as Map<String, dynamic>),
+              ),
             ),
           )
           .toList();
@@ -337,11 +351,14 @@ class ApiService {
   }
 
   Map<String, dynamic> _processNovelType(Map<String, dynamic> novelData) {
-    // novelTypeが文字列の場合、整数に変換
-    if (novelData['novel_type'] is String) {
-      final novelTypeStr = novelData['novel_type'] as String;
-      novelData['novel_type'] = int.tryParse(novelTypeStr) ?? 1; // デフォルトは連載(1)
-    } else if (novelData['novel_type'] == null) {
+    // The API emits `noveltype` (no underscore) when `nt` is requested, which
+    // is what `_novelApiOfParameter` does. Normalise it to the documented name.
+    novelData['novel_type'] ??= novelData['noveltype'];
+
+    // A value that is present is left for StringToIntConverter, which accepts
+    // ints and numeric strings and reports anything else. Only a missing value
+    // is inferred, so a retyped field cannot quietly become "serialising".
+    if (novelData['novel_type'] == null) {
       // novelTypeがnullの場合、general_all_noを使って判断
       // general_all_noが1または0の場合は短編小説、それ以外は連載小説
       final generalAllNo = novelData['general_all_no'];

@@ -8,6 +8,7 @@ import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/models/ranking_page.dart';
 import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_source.dart';
+import 'package:novelty/utils/decode_guard.dart';
 import 'package:tiny_http/tiny_http.dart';
 
 /// カクヨムのサイト定義。
@@ -106,7 +107,13 @@ class KakuyomuSite implements NovelSite {
   @override
   Future<NovelInfo> fetchNovelInfo(String workId) async {
     final html = await _fetch('/works/$workId');
-    return _parseNovelInfo(html, workId);
+    final info = guardDecode(() => _parseNovelInfo(html, workId));
+
+    // Without these the work cannot be opened or downloaded.
+    if (info.workId == null || info.generalAllNo == null) {
+      throw const FormatException('作品ページに必須項目がありません');
+    }
+    return info;
   }
 
   /// 目次（エピソード一覧）を取得する。
@@ -117,11 +124,13 @@ class KakuyomuSite implements NovelSite {
   @override
   Future<List<Episode>> fetchToc(String workId) async {
     final workHtml = await _fetch('/works/$workId');
-    final firstEpisodeId = _parseFirstEpisodeId(workHtml, workId);
+    final firstEpisodeId = guardDecode(
+      () => _parseFirstEpisodeId(workHtml, workId),
+    );
     final tocHtml = await _fetch(
       '/works/$workId/episodes/$firstEpisodeId/episode_sidebar',
     );
-    return _parseToc(tocHtml, workId);
+    return guardDecode(() => _parseToc(tocHtml, workId));
   }
 
   /// エピソード本文を取得する。
@@ -136,7 +145,7 @@ class KakuyomuSite implements NovelSite {
   }) async {
     final episodeUrl = url ?? await _resolveEpisodeUrl(workId, index);
     final html = await _fetch(episodeUrl);
-    return _parseEpisode(html, workId, index, episodeUrl);
+    return guardDecode(() => _parseEpisode(html, workId, index, episodeUrl));
   }
 
   /// 目次の [index] 番目のエピソードURLを解決する。
@@ -177,7 +186,7 @@ class KakuyomuSite implements NovelSite {
       },
     ).toString();
     final html = await _fetch(url);
-    return _parseSearchResults(html);
+    return guardDecode(() => _parseSearchResults(html));
   }
 
   /// ランキングを取得する。
@@ -200,7 +209,7 @@ class KakuyomuSite implements NovelSite {
           },
         );
     final html = await _fetch(uri.toString());
-    return _parseRanking(html);
+    return guardDecode(() => _parseRanking(html));
   }
 
   /// パスがrobots.txtで取得禁止でないことを検証する。

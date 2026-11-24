@@ -52,6 +52,12 @@ class MockApiService extends _i1.Mock implements _i5.ApiService {
   }
 
   @override
+  void close() => super.noSuchMethod(
+    Invocation.method(#close, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
   _i6.Future<List<_i3.Episode>> fetchEpisodeList(String? ncode, int? page) =>
       (super.noSuchMethod(
             Invocation.method(#fetchEpisodeList, [ncode, page]),
