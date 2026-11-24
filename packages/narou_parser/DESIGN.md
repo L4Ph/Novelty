@@ -28,8 +28,7 @@ HTMLから以下の要素を抽出：
 ### NovelContentElement（ユニオン型）
 
 ```dart
-@freezed
-sealed class NovelContentElement with _$NovelContentElement {
+sealed class NovelContentElement {
   /// プレーンテキスト
   factory NovelContentElement.plainText(String text) = PlainText;
 
@@ -79,7 +78,6 @@ packages/narou_parser/
 │       ├── parser.dart                   # parseNovelContent関数
 │       └── models/
 │           ├── novel_content_element.dart
-│           ├── novel_content_element.freezed.dart
 │           └── novel_content_element.g.dart
 ├── test/
 │   ├── parser_test.dart
@@ -106,12 +104,10 @@ resolution: workspace
 
 dependencies:
   html: # workspace で管理
-  freezed_annotation: # workspace で管理
   json_annotation: # workspace で管理
 
 dev_dependencies:
   build_runner: # workspace で管理
-  freezed: # workspace で管理
   json_serializable: # workspace で管理
   very_good_analysis: # workspace で管理
   test: # workspace で管理
@@ -199,7 +195,6 @@ dependencies:
 
 - `lib/utils/novel_parser.dart`
 - `lib/models/novel_content_element.dart`
-- `lib/models/novel_content_element.freezed.dart`
 - `lib/models/novel_content_element.g.dart`
 - `test/utils/novel_parser_test.dart`（パッケージ側に移動）
 

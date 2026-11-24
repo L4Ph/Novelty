@@ -5,7 +5,6 @@ pre-commit:
       exclude:
         - "*.g.dart"
         - "*.mocks.dart"
-        - "*.freezed.dart"
       run: mise exec -- dart format {staged_files}
       stage_fixed: true
     analyze:
@@ -13,5 +12,4 @@ pre-commit:
       exclude:
         - "*.g.dart"
         - "*.mocks.dart"
-        - "*.freezed.dart"
       run: mise exec -- dart analyze {staged_files}
