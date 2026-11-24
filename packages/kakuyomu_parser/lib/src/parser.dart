@@ -20,12 +20,12 @@ List<NovelContentElement> parseKakuyomuEpisodeBody(String html) {
     final isBlank =
         paragraph.classes.contains('blank') || paragraph.text.trim().isEmpty;
     if (isBlank) {
-      elements.add(NovelContentElement.newLine());
+      elements.add(const NovelContentElement.newLine());
       continue;
     }
     _parseInline(paragraph, elements);
     // 段落の区切りとして改行を付与する
-    elements.add(NovelContentElement.newLine());
+    elements.add(const NovelContentElement.newLine());
   }
   return elements;
 }
@@ -56,7 +56,7 @@ void _parseInline(dom.Node node, List<NovelContentElement> elements) {
             _parseInline(child, elements);
           }
         case 'br':
-          elements.add(NovelContentElement.newLine());
+          elements.add(const NovelContentElement.newLine());
         default:
           // span 等の未知タグは子要素を再帰的に処理する
           _parseInline(child, elements);

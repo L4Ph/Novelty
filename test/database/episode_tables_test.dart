@@ -116,7 +116,7 @@ void main() {
         source: NovelSource.narou,
         workId: ncode,
         episodeId: 1,
-        content: [NovelContentElement.plainText('本文テキスト')],
+        content: [const NovelContentElement.plainText('本文テキスト')],
         fetchedAt: 1234567890,
         revisedAt: '2024-02-01 00:00:00',
       );
@@ -147,7 +147,7 @@ void main() {
         source: NovelSource.narou,
         workId: ncode,
         episodeId: 1,
-        content: [NovelContentElement.plainText('本文テキスト')],
+        content: [const NovelContentElement.plainText('本文テキスト')],
         fetchedAt: 111,
       );
 
@@ -192,7 +192,7 @@ void main() {
         source: NovelSource.narou,
         workId: ncode,
         episodeId: 1,
-        content: [NovelContentElement.plainText('本文テキスト')],
+        content: [const NovelContentElement.plainText('本文テキスト')],
         fetchedAt: 222,
       );
 

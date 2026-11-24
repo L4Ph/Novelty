@@ -26,7 +26,7 @@ void main() {
         source: NovelSource.narou,
         workId: workId,
         episodeId: 1,
-        content: [NovelContentElement.plainText('ダウンロード済みの本文')],
+        content: [const NovelContentElement.plainText('ダウンロード済みの本文')],
         fetchedAt: 1234567890,
         subtitle: '第1話',
       );

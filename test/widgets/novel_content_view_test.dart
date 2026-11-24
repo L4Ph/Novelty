@@ -10,10 +10,10 @@ void main() {
   group('NovelContentView', () {
     test('buildSpansが正しくInlineSpanを生成するか', () {
       final elements = <NovelContentElement>[
-        PlainText('これは'),
-        RubyText('テスト', 'てすと'),
-        PlainText('です。'),
-        NewLine(),
+        const PlainText('これは'),
+        const RubyText('テスト', 'てすと'),
+        const PlainText('です。'),
+        const NewLine(),
       ];
 
       const style = TextStyle(fontSize: 16);
@@ -43,8 +43,8 @@ void main() {
 
     testWidgets('HookWidgetとして実装されておりuseMemoizedを使用するか', (tester) async {
       final elements = <NovelContentElement>[
-        PlainText('テストテキスト'),
-        NewLine(),
+        const PlainText('テストテキスト'),
+        const NewLine(),
       ];
 
       await tester.pumpWidget(
@@ -78,7 +78,7 @@ void main() {
 
     testWidgets('elementsが変更された時のみspan再計算が行われるか', (tester) async {
       var elements = <NovelContentElement>[
-        PlainText('初期テキスト'),
+        const PlainText('初期テキスト'),
       ];
 
       await tester.pumpWidget(
@@ -96,7 +96,7 @@ void main() {
 
       // 異なるelementsで更新
       elements = <NovelContentElement>[
-        PlainText('更新されたテキスト'),
+        const PlainText('更新されたテキスト'),
       ];
 
       await tester.pumpWidget(
@@ -117,7 +117,7 @@ void main() {
   group('NovelContentView with ruby control', () {
     testWidgets('isRubyEnabled=trueのときstrutStyleが設定される', (tester) async {
       final elements = <NovelContentElement>[
-        PlainText('テストテキスト'),
+        const PlainText('テストテキスト'),
       ];
 
       await tester.pumpWidget(
@@ -138,7 +138,7 @@ void main() {
 
     testWidgets('isRubyEnabled=falseのときstrutStyleがnull', (tester) async {
       final elements = <NovelContentElement>[
-        PlainText('テストテキスト'),
+        const PlainText('テストテキスト'),
       ];
 
       await tester.pumpWidget(
@@ -158,9 +158,9 @@ void main() {
 
     test('buildSpansはisRubyEnabledがtrueのときルビを含む', () {
       final elements = <NovelContentElement>[
-        PlainText('これは'),
-        RubyText('テスト', 'てすと'),
-        PlainText('です。'),
+        const PlainText('これは'),
+        const RubyText('テスト', 'てすと'),
+        const PlainText('です。'),
       ];
 
       const style = TextStyle(fontSize: 16);
@@ -181,9 +181,9 @@ void main() {
 
     test('buildSpansはisRubyEnabledがfalseのときルビを除外', () {
       final elements = <NovelContentElement>[
-        PlainText('これは'),
-        RubyText('テスト', 'てすと'),
-        PlainText('です。'),
+        const PlainText('これは'),
+        const RubyText('テスト', 'てすと'),
+        const PlainText('です。'),
       ];
 
       const style = TextStyle(fontSize: 16);
@@ -203,9 +203,9 @@ void main() {
 
     test('buildSpansはKentenをWidgetSpan(KentenSpan)として生成する', () {
       final elements = <NovelContentElement>[
-        PlainText('これは'),
-        Kenten('重要', '﹅'),
-        PlainText('です。'),
+        const PlainText('これは'),
+        const Kenten('重要', '﹅'),
+        const PlainText('です。'),
       ];
 
       const style = TextStyle(fontSize: 16);
@@ -223,7 +223,7 @@ void main() {
     });
 
     testWidgets('横書きで傍点が描画される', (tester) async {
-      final elements = <NovelContentElement>[Kenten('重要', '﹅')];
+      final elements = <NovelContentElement>[const Kenten('重要', '﹅')];
 
       await tester.pumpWidget(
         MaterialApp(
@@ -239,9 +239,9 @@ void main() {
 
     test('buildSpansは複数のルビ要素を正しく処理する', () {
       final elements = <NovelContentElement>[
-        RubyText('漢字', 'かんじ'),
-        PlainText('と'),
-        RubyText('平仮名', 'ひらがな'),
+        const RubyText('漢字', 'かんじ'),
+        const PlainText('と'),
+        const RubyText('平仮名', 'ひらがな'),
       ];
 
       const style = TextStyle(fontSize: 16);

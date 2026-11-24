@@ -19,7 +19,7 @@ void main() {
 
     test('plainText のみが正しく変換される', () {
       final elements = <NovelContentElement>[
-        NovelContentElement.plainText('こんにちは'),
+        const NovelContentElement.plainText('こんにちは'),
       ];
       final jsonStr = elements.toHybridJson();
       final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
@@ -34,9 +34,9 @@ void main() {
 
     test(r'newLine は txt 内の \n として扱われる', () {
       final elements = <NovelContentElement>[
-        NovelContentElement.plainText('A'),
-        NovelContentElement.newLine(),
-        NovelContentElement.plainText('B'),
+        const NovelContentElement.plainText('A'),
+        const NovelContentElement.newLine(),
+        const NovelContentElement.plainText('B'),
       ];
       final jsonStr = elements.toHybridJson();
       final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
@@ -52,10 +52,10 @@ void main() {
 
     test('rubyText は txt に base が入り rb に off/base/ruby が入る', () {
       final elements = <NovelContentElement>[
-        NovelContentElement.plainText('かくいう俺も、'),
-        NovelContentElement.rubyText('前', '・'),
-        NovelContentElement.rubyText('世', '・'),
-        NovelContentElement.plainText('では'),
+        const NovelContentElement.plainText('かくいう俺も、'),
+        const NovelContentElement.rubyText('前', '・'),
+        const NovelContentElement.rubyText('世', '・'),
+        const NovelContentElement.plainText('では'),
       ];
       final jsonStr = elements.toHybridJson();
       final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
@@ -77,9 +77,9 @@ void main() {
 
     test('kenten は txt に base が入り rb に type/base/mark が入る', () {
       final elements = <NovelContentElement>[
-        NovelContentElement.plainText('これは'),
-        NovelContentElement.kenten('重要', '﹅'),
-        NovelContentElement.plainText('だ'),
+        const NovelContentElement.plainText('これは'),
+        const NovelContentElement.kenten('重要', '﹅'),
+        const NovelContentElement.plainText('だ'),
       ];
       final jsonStr = elements.toHybridJson();
       final decoded = jsonDecode(jsonStr) as Map<String, dynamic>;
@@ -113,11 +113,11 @@ void main() {
 
     test('kenten と ruby の混在が往復できる', () {
       final elements = <NovelContentElement>[
-        NovelContentElement.plainText('彼は'),
-        NovelContentElement.kenten('天才', '﹅'),
-        NovelContentElement.plainText('と呼ばれた'),
-        NovelContentElement.rubyText('最強', 'さいきょう'),
-        NovelContentElement.plainText('だ'),
+        const NovelContentElement.plainText('彼は'),
+        const NovelContentElement.kenten('天才', '﹅'),
+        const NovelContentElement.plainText('と呼ばれた'),
+        const NovelContentElement.rubyText('最強', 'さいきょう'),
+        const NovelContentElement.plainText('だ'),
       ];
       final roundTrip = HybridConverter.fromHybridJson(
         elements.toHybridJson(),
@@ -127,14 +127,14 @@ void main() {
 
     test('複合例が往復できる (docs/narou_html の抜粋)', () {
       final elements = <NovelContentElement>[
-        NovelContentElement.plainText('人間、どんな清廉潔白'),
-        NovelContentElement.newLine(),
-        NovelContentElement.plainText('かくいう俺も、'),
-        NovelContentElement.rubyText('前', '・'),
-        NovelContentElement.rubyText('世', '・'),
-        NovelContentElement.plainText('では'),
-        NovelContentElement.newLine(),
-        NovelContentElement.plainText('俺は悲劇のヒロインが好きだった。'),
+        const NovelContentElement.plainText('人間、どんな清廉潔白'),
+        const NovelContentElement.newLine(),
+        const NovelContentElement.plainText('かくいう俺も、'),
+        const NovelContentElement.rubyText('前', '・'),
+        const NovelContentElement.rubyText('世', '・'),
+        const NovelContentElement.plainText('では'),
+        const NovelContentElement.newLine(),
+        const NovelContentElement.plainText('俺は悲劇のヒロインが好きだった。'),
       ];
       final jsonStr = elements.toHybridJson();
       final roundTrip = HybridConverter.fromHybridJson(jsonStr);

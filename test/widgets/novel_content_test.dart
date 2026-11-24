@@ -23,8 +23,8 @@ AppSettings get defaultTestSettings => const AppSettings(
 void main() {
   // ダミーの小説コンテンツデータ
   final testContent = <NovelContentElement>[
-    NovelContentElement.plainText('これはテストの1行目です。'),
-    NovelContentElement.plainText('これはテストの2行目です。'),
+    const NovelContentElement.plainText('これはテストの1行目です。'),
+    const NovelContentElement.plainText('これはテストの2行目です。'),
   ];
 
   // 各テストでウィジェットをポンプするためのヘルパー関数

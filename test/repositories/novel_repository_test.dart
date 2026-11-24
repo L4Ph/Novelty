@@ -753,7 +753,7 @@ void main() {
         source: NovelSource.narou,
         workId: normalizedNcode,
         episodeId: episodeId,
-        content: [NovelContentElement.plainText('cached body')],
+        content: [const NovelContentElement.plainText('cached body')],
         fetchedAt: DateTime.now().millisecondsSinceEpoch,
         revisedAt: '2024-01-01',
       );
