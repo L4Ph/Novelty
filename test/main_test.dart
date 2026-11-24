@@ -140,4 +140,11 @@ void main() {
       expect(find.text('配下の画面'), findsNothing);
     });
   });
+
+  group('テーマ', () {
+    test('ダークテーマは暗い配色で生成される', () {
+      expect(appTheme(Brightness.light).brightness, Brightness.light);
+      expect(appTheme(Brightness.dark).brightness, Brightness.dark);
+    });
+  });
 }
