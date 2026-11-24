@@ -32,7 +32,6 @@ workspace:
 # versions available, run `flutter pub outdated`.
 dependencies:
   drift: ^2.34.0
-  dynamic_color: ^1.7.0
   file_picker: ^10.3.7
   flutter:
     sdk: flutter
