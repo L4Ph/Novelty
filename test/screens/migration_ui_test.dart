@@ -46,6 +46,7 @@ void main() {
         MaterialApp(
           home: MigrationRecoveryScreen(
             error: Exception('test error'),
+            canUseFilePicker: true,
           ),
         ),
       );
@@ -64,6 +65,7 @@ void main() {
         MaterialApp(
           home: MigrationRecoveryScreen(
             error: Exception('test error'),
+            canUseFilePicker: true,
             onRetry: () {
               retryCalled = true;
             },
@@ -83,6 +85,7 @@ void main() {
         MaterialApp(
           home: MigrationRecoveryScreen(
             error: Exception('test error'),
+            canUseFilePicker: true,
             onExportDatabase: () async {
               exportCalled = true;
               return null;
@@ -123,6 +126,7 @@ void main() {
         MaterialApp(
           home: MigrationRecoveryScreen(
             error: Exception('test error'),
+            canUseFilePicker: true,
           ),
         ),
       );

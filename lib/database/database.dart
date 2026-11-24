@@ -1570,11 +1570,20 @@ class AppDatabase extends _$AppDatabase {
   }
 }
 
+/// データベースファイルの場所。
+///
+/// デスクトップではユーザーが直接コピーできるよう、UI でもこのパスを出す。
+Future<File> databaseFile() async {
+  final dbFolder = await getApplicationDocumentsDirectory();
+  return File(p.join(dbFolder.path, 'novelty.db'));
+}
+
+/// データベースファイルのパス。
+Future<String> databaseFilePath() async => (await databaseFile()).path;
+
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'novelty.db'));
-    return NativeDatabase.createInBackground(file);
+    return NativeDatabase.createInBackground(await databaseFile());
   });
 }
 

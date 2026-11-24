@@ -1,19 +1,24 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/services/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:sqlite3/sqlite3.dart';
 
 /// バックアップ・復元サービス
 /// データベース全体のエクスポート・インポート機能を提供
 class BackupService {
   /// コンストラクタ
-  const BackupService(this._database);
+  BackupService(this._database, {FilePicker? picker})
+    : _picker = picker ?? FilePicker();
 
   /// データベースインスタンス
   final AppDatabase _database;
+
+  /// 保存先/復元元を選ぶプラットフォーム実装。
+  final FilePicker _picker;
 
   /// 現在のスキーマバージョン
   /// AppDatabase.currentSchemaVersion と常に同期させることで、
@@ -31,26 +36,23 @@ class BackupService {
   /// コピーを取得する(DBクローズはアクティブなストリームを
   /// 待機して完了しないことがあるため、クリティカルパスから外す)。
   Future<String?> exportDatabaseToFile() async {
-    // 保存先ディレクトリを選択
-    final selectedDirectory = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: 'バックアップ先のディレクトリを選択',
-    );
+    final fileName = _backupFileName();
 
-    if (selectedDirectory == null) {
-      return null;
+    // VACUUM INTO cannot write to a content URI, so the copy is produced in
+    // the app's own cache and then streamed out by the platform picker.
+    final cacheDirectory = await getTemporaryDirectory();
+    final tempFile = File(p.join(cacheDirectory.path, fileName));
+    try {
+      final escapedPath = tempFile.path.replaceAll("'", "''");
+      await _database.customStatement("VACUUM INTO '$escapedPath'");
+      return await _picker.saveFile(
+        sourcePath: tempFile.path,
+        suggestedName: fileName,
+        dialogTitle: 'バックアップの保存先を選択',
+      );
+    } finally {
+      await _deleteQuietly(tempFile);
     }
-
-    // バックアップファイル名を生成(スキーマバージョンを含める)
-    final fileName =
-        'novelty_backup_${_formatDateTime(DateTime.now())}'
-        '_v$currentSchemaVersion.db';
-    final backupPath = p.join(selectedDirectory, fileName);
-
-    // VACUUM INTO で整合性のあるバックアップを作成
-    final escapedPath = backupPath.replaceAll("'", "''");
-    await _database.customStatement("VACUUM INTO '$escapedPath'");
-
-    return backupPath;
   }
 
   /// データベースファイルを直接コピーしてエクスポートする
@@ -61,14 +63,6 @@ class BackupService {
   ///
   /// 戻り値: エクスポートされたファイルのパス。キャンセルされた場合はnull
   Future<String?> exportDatabaseFileDirectly() async {
-    final selectedDirectory = await FilePicker.platform.getDirectoryPath(
-      dialogTitle: 'バックアップ先のディレクトリを選択',
-    );
-
-    if (selectedDirectory == null) {
-      return null;
-    }
-
     // 開いているDBをクローズしてからコピーする(WALの内容を
     // 本体に反映させるため)。マイグレーション失敗直後など接続が
     // 不安定な状態でもコピーは試行する(ベストエフォート)。
@@ -78,17 +72,21 @@ class BackupService {
       // クローズに失敗してもコピーは継続する
     }
 
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final dbFile = File(p.join(dbFolder.path, 'novelty.db'));
+    final dbFile = await databaseFile();
+    final fileName = _backupFileName();
+    final cacheDirectory = await getTemporaryDirectory();
+    final tempFile = File(p.join(cacheDirectory.path, fileName));
 
-    final fileName =
-        'novelty_backup_${_formatDateTime(DateTime.now())}'
-        '_v$currentSchemaVersion.db';
-    final backupPath = p.join(selectedDirectory, fileName);
-
-    await dbFile.copy(backupPath);
-
-    return backupPath;
+    try {
+      await dbFile.copy(tempFile.path);
+      return await _picker.saveFile(
+        sourcePath: tempFile.path,
+        suggestedName: fileName,
+        dialogTitle: 'バックアップの保存先を選択',
+      );
+    } finally {
+      await _deleteQuietly(tempFile);
+    }
   }
 
   /// インポートのステージング(バックアップファイルの読み込み)
@@ -102,66 +100,106 @@ class BackupService {
   ///
   /// 成功後は [applyImportSwap] でファイルを置き換えること。
   Future<ImportStagedResult> stageImport() async {
-    // バックアップファイルを選択。
-    // 選択されたファイルはFilePickerがアプリのキャッシュにコピーし、
-    // 実パスを返してくれる(AndroidのSAF経由でも同様)。
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['db'],
+    // The platform copies the picked document into the cache directory we hand
+    // it, so the caller owns a real path and deletes it afterwards.
+    final cacheDirectory = await getTemporaryDirectory();
+    final pickedPath = await _picker.pickFile(
+      cacheDirectory: cacheDirectory.path,
+      extensions: const <String>['db'],
       dialogTitle: 'バックアップファイルを選択',
     );
 
-    if (result == null || result.files.isEmpty) {
+    if (pickedPath == null) {
       return const ImportStagedResult(cancelled: true);
     }
 
-    final pickedFile = result.files.single;
-
-    // ファイル名からスキーマバージョンを抽出
-    final backupVersion = _extractVersionFromFileName(pickedFile.name);
-
-    final pickedPath = pickedFile.path;
-    if (pickedPath == null) {
-      throw StateError('選択したファイルを読み込めませんでした');
-    }
-
-    // ステージング先(前回の残骸があれば消してから書き込む)
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final pendingFile = File(
-      p.join(dbFolder.path, 'novelty.db.import_pending'),
-    );
-    if (pendingFile.existsSync()) {
-      await pendingFile.delete();
-    }
-
+    final picked = File(pickedPath);
     try {
-      await File(pickedPath).copy(pendingFile.path);
-    } on Object {
-      // 書き込み途中のファイルを残さない
+      // The swap is the one operation that can destroy a library, so never
+      // accept a file that is not a readable Novelty database.
+      _validateBackup(picked);
+
+      final dbFolder = await getApplicationDocumentsDirectory();
+      final pendingFile = File(
+        p.join(dbFolder.path, 'novelty.db.import_pending'),
+      );
       if (pendingFile.existsSync()) {
         await pendingFile.delete();
       }
-      rethrow;
+
+      try {
+        await picked.copy(pendingFile.path);
+      } on Object {
+        // 書き込み途中のファイルを残さない
+        if (pendingFile.existsSync()) {
+          await pendingFile.delete();
+        }
+        rethrow;
+      }
+
+      return ImportStagedResult(pendingFilePath: pendingFile.path);
+    } finally {
+      await _deleteQuietly(picked);
     }
-
-    // FilePickerのキャッシュは自動削除されず繰り返すと
-    // ストレージを圧迫するため、コピー後に消去する
-    await _clearFilePickerCache();
-
-    return ImportStagedResult(
-      pendingFilePath: pendingFile.path,
-      backupVersion: backupVersion,
-    );
   }
 
-  /// FilePickerの一時キャッシュを消去する(失敗しても続行する)
-  Future<void> _clearFilePickerCache() async {
+  /// Throws [FormatException] when [file] cannot be a Novelty backup.
+  ///
+  /// Checks the SQLite header, the schema version, the required tables and the
+  /// page structure. A newer schema is rejected because opening it would run no
+  /// migration and silently misread columns.
+  void _validateBackup(File file) {
+    if (!file.existsSync() || file.lengthSync() < 100) {
+      throw const FormatException('ファイルが空か壊れています');
+    }
+
+    final handle = file.openSync()..setPositionSync(0);
+    final magic = handle.readSync(16);
+    handle.closeSync();
+    if (magic.length < 16 || String.fromCharCodes(magic) != _sqliteMagic) {
+      throw const FormatException('SQLiteのデータベースではありません');
+    }
+
+    Database? db;
     try {
-      await FilePicker.platform.clearTemporaryFiles();
-    } on Object {
-      // 消去に失敗しても続行する
+      db = sqlite3.open(file.path, mode: OpenMode.readOnly);
+      final version = db.userVersion;
+      if (version > currentSchemaVersion) {
+        throw FormatException(
+          'このバックアップは新しいバージョンのアプリで作成されています'
+          '（v$version、現在は v$currentSchemaVersion）',
+        );
+      }
+
+      final tables = db
+          .select("SELECT name FROM sqlite_master WHERE type = 'table'")
+          .map((row) => row['name'] as String)
+          .toSet();
+      if (!tables.containsAll(_requiredTables)) {
+        throw const FormatException('このアプリのバックアップではありません');
+      }
+
+      if (db.select('PRAGMA quick_check').first.values.first != 'ok') {
+        throw const FormatException('データベースが壊れています');
+      }
+    } on SqliteException catch (e) {
+      throw FormatException('データベースを開けません: ${e.message}');
+    } finally {
+      db?.close();
     }
   }
+
+  /// A table every schema this app can migrate from has.
+  ///
+  /// Only `novels` qualifies: `episode_list_entries` and `episode_contents`
+  /// were split out of `episodes` in v16, and v12 and earlier used
+  /// `library_novels` / `history`. Requiring the newer names would reject
+  /// backups that `onUpgrade` can still migrate, so the schema version and the
+  /// migration itself stay responsible for the rest.
+  static const _requiredTables = <String>{'novels'};
+
+  /// SQLite のファイル先頭16バイト。
+  static const _sqliteMagic = 'SQLite format 3\u0000';
 
   /// ステージング済みのファイルでデータベースを置き換える
   ///
@@ -176,8 +214,7 @@ class BackupService {
   /// 購読がpause状態で残っているとDriftのclose()は完了しない
   /// (実測で確認済み)。
   Future<void> applyImportSwap(String pendingFilePath) async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final dbFile = File(p.join(dbFolder.path, 'novelty.db'));
+    final dbFile = await databaseFile();
     final backupFile = File('${dbFile.path}.bak');
     final pendingFile = File(pendingFilePath);
 
@@ -226,17 +263,20 @@ class BackupService {
     }
   }
 
-  /// ファイル名からスキーマバージョンを抽出
-  ///
-  /// ファイル名の形式: novelty_backup_YYYYMMDD_HHMMSS_vN.db
-  /// 戻り値: バージョン番号、抽出できない場合はnull
-  int? _extractVersionFromFileName(String fileName) {
-    final versionPattern = RegExp(r'_v(\d+)\.db$');
-    final match = versionPattern.firstMatch(fileName);
-    if (match != null) {
-      return int.tryParse(match.group(1)!);
+  /// バックアップのファイル名。
+  String _backupFileName() =>
+      'novelty_backup_${_formatDateTime(DateTime.now())}'
+      '_v$currentSchemaVersion.db';
+
+  /// Deletes [file] without failing the operation when it is already gone.
+  Future<void> _deleteQuietly(File file) async {
+    try {
+      if (file.existsSync()) {
+        await file.delete();
+      }
+    } on Object {
+      // A leftover cache file is harmless; the OS reclaims it.
     }
-    return null;
   }
 
   /// 日時をファイル名用にフォーマットする
@@ -257,7 +297,6 @@ class ImportStagedResult {
   const ImportStagedResult({
     this.cancelled = false,
     this.pendingFilePath,
-    this.backupVersion,
   });
 
   /// ファイル選択がキャンセルされたかどうか
@@ -265,7 +304,4 @@ class ImportStagedResult {
 
   /// ステージング済みファイルのパス(キャンセル時はnull)
   final String? pendingFilePath;
-
-  /// バックアップファイルのスキーマバージョン
-  final int? backupVersion;
 }

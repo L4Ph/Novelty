@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:novelty/database/migration_helper.dart';
+import 'package:novelty/database/database.dart';
+import 'package:novelty/services/file_picker.dart';
 import 'package:novelty/utils/clipboard_helper.dart';
 
 /// マイグレーション失敗時に表示するリカバリー画面。
@@ -14,6 +15,7 @@ class MigrationRecoveryScreen extends StatelessWidget {
     super.key,
     this.onRetry,
     this.onExportDatabase,
+    this.canUseFilePicker,
   });
 
   /// マイグレーション失敗の原因となった例外
@@ -25,6 +27,9 @@ class MigrationRecoveryScreen extends StatelessWidget {
   /// DBエクスポートボタンが押されたときに呼ばれるコールバック。
   /// 戻り値はエクスポートされたファイルのパス。キャンセル時はnull。
   final Future<String?> Function()? onExportDatabase;
+
+  /// ファイル選択が使えるかどうか。省略時はプラットフォームから判定する。
+  final bool? canUseFilePicker;
 
   @override
   Widget build(BuildContext context) {
@@ -84,11 +89,14 @@ class MigrationRecoveryScreen extends StatelessWidget {
               label: const Text('もう一度試す'),
             ),
             const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: () => _onExport(context),
-              icon: const Icon(Icons.save_alt),
-              label: const Text('データベースをエクスポート'),
-            ),
+            if (canUseFilePicker ?? FilePicker.platformSupports)
+              OutlinedButton.icon(
+                onPressed: () => _onExport(context),
+                icon: const Icon(Icons.save_alt),
+                label: const Text('データベースをエクスポート'),
+              )
+            else
+              _manualExportHint(context),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () => unawaited(_copyLatestReportPath(context)),
@@ -98,6 +106,35 @@ class MigrationRecoveryScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// ファイル選択が使えない環境向けの案内。
+  ///
+  /// デスクトップではデータベースが普通のファイルなので、
+  /// エクスポート機能よりパスを教えるほうが役に立つ。
+  Widget _manualExportHint(BuildContext context) {
+    return FutureBuilder<String>(
+      future: databaseFilePath(),
+      builder: (context, snapshot) {
+        final path = snapshot.data;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            children: [
+              const Text(
+                'このプラットフォームではアプリ内エクスポートに対応していません。',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              SelectableText(
+                path ?? 'データベースはアプリの Documents にあります',
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

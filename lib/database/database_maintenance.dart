@@ -19,13 +19,10 @@ class DatabaseMaintenanceIdle extends DatabaseMaintenanceState {
 /// インポート適用(DBファイルの置き換え)に必要な情報。
 class ImportSwapPayload {
   /// コンストラクタ
-  const ImportSwapPayload({required this.pendingFilePath, this.backupVersion});
+  const ImportSwapPayload({required this.pendingFilePath});
 
   /// ステージング済みの新しいDBファイルのパス
   final String pendingFilePath;
-
-  /// バックアップファイルのスキーマバージョン
-  final int? backupVersion;
 }
 
 /// 保守操作の実行中。
