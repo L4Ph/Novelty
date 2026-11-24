@@ -5,16 +5,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/database/database_maintenance.dart';
 import 'package:novelty/services/backup_service.dart';
+import 'package:novelty/services/file_picker.dart';
+import 'package:novelty/utils/clipboard_helper.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 /// データとストレージページ
 /// データベース全体のバックアップ・復元機能を提供
 class DataStoragePage extends ConsumerStatefulWidget {
   /// コンストラクタ
-  const DataStoragePage({super.key, this.backupService});
+  const DataStoragePage({super.key, this.backupService, this.canUseFilePicker});
 
   /// バックアップサービス
   final BackupService? backupService;
+
+  /// ファイル選択が使えるかどうか。省略時はプラットフォームから判定する。
+  final bool? canUseFilePicker;
 
   @override
   ConsumerState<DataStoragePage> createState() => _DataStoragePageState();
@@ -66,19 +71,56 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
             ),
           ),
         ),
-        ListTile(
-          leading: const Icon(Icons.save_alt),
-          title: const Text('データベースをエクスポート'),
-          subtitle: const Text('すべてのデータをバックアップファイルに保存'),
-          onTap: _exportDatabase,
-        ),
-        ListTile(
-          leading: const Icon(Icons.upload_file),
-          title: const Text('データベースをインポート'),
-          subtitle: const Text('バックアップファイルからすべてのデータを復元'),
-          onTap: _importDatabase,
-        ),
+        if (widget.canUseFilePicker ?? FilePicker.platformSupports) ...[
+          ListTile(
+            leading: const Icon(Icons.save_alt),
+            title: const Text('データベースをエクスポート'),
+            subtitle: const Text('すべてのデータをバックアップファイルに保存'),
+            onTap: _exportDatabase,
+          ),
+          ListTile(
+            leading: const Icon(Icons.upload_file),
+            title: const Text('データベースをインポート'),
+            subtitle: const Text('バックアップファイルからすべてのデータを復元'),
+            onTap: _importDatabase,
+          ),
+        ] else
+          _buildManualBackupHint(),
       ],
+    );
+  }
+
+  /// ファイル選択が使えないプラットフォーム向けの案内。
+  ///
+  /// デスクトップではデータベースが普通のファイルなので、
+  /// アプリを介さずコピーしてもらうほうが早い。
+  Widget _buildManualBackupHint() {
+    return FutureBuilder<String>(
+      future: databaseFilePath(),
+      builder: (context, snapshot) {
+        final path = snapshot.data;
+        return ListTile(
+          leading: const Icon(Icons.info_outline),
+          title: const Text('このプラットフォームではアプリ内バックアップに対応していません'),
+          subtitle: Text(
+            path == null
+                ? 'データベースはアプリの Documents にあります'
+                : 'データベースは次のファイルです。コピーして保存してください:\n$path',
+          ),
+          isThreeLine: path != null,
+          trailing: path == null
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.copy),
+                  tooltip: 'パスをコピー',
+                  onPressed: () async {
+                    await copyTextToClipboard(path);
+                    if (!context.mounted) return;
+                    _showSnackBar('パスをコピーしました');
+                  },
+                ),
+        );
+      },
     );
   }
 
@@ -226,10 +268,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
     // (importSwapResultProvider 経由)。
     startImportSwap(
       ref,
-      payload: ImportSwapPayload(
-        pendingFilePath: staged.pendingFilePath!,
-        backupVersion: staged.backupVersion,
-      ),
+      payload: ImportSwapPayload(pendingFilePath: staged.pendingFilePath!),
     );
   }
 

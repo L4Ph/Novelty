@@ -23,7 +23,10 @@ void main() {
       mockBackupService = MockBackupService();
     });
 
-    Future<void> pumpPage(WidgetTester tester) async {
+    Future<void> pumpPage(
+      WidgetTester tester, {
+      bool canUseFilePicker = true,
+    }) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -32,7 +35,10 @@ void main() {
             ),
           ],
           child: MaterialApp(
-            home: DataStoragePage(backupService: mockBackupService),
+            home: DataStoragePage(
+              backupService: mockBackupService,
+              canUseFilePicker: canUseFilePicker,
+            ),
           ),
         ),
       );
@@ -50,6 +56,17 @@ void main() {
       expect(find.text('データベースのバックアップ'), findsOneWidget);
       expect(find.text('データベースをエクスポート'), findsOneWidget);
       expect(find.text('データベースをインポート'), findsOneWidget);
+    });
+
+    testWidgets('ファイル選択が使えない環境ではパスの案内を出す', (tester) async {
+      await pumpPage(tester, canUseFilePicker: false);
+
+      expect(
+        find.text('このプラットフォームではアプリ内バックアップに対応していません'),
+        findsOneWidget,
+      );
+      expect(find.text('データベースをエクスポート'), findsNothing);
+      expect(find.text('データベースをインポート'), findsNothing);
     });
 
     group('エクスポート', () {
@@ -113,7 +130,6 @@ void main() {
         when(mockBackupService.stageImport()).thenAnswer(
           (_) async => const ImportStagedResult(
             pendingFilePath: '/tmp/novelty.db.import_pending',
-            backupVersion: 17,
           ),
         );
 
@@ -132,7 +148,6 @@ void main() {
         final swap = (maintenance as DatabaseMaintenanceBusy).importSwap;
         expect(swap, isNotNull);
         expect(swap!.pendingFilePath, '/tmp/novelty.db.import_pending');
-        expect(swap.backupVersion, 17);
       });
 
       testWidgets('キャンセルするとスナックバーが表示される', (tester) async {
