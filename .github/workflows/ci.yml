@@ -34,7 +34,9 @@ jobs:
       - name: Analyze
         run: |
           mise run analyze
-          (cd packages/tategaki && mise exec -- flutter analyze)
+          for package in tategaki tiny_router; do
+            (cd "packages/$package" && mise exec -- flutter analyze)
+          done
           for package in narou_parser kakuyomu_parser novel_parser_core tiny_http; do
             (cd "packages/$package" && mise exec -- dart analyze)
           done
@@ -44,9 +46,10 @@ jobs:
 
       - name: Test (packages)
         run: |
-          (cd packages/tategaki && mise exec -- flutter test)
-          (cd packages/tiny_router_flutter && mise exec -- flutter test)
-          for package in narou_parser kakuyomu_parser novel_parser_core tiny_http tiny_router; do
+          for package in tategaki tiny_router; do
+            (cd "packages/$package" && mise exec -- flutter test)
+          done
+          for package in narou_parser kakuyomu_parser novel_parser_core tiny_http; do
             (cd "packages/$package" && mise exec -- dart test)
           done
 

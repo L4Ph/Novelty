@@ -37,12 +37,26 @@ void main() {
     expect(find.byType(AboutPage), findsOneWidget);
     expect(appRouter.overlays.entries, [const AboutDest()]);
 
-    appRouter.pop();
+    // The system back has to reach the router through the dispatcher; without
+    // one the press would leave the app instead of popping.
+    expect(await tester.binding.handlePopRoute(), isTrue);
     await _pumpTransition(tester);
 
     expect(find.byType(AboutPage), findsNothing);
     expect(appRouter.overlays.entries, isEmpty);
     expect(find.byType(BottomNavigationBar), findsOneWidget);
+
+    // A page pushed inside the tab pops the same way.
+    appRouter.push(const AppearanceSettingsDest());
+    await _pumpTransition(tester);
+    expect(appRouter.stackOf(AppTab.library).length, 2);
+
+    expect(await tester.binding.handlePopRoute(), isTrue);
+    await _pumpTransition(tester);
+    expect(appRouter.stackOf(AppTab.library).entries, [const LibraryDest()]);
+
+    // At the tab root there is nothing left to pop, so the OS gets the press.
+    expect(await tester.binding.handlePopRoute(), isFalse);
 
     // Unmount so providers release whatever they scheduled.
     await tester.pumpWidget(const SizedBox.shrink());

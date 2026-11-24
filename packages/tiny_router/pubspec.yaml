@@ -1,11 +1,17 @@
 name: tiny_router
-description: A tiny, host-agnostic navigation stack for declarative routers.
+description: A tiny navigation stack and its Navigator 2.0 adapter.
 version: 0.1.0
 publish_to: "none" # Internal package, not published.
 environment:
   sdk: ^3.8.1
+  flutter: ">=3.27.0"
 resolution: workspace
 
+dependencies:
+  flutter:
+    sdk: flutter
+
 dev_dependencies:
-  test:
+  flutter_test:
+    sdk: flutter
   very_good_analysis: ^10.3.0

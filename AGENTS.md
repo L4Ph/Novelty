@@ -5,7 +5,7 @@ This is a Flutter project called "Novelty," a cross-platform novel viewer for th
 The project uses a modern and robust technology stack, including:
 - **Framework:** Flutter
 - **State Management:** Riverpod
-- **Routing:** GoRouter
+- **Routing:** `tiny_router` (in-house, ADR-0003)
 - **Database:** Drift (SQLite)
 - **API Client:** tiny_http
 - **CI/CD:** GitHub Actions

@@ -3,7 +3,6 @@ import 'package:novelty/router/destinations.dart';
 import 'package:novelty/router/screens.dart';
 import 'package:novelty/screens/scaffold_page.dart';
 import 'package:tiny_router/tiny_router.dart';
-import 'package:tiny_router_flutter/tiny_router_flutter.dart';
 
 /// The app's tabs. Each owns a navigation stack of its own.
 enum AppTab {
@@ -125,5 +124,8 @@ class _AppRouterConfig extends RouterConfig<Object> {
           rootBuilder: (context) => const ScaffoldPage(),
           builder: (context, destination) => screenFor(destination),
         ),
+        // Without this, Router registers no pop callback and the system back
+        // never reaches the delegate: every press would leave the app.
+        backButtonDispatcher: RootBackButtonDispatcher(),
       );
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tiny_router/tiny_router.dart';
-import 'package:tiny_router_flutter/src/page_factory.dart';
 
 /// A `Navigator` whose pages come from [stack].
 ///
@@ -79,15 +78,33 @@ class _RouteStackNavigatorState<D extends Object>
             widget.builder(context, destination),
           ),
       ],
-      // Reached when a screen pops with Navigator.pop instead of going through
-      // the stack; the delegate-driven removals below do not come through here.
-      onDidRemovePage: (_) => widget.stack.pop(),
+      // Fires for imperative removals only, but also when a page is replaced,
+      // where the entry is already gone; popping then would take the wrong one.
+      onDidRemovePage: (page) {
+        if (_isTopPage(page)) {
+          widget.stack.pop();
+        }
+      },
     );
 
     return NavigatorPopHandler<void>(
       enabled: widget.handlesSystemPop,
-      onPopWithResult: (_) => widget.stack.pop(),
+      // A refused pop is announced to every handler of the route, the
+      // disabled ones included, so a hidden tab would pop itself as well.
+      onPopWithResult: (_) {
+        if (widget.handlesSystemPop) {
+          widget.stack.pop();
+        }
+      },
       child: navigator,
     );
+  }
+
+  bool _isTopPage(Page<Object?> page) {
+    final top = widget.stack.top;
+    if (top == null) {
+      return false;
+    }
+    return page.key == pageKeyFor(widget.stack.length - 1, top);
   }
 }

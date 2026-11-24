@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:tiny_router/tiny_router.dart';
-import 'package:tiny_router_flutter/src/page_factory.dart';
 
 /// A [RouterDelegate] whose page list is [rootBuilder] followed by [stack].
 ///
@@ -39,8 +38,12 @@ class RouteStackDelegate<D extends Object> extends RouterDelegate<List<D>>
 
   @override
   Future<void> setNewRoutePath(List<D> configuration) async {
+    // clear() leaves the initial entries in place, and those are the floor of
+    // this stack: only what follows them belongs to the incoming configuration,
+    // whose head is expected to be those same entries.
     stack.clear();
-    configuration.forEach(stack.push);
+    final floor = stack.length;
+    configuration.skip(floor).forEach(stack.push);
   }
 
   @override
@@ -54,8 +57,17 @@ class RouteStackDelegate<D extends Object> extends RouterDelegate<List<D>>
           builder(context, destination),
         ),
     ],
-    onDidRemovePage: (_) => stack.pop(),
+    // Fires for imperative removals only, but also when a page is replaced,
+    // where the entry is already gone; popping then would take the wrong one.
+    onDidRemovePage: _popIfTopPage,
   );
+
+  void _popIfTopPage(Page<Object?> page) {
+    final top = stack.top;
+    if (top != null && page.key == pageKeyFor(stack.length - 1, top)) {
+      stack.pop();
+    }
+  }
 
   @override
   void dispose() {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tiny_router/tiny_router.dart';
-import 'package:tiny_router_flutter/tiny_router_flutter.dart';
 
 /// A screen that counts its own taps, so tests can tell whether its state
 /// survived a rebuild of the navigator.
@@ -112,6 +111,57 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(stack.entries, ['root']);
+    });
+
+    testWidgets('a hidden navigator does not pop when another refuses', (
+      tester,
+    ) async {
+      // A refused pop is announced to every handler on the route, so the
+      // disabled one must ignore it.
+      final hidden = RouteStack<String>(['root'])..push('hidden');
+      final active = RouteStack<String>(['root'])..push('active');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Column(
+            children: [
+              Expanded(
+                child: RouteStackNavigator<String>(
+                  stack: hidden,
+                  handlesSystemPop: false,
+                  builder: (context, destination) => _Counter(destination),
+                ),
+              ),
+              Expanded(
+                child: RouteStackNavigator<String>(
+                  stack: active,
+                  builder: (context, destination) => _Counter(destination),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(active.entries, ['root']);
+      expect(hidden.entries, ['root', 'hidden']);
+    });
+
+    testWidgets('replaceTop swaps the screen without popping the stack', (
+      tester,
+    ) async {
+      final stack = RouteStack<String>(['root'])..push('a');
+      await tester.pumpWidget(_app(stack));
+      await tester.pumpAndSettle();
+
+      stack.replaceTop('b');
+      await tester.pumpAndSettle();
+
+      expect(stack.entries, ['root', 'b']);
+      expect(find.text('b:0'), findsOneWidget);
     });
 
     testWidgets('does not consume system back when handlesSystemPop is false', (

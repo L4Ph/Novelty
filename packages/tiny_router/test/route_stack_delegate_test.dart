@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tiny_router/tiny_router.dart';
-import 'package:tiny_router_flutter/tiny_router_flutter.dart';
 
 void main() {
   group('RouteStackDelegate', () {
@@ -15,6 +14,20 @@ void main() {
       addTearDown(delegate.dispose);
 
       expect(delegate.currentConfiguration, ['root', 'a']);
+    });
+
+    test('setNewRoutePath keeps the initial entries once', () async {
+      final stack = RouteStack<String>(['root'])..push('a');
+      final delegate = RouteStackDelegate<String>(
+        stack: stack,
+        rootBuilder: (context) => const SizedBox.shrink(),
+        builder: (context, destination) => Text(destination),
+      );
+      addTearDown(delegate.dispose);
+
+      await delegate.setNewRoutePath(['root', 'b']);
+
+      expect(stack.entries, ['root', 'b']);
     });
 
     test('setNewRoutePath replaces the stack', () async {

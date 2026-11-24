@@ -1,6 +1,6 @@
 // ignore_for_file: cascade_invocations
 
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:tiny_router/tiny_router.dart';
 
 void main() {

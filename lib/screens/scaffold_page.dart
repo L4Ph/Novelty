@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:novelty/router/app_router.dart';
 import 'package:novelty/router/destinations.dart';
 import 'package:novelty/router/screens.dart';
-import 'package:tiny_router_flutter/tiny_router_flutter.dart';
+import 'package:tiny_router/tiny_router.dart';
 
 /// The app shell: the tab bar and one navigator per tab.
 ///
