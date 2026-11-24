@@ -404,6 +404,59 @@ class NovelSearchQuery {
     );
   }
 
+  /// ログとデバッグ用の文字列表現。
+  @override
+  String toString() {
+    final parts = <String>[
+      'source: $source',
+      'word: $word',
+      'notword: $notword',
+      'title: $title',
+      'ex: $ex',
+      'keyword: $keyword',
+      'wname: $wname',
+      'biggenre: $biggenre',
+      'notbiggenre: $notbiggenre',
+      'genreId: $genreId',
+      'notgenre: $notgenre',
+      'userid: $userid',
+      'isr15: $isr15',
+      'isbl: $isbl',
+      'isgl: $isgl',
+      'iszankoku: $iszankoku',
+      'istensei: $istensei',
+      'istenni: $istenni',
+      'istt: $istt',
+      'notr15: $notr15',
+      'notbl: $notbl',
+      'notgl: $notgl',
+      'notzankoku: $notzankoku',
+      'nottensei: $nottensei',
+      'nottenni: $nottenni',
+      'minlen: $minlen',
+      'maxlen: $maxlen',
+      'length: $length',
+      'kaiwaritu: $kaiwaritu',
+      'sasie: $sasie',
+      'mintime: $mintime',
+      'maxtime: $maxtime',
+      'time: $time',
+      'ncode: $ncode',
+      'type: $type',
+      'serialStatus: $serialStatus',
+      'totalCharacterCountRange: $totalCharacterCountRange',
+      'buntai: $buntai',
+      'stop: $stop',
+      'lastup: $lastup',
+      'lastupdate: $lastupdate',
+      'ispickup: $ispickup',
+      'order: $order',
+      'lim: $lim',
+      'st: $st',
+    ];
+    return 'NovelSearchQuery(${parts.join(', ')})';
+  }
+
   /// Value equality over every field.
   @override
   bool operator ==(Object other) =>

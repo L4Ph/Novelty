@@ -840,6 +840,7 @@ void main() {
         DownloadResultError(:final message) => message,
         DownloadResultSuccess() => fail('expected an error, got success'),
         DownloadResultCancelled() => fail('expected an error, got cancelled'),
+        _ => fail('expected an error, got $result'),
       };
       expect(message, isNotEmpty);
       expect(message, isNotEmpty);

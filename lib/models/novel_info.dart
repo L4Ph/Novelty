@@ -14,7 +14,6 @@ part 'novel_info.g.dart';
 ///
 /// なろう小説APIのレスポンスや、なろう小説のHTMLからパースした情報を格納する。
 /// カクヨム対応（#240）により、[source]で提供サイトを識別する。
-
 @JsonSerializable()
 class NovelInfo {
   /// Constructor.
@@ -224,6 +223,50 @@ class NovelInfo {
 
   /// エピソードのリスト。
   final List<Episode>? episodes;
+
+  /// ログとデバッグ用の文字列表現。
+  @override
+  String toString() {
+    final parts = <String>[
+      'source: $source',
+      'workId: $workId',
+      'title: $title',
+      'ncode: $ncode',
+      'writer: $writer',
+      'userId: $userId',
+      'story: $story',
+      'novelType: $novelType',
+      'end: $end',
+      'generalAllNo: $generalAllNo',
+      'genreId: $genreId',
+      'keyword: $keyword',
+      'generalFirstup: $generalFirstup',
+      'generalLastup: $generalLastup',
+      'globalPoint: $globalPoint',
+      'dailyPoint: $dailyPoint',
+      'weeklyPoint: $weeklyPoint',
+      'monthlyPoint: $monthlyPoint',
+      'quarterPoint: $quarterPoint',
+      'yearlyPoint: $yearlyPoint',
+      'favNovelCnt: $favNovelCnt',
+      'impressionCnt: $impressionCnt',
+      'reviewCnt: $reviewCnt',
+      'allPoint: $allPoint',
+      'allHyokaCnt: $allHyokaCnt',
+      'sasieCnt: $sasieCnt',
+      'kaiwaritu: $kaiwaritu',
+      'novelupdatedAt: $novelupdatedAt',
+      'episodes: $episodes',
+      'isr15: $isr15',
+      'isbl: $isbl',
+      'isgl: $isgl',
+      'iszankoku: $iszankoku',
+      'istensei: $istensei',
+      'istenni: $istenni',
+      'isPrivate: $isPrivate',
+    ];
+    return 'NovelInfo(${parts.join(', ')})';
+  }
 
   /// R15作品か。
   ///
