@@ -843,7 +843,6 @@ void main() {
         _ => fail('expected an error, got $result'),
       };
       expect(message, isNotEmpty);
-      expect(message, isNotEmpty);
       // No download was attempted.
       verifyNever(mockApiService.fetchEpisode(any, any));
     });
