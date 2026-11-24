@@ -296,7 +296,7 @@ final class LibraryStatusProvider
   }
 }
 
-String _$libraryStatusHash() => r'b47ec1efede3910208660b7c413e45c7e2cf2254';
+String _$libraryStatusHash() => r'a51d245612a15ccd0c177fcc0e39a97c1bc73c29';
 
 /// 小説のライブラリ状態を管理するプロバイダー。
 
@@ -492,7 +492,7 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'ebc1e2f30debe5326c3e2895bb2f92b423134db2';
+String _$downloadStatusHash() => r'b773c632a5bd421fc1e3127d3a2e9b1317db88c5';
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///

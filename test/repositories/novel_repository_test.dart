@@ -836,11 +836,12 @@ void main() {
       );
       final result = await notifier.executeDownload(novel);
 
-      final message = result.when(
-        success: (_) => fail('expected an error, got success'),
-        cancelled: () => fail('expected an error, got cancelled'),
-        error: (message) => message,
-      );
+      final message = switch (result) {
+        DownloadResultError(:final message) => message,
+        DownloadResultSuccess() => fail('expected an error, got success'),
+        DownloadResultCancelled() => fail('expected an error, got cancelled'),
+      };
+      expect(message, isNotEmpty);
       expect(message, isNotEmpty);
       // No download was attempted.
       verifyNever(mockApiService.fetchEpisode(any, any));
