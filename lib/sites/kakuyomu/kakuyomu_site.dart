@@ -107,7 +107,13 @@ class KakuyomuSite implements NovelSite {
   @override
   Future<NovelInfo> fetchNovelInfo(String workId) async {
     final html = await _fetch('/works/$workId');
-    return guardDecode(() => _parseNovelInfo(html, workId));
+    final info = guardDecode(() => _parseNovelInfo(html, workId));
+
+    // Without these the work cannot be opened or downloaded.
+    if (info.workId == null || info.generalAllNo == null) {
+      throw const FormatException('作品ページに必須項目がありません');
+    }
+    return info;
   }
 
   /// 目次（エピソード一覧）を取得する。

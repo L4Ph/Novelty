@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart' as db;
+import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/network_fallback_event_provider.dart';
@@ -796,6 +797,55 @@ void main() {
         fallbackEvent?.message,
         '最新のエピソードを取得できませんでした。キャッシュを表示しています。',
       );
+    });
+  });
+
+  group('DownloadStatus executeDownload', () {
+    late MockAppDatabase mockDatabase;
+    late MockApiService mockApiService;
+    late ProviderContainer container;
+
+    setUp(() {
+      mockDatabase = MockAppDatabase();
+      mockApiService = MockApiService();
+      container = ProviderContainer(
+        overrides: [
+          db.appDatabaseProvider.overrideWithValue(mockDatabase),
+          apiServiceProvider.overrideWithValue(mockApiService),
+          settingsProvider.overrideWith(FakeSettings.new),
+          novelRepositoryProvider.overrideWith(
+            (ref) => NovelRepository(
+              ref: ref,
+              apiService: mockApiService,
+              settings: ref.watch(settingsProvider),
+              db: mockDatabase,
+            ),
+          ),
+        ],
+      );
+    });
+
+    tearDown(() => container.dispose());
+
+    test('reports an error when the episode count is unknown', () async {
+      // generalAllNo deliberately absent.
+      const novel = NovelInfo(ncode: 'n1234ab', workId: 'n1234ab');
+
+      final notifier = container.read(
+        downloadStatusProvider(novel).notifier,
+      );
+      final result = await notifier.executeDownload(novel);
+
+      expect(
+        result.when(
+          success: (_) => 'success',
+          cancelled: () => 'cancelled',
+          error: (message) => message,
+        ),
+        isNotEmpty,
+      );
+      // No download was attempted.
+      verifyNever(mockApiService.fetchEpisode(any, any));
     });
   });
 }

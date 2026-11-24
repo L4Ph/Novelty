@@ -134,7 +134,14 @@ class ApiService {
     // デバッグ: APIレスポンスを確認
 
     final processedData = _processNovelType(novelData);
-    return guardDecode(() => NovelInfo.fromJson(processedData));
+    final info = guardDecode(() => NovelInfo.fromJson(processedData));
+
+    // Every narou payload carries these; their absence means the response is
+    // not usable, so fail here rather than storing a partial row.
+    if (info.ncode == null || info.generalAllNo == null) {
+      throw const FormatException('APIレスポンスに必須項目がありません');
+    }
+    return info;
   }
 
   /// 小説のエピソードを取得するメソッド。
@@ -155,7 +162,7 @@ class ApiService {
 
     // novelTypeがnullの場合、general_all_noを使って判断
     if (info.novelType == null) {
-      if (info.generalAllNo != null && info.generalAllNo! <= 1) {
+      if ((info.generalAllNo ?? 2) <= 1) {
         info = info.copyWith(novelType: 2); // 短編小説
       } else {
         info = info.copyWith(novelType: 1); // 連載小説
@@ -232,7 +239,7 @@ class ApiService {
 
     // novelTypeがnullの場合、general_all_noを使って判断
     if (info.novelType == null) {
-      if (info.generalAllNo != null && info.generalAllNo! <= 1) {
+      if ((info.generalAllNo ?? 2) <= 1) {
         info = info.copyWith(novelType: 2); // 短編小説
       } else {
         info = info.copyWith(novelType: 1); // 連載小説

@@ -122,9 +122,10 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
         .read(novelInfoWithCacheProvider(widget.source, widget.workId))
         .asData
         ?.value;
-    if (novelInfo?.generalAllNo != null) {
+    final totalEpisodes = novelInfo?.generalAllNo;
+    if (totalEpisodes != null) {
       final currentTotal = (_currentPage - 1) * 100; // approximation
-      if (currentTotal >= novelInfo!.generalAllNo!) {
+      if (currentTotal >= totalEpisodes) {
         return;
       }
     }
@@ -451,15 +452,12 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                     const SizedBox(height: 12),
                     // Writer
                     InkWell(
-                      onTap: novelInfo.userId != null
-                          ? () {
-                              unawaited(
-                                AuthorNovelsRoute(
-                                  userId: novelInfo.userId!,
-                                ).push(context),
-                              );
-                            }
-                          : null,
+                      onTap: switch (novelInfo.userId) {
+                        final userId? => () => unawaited(
+                          AuthorNovelsRoute(userId: userId).push(context),
+                        ),
+                        null => null,
+                      },
                       child: Text(
                         novelInfo.writer ?? '',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -501,11 +499,11 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                     ),
                     const SizedBox(height: 32),
                     // Keywords (Tags)
-                    if (novelInfo.keyword != null) ...[
+                    if (novelInfo.keyword case final keyword?) ...[
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
-                          children: novelInfo.keyword!
+                          children: keyword
                               .split(' ')
                               .where((k) => k.isNotEmpty)
                               .map((keyword) {
@@ -551,10 +549,10 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                 totalEpisodes: novelInfo.generalAllNo ?? 0,
                 episodes: episodes,
                 isLoading: isLoading,
-                hasMore:
-                    !isShortStory &&
-                    (novelInfo.generalAllNo == null ||
-                        episodes.length < novelInfo.generalAllNo!),
+                hasMore: switch (novelInfo.generalAllNo) {
+                  final total? => !isShortStory && episodes.length < total,
+                  null => false,
+                },
                 onLoadMoreRequested: _loadMoreEpisodes,
               ),
             // Add extra padding at the bottom for FAB
@@ -749,28 +747,27 @@ Future<void> _handleDownload(
 
   result.when(
     success: (needsLibraryAddition) {
-      if (needsLibraryAddition) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('ライブラリに追加しますか?'),
-            action: SnackBarAction(
-              label: '追加',
-              onPressed: () {
-                unawaited(
-                  ref
-                      .read(
-                        libraryStatusProvider(
-                          novelInfo.source,
-                          novelInfo.workId ?? novelInfo.ncode!,
-                        ).notifier,
-                      )
-                      .addToLibrary(novelInfo),
-                );
-              },
-            ),
-          ),
-        );
+      final workId = novelInfo.resolvedWorkId;
+      if (!needsLibraryAddition || workId == null) {
+        return;
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('ライブラリに追加しますか?'),
+          action: SnackBarAction(
+            label: '追加',
+            onPressed: () {
+              unawaited(
+                ref
+                    .read(
+                      libraryStatusProvider(novelInfo.source, workId).notifier,
+                    )
+                    .addToLibrary(novelInfo),
+              );
+            },
+          ),
+        ),
+      );
     },
 
     cancelled: () {},

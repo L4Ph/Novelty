@@ -887,7 +887,8 @@ class LibraryStatus extends _$LibraryStatus {
       await db.insertNovel(novelInfo.toDbCompanion());
       await db.addToLibrary(
         novelInfo.source,
-        novelInfo.workId ?? novelInfo.ncode!,
+        novelInfo.resolvedWorkId ??
+            (throw StateError('NovelInfo has neither workId nor ncode')),
       );
 
       ref.invalidate(libraryNovelsProvider);
@@ -929,10 +930,19 @@ class DownloadStatus extends _$DownloadStatus {
     state = const AsyncValue.loading();
 
     try {
+      final workId = novelInfo.resolvedWorkId;
+      final totalEpisodes = novelInfo.generalAllNo;
+      if (workId == null) {
+        return const DownloadResult.error('作品IDを取得できませんでした');
+      }
+      if (totalEpisodes == null) {
+        return const DownloadResult.error('話数を取得できませんでした');
+      }
+
       final result = await repo.downloadNovelWithResult(
         novelInfo.source,
-        novelInfo.workId ?? novelInfo.ncode!,
-        novelInfo.generalAllNo!,
+        workId,
+        totalEpisodes,
       );
 
       return result;

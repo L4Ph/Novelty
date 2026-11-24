@@ -184,14 +184,23 @@ abstract class NovelInfo with _$NovelInfo {
   });
 }
 
-/// [NovelInfo]をデータベースの[NovelsCompanion]に変換する拡張メソッド。
+/// Helpers for the fields that every site is expected to populate.
 extension NovelInfoEx on NovelInfo {
-  /// [NovelInfo]をデータベースの[NovelsCompanion]に変換するメソッド。
+  /// The site-wide work id.
+  ///
+  /// Narou derives it from the ncode when the payload has no explicit workId.
+  /// Null means the payload was unusable, which is worth failing on rather
+  /// than letting a null reach a NOT NULL column.
+  String? get resolvedWorkId => workId ?? ncode;
+
+  /// Maps this model onto the row it came from.
   NovelsCompanion toDbCompanion() {
     return NovelsCompanion(
       source: Value(source),
-      // なろうの場合はworkId未設定でもncodeから補完する
-      workId: Value(workId ?? ncode!),
+      workId: Value(
+        resolvedWorkId ??
+            (throw StateError('NovelInfo has neither workId nor ncode')),
+      ),
       title: Value(title),
       writer: Value(writer),
       userId: Value(userId),
