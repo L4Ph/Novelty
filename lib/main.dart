@@ -79,11 +79,7 @@ class MyApp extends ConsumerWidget {
       // databaseInitializationProvider等を監視したまま
       // appDatabaseProviderをinvalidateすると即座に再生成されて
       // しまい、旧接続のクローズと新接続のオープンが競合するため。
-      return MaterialApp(
-        locale: appLocale,
-        supportedLocales: appSupportedLocales,
-        localizationsDelegates: appLocalizationsDelegates,
-        theme: ThemeData(fontFamily: appUiFontFamily),
+      return _startupApp(
         home: DatabaseMaintenanceScreen(
           operationLabel: maintenance.operationLabel,
         ),
@@ -94,22 +90,14 @@ class MyApp extends ConsumerWidget {
 
     return dbInit.when(
       data: (_) => const _AppWithSettings(),
-      loading: () => MaterialApp(
-        locale: appLocale,
-        supportedLocales: appSupportedLocales,
-        localizationsDelegates: appLocalizationsDelegates,
-        theme: ThemeData(fontFamily: appUiFontFamily),
+      loading: () => _startupApp(
         home: const DatabaseMaintenanceOverlay(
           child: MigrationProgressSplash(),
         ),
       ),
       error: (err, stack) {
         final db = ref.read(appDatabaseProvider);
-        return MaterialApp(
-          locale: appLocale,
-          supportedLocales: appSupportedLocales,
-          localizationsDelegates: appLocalizationsDelegates,
-          theme: ThemeData(fontFamily: appUiFontFamily),
+        return _startupApp(
           home: DatabaseMaintenanceOverlay(
             child: MigrationRecoveryScreen(
               error: err,
@@ -131,6 +119,18 @@ class MyApp extends ConsumerWidget {
     );
   }
 }
+
+/// Startup and maintenance screens, shown before settings are readable.
+/// They follow the OS brightness so they don't flash the light palette
+/// on a dark device before the main screen mounts.
+Widget _startupApp({required Widget home}) => MaterialApp(
+  locale: appLocale,
+  supportedLocales: appSupportedLocales,
+  localizationsDelegates: appLocalizationsDelegates,
+  theme: appTheme(Brightness.light),
+  darkTheme: appTheme(Brightness.dark),
+  home: home,
+);
 
 /// インポート適用(DBファイルの置き換え)を実行する。
 ///
