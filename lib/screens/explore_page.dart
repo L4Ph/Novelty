@@ -8,7 +8,7 @@ import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/domain/search_state.dart';
 import 'package:novelty/models/novel_search_query.dart';
-import 'package:novelty/router/router.dart';
+import 'package:novelty/router/app_router.dart';
 import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
@@ -265,7 +265,7 @@ class _OfflineExploreBody extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           OutlinedButton(
-            onPressed: () => const LibraryRoute().go(context),
+            onPressed: () => appRouter.select(AppTab.library),
             child: const Text('ライブラリに戻る'),
           ),
         ],

@@ -1,10 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/router/router.dart';
+import 'package:novelty/router/app_router.dart';
+import 'package:novelty/router/destinations.dart';
 import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 
@@ -88,11 +87,8 @@ class NovelListTile extends HookWidget {
       () {
         final workId = item.workId ?? item.ncode;
         if (workId != null) {
-          unawaited(
-            NovelDetailRoute(
-              source: item.source.name,
-              workId: workId,
-            ).push(context),
+          appRouter.pushOverlay(
+            NovelDetailDest(source: item.source, workId: workId),
           );
         }
       },

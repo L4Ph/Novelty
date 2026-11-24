@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:novelty/router/app_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// よくある質問の一覧。旧サイト（ヘルプページ）から移植した。
@@ -100,6 +101,7 @@ class _AboutPageState extends State<AboutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: BackButton(onPressed: appRouter.pop),
         title: const Text('アプリについて'),
       ),
       body: ListView(

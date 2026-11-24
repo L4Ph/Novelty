@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/repositories/novel_repository.dart';
-import 'package:novelty/router/router.dart';
+import 'package:novelty/router/app_router.dart';
+import 'package:novelty/router/destinations.dart';
 import 'package:novelty/utils/time_format.dart';
 
 /// "履歴"ページのウィジェット。
@@ -80,25 +81,26 @@ class HistoryPage extends ConsumerWidget {
                         if (lastEpisode != null && lastEpisode > 0) {
                           // 本文を開く際は目次(小説詳細)も積むことで、
                           // 戻るボタンで本文から目次へ遷移できるようにする
-                          unawaited(
-                            NovelDetailRoute(
-                              source: item.source.name,
-                              workId: workId,
-                            ).push(context),
-                          );
-                          unawaited(
-                            NovelEpisodeRoute(
-                              source: item.source.name,
-                              workId: workId,
-                              episode: lastEpisode,
-                            ).push(context),
-                          );
+                          appRouter
+                            ..pushOverlay(
+                              NovelDetailDest(
+                                source: item.source,
+                                workId: workId,
+                              ),
+                            )
+                            ..pushOverlay(
+                              NovelEpisodeDest(
+                                source: item.source,
+                                workId: workId,
+                                episode: lastEpisode,
+                              ),
+                            );
                         } else {
-                          unawaited(
-                            NovelDetailRoute(
-                              source: item.source.name,
+                          appRouter.pushOverlay(
+                            NovelDetailDest(
+                              source: item.source,
                               workId: workId,
-                            ).push(context),
+                            ),
                           );
                         }
                       },

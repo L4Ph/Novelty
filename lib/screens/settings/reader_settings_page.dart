@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/router/app_router.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 /// 閲覧設定ページ
@@ -13,6 +14,7 @@ class ReaderSettingsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: BackButton(onPressed: appRouter.pop),
         title: const Text('閲覧設定'),
       ),
       body: settings.when(

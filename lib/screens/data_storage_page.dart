@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/database/database_maintenance.dart';
+import 'package:novelty/router/app_router.dart';
 import 'package:novelty/services/backup_service.dart';
 import 'package:novelty/services/file_picker.dart';
 import 'package:novelty/utils/clipboard_helper.dart';
@@ -36,6 +37,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: BackButton(onPressed: appRouter.pop),
         title: const Text('データとストレージ'),
       ),
       body: ListView(

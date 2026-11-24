@@ -1,63 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:novelty/router/router.dart';
+import 'package:novelty/router/app_router.dart';
+import 'package:novelty/router/destinations.dart';
+import 'package:novelty/router/screens.dart';
+import 'package:tiny_router_flutter/tiny_router_flutter.dart';
 
-/// Scaffoldのウィジェット。
-class ScaffoldPage extends ConsumerWidget {
-  /// コンストラクタ。
-  const ScaffoldPage({required this.child, super.key});
+/// The app shell: the tab bar and one navigator per tab.
+///
+/// It is the bottom page of the root navigator, so screens pushed with
+/// [AppRouter.pushOverlay] cover it — tab bar included.
+class ScaffoldPage extends StatelessWidget {
+  /// Const constructor.
+  const ScaffoldPage({super.key});
 
-  /// 子ウィジェット。
-  /// Scaffoldのbodyとして表示されるウィジェット。
-  final Widget child;
+  static const _items = <BottomNavigationBarItem>[
+    BottomNavigationBarItem(icon: Icon(Icons.book), label: 'ライブラリ'),
+    BottomNavigationBarItem(icon: Icon(Icons.explore), label: '見つける'),
+    BottomNavigationBarItem(icon: Icon(Icons.history), label: '履歴'),
+    BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: 'もっと'),
+  ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    const items = <BottomNavigationBarItem>[
-      BottomNavigationBarItem(icon: Icon(Icons.book), label: 'ライブラリ'),
-      BottomNavigationBarItem(icon: Icon(Icons.explore), label: '見つける'),
-      BottomNavigationBarItem(icon: Icon(Icons.history), label: '履歴'),
-      BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: 'もっと'),
-    ];
-
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        items: items,
-        currentIndex: _calculateSelectedIndex(context),
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
-        onTap: (idx) => _onItemTapped(idx, context),
-        type: BottomNavigationBarType.fixed,
-      ),
-    );
-  }
-
-  static int _calculateSelectedIndex(BuildContext context) {
-    final location = GoRouterState.of(context).uri.toString();
-    if (location.startsWith('/explore')) {
-      return 1;
-    }
-    if (location.startsWith('/history')) {
-      return 2;
-    }
-    if (location.startsWith('/more')) {
-      return 3;
-    }
-    return 0;
-  }
-
-  void _onItemTapped(int index, BuildContext context) {
-    switch (index) {
-      case 0:
-        const LibraryRoute().go(context);
-      case 1:
-        const ExploreRoute().go(context);
-      case 2:
-        const HistoryRoute().go(context);
-      case 3:
-        const MoreRoute().go(context);
-    }
-  }
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: appRouter,
+    builder: (context, _) {
+      final selected = appRouter.selected;
+      return Scaffold(
+        body: IndexedStack(
+          index: selected.index,
+          children: <Widget>[
+            for (final tab in AppTab.values)
+              RouteStackNavigator<NovelDestination>(
+                stack: appRouter.stackOf(tab),
+                // Only the visible tab may take the system back.
+                handlesSystemPop: tab == selected,
+                builder: (context, destination) => screenFor(destination),
+              ),
+          ],
+        ),
+        bottomNavigationBar: BottomNavigationBar(
+          items: _items,
+          currentIndex: selected.index,
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          unselectedItemColor: Colors.grey,
+          onTap: (index) => appRouter.select(AppTab.values[index]),
+          type: BottomNavigationBarType.fixed,
+        ),
+      );
+    },
+  );
 }

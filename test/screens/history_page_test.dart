@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/router/app_router.dart';
+import 'package:novelty/router/destinations.dart';
 import 'package:novelty/screens/history_page.dart';
 import 'package:novelty/sites/novel_source.dart';
 
@@ -19,6 +20,7 @@ void main() {
     setUp(() {
       mockDatabase = MockAppDatabase();
       fixedTime = DateTime(2024, 1, 15, 12);
+      appRouter.reset();
     });
 
     testWidgets('should display grouped history items with date headers', (
@@ -172,34 +174,6 @@ void main() {
           mockDatabase.watchHistory(),
         ).thenAnswer((_) => Stream.value(testHistoryData));
 
-        // アプリと同構造のパスを持つスタブ GoRouter
-        // (本文だけを push すると目次がスタックに積まれない問題を検証するため)
-        final stubRouter = GoRouter(
-          initialLocation: '/history',
-          routes: [
-            GoRoute(
-              path: '/history',
-              builder: (context, state) => const HistoryPage(),
-            ),
-            GoRoute(
-              path: '/novel/:source/:workId',
-              builder: (context, state) => Scaffold(
-                appBar: AppBar(),
-                body: const Center(child: Text('目次')),
-              ),
-              routes: [
-                GoRoute(
-                  path: ':episode',
-                  builder: (context, state) => Scaffold(
-                    appBar: AppBar(),
-                    body: const Center(child: Text('本文')),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-
         await tester.pumpWidget(
           ProviderScope(
             retry: (_, _) => null,
@@ -207,26 +181,32 @@ void main() {
               appDatabaseProvider.overrideWithValue(mockDatabase),
               currentTimeProvider.overrideWithValue(fixedTime),
             ],
-            child: MaterialApp.router(routerConfig: stubRouter),
+            child: const MaterialApp(home: HistoryPage()),
           ),
         );
 
         await tester.pumpAndSettle();
+        expect(appRouter.overlays.entries, isEmpty);
 
-        // 履歴アイテムをタップ → 本文が表示される
+        // 履歴アイテムをタップ → 目次と本文が順に積まれる
         await tester.tap(find.text('今日の小説1'));
         await tester.pumpAndSettle();
-        expect(find.text('本文'), findsOneWidget);
 
-        // 戻る → 目次が表示される
-        await tester.tap(find.byType(BackButton));
-        await tester.pumpAndSettle();
-        expect(find.text('目次'), findsOneWidget);
+        expect(appRouter.overlays.entries, [
+          const NovelDetailDest(source: NovelSource.narou, workId: 'today1'),
+          const NovelEpisodeDest(
+            source: NovelSource.narou,
+            workId: 'today1',
+            episode: 5,
+          ),
+        ]);
 
-        // さらに戻る → 履歴に戻る
-        await tester.tap(find.byType(BackButton));
-        await tester.pumpAndSettle();
-        expect(find.text('履歴がありません。'), findsNothing);
+        // 戻る → 目次、もう一度戻る → 空
+        expect(appRouter.pop(), isTrue);
+        expect(appRouter.overlays.top, isA<NovelDetailDest>());
+        expect(appRouter.pop(), isTrue);
+        expect(appRouter.overlays.entries, isEmpty);
+
         expect(find.text('今日の小説1'), findsOneWidget);
       },
     );
