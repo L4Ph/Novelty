@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/database/database_initialization.dart';
 import 'package:novelty/database/database_maintenance.dart';
-import 'package:novelty/router/router.dart';
+import 'package:novelty/router/app_router.dart';
 import 'package:novelty/screens/database_maintenance_screen.dart';
 import 'package:novelty/screens/migration_progress_splash.dart';
 import 'package:novelty/screens/migration_recovery_screen.dart';
@@ -177,6 +177,8 @@ Future<void> _performImportSwap(
   // ビルド中の状態更新(setState during build)を避けるため、
   // フレーム完了後に結果をセットする。
   SchedulerBinding.instance.addPostFrameCallback((_) {
+    // Screens on the stacks belong to the database that was just replaced.
+    appRouter.reset();
     finishImportSwap(
       ref,
       result: error == null
@@ -311,7 +313,7 @@ class _AppWithSettings extends ConsumerWidget {
         themeMode: settings.themeMode,
         theme: appTheme(Brightness.light),
         darkTheme: appTheme(Brightness.dark),
-        routerConfig: router,
+        routerConfig: appRouterConfig,
         builder: (context, child) => ImportSwapResultHandler(
           child: DatabaseMaintenanceOverlay(
             child: NetworkFallbackSnackbar(child: child!),

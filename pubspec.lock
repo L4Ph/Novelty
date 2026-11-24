@@ -333,22 +333,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.3"
-  go_router:
-    dependency: "direct main"
-    description:
-      name: go_router
-      sha256: "5922b2861e2235a3504896f0d6fa07d84141b480cf52eecd2f42cd25585a9e8a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "17.3.0"
-  go_router_builder:
-    dependency: "direct dev"
-    description:
-      name: go_router_builder
-      sha256: "53253ae5bd3d3bfc38c5488ca844f6b054c4b905683667db4544e7ab995fddcc"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.4.0"
   graphs:
     dependency: transitive
     description:

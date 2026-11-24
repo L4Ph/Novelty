@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:novelty/router/router.dart';
+import 'package:novelty/router/app_router.dart';
+import 'package:novelty/router/destinations.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 /// "もっと"ページ（設定ハブ）のウィジェット。
@@ -106,7 +107,7 @@ class _MorePageState extends ConsumerState<MorePage> {
         ListTile(
           leading: const Icon(Icons.download),
           title: const Text('ダウンロードキュー'),
-          onTap: () => const DownloadsRoute().go(context),
+          onTap: () => appRouter.push(const DownloadsDest()),
         ),
       ],
     );
@@ -120,17 +121,17 @@ class _MorePageState extends ConsumerState<MorePage> {
         ListTile(
           leading: const Icon(Icons.palette_outlined),
           title: const Text('一般設定'), // Appearance
-          onTap: () => const AppearanceSettingsRoute().go(context),
+          onTap: () => appRouter.push(const AppearanceSettingsDest()),
         ),
         ListTile(
           leading: const Icon(Icons.chrome_reader_mode_outlined),
           title: const Text('閲覧設定'), // Reader
-          onTap: () => const ReaderSettingsRoute().go(context),
+          onTap: () => appRouter.push(const ReaderSettingsDest()),
         ),
         ListTile(
           leading: const Icon(Icons.storage_outlined),
           title: const Text('データとストレージ'),
-          onTap: () => const DataStorageRoute().go(context),
+          onTap: () => appRouter.push(const DataStorageDest()),
         ),
       ],
     );
@@ -144,7 +145,7 @@ class _MorePageState extends ConsumerState<MorePage> {
         ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('アプリについて'),
-          onTap: () => const AboutRoute().go(context),
+          onTap: () => appRouter.push(const AboutDest()),
         ),
       ],
     );

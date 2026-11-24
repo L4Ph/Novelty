@@ -5,6 +5,7 @@ import 'package:novelty/models/novel_download_summary.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/router/app_router.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
@@ -19,6 +20,7 @@ class DownloadManagerPage extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
+          leading: BackButton(onPressed: appRouter.pop),
           title: const Text('ダウンロード'),
           bottom: const TabBar(
             tabs: [

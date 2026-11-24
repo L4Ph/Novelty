@@ -7,7 +7,8 @@ import 'package:novelty/domain/library_filter_state.dart';
 import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/repositories/novel_repository.dart';
-import 'package:novelty/screens/search_page.dart';
+import 'package:novelty/router/app_router.dart';
+import 'package:novelty/router/destinations.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/app_bar_source_dropdown.dart';
@@ -119,14 +120,7 @@ class LibraryPage extends ConsumerWidget {
                     initialQuery: const NovelSearchQuery(),
                     onSearch: (query) {
                       Navigator.pop(context);
-                      unawaited(
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (context) =>
-                                SearchPage(initialQuery: query),
-                          ),
-                        ),
-                      );
+                      appRouter.push(SearchDest(query: query));
                     },
                   ),
                 ),

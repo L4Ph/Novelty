@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/router/app_router.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/gesture_shield.dart';
@@ -119,75 +120,83 @@ class NovelPage extends HookConsumerWidget {
 
         return settings.when(
           data: (settings) {
-            return Scaffold(
-              appBar: isAppBarVisible.value
-                  ? AppBar(
-                      leading: IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      title: Text(
-                        buildTitle(
-                          novelInfo,
-                          currentEpisode.value,
-                          currentEpisodeData,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    )
-                  : null,
-              body: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                // 本文タップでAppBarの表示/非表示を切り替える
-                onTap: () {
-                  isAppBarVisible.value = !isAppBarVisible.value;
-                },
-                child: Stack(
-                  children: [
-                    PageView.builder(
-                      scrollDirection: settings.isVertical
-                          ? Axis.vertical
-                          : Axis.horizontal,
-                      controller: pageController,
-                      itemCount: itemCount,
-                      onPageChanged: (index) {
-                        _handlePageChanged(
-                          index,
-                          currentEpisode,
-                          totalEpisodes,
-                          pageController,
-                          ref,
-                          novelInfo,
-                        );
-                      },
-                      itemBuilder: (context, index) {
-                        final episodeNum = _getEpisodeNumber(
-                          index,
-                          currentEpisode.value,
-                          totalEpisodes,
-                        );
-
-                        // 指定されたエピソードかつ改稿日時が指定されている場合はそちらを優先
-                        // それ以外はNovelInfoから取得した改稿日時を使用
-                        final revisedDate =
-                            (episodeNum == episode && revised != null)
-                            ? revised
-                            : episodeMap[episodeNum];
-
-                        return RepaintBoundary(
-                          child: NovelContent(
-                            source: source,
-                            workId: workId,
-                            episode: episodeNum,
-                            revised: revisedDate,
-                            isAppBarVisible: isAppBarVisible.value,
+            // The reader pages horizontally, so the iOS back gesture would
+            // fight the page swipe. Refusing the pop turns the gesture off;
+            // the back button above calls appRouter.pop directly.
+            return PopScope(
+              canPop: false,
+              onPopInvokedWithResult: (didPop, _) {
+                if (!didPop) {
+                  appRouter.pop();
+                }
+              },
+              child: Scaffold(
+                appBar: isAppBarVisible.value
+                    ? AppBar(
+                        leading: BackButton(onPressed: appRouter.pop),
+                        title: Text(
+                          buildTitle(
+                            novelInfo,
+                            currentEpisode.value,
+                            currentEpisodeData,
                           ),
-                        );
-                      },
-                    ),
-                    // 縦書きモード時、ホームジェスチャーとの競合を防ぐためシールドを表示
-                    if (settings.isVertical) const GestureShield(),
-                  ],
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )
+                    : null,
+                body: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  // 本文タップでAppBarの表示/非表示を切り替える
+                  onTap: () {
+                    isAppBarVisible.value = !isAppBarVisible.value;
+                  },
+                  child: Stack(
+                    children: [
+                      PageView.builder(
+                        scrollDirection: settings.isVertical
+                            ? Axis.vertical
+                            : Axis.horizontal,
+                        controller: pageController,
+                        itemCount: itemCount,
+                        onPageChanged: (index) {
+                          _handlePageChanged(
+                            index,
+                            currentEpisode,
+                            totalEpisodes,
+                            pageController,
+                            ref,
+                            novelInfo,
+                          );
+                        },
+                        itemBuilder: (context, index) {
+                          final episodeNum = _getEpisodeNumber(
+                            index,
+                            currentEpisode.value,
+                            totalEpisodes,
+                          );
+
+                          // 指定されたエピソードかつ改稿日時が指定されている場合はそちらを優先
+                          // それ以外はNovelInfoから取得した改稿日時を使用
+                          final revisedDate =
+                              (episodeNum == episode && revised != null)
+                              ? revised
+                              : episodeMap[episodeNum];
+
+                          return RepaintBoundary(
+                            child: NovelContent(
+                              source: source,
+                              workId: workId,
+                              episode: episodeNum,
+                              revised: revisedDate,
+                              isAppBarVisible: isAppBarVisible.value,
+                            ),
+                          );
+                        },
+                      ),
+                      // 縦書きモード時、ホームジェスチャーとの競合を防ぐためシールドを表示
+                      if (settings.isVertical) const GestureShield(),
+                    ],
+                  ),
                 ),
               ),
             );

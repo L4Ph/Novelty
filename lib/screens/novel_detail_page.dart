@@ -6,7 +6,8 @@ import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
-import 'package:novelty/router/router.dart';
+import 'package:novelty/router/app_router.dart';
+import 'package:novelty/router/destinations.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/clipboard_helper.dart';
 import 'package:novelty/utils/settings_provider.dart';
@@ -254,21 +255,25 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
         onPressed: () async {
           // 短編: 常にエピソード1へ移動
           if (isShortStory) {
-            await NovelEpisodeRoute(
-              source: widget.source.name,
-              workId: widget.workId,
-              episode: 1,
-            ).push<void>(context);
+            appRouter.pushOverlay(
+              NovelEpisodeDest(
+                source: widget.source,
+                workId: widget.workId,
+                episode: 1,
+              ),
+            );
             return;
           }
 
           // 連載: 最後に読んだエピソードまたはエピソード1へ移動
           final targetEpisode = lastReadEpisode ?? 1;
-          await NovelEpisodeRoute(
-            source: widget.source.name,
-            workId: widget.workId,
-            episode: targetEpisode,
-          ).push<void>(context);
+          appRouter.pushOverlay(
+            NovelEpisodeDest(
+              source: widget.source,
+              workId: widget.workId,
+              episode: targetEpisode,
+            ),
+          );
         },
         icon: const Icon(Icons.menu_book),
         label: Text(
@@ -453,8 +458,8 @@ class _NovelDetailPageState extends ConsumerState<NovelDetailPage> {
                     // Writer
                     InkWell(
                       onTap: switch (novelInfo.userId) {
-                        final userId? => () => unawaited(
-                          AuthorNovelsRoute(userId: userId).push(context),
+                        final userId? => () => appRouter.pushOverlay(
+                          AuthorNovelsDest(userId: userId),
                         ),
                         null => null,
                       },
@@ -873,16 +878,14 @@ class _EpisodeListTile extends ConsumerWidget {
               color: colorScheme.primary,
             )
           : null,
-      onTap: () {
-        unawaited(
-          NovelEpisodeRoute(
-            source: source.name,
-            workId: workId,
-            episode: episodeNumber,
-            revised: episode.revised,
-          ).push(context),
-        );
-      },
+      onTap: () => appRouter.pushOverlay(
+        NovelEpisodeDest(
+          source: source,
+          workId: workId,
+          episode: episodeNumber,
+          revised: episode.revised,
+        ),
+      ),
       onLongPress: isOfflineMode
           ? () => showOfflineDisabledSnackBar(context)
           : () => _showEpisodeMenu(context, ref, episodeNumber, isDownloaded),
