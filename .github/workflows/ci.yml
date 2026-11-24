@@ -45,7 +45,8 @@ jobs:
       - name: Test (packages)
         run: |
           (cd packages/tategaki && mise exec -- flutter test)
-          for package in narou_parser kakuyomu_parser novel_parser_core tiny_http; do
+          (cd packages/tiny_router_flutter && mise exec -- flutter test)
+          for package in narou_parser kakuyomu_parser novel_parser_core tiny_http tiny_router; do
             (cd "packages/$package" && mise exec -- dart test)
           done
 

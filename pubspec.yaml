@@ -24,6 +24,8 @@ workspace:
   - packages/novel_parser_core
   - packages/tategaki
   - packages/tiny_http
+  - packages/tiny_router
+  - packages/tiny_router_flutter
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
 # consider running `flutter pub upgrade --major-versions`. Alternatively,
