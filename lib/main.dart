@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -80,11 +79,7 @@ class MyApp extends ConsumerWidget {
       // databaseInitializationProvider等を監視したまま
       // appDatabaseProviderをinvalidateすると即座に再生成されて
       // しまい、旧接続のクローズと新接続のオープンが競合するため。
-      return MaterialApp(
-        locale: appLocale,
-        supportedLocales: appSupportedLocales,
-        localizationsDelegates: appLocalizationsDelegates,
-        theme: ThemeData(fontFamily: appUiFontFamily),
+      return _startupApp(
         home: DatabaseMaintenanceScreen(
           operationLabel: maintenance.operationLabel,
         ),
@@ -95,22 +90,14 @@ class MyApp extends ConsumerWidget {
 
     return dbInit.when(
       data: (_) => const _AppWithSettings(),
-      loading: () => MaterialApp(
-        locale: appLocale,
-        supportedLocales: appSupportedLocales,
-        localizationsDelegates: appLocalizationsDelegates,
-        theme: ThemeData(fontFamily: appUiFontFamily),
+      loading: () => _startupApp(
         home: const DatabaseMaintenanceOverlay(
           child: MigrationProgressSplash(),
         ),
       ),
       error: (err, stack) {
         final db = ref.read(appDatabaseProvider);
-        return MaterialApp(
-          locale: appLocale,
-          supportedLocales: appSupportedLocales,
-          localizationsDelegates: appLocalizationsDelegates,
-          theme: ThemeData(fontFamily: appUiFontFamily),
+        return _startupApp(
           home: DatabaseMaintenanceOverlay(
             child: MigrationRecoveryScreen(
               error: err,
@@ -132,6 +119,18 @@ class MyApp extends ConsumerWidget {
     );
   }
 }
+
+/// Startup and maintenance screens, shown before settings are readable.
+/// They follow the OS brightness so they don't flash the light palette
+/// on a dark device before the main screen mounts.
+Widget _startupApp({required Widget home}) => MaterialApp(
+  locale: appLocale,
+  supportedLocales: appSupportedLocales,
+  localizationsDelegates: appLocalizationsDelegates,
+  theme: appTheme(Brightness.light),
+  darkTheme: appTheme(Brightness.dark),
+  home: home,
+);
 
 /// インポート適用(DBファイルの置き換え)を実行する。
 ///
@@ -283,6 +282,18 @@ class _ImportSwapResultHandlerState
   }
 }
 
+/// Seed color for the UI palette. Changing it swaps every color in the app.
+const _seedColor = Color(0xFF006972);
+
+/// Builds the app theme for the given brightness.
+ThemeData appTheme(Brightness brightness) => ThemeData(
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: _seedColor,
+    brightness: brightness,
+  ),
+  fontFamily: appUiFontFamily,
+);
+
 /// 設定を読み込み、テーマとルーターを適用したメインアプリ。
 class _AppWithSettings extends ConsumerWidget {
   const _AppWithSettings();
@@ -292,41 +303,20 @@ class _AppWithSettings extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
 
     return settings.when(
-      data: (settings) => DynamicColorBuilder(
-        builder: (lightDynamic, darkDynamic) {
-          final colorScheme =
-              lightDynamic ??
-              ColorScheme.fromSeed(
-                seedColor: const Color.fromARGB(255, 179, 220, 226),
-              );
-          final darkColorSchema =
-              darkDynamic ??
-              ColorScheme.fromSeed(
-                seedColor: const Color.fromARGB(255, 179, 220, 226),
-              );
-
-          return MaterialApp.router(
-            title: 'Novelty',
-            locale: appLocale,
-            supportedLocales: appSupportedLocales,
-            localizationsDelegates: appLocalizationsDelegates,
-            themeMode: settings.themeMode,
-            theme: ThemeData(
-              colorScheme: colorScheme,
-              fontFamily: appUiFontFamily,
-            ),
-            darkTheme: ThemeData(
-              colorScheme: darkColorSchema,
-              fontFamily: appUiFontFamily,
-            ),
-            routerConfig: router,
-            builder: (context, child) => ImportSwapResultHandler(
-              child: DatabaseMaintenanceOverlay(
-                child: NetworkFallbackSnackbar(child: child!),
-              ),
-            ),
-          );
-        },
+      data: (settings) => MaterialApp.router(
+        title: 'Novelty',
+        locale: appLocale,
+        supportedLocales: appSupportedLocales,
+        localizationsDelegates: appLocalizationsDelegates,
+        themeMode: settings.themeMode,
+        theme: appTheme(Brightness.light),
+        darkTheme: appTheme(Brightness.dark),
+        routerConfig: router,
+        builder: (context, child) => ImportSwapResultHandler(
+          child: DatabaseMaintenanceOverlay(
+            child: NetworkFallbackSnackbar(child: child!),
+          ),
+        ),
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (err, stack) => Center(child: Text('Error: $err')),

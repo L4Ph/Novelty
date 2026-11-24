@@ -140,4 +140,21 @@ void main() {
       expect(find.text('配下の画面'), findsNothing);
     });
   });
+
+  group('テーマ', () {
+    test('ダークテーマは暗い配色で生成される', () {
+      expect(appTheme(Brightness.light).brightness, Brightness.light);
+      expect(appTheme(Brightness.dark).brightness, Brightness.dark);
+    });
+
+    testWidgets('起動中の画面もダークテーマを持つ', (tester) async {
+      await pumpMyApp(
+        tester,
+        dbInit: () => Completer<AppDatabase>().future,
+      );
+
+      final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
+      expect(app.darkTheme?.brightness, Brightness.dark);
+    });
+  });
 }
