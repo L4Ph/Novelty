@@ -40,10 +40,7 @@ extension NovelInfoFromDb on db.Novel {
       quarterPoint: quarterPoint,
       yearlyPoint: yearlyPoint,
 
-      // DBはText, NovelInfoはInt
-      novelupdatedAt: novelUpdatedAt != null
-          ? int.tryParse(novelUpdatedAt!)
-          : null,
+      novelupdatedAt: novelUpdatedAt,
 
       episodes: episodes, // そのまま渡す（既にEpisodeモデルのリスト）
 

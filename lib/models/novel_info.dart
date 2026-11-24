@@ -125,14 +125,10 @@ abstract class NovelInfo with _$NovelInfo {
     @StringToIntConverter() int? kaiwaritu,
 
     /// 作品の更新日時。
-    @StringToIntConverter()
-    @JsonKey(name: 'novelupdated_at')
-    int? novelupdatedAt,
-
-    /// 最終更新日時。
     ///
-    /// システム用で作品更新時とは関係ない。
-    @StringToIntConverter() @JsonKey(name: 'updated_at') int? updatedAt,
+    /// The API returns a date string such as `2026-03-22 23:00:26`.
+    /// It used to be decoded as int, which always produced null.
+    @JsonKey(name: 'novelupdated_at') String? novelupdatedAt,
 
     /// エピソードのリスト。
     List<Episode>? episodes,
@@ -217,7 +213,7 @@ extension NovelInfoEx on NovelInfo {
       monthlyPoint: Value(monthlyPoint),
       quarterPoint: Value(quarterPoint),
       yearlyPoint: Value(yearlyPoint),
-      novelUpdatedAt: Value(novelupdatedAt?.toString()),
+      novelUpdatedAt: Value(novelupdatedAt),
       cachedAt: Value(DateTime.now().millisecondsSinceEpoch),
       isr15: Value(isr15),
       isbl: Value(isbl),

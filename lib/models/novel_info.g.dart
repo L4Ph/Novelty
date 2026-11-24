@@ -108,14 +108,7 @@ _NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => $checkedCreate(
         'kaiwaritu',
         (v) => const StringToIntConverter().fromJson(v),
       ),
-      novelupdatedAt: $checkedConvert(
-        'novelupdated_at',
-        (v) => const StringToIntConverter().fromJson(v),
-      ),
-      updatedAt: $checkedConvert(
-        'updated_at',
-        (v) => const StringToIntConverter().fromJson(v),
-      ),
+      novelupdatedAt: $checkedConvert('novelupdated_at', (v) => v as String?),
       episodes: $checkedConvert(
         'episodes',
         (v) => (v as List<dynamic>?)
@@ -170,7 +163,6 @@ _NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => $checkedCreate(
     'allHyokaCnt': 'all_hyoka_cnt',
     'sasieCnt': 'sasie_cnt',
     'novelupdatedAt': 'novelupdated_at',
-    'updatedAt': 'updated_at',
   },
 );
 
@@ -204,10 +196,7 @@ Map<String, dynamic> _$NovelInfoToJson(
   'all_hyoka_cnt': const StringToIntConverter().toJson(instance.allHyokaCnt),
   'sasie_cnt': const StringToIntConverter().toJson(instance.sasieCnt),
   'kaiwaritu': const StringToIntConverter().toJson(instance.kaiwaritu),
-  'novelupdated_at': const StringToIntConverter().toJson(
-    instance.novelupdatedAt,
-  ),
-  'updated_at': const StringToIntConverter().toJson(instance.updatedAt),
+  'novelupdated_at': instance.novelupdatedAt,
   'episodes': instance.episodes,
   'isr15': const StringToIntConverter().toJson(instance.isr15),
   'isbl': const StringToIntConverter().toJson(instance.isbl),

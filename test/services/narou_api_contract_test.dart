@@ -63,6 +63,11 @@ void main() {
       // genre arrives as a number and must normalise to a string.
       expect(info.genreId, equals('102'));
       // Sanity check that the numeric converters ran at all.
+      // Date fields arrive as strings, not epoch integers.
+      expect(
+        info.novelupdatedAt,
+        matches(RegExp(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$')),
+      );
       expect(info.globalPoint, isNotNull);
       expect(info.allPoint, isNotNull);
       expect(info.keyword, isNotNull);
