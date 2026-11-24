@@ -118,12 +118,19 @@ final class FilePickerChannel: NSObject {
     result?(FlutterError(code: code, message: message, details: nil))
   }
 
+  /// Fallback for the case where attach() ran before the root controller
+  /// existed. `connectedScenes` is iOS 13, but the app targets 12.
   private func topViewController() -> UIViewController? {
-    let keyWindow = UIApplication.shared.connectedScenes
-      .compactMap { $0 as? UIWindowScene }
-      .flatMap { $0.windows }
-      .first { $0.isKeyWindow }
-    var controller = keyWindow?.rootViewController
+    var controller: UIViewController?
+    if #available(iOS 13.0, *) {
+      controller = UIApplication.shared.connectedScenes
+        .compactMap { $0 as? UIWindowScene }
+        .flatMap { $0.windows }
+        .first { $0.isKeyWindow }?
+        .rootViewController
+    } else {
+      controller = UIApplication.shared.keyWindow?.rootViewController
+    }
     while let presented = controller?.presentedViewController {
       controller = presented
     }
