@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:tiny_router/tiny_router.dart';
 
@@ -41,6 +43,8 @@ class RouteStackNavigator<D extends Object> extends StatefulWidget {
 
 class _RouteStackNavigatorState<D extends Object>
     extends State<RouteStackNavigator<D>> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +75,7 @@ class _RouteStackNavigatorState<D extends Object>
   @override
   Widget build(BuildContext context) {
     final navigator = Navigator(
+      key: _navigatorKey,
       pages: <Page<void>>[
         for (final (index, destination) in widget.stack.entries.indexed)
           widget.pageFactory(
@@ -91,9 +96,14 @@ class _RouteStackNavigatorState<D extends Object>
       enabled: widget.handlesSystemPop,
       // A refused pop is announced to every handler of the route, the
       // disabled ones included, so a hidden tab would pop itself as well.
+      //
+      // Let the navigator decide rather than popping the stack here: a screen
+      // can refuse with its own PopScope (the explore tab resets its search
+      // that way), and only maybePop() asks it. When it agrees, the route goes
+      // and onDidRemovePage takes the entry off the stack.
       onPopWithResult: (_) {
         if (widget.handlesSystemPop) {
-          widget.stack.pop();
+          unawaited(_navigatorKey.currentState?.maybePop());
         }
       },
       child: navigator,

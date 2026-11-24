@@ -113,6 +113,36 @@ void main() {
       expect(stack.entries, ['root']);
     });
 
+    testWidgets('a screen can refuse the pop with its own PopScope', (
+      tester,
+    ) async {
+      final stack = RouteStack<String>(['root'])..push('a');
+      final refusals = <String>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RouteStackNavigator<String>(
+            stack: stack,
+            builder: (context, destination) => PopScope(
+              canPop: destination != 'a',
+              onPopInvokedWithResult: (didPop, _) {
+                if (!didPop) {
+                  refusals.add(destination);
+                }
+              },
+              child: _Counter(destination),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(refusals, ['a']);
+      expect(stack.entries, ['root', 'a']);
+    });
+
     testWidgets('a hidden navigator does not pop when another refuses', (
       tester,
     ) async {
