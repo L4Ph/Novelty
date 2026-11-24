@@ -340,6 +340,10 @@ class ApiService {
   }
 
   Map<String, dynamic> _processNovelType(Map<String, dynamic> novelData) {
+    // The API emits `noveltype` (no underscore) when `nt` is requested, which
+    // is what `_novelApiOfParameter` does. Normalise it to the documented name.
+    novelData['novel_type'] ??= novelData['noveltype'];
+
     // novelTypeが文字列の場合、整数に変換
     if (novelData['novel_type'] is String) {
       final novelTypeStr = novelData['novel_type'] as String;
