@@ -915,7 +915,7 @@ Stream<DownloadProgress?> downloadProgress(
 /// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
 class DownloadStatus extends _$DownloadStatus {
   @override
-  Stream<bool> build(NovelInfo novelInfo) {
+  Stream<bool> build(NovelSource source, String workId) {
     // ダウンロード状態の監視は不要になったため、ダミーを返す
     return Stream.value(false);
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_info_extension.dart';
 
 /// ランキングの1ページ分の結果を表すクラス。
 ///
@@ -35,11 +36,14 @@ class RankingPage {
       identical(this, other) ||
       other is RankingPage &&
           runtimeType == other.runtimeType &&
-          listEquals(_novels, other._novels) &&
+          sameWorks(_novels, other._novels) &&
           hasNextPage == other.hasNextPage;
 
   @override
-  int get hashCode => Object.hash(Object.hashAll(_novels), hasNextPage);
+  int get hashCode => Object.hash(
+    Object.hashAll(_novels.map((e) => e.resolvedWorkId)),
+    hasNextPage,
+  );
 
   @override
   String toString() =>

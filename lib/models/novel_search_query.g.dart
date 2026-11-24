@@ -6,9 +6,9 @@ part of 'novel_search_query.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_NovelSearchQuery _$NovelSearchQueryFromJson(Map<String, dynamic> json) =>
-    $checkedCreate('_NovelSearchQuery', json, ($checkedConvert) {
-      final val = _NovelSearchQuery(
+NovelSearchQuery _$NovelSearchQueryFromJson(Map<String, dynamic> json) =>
+    $checkedCreate('NovelSearchQuery', json, ($checkedConvert) {
+      final val = NovelSearchQuery(
         source: $checkedConvert(
           'source',
           (v) =>
@@ -86,7 +86,7 @@ _NovelSearchQuery _$NovelSearchQueryFromJson(Map<String, dynamic> json) =>
       return val;
     }, fieldKeyMap: const {'genreId': 'genre'});
 
-Map<String, dynamic> _$NovelSearchQueryToJson(_NovelSearchQuery instance) =>
+Map<String, dynamic> _$NovelSearchQueryToJson(NovelSearchQuery instance) =>
     <String, dynamic>{
       'source': _$NovelSourceEnumMap[instance.source]!,
       'word': instance.word,

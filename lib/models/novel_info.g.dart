@@ -6,11 +6,11 @@ part of 'novel_info.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => $checkedCreate(
-  '_NovelInfo',
+NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => $checkedCreate(
+  'NovelInfo',
   json,
   ($checkedConvert) {
-    final val = _NovelInfo(
+    final val = NovelInfo(
       source: $checkedConvert(
         'source',
         (v) =>
@@ -166,9 +166,7 @@ _NovelInfo _$NovelInfoFromJson(Map<String, dynamic> json) => $checkedCreate(
   },
 );
 
-Map<String, dynamic> _$NovelInfoToJson(
-  _NovelInfo instance,
-) => <String, dynamic>{
+Map<String, dynamic> _$NovelInfoToJson(NovelInfo instance) => <String, dynamic>{
   'source': _$NovelSourceEnumMap[instance.source]!,
   'workId': instance.workId,
   'title': const HtmlEscapeConverter().toJson(instance.title),

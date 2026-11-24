@@ -739,16 +739,23 @@ Future<void> _handleDownload(
   WidgetRef ref,
   NovelInfo novelInfo,
 ) async {
+  final workId = novelInfo.resolvedWorkId;
+  if (workId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('ダウンロードに失敗しました: 作品IDがありません')),
+    );
+    return;
+  }
+
   final result = await ref
-      .read(downloadStatusProvider(novelInfo).notifier)
+      .read(downloadStatusProvider(novelInfo.source, workId).notifier)
       .executeDownload(novelInfo);
 
   if (!context.mounted) return;
 
   switch (result) {
     case DownloadResultSuccess(:final needsLibraryAddition):
-      final workId = novelInfo.resolvedWorkId;
-      if (!needsLibraryAddition || workId == null) {
+      if (!needsLibraryAddition) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(

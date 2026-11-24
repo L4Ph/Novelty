@@ -28,7 +28,7 @@ class FakeInLibraryStatus extends LibraryStatus {
 /// ダウンロード完了時にライブラリ追加を促す結果を返すテスト用のNotifier
 class FakeDownloadStatus extends DownloadStatus {
   @override
-  Stream<bool> build(NovelInfo novelInfo) => Stream.value(false);
+  Stream<bool> build(NovelSource source, String workId) => Stream.value(false);
 
   @override
   Future<DownloadResult> executeDownload(NovelInfo novelInfo) async {

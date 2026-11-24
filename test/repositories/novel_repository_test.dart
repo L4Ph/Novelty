@@ -832,7 +832,7 @@ void main() {
       const novel = NovelInfo(ncode: 'n1234ab', workId: 'n1234ab');
 
       final notifier = container.read(
-        downloadStatusProvider(novel).notifier,
+        downloadStatusProvider(novel.source, novel.resolvedWorkId!).notifier,
       );
       final result = await notifier.executeDownload(novel);
 
