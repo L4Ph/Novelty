@@ -77,6 +77,24 @@ void main() {
         expect(result.novels, hasLength(1));
         expect(result.novels.single.title, equals('テスト作品'));
       });
+
+      test('turns a retyped field into a FormatException', () async {
+        // ncode is typed as String? but the payload carries a number.
+        final adapter = _GzipAdapter(
+          jsonEncode(<Object?>[
+            <String, Object?>{'allcount': 1},
+            <String, Object?>{'ncode': 123},
+          ]),
+        );
+        final service = ApiService(
+          http: TinyHttp(transport: adapter, minInterval: Duration.zero),
+        );
+
+        await expectLater(
+          service.searchNovels(const NovelSearchQuery(word: 'テスト')),
+          throwsA(isA<FormatException>()),
+        );
+      });
     });
   });
 }

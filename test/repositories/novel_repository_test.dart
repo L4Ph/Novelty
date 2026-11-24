@@ -442,6 +442,33 @@ void main() {
       expect(data?.content, isEmpty);
     });
 
+    test('records a decoding failure as a failed episode', () async {
+      await database.insertNovel(
+        NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
+      );
+
+      // The path where guardDecode normalises a shape change.
+      when(
+        mockApiService.fetchEpisode(normalizedNcode, episodeId),
+      ).thenThrow(const FormatException('レスポンスの形式が不正です'));
+
+      final repository = container.read(novelRepositoryProvider);
+      final result = await repository.downloadSingleEpisode(
+        NovelSource.narou,
+        testNcode,
+        episodeId,
+      );
+
+      expect(result, isFalse);
+
+      final data = await database.getEpisodeData(
+        NovelSource.narou,
+        normalizedNcode,
+        episodeId,
+      );
+      expect(data?.content, isEmpty);
+    });
+
     test('想定外の例外は失敗記録にせず伝播する', () async {
       await database.insertNovel(
         NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),

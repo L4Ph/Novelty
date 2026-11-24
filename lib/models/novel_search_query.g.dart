@@ -6,67 +6,85 @@ part of 'novel_search_query.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_NovelSearchQuery _$NovelSearchQueryFromJson(
-  Map<String, dynamic> json,
-) => _NovelSearchQuery(
-  source:
-      $enumDecodeNullable(_$NovelSourceEnumMap, json['source']) ??
-      NovelSource.narou,
-  word: json['word'] as String?,
-  notword: json['notword'] as String?,
-  title: json['title'] as bool? ?? false,
-  ex: json['ex'] as bool? ?? false,
-  keyword: json['keyword'] as bool? ?? false,
-  wname: json['wname'] as bool? ?? false,
-  biggenre: (json['biggenre'] as List<dynamic>?)
-      ?.map((e) => (e as num).toInt())
-      .toList(),
-  notbiggenre: (json['notbiggenre'] as List<dynamic>?)
-      ?.map((e) => (e as num).toInt())
-      .toList(),
-  genreId: (json['genre'] as List<dynamic>?)?.map((e) => e as String).toList(),
-  notgenre: (json['notgenre'] as List<dynamic>?)
-      ?.map((e) => (e as num).toInt())
-      .toList(),
-  userid: (json['userid'] as List<dynamic>?)
-      ?.map((e) => (e as num).toInt())
-      .toList(),
-  isr15: json['isr15'] as bool? ?? false,
-  isbl: json['isbl'] as bool? ?? false,
-  isgl: json['isgl'] as bool? ?? false,
-  iszankoku: json['iszankoku'] as bool? ?? false,
-  istensei: json['istensei'] as bool? ?? false,
-  istenni: json['istenni'] as bool? ?? false,
-  istt: json['istt'] as bool? ?? false,
-  notr15: json['notr15'] as bool? ?? false,
-  notbl: json['notbl'] as bool? ?? false,
-  notgl: json['notgl'] as bool? ?? false,
-  notzankoku: json['notzankoku'] as bool? ?? false,
-  nottensei: json['nottensei'] as bool? ?? false,
-  nottenni: json['nottenni'] as bool? ?? false,
-  minlen: (json['minlen'] as num?)?.toInt(),
-  maxlen: (json['maxlen'] as num?)?.toInt(),
-  length: json['length'] as String?,
-  kaiwaritu: json['kaiwaritu'] as String?,
-  sasie: json['sasie'] as String?,
-  mintime: (json['mintime'] as num?)?.toInt(),
-  maxtime: (json['maxtime'] as num?)?.toInt(),
-  time: json['time'] as String?,
-  ncode: (json['ncode'] as List<dynamic>?)?.map((e) => e as String).toList(),
-  type: json['type'] as String?,
-  serialStatus: json['serialStatus'] as String?,
-  totalCharacterCountRange: json['totalCharacterCountRange'] as String?,
-  buntai: (json['buntai'] as List<dynamic>?)
-      ?.map((e) => (e as num).toInt())
-      .toList(),
-  stop: (json['stop'] as num?)?.toInt(),
-  lastup: json['lastup'] as String?,
-  lastupdate: json['lastupdate'] as String?,
-  ispickup: json['ispickup'] as bool? ?? false,
-  order: json['order'] as String? ?? 'new',
-  lim: (json['lim'] as num?)?.toInt() ?? 20,
-  st: (json['st'] as num?)?.toInt() ?? 1,
-);
+_NovelSearchQuery _$NovelSearchQueryFromJson(Map<String, dynamic> json) =>
+    $checkedCreate('_NovelSearchQuery', json, ($checkedConvert) {
+      final val = _NovelSearchQuery(
+        source: $checkedConvert(
+          'source',
+          (v) =>
+              $enumDecodeNullable(_$NovelSourceEnumMap, v) ?? NovelSource.narou,
+        ),
+        word: $checkedConvert('word', (v) => v as String?),
+        notword: $checkedConvert('notword', (v) => v as String?),
+        title: $checkedConvert('title', (v) => v as bool? ?? false),
+        ex: $checkedConvert('ex', (v) => v as bool? ?? false),
+        keyword: $checkedConvert('keyword', (v) => v as bool? ?? false),
+        wname: $checkedConvert('wname', (v) => v as bool? ?? false),
+        biggenre: $checkedConvert(
+          'biggenre',
+          (v) => (v as List<dynamic>?)?.map((e) => (e as num).toInt()).toList(),
+        ),
+        notbiggenre: $checkedConvert(
+          'notbiggenre',
+          (v) => (v as List<dynamic>?)?.map((e) => (e as num).toInt()).toList(),
+        ),
+        genreId: $checkedConvert(
+          'genre',
+          (v) => (v as List<dynamic>?)?.map((e) => e as String).toList(),
+        ),
+        notgenre: $checkedConvert(
+          'notgenre',
+          (v) => (v as List<dynamic>?)?.map((e) => (e as num).toInt()).toList(),
+        ),
+        userid: $checkedConvert(
+          'userid',
+          (v) => (v as List<dynamic>?)?.map((e) => (e as num).toInt()).toList(),
+        ),
+        isr15: $checkedConvert('isr15', (v) => v as bool? ?? false),
+        isbl: $checkedConvert('isbl', (v) => v as bool? ?? false),
+        isgl: $checkedConvert('isgl', (v) => v as bool? ?? false),
+        iszankoku: $checkedConvert('iszankoku', (v) => v as bool? ?? false),
+        istensei: $checkedConvert('istensei', (v) => v as bool? ?? false),
+        istenni: $checkedConvert('istenni', (v) => v as bool? ?? false),
+        istt: $checkedConvert('istt', (v) => v as bool? ?? false),
+        notr15: $checkedConvert('notr15', (v) => v as bool? ?? false),
+        notbl: $checkedConvert('notbl', (v) => v as bool? ?? false),
+        notgl: $checkedConvert('notgl', (v) => v as bool? ?? false),
+        notzankoku: $checkedConvert('notzankoku', (v) => v as bool? ?? false),
+        nottensei: $checkedConvert('nottensei', (v) => v as bool? ?? false),
+        nottenni: $checkedConvert('nottenni', (v) => v as bool? ?? false),
+        minlen: $checkedConvert('minlen', (v) => (v as num?)?.toInt()),
+        maxlen: $checkedConvert('maxlen', (v) => (v as num?)?.toInt()),
+        length: $checkedConvert('length', (v) => v as String?),
+        kaiwaritu: $checkedConvert('kaiwaritu', (v) => v as String?),
+        sasie: $checkedConvert('sasie', (v) => v as String?),
+        mintime: $checkedConvert('mintime', (v) => (v as num?)?.toInt()),
+        maxtime: $checkedConvert('maxtime', (v) => (v as num?)?.toInt()),
+        time: $checkedConvert('time', (v) => v as String?),
+        ncode: $checkedConvert(
+          'ncode',
+          (v) => (v as List<dynamic>?)?.map((e) => e as String).toList(),
+        ),
+        type: $checkedConvert('type', (v) => v as String?),
+        serialStatus: $checkedConvert('serialStatus', (v) => v as String?),
+        totalCharacterCountRange: $checkedConvert(
+          'totalCharacterCountRange',
+          (v) => v as String?,
+        ),
+        buntai: $checkedConvert(
+          'buntai',
+          (v) => (v as List<dynamic>?)?.map((e) => (e as num).toInt()).toList(),
+        ),
+        stop: $checkedConvert('stop', (v) => (v as num?)?.toInt()),
+        lastup: $checkedConvert('lastup', (v) => v as String?),
+        lastupdate: $checkedConvert('lastupdate', (v) => v as String?),
+        ispickup: $checkedConvert('ispickup', (v) => v as bool? ?? false),
+        order: $checkedConvert('order', (v) => v as String? ?? 'new'),
+        lim: $checkedConvert('lim', (v) => (v as num?)?.toInt() ?? 20),
+        st: $checkedConvert('st', (v) => (v as num?)?.toInt() ?? 1),
+      );
+      return val;
+    }, fieldKeyMap: const {'genreId': 'genre'});
 
 Map<String, dynamic> _$NovelSearchQueryToJson(_NovelSearchQuery instance) =>
     <String, dynamic>{

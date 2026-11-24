@@ -6,19 +6,31 @@ part of 'episode.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-Episode _$EpisodeFromJson(Map<String, dynamic> json) => Episode(
-  source:
-      $enumDecodeNullable(_$NovelSourceEnumMap, json['source']) ??
-      NovelSource.narou,
-  subtitle: const HtmlEscapeConverter().fromJson(json['subtitle'] as String?),
-  url: json['url'] as String?,
-  update: json['update'] as String?,
-  revised: json['revised'] as String?,
-  ncode: json['ncode'] as String?,
-  index: (json['index'] as num?)?.toInt(),
-  body: json['body'] as String?,
-  novelUpdatedAt: json['novelUpdatedAt'] as String?,
-  isDownloaded: json['isDownloaded'] as bool? ?? false,
+Episode _$EpisodeFromJson(Map<String, dynamic> json) => $checkedCreate(
+  'Episode',
+  json,
+  ($checkedConvert) {
+    final val = Episode(
+      source: $checkedConvert(
+        'source',
+        (v) =>
+            $enumDecodeNullable(_$NovelSourceEnumMap, v) ?? NovelSource.narou,
+      ),
+      subtitle: $checkedConvert(
+        'subtitle',
+        (v) => const HtmlEscapeConverter().fromJson(v as String?),
+      ),
+      url: $checkedConvert('url', (v) => v as String?),
+      update: $checkedConvert('update', (v) => v as String?),
+      revised: $checkedConvert('revised', (v) => v as String?),
+      ncode: $checkedConvert('ncode', (v) => v as String?),
+      index: $checkedConvert('index', (v) => (v as num?)?.toInt()),
+      body: $checkedConvert('body', (v) => v as String?),
+      novelUpdatedAt: $checkedConvert('novelUpdatedAt', (v) => v as String?),
+      isDownloaded: $checkedConvert('isDownloaded', (v) => v as bool? ?? false),
+    );
+    return val;
+  },
 );
 
 Map<String, dynamic> _$EpisodeToJson(Episode instance) => <String, dynamic>{

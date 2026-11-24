@@ -9,6 +9,7 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/sites/novel_site.dart';
+import 'package:novelty/utils/decode_guard.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:tiny_http/tiny_http.dart';
@@ -133,7 +134,7 @@ class ApiService {
     // デバッグ: APIレスポンスを確認
 
     final processedData = _processNovelType(novelData);
-    return NovelInfo.fromJson(processedData);
+    return guardDecode(() => NovelInfo.fromJson(processedData));
   }
 
   /// 小説のエピソードを取得するメソッド。
@@ -326,8 +327,10 @@ class ApiService {
       final novels = data
           .sublist(1)
           .map(
-            (item) => NovelInfo.fromJson(
-              _processNovelType(item as Map<String, dynamic>),
+            (item) => guardDecode(
+              () => NovelInfo.fromJson(
+                _processNovelType(item as Map<String, dynamic>),
+              ),
             ),
           )
           .toList();

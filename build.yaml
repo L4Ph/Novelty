@@ -7,3 +7,9 @@ targets:
       drift_dev:
         generate_for:
           - lib/database/database.dart
+      json_serializable:
+        options:
+          # Surface a retyped API field as CheckedFromJsonException (an
+          # Exception) instead of TypeError (an Error), so the boundary can
+          # classify it as a retrieval failure.
+          checked: true
