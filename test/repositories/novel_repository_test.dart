@@ -836,14 +836,12 @@ void main() {
       );
       final result = await notifier.executeDownload(novel);
 
-      expect(
-        result.when(
-          success: (_) => 'success',
-          cancelled: () => 'cancelled',
-          error: (message) => message,
-        ),
-        isNotEmpty,
+      final message = result.when(
+        success: (_) => fail('expected an error, got success'),
+        cancelled: () => fail('expected an error, got cancelled'),
+        error: (message) => message,
       );
+      expect(message, isNotEmpty);
       // No download was attempted.
       verifyNever(mockApiService.fetchEpisode(any, any));
     });

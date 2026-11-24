@@ -78,6 +78,43 @@ void main() {
         expect(result.novels.single.title, equals('テスト作品'));
       });
 
+      test('turns a non-numeric noveltype into a FormatException', () async {
+        // The API emits `noveltype` when `nt` is requested. A non-numeric value
+        // must reach the converter rather than defaulting to "serialising".
+        final adapter = _GzipAdapter(
+          jsonEncode(<Object?>[
+            <String, Object?>{'allcount': 1},
+            <String, Object?>{'ncode': 'N1234AB', 'noveltype': 'unknown'},
+          ]),
+        );
+        final service = ApiService(
+          http: TinyHttp(transport: adapter, minInterval: Duration.zero),
+        );
+
+        await expectLater(
+          service.searchNovels(const NovelSearchQuery(word: 'テスト')),
+          throwsA(isA<FormatException>()),
+        );
+      });
+
+      test('accepts a numeric noveltype string', () async {
+        final adapter = _GzipAdapter(
+          jsonEncode(<Object?>[
+            <String, Object?>{'allcount': 1},
+            <String, Object?>{'ncode': 'N1234AB', 'noveltype': '2'},
+          ]),
+        );
+        final service = ApiService(
+          http: TinyHttp(transport: adapter, minInterval: Duration.zero),
+        );
+
+        final result = await service.searchNovels(
+          const NovelSearchQuery(word: 'テスト'),
+        );
+
+        expect(result.novels.single.novelType, equals(2));
+      });
+
       test('turns a retyped field into a FormatException', () async {
         // ncode is typed as String? but the payload carries a number.
         final adapter = _GzipAdapter(

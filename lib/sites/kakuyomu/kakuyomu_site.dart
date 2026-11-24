@@ -124,7 +124,9 @@ class KakuyomuSite implements NovelSite {
   @override
   Future<List<Episode>> fetchToc(String workId) async {
     final workHtml = await _fetch('/works/$workId');
-    final firstEpisodeId = _parseFirstEpisodeId(workHtml, workId);
+    final firstEpisodeId = guardDecode(
+      () => _parseFirstEpisodeId(workHtml, workId),
+    );
     final tocHtml = await _fetch(
       '/works/$workId/episodes/$firstEpisodeId/episode_sidebar',
     );
