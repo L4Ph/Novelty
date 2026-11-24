@@ -8,4 +8,3 @@ analyzer:
     document_ignores: ignore
   exclude:
     - lib/src/models/*.g.dart
-    - lib/src/models/*.freezed.dart

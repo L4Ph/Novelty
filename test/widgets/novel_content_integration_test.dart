@@ -21,7 +21,7 @@ void main() {
 
     testWidgets('isRubyEnabledがtrueのときルビを表示する', (tester) async {
       final elements = <NovelContentElement>[
-        RubyText('漢字', 'かんじ'),
+        const RubyText('漢字', 'かんじ'),
       ];
 
       await tester.pumpWidget(
@@ -38,7 +38,7 @@ void main() {
 
     testWidgets('isRubyEnabledがfalseのときルビを表示しない', (tester) async {
       final elements = <NovelContentElement>[
-        RubyText('漢字', 'かんじ'),
+        const RubyText('漢字', 'かんじ'),
       ];
 
       await tester.pumpWidget(
@@ -64,7 +64,7 @@ void main() {
 
     testWidgets('isRubyEnabledの変更でウィジェットが再構築される', (tester) async {
       final elements = <NovelContentElement>[
-        RubyText('漢字', 'かんじ'),
+        const RubyText('漢字', 'かんじ'),
       ];
 
       // 初期状態: ルビ有効

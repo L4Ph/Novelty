@@ -117,7 +117,8 @@ void main() {
     });
 
     test('同じ値を持つインスタンスは等価', () {
-      // novelsリストは比較対象外（NovelInfoの等価性がfreezed依存のため）
+      // The novels list is left out on purpose: NovelInfo compares by
+      // identity, and sameWorks covers the list case.
       const state1 = RankingState(
         isLoading: true,
         page: 2,

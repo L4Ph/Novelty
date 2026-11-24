@@ -13,11 +13,8 @@ plugins:
   riverpod_lint: 3.1.4
 
 analyzer:
-  errors:
-    invalid_annotation_target: ignore
   exclude:
     - lib/**/*.g.dart
-    - lib/**/*.freezed.dart
     - "test/**.mocks.dart"
 
 linter:

@@ -53,14 +53,14 @@ List<NovelContentElement> parseNovelContentLookup(String html) {
             }
           case 98: // b (br)
             if (html.startsWith('r', i + 2)) {
-              elements.add(NovelContentElement.newLine());
+              elements.add(const NovelContentElement.newLine());
               i = html.indexOf('>', i) + 1;
               continue;
             }
           case 47: // / (closing)
             if (html.startsWith('p>', i + 2)) {
               if (elements.isNotEmpty && elements.last is! NewLine) {
-                elements.add(NovelContentElement.newLine());
+                elements.add(const NovelContentElement.newLine());
               }
               i += 4;
               continue;

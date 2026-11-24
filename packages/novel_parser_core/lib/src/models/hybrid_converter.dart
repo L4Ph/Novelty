@@ -15,26 +15,22 @@ class HybridConverter {
     var off = 0;
 
     for (final e in elements) {
-      e.when(
-        plainText: (text) {
+      switch (e) {
+        case PlainText(:final text):
           buffer.write(text);
           off += text.length;
-        },
-        rubyText: (base, ruby) {
+        case RubyText(:final base, :final ruby):
           rb.add({'type': 'ruby', 'off': off, 'base': base, 'ruby': ruby});
           buffer.write(base);
           off += base.length;
-        },
-        kenten: (base, mark) {
+        case Kenten(:final base, :final mark):
           rb.add({'type': 'kenten', 'off': off, 'base': base, 'mark': mark});
           buffer.write(base);
           off += base.length;
-        },
-        newLine: () {
+        case NewLine():
           buffer.write('\n');
           off += 1;
-        },
-      );
+      }
     }
 
     return json.encode({'txt': buffer.toString(), 'rb': rb});
@@ -145,7 +141,7 @@ class HybridConverter {
       final char = txt[txtIndex];
       if (char == '\n') {
         flushPlain();
-        result.add(NovelContentElement.newLine());
+        result.add(const NovelContentElement.newLine());
         txtIndex++;
         continue;
       }

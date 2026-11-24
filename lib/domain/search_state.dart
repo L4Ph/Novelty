@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/services/api_service.dart';
@@ -67,7 +68,7 @@ class SearchState {
       other is SearchState &&
           runtimeType == other.runtimeType &&
           query == other.query &&
-          listEquals(results, other.results) &&
+          sameWorks(results, other.results) &&
           allCount == other.allCount &&
           isLoading == other.isLoading &&
           isSearching == other.isSearching &&
@@ -76,7 +77,7 @@ class SearchState {
   @override
   int get hashCode => Object.hash(
     query,
-    Object.hashAll(results),
+    Object.hashAll(results.map((e) => e.resolvedWorkId)),
     allCount,
     isLoading,
     isSearching,

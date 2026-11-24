@@ -739,16 +739,23 @@ Future<void> _handleDownload(
   WidgetRef ref,
   NovelInfo novelInfo,
 ) async {
+  final workId = novelInfo.resolvedWorkId;
+  if (workId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('ダウンロードに失敗しました: 作品IDがありません')),
+    );
+    return;
+  }
+
   final result = await ref
-      .read(downloadStatusProvider(novelInfo).notifier)
+      .read(downloadStatusProvider(novelInfo.source, workId).notifier)
       .executeDownload(novelInfo);
 
   if (!context.mounted) return;
 
-  result.when(
-    success: (needsLibraryAddition) {
-      final workId = novelInfo.resolvedWorkId;
-      if (!needsLibraryAddition || workId == null) {
+  switch (result) {
+    case DownloadResultSuccess(:final needsLibraryAddition):
+      if (!needsLibraryAddition) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
@@ -768,15 +775,15 @@ Future<void> _handleDownload(
           ),
         ),
       );
-    },
-
-    cancelled: () {},
-    error: (message) {
+    case DownloadResultCancelled():
+      break;
+    case DownloadResultError(:final message):
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('ダウンロードに失敗しました: $message')),
       );
-    },
-  );
+    default:
+      throw StateError('Unhandled DownloadResult: $result');
+  }
 }
 
 class _EpisodeListTile extends ConsumerWidget {

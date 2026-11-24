@@ -7,9 +7,9 @@ void main() {
   group('TategakiConverter with ruby control', () {
     test('convertはisRubyEnabledがtrueのときルビを含む', () {
       final elements = <NovelContentElement>[
-        PlainText('これは'),
-        RubyText('テスト', 'てすと'),
-        PlainText('です。'),
+        const PlainText('これは'),
+        const RubyText('テスト', 'てすと'),
+        const PlainText('です。'),
       ];
 
       final result = TategakiConverter.convert(elements);
@@ -24,9 +24,9 @@ void main() {
 
     test('convertはisRubyEnabledがfalseのときルビを除外', () {
       final elements = <NovelContentElement>[
-        PlainText('これは'),
-        RubyText('テスト', 'てすと'),
-        PlainText('です。'),
+        const PlainText('これは'),
+        const RubyText('テスト', 'てすと'),
+        const PlainText('です。'),
       ];
 
       final result = TategakiConverter.convert(elements, isRubyEnabled: false);
@@ -39,9 +39,9 @@ void main() {
 
     test('convertはルビ設定に関わらずNewLine要素を保持する', () {
       final elements = <NovelContentElement>[
-        PlainText('行1'),
-        NewLine(),
-        PlainText('行2'),
+        const PlainText('行1'),
+        const NewLine(),
+        const PlainText('行2'),
       ];
 
       final resultWithRuby = TategakiConverter.convert(elements);
@@ -61,9 +61,9 @@ void main() {
 
     test('convertは複数のルビ要素を正しく処理する', () {
       final elements = <NovelContentElement>[
-        RubyText('漢字', 'かんじ'),
-        PlainText('と'),
-        RubyText('平仮名', 'ひらがな'),
+        const RubyText('漢字', 'かんじ'),
+        const PlainText('と'),
+        const RubyText('平仮名', 'ひらがな'),
       ];
 
       // ルビ有効

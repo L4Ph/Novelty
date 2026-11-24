@@ -38,7 +38,7 @@ void main() {
         source: NovelSource.narou,
         workId: workId,
         episodeId: 1,
-        content: [NovelContentElement.plainText('ダウンロード済みの本文')],
+        content: [const NovelContentElement.plainText('ダウンロード済みの本文')],
         fetchedAt: 1234567890,
         subtitle: '第1話',
       );
@@ -58,7 +58,7 @@ void main() {
         source: NovelSource.narou,
         workId: otherWorkId,
         episodeId: 1,
-        content: [NovelContentElement.plainText('別作品の本文')],
+        content: [const NovelContentElement.plainText('別作品の本文')],
         fetchedAt: 1234567890,
       );
       await database.insertNovel(
@@ -72,7 +72,7 @@ void main() {
         source: NovelSource.kakuyomu,
         workId: kakuyomuWorkId,
         episodeId: 1,
-        content: [NovelContentElement.plainText('カクヨム作品の本文')],
+        content: [const NovelContentElement.plainText('カクヨム作品の本文')],
         fetchedAt: 1234567890,
       );
     });

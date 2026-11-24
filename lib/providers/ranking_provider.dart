@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
@@ -76,7 +77,7 @@ class RankingState {
       identical(this, other) ||
       other is RankingState &&
           runtimeType == other.runtimeType &&
-          listEquals(novels, other.novels) &&
+          sameWorks(novels, other.novels) &&
           isLoading == other.isLoading &&
           isLoadingMore == other.isLoadingMore &&
           hasMore == other.hasMore &&
@@ -85,7 +86,7 @@ class RankingState {
 
   @override
   int get hashCode => Object.hash(
-    Object.hashAll(novels),
+    Object.hashAll(novels.map((e) => e.resolvedWorkId)),
     isLoading,
     isLoadingMore,
     hasMore,

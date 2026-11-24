@@ -296,7 +296,7 @@ final class LibraryStatusProvider
   }
 }
 
-String _$libraryStatusHash() => r'b47ec1efede3910208660b7c413e45c7e2cf2254';
+String _$libraryStatusHash() => r'a51d245612a15ccd0c177fcc0e39a97c1bc73c29';
 
 /// 小説のライブラリ状態を管理するプロバイダー。
 
@@ -458,7 +458,7 @@ final class DownloadStatusProvider
   /// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
   DownloadStatusProvider._({
     required DownloadStatusFamily super.from,
-    required NovelInfo super.argument,
+    required (NovelSource, String) super.argument,
   }) : super(
          retry: null,
          name: r'downloadStatusProvider',
@@ -474,7 +474,7 @@ final class DownloadStatusProvider
   String toString() {
     return r'downloadStatusProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -492,7 +492,7 @@ final class DownloadStatusProvider
   }
 }
 
-String _$downloadStatusHash() => r'ebc1e2f30debe5326c3e2895bb2f92b423134db2';
+String _$downloadStatusHash() => r'454343d7c97de918af5bf2f27660d9042503159b';
 
 /// 小説のダウンロード状態を管理するプロバイダー。
 ///
@@ -505,7 +505,7 @@ final class DownloadStatusFamily extends $Family
           AsyncValue<bool>,
           bool,
           Stream<bool>,
-          NovelInfo
+          (NovelSource, String)
         > {
   DownloadStatusFamily._()
     : super(
@@ -520,8 +520,8 @@ final class DownloadStatusFamily extends $Family
   ///
   /// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
 
-  DownloadStatusProvider call(NovelInfo novelInfo) =>
-      DownloadStatusProvider._(argument: novelInfo, from: this);
+  DownloadStatusProvider call(NovelSource source, String workId) =>
+      DownloadStatusProvider._(argument: (source, workId), from: this);
 
   @override
   String toString() => r'downloadStatusProvider';
@@ -532,10 +532,11 @@ final class DownloadStatusFamily extends $Family
 /// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
 
 abstract class _$DownloadStatus extends $StreamNotifier<bool> {
-  late final _$args = ref.$arg as NovelInfo;
-  NovelInfo get novelInfo => _$args;
+  late final _$args = ref.$arg as (NovelSource, String);
+  NovelSource get source => _$args.$1;
+  String get workId => _$args.$2;
 
-  Stream<bool> build(NovelInfo novelInfo);
+  Stream<bool> build(NovelSource source, String workId);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
@@ -548,7 +549,7 @@ abstract class _$DownloadStatus extends $StreamNotifier<bool> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, () => build(_$args));
+    return element.handleCreate(ref, () => build(_$args.$1, _$args.$2));
   }
 }
 

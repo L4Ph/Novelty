@@ -278,7 +278,7 @@ void main() {
       source: NovelSource.narou,
       workId: 'n1234ab',
       episodeId: 6,
-      content: [NovelContentElement.plainText('新規')],
+      content: [const NovelContentElement.plainText('新規')],
       fetchedAt: 1700000000000,
       revisedAt: null,
     );
@@ -300,14 +300,14 @@ void main() {
 
     // 新 Hybrid
     final hybrid = HybridConverter.toHybridJson([
-      NovelContentElement.plainText('A'),
+      const NovelContentElement.plainText('A'),
     ]);
     final hybridDecoded = converter.fromSql(hybrid);
     expect(hybridDecoded, hasLength(1));
     expect((hybridDecoded[0] as PlainText).text, 'A');
 
     // toSql は Hybrid を出す
-    final encoded = converter.toSql([NovelContentElement.plainText('B')]);
+    final encoded = converter.toSql([const NovelContentElement.plainText('B')]);
     expect(encoded.contains('"txt"'), isTrue);
   });
 }

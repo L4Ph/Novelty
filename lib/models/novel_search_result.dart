@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:novelty/models/novel_info.dart';
+import 'package:novelty/models/novel_info_extension.dart';
 
 /// 小説検索結果を表すクラス。
 ///
@@ -35,11 +36,14 @@ class NovelSearchResult {
       identical(this, other) ||
       other is NovelSearchResult &&
           runtimeType == other.runtimeType &&
-          listEquals(_novels, other._novels) &&
+          sameWorks(_novels, other._novels) &&
           allCount == other.allCount;
 
   @override
-  int get hashCode => Object.hash(Object.hashAll(_novels), allCount);
+  int get hashCode => Object.hash(
+    Object.hashAll(_novels.map((e) => e.resolvedWorkId)),
+    allCount,
+  );
 
   @override
   String toString() =>

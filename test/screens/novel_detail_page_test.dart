@@ -28,7 +28,7 @@ class FakeInLibraryStatus extends LibraryStatus {
 /// ダウンロード完了時にライブラリ追加を促す結果を返すテスト用のNotifier
 class FakeDownloadStatus extends DownloadStatus {
   @override
-  Stream<bool> build(NovelInfo novelInfo) => Stream.value(false);
+  Stream<bool> build(NovelSource source, String workId) => Stream.value(false);
 
   @override
   Future<DownloadResult> executeDownload(NovelInfo novelInfo) async {
@@ -501,7 +501,7 @@ void main() {
         source: NovelSource.narou,
         workId: testNcode,
         episodeId: 1,
-        content: [NovelContentElement.plainText('ダウンロード済みの本文')],
+        content: [const NovelContentElement.plainText('ダウンロード済みの本文')],
         fetchedAt: 1234567890,
         subtitle: '第1話',
       );

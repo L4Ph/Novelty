@@ -43,7 +43,9 @@ void main() {
               source: const Value(NovelSource.narou),
               workId: Value(normalizedNcode),
               episodeId: const Value(1),
-              content: Value([NovelContentElement.plainText('Content 1')]),
+              content: const Value([
+                NovelContentElement.plainText('Content 1'),
+              ]),
             ),
           );
 
@@ -55,7 +57,9 @@ void main() {
               source: const Value(NovelSource.narou),
               workId: Value(normalizedNcode),
               episodeId: const Value(2),
-              content: Value([NovelContentElement.plainText('Content 2')]),
+              content: const Value([
+                NovelContentElement.plainText('Content 2'),
+              ]),
             ),
           );
 
@@ -91,7 +95,7 @@ void main() {
               source: const Value(NovelSource.narou),
               workId: Value(normalizedNcode),
               episodeId: const Value(5),
-              content: Value([NovelContentElement.rubyText('漢字', 'かんじ')]),
+              content: const Value([NovelContentElement.rubyText('漢字', 'かんじ')]),
             ),
           );
     }
@@ -132,7 +136,7 @@ void main() {
                 source: const Value(NovelSource.narou),
                 workId: Value(normalizedNcode),
                 episodeId: const Value(1),
-                content: Value([NovelContentElement.plainText('1')]),
+                content: const Value([NovelContentElement.plainText('1')]),
               ),
             );
         await database
@@ -142,7 +146,7 @@ void main() {
                 source: const Value(NovelSource.narou),
                 workId: Value(normalizedNcode),
                 episodeId: const Value(2),
-                content: Value([NovelContentElement.plainText('2')]),
+                content: const Value([NovelContentElement.plainText('2')]),
               ),
             );
 

@@ -753,7 +753,7 @@ void main() {
         source: NovelSource.narou,
         workId: normalizedNcode,
         episodeId: episodeId,
-        content: [NovelContentElement.plainText('cached body')],
+        content: [const NovelContentElement.plainText('cached body')],
         fetchedAt: DateTime.now().millisecondsSinceEpoch,
         revisedAt: '2024-01-01',
       );
@@ -832,15 +832,16 @@ void main() {
       const novel = NovelInfo(ncode: 'n1234ab', workId: 'n1234ab');
 
       final notifier = container.read(
-        downloadStatusProvider(novel).notifier,
+        downloadStatusProvider(novel.source, novel.resolvedWorkId!).notifier,
       );
       final result = await notifier.executeDownload(novel);
 
-      final message = result.when(
-        success: (_) => fail('expected an error, got success'),
-        cancelled: () => fail('expected an error, got cancelled'),
-        error: (message) => message,
-      );
+      final message = switch (result) {
+        DownloadResultError(:final message) => message,
+        DownloadResultSuccess() => fail('expected an error, got success'),
+        DownloadResultCancelled() => fail('expected an error, got cancelled'),
+        _ => fail('expected an error, got $result'),
+      };
       expect(message, isNotEmpty);
       // No download was attempted.
       verifyNever(mockApiService.fetchEpisode(any, any));

@@ -6,7 +6,7 @@ import 'package:test/test.dart';
 void main() {
   group('NovelContentElement', () {
     test('plainText が JSON シリアライズ往復できる', () {
-      final element = PlainText('これはテストです。');
+      const element = PlainText('これはテストです。');
       final json = jsonEncode(element.toJson());
       final decoded = NovelContentElement.fromJson(
         jsonDecode(json) as Map<String, dynamic>,
@@ -17,7 +17,7 @@ void main() {
     });
 
     test('rubyText が JSON シリアライズ往復できる', () {
-      final element = RubyText('山田', 'やまだ');
+      const element = RubyText('山田', 'やまだ');
       final json = jsonEncode(element.toJson());
       final decoded = NovelContentElement.fromJson(
         jsonDecode(json) as Map<String, dynamic>,
@@ -29,7 +29,7 @@ void main() {
     });
 
     test('kenten が JSON シリアライズ往復できる', () {
-      final element = Kenten('重要', '﹅');
+      const element = Kenten('重要', '﹅');
       final json = jsonEncode(element.toJson());
       final decoded = NovelContentElement.fromJson(
         jsonDecode(json) as Map<String, dynamic>,
@@ -41,7 +41,7 @@ void main() {
     });
 
     test('newLine が JSON シリアライズ往復できる', () {
-      final element = NewLine();
+      const element = NewLine();
       final json = jsonEncode(element.toJson());
       final decoded = NovelContentElement.fromJson(
         jsonDecode(json) as Map<String, dynamic>,
@@ -51,7 +51,7 @@ void main() {
     });
 
     test('ファクトリから生成した要素も JSON シリアライズ往復できる', () {
-      final element = NovelContentElement.plainText('テスト');
+      const element = NovelContentElement.plainText('テスト');
       final json = jsonEncode(element.toJson());
       final decoded = NovelContentElement.fromJson(
         jsonDecode(json) as Map<String, dynamic>,
@@ -65,21 +65,23 @@ void main() {
       // This is the on-disk shape. Changing it silently would make every
       // already-downloaded episode unreadable, so pin the exact keys.
       // The discriminator is the factory name, not the class name.
-      expect(PlainText('a').toJson(), <String, Object?>{
+      expect(const PlainText('a').toJson(), <String, Object?>{
         'text': 'a',
         'runtimeType': 'plainText',
       });
-      expect(RubyText('山田', 'やまだ').toJson(), <String, Object?>{
+      expect(const RubyText('山田', 'やまだ').toJson(), <String, Object?>{
         'base': '山田',
         'ruby': 'やまだ',
         'runtimeType': 'rubyText',
       });
-      expect(Kenten('重要', '﹅').toJson(), <String, Object?>{
+      expect(const Kenten('重要', '﹅').toJson(), <String, Object?>{
         'base': '重要',
         'mark': '﹅',
         'runtimeType': 'kenten',
       });
-      expect(NewLine().toJson(), <String, Object?>{'runtimeType': 'newLine'});
+      expect(const NewLine().toJson(), <String, Object?>{
+        'runtimeType': 'newLine',
+      });
     });
 
     test('reads a literal stored by a released version', () {
@@ -110,8 +112,8 @@ void main() {
 
     test('リストを JSON 文字列に変換して戻せる', () {
       final elements = <NovelContentElement>[
-        NovelContentElement.plainText('テスト'),
-        NovelContentElement.newLine(),
+        const NovelContentElement.plainText('テスト'),
+        const NovelContentElement.newLine(),
       ];
       final jsonString = elements.toJsonString();
       final decoded = (jsonDecode(jsonString) as List<dynamic>)

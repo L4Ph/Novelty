@@ -23,7 +23,7 @@ void main() {
     'NovelContentBody uses unique keys for TategakiTextPaged across episodes',
     (tester) async {
       final testContent = <NovelContentElement>[
-        NovelContentElement.plainText('Text 1'),
+        const NovelContentElement.plainText('Text 1'),
       ];
 
       // Build with Episode 1
