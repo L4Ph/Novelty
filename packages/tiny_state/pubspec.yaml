@@ -1,0 +1,19 @@
+name: tiny_state
+description: A tiny async-state layer - values, DI scope and keyed loaders.
+version: 0.1.0
+publish_to: "none" # Internal package, not published.
+
+environment:
+  sdk: ^3.8.1
+  flutter: ">=3.27.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  very_good_analysis: ^10.3.0
