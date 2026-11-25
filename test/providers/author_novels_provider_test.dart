@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -6,7 +5,12 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/providers/author_novels_provider.dart';
+import 'package:novelty/repositories/preferences_repository.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/utils/settings_provider.dart';
+import 'package:tiny_state/tiny_state.dart';
+
+import '../support/test_services.dart';
 
 import 'author_novels_provider_test.mocks.dart';
 
@@ -54,16 +58,16 @@ void main() {
         ),
       );
 
-      final container = ProviderContainer(
-        overrides: [
-          apiServiceProvider.overrideWithValue(mockApiService),
-        ],
+      final settings = SettingsController(
+        PreferencesRepository(),
+        initialState: const AsyncData(testSettings),
       );
+      addTearDown(settings.dispose);
 
-      addTearDown(container.dispose);
-
-      final result = await container.read(
-        authorNovelsProvider(userId).future,
+      final result = await fetchAuthorNovels(
+        mockApiService,
+        settings,
+        userId,
       );
 
       expect(result.length, equals(1));

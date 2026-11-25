@@ -1,9 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/value_wrapper.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-part 'library_filter_state.g.dart';
 
 /// ライブラリのフィルタ状態を表すモデル。
 @immutable
@@ -57,37 +54,48 @@ class LibraryFilterState {
       '$showOnlyOngoing, selectedGenreId: $selectedGenreId)';
 }
 
-/// ライブラリのフィルタ状態を管理するNotifier。
-@riverpod
-class LibraryFilterStateNotifier extends _$LibraryFilterStateNotifier {
-  @override
-  LibraryFilterState build() {
-    return const LibraryFilterState();
+/// ライブラリのフィルタ状態を保持し、変更を購読者へ通知する。
+///
+/// ライブラリ画面が1つ生成して保持する。
+class LibraryFilterController extends ChangeNotifier {
+  LibraryFilterState _state = const LibraryFilterState();
+
+  /// 現在のフィルタ状態。
+  LibraryFilterState get state => _state;
+
+  void _setState(LibraryFilterState next) {
+    if (next == _state) return;
+    _state = next;
+    notifyListeners();
   }
 
   /// サイト絞り込みフィルタを設定する。
   void setSource(NovelSource? source) {
     // サイトを切り替えたらジャンルフィルタはリセットする
-    state = LibraryFilterState(
-      source: source,
-      showOnlyOngoing: state.showOnlyOngoing,
+    _setState(
+      LibraryFilterState(
+        source: source,
+        showOnlyOngoing: _state.showOnlyOngoing,
+      ),
     );
   }
 
   /// 連載中のみ表示フィルタを設定する。
   void setShowOnlyOngoing({required bool value}) {
-    state = state.copyWith(showOnlyOngoing: value);
+    _setState(_state.copyWith(showOnlyOngoing: value));
   }
 
   /// ジャンルフィルタを設定する。
   void setSelectedGenreId(String? genreId) {
-    state = state.copyWith(
-      selectedGenreId: genreId != null ? Value(genreId) : const Value(null),
+    _setState(
+      _state.copyWith(
+        selectedGenreId: genreId != null ? Value(genreId) : const Value(null),
+      ),
     );
   }
 
   /// フィルタ状態をリセットする。
   void reset() {
-    state = const LibraryFilterState();
+    _setState(const LibraryFilterState());
   }
 }

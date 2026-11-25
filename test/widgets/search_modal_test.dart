@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/search_modal.dart';
@@ -12,13 +11,11 @@ Widget _buildModal({
   ),
   ValueChanged<NovelSearchQuery>? onSearch,
 }) {
-  return ProviderScope(
-    child: MaterialApp(
-      home: Scaffold(
-        body: SearchModal(
-          initialQuery: initialQuery,
-          onSearch: onSearch ?? (_) {},
-        ),
+  return MaterialApp(
+    home: Scaffold(
+      body: SearchModal(
+        initialQuery: initialQuery,
+        onSearch: onSearch ?? (_) {},
       ),
     ),
   );

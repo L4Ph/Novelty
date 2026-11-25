@@ -1,9 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/value_wrapper.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-part 'ranking_filter_state.g.dart';
 
 /// ランキングのフィルタ状態を表すモデル。
 @immutable
@@ -57,31 +54,41 @@ class RankingFilterState {
       '$showOnlyOngoing, selectedGenreId: $selectedGenreId)';
 }
 
-/// ランキングタイプごとのフィルタ状態を管理するNotifier。
+/// ランキングタイプごとのフィルタ状態を保持し、変更を購読者へ通知する。
 ///
-/// familyキーは `(source, rankingType)`。
-@riverpod
-class RankingFilterStateNotifier extends _$RankingFilterStateNotifier {
-  @override
-  RankingFilterState build(NovelSource source, String rankingType) {
-    // 初期状態はフィルタなし
-    return RankingFilterState(source: source);
+/// ランキング画面が `(source, rankingType)` ごとに1つ生成して保持する。
+class RankingFilterController extends ChangeNotifier {
+  /// コンストラクタ。
+  RankingFilterController({required NovelSource source})
+    : _state = RankingFilterState(source: source);
+
+  RankingFilterState _state;
+
+  /// 現在のフィルタ状態。
+  RankingFilterState get state => _state;
+
+  void _setState(RankingFilterState next) {
+    if (next == _state) return;
+    _state = next;
+    notifyListeners();
   }
 
   /// 連載中のみ表示フィルタを設定する。
   void setShowOnlyOngoing({required bool value}) {
-    state = state.copyWith(showOnlyOngoing: value);
+    _setState(_state.copyWith(showOnlyOngoing: value));
   }
 
   /// ジャンルフィルタを設定する。
   void setSelectedGenreId(String? genreId) {
-    state = state.copyWith(
-      selectedGenreId: genreId != null ? Value(genreId) : const Value(null),
+    _setState(
+      _state.copyWith(
+        selectedGenreId: genreId != null ? Value(genreId) : const Value(null),
+      ),
     );
   }
 
   /// フィルタ状態をリセットする。
   void reset() {
-    state = RankingFilterState(source: state.source);
+    _setState(RankingFilterState(source: _state.source));
   }
 }

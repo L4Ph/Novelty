@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/router/app_router.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 /// 閲覧設定ページ
-class ReaderSettingsPage extends ConsumerWidget {
+class ReaderSettingsPage extends StatelessWidget {
   /// コンストラクタ
   const ReaderSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
+  Widget build(BuildContext context) {
+    final settings = context.services.settings.state;
 
     return Scaffold(
       appBar: AppBar(
@@ -20,9 +20,9 @@ class ReaderSettingsPage extends ConsumerWidget {
       body: settings.when(
         data: (data) => ListView(
           children: [
-            _buildFontSection(context, ref, data),
+            _buildFontSection(context, data),
             const Divider(),
-            _buildLayoutSection(context, ref, data),
+            _buildLayoutSection(context, data),
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -33,7 +33,6 @@ class ReaderSettingsPage extends ConsumerWidget {
 
   Widget _buildFontSection(
     BuildContext context,
-    WidgetRef ref,
     AppSettings settings,
   ) {
     return Column(
@@ -59,7 +58,7 @@ class ReaderSettingsPage extends ConsumerWidget {
             label: settings.fontSize.toStringAsFixed(1),
             onChanged: (value) async {
               try {
-                await ref.read(settingsProvider.notifier).setFontSize(value);
+                await context.services.settings.setFontSize(value);
               } on Exception catch (e, stackTrace) {
                 debugPrint('Failed to save font size: $e\n$stackTrace');
                 if (context.mounted) {
@@ -80,7 +79,6 @@ class ReaderSettingsPage extends ConsumerWidget {
 
   Widget _buildLayoutSection(
     BuildContext context,
-    WidgetRef ref,
     AppSettings settings,
   ) {
     return Column(
@@ -105,7 +103,8 @@ class ReaderSettingsPage extends ConsumerWidget {
               // 注: 通常のUI操作では発生しないが、古いバージョンからのアップデート時や
               // 設定データの移行時など、過渡的な状態で表示される可能性がある
               if (settings.isRubyEnabled &&
-                  settings.lineHeight < Settings.minLineHeightWithRuby)
+                  settings.lineHeight <
+                      SettingsController.minLineHeightWithRuby)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
@@ -120,16 +119,14 @@ class ReaderSettingsPage extends ConsumerWidget {
               Slider(
                 value: settings.lineHeight,
                 min: settings.isRubyEnabled
-                    ? Settings.minLineHeightWithRuby
-                    : Settings.minLineHeightWithoutRuby,
+                    ? SettingsController.minLineHeightWithRuby
+                    : SettingsController.minLineHeightWithoutRuby,
                 max: 3,
                 divisions: settings.isRubyEnabled ? 17 : 20,
                 label: settings.lineHeight.toStringAsFixed(1),
                 onChanged: (value) async {
                   try {
-                    await ref
-                        .read(settingsProvider.notifier)
-                        .setLineHeight(value);
+                    await context.services.settings.setLineHeight(value);
                   } on Exception catch (e, stackTrace) {
                     debugPrint('Failed to save line height: $e\n$stackTrace');
                     if (context.mounted) {
@@ -151,9 +148,7 @@ class ReaderSettingsPage extends ConsumerWidget {
           value: settings.isVertical,
           onChanged: (value) async {
             try {
-              await ref
-                  .read(settingsProvider.notifier)
-                  .setIsVertical(isVertical: value);
+              await context.services.settings.setIsVertical(isVertical: value);
             } on Exception catch (e, stackTrace) {
               debugPrint('Failed to save is vertical: $e\n$stackTrace');
               if (context.mounted) {
@@ -173,9 +168,9 @@ class ReaderSettingsPage extends ConsumerWidget {
             value: settings.isPageFlip,
             onChanged: (value) async {
               try {
-                await ref
-                    .read(settingsProvider.notifier)
-                    .setIsPageFlip(isPageFlip: value);
+                await context.services.settings.setIsPageFlip(
+                  isPageFlip: value,
+                );
               } on Exception catch (e, stackTrace) {
                 debugPrint('Failed to save is page flip: $e\n$stackTrace');
                 if (context.mounted) {
@@ -195,9 +190,9 @@ class ReaderSettingsPage extends ConsumerWidget {
           value: settings.isRubyEnabled,
           onChanged: (value) async {
             try {
-              await ref
-                  .read(settingsProvider.notifier)
-                  .setIsRubyEnabled(isRubyEnabled: value);
+              await context.services.settings.setIsRubyEnabled(
+                isRubyEnabled: value,
+              );
             } on Exception catch (e, stackTrace) {
               debugPrint('Failed to save is ruby enabled: $e\n$stackTrace');
               if (context.mounted) {

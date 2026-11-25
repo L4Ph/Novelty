@@ -1,20 +1,23 @@
 import 'package:drift/drift.dart' show Value;
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/repositories/preferences_repository.dart';
+import 'package:novelty/services/api_service.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:tiny_state/tiny_state.dart';
+
+import '../support/test_services.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('NovelRepository.removeFromLibrary', () {
     late AppDatabase database;
-    late ProviderContainer container;
+    late NovelRepository repository;
 
     const workId = 'n1234ab';
     const otherWorkId = 'n5678cd';
@@ -22,12 +25,13 @@ void main() {
 
     setUp(() async {
       database = AppDatabase.memory();
-      container = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(database),
-          settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineModeProvider.overrideWithValue(false),
-        ],
+      repository = NovelRepository(
+        apiService: ApiService(),
+        settings: SettingsController(
+          PreferencesRepository(),
+          initialState: const AsyncData(testSettings),
+        ),
+        db: database,
       );
 
       await database.insertNovel(
@@ -78,14 +82,12 @@ void main() {
     });
 
     tearDown(() async {
-      container.dispose();
+      repository.dispose();
       await database.close();
     });
 
     test('ダウンロード済みの話を残したままライブラリから外せる', () async {
-      await container
-          .read(novelRepositoryProvider)
-          .removeFromLibrary(NovelSource.narou, workId);
+      await repository.removeFromLibrary(NovelSource.narou, workId);
 
       expect(await database.isInLibrary(NovelSource.narou, workId), isFalse);
 
@@ -99,13 +101,11 @@ void main() {
     });
 
     test('ダウンロード済みの話も削除してライブラリから外せる', () async {
-      await container
-          .read(novelRepositoryProvider)
-          .removeFromLibrary(
-            NovelSource.narou,
-            workId,
-            deleteDownloads: true,
-          );
+      await repository.removeFromLibrary(
+        NovelSource.narou,
+        workId,
+        deleteDownloads: true,
+      );
 
       expect(await database.isInLibrary(NovelSource.narou, workId), isFalse);
 
@@ -139,20 +139,4 @@ void main() {
       expect(otherSiteEpisode!.content, isNotNull);
     });
   });
-}
-
-/// テスト用の設定Notifier
-class FakeSettings extends Settings {
-  @override
-  Future<AppSettings> build() async {
-    return const AppSettings(
-      fontSize: 16,
-      isVertical: false,
-      themeMode: ThemeMode.system,
-      lineHeight: 1.5,
-      isIncognito: false,
-      isPageFlip: false,
-      isRubyEnabled: true,
-    );
-  }
 }

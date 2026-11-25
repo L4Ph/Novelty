@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:narou_parser/narou_parser.dart';
+import 'package:novelty/database/database.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
@@ -12,48 +13,97 @@ import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/gesture_shield.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
+import '../support/test_services.dart';
 @GenerateMocks([NovelRepository])
 import 'novel_page_test.mocks.dart';
 
-/// 縦書き設定をシミュレートするSettingsクラス
-class VerticalSettings extends Settings {
-  @override
-  Future<AppSettings> build() async => const AppSettings(
-    fontSize: 16,
-    isVertical: true,
-    themeMode: ThemeMode.system,
-    lineHeight: 1.5,
-    isIncognito: false,
-    isPageFlip: false,
-    isRubyEnabled: true,
-  );
-}
+const testNcode = 'n0001';
 
-/// 横書き設定をシミュレートするSettingsクラス
-class HorizontalSettings extends Settings {
-  @override
-  Future<AppSettings> build() async => const AppSettings(
-    fontSize: 16,
-    isVertical: false,
-    themeMode: ThemeMode.system,
-    lineHeight: 1.5,
-    isIncognito: false,
-    isPageFlip: false,
-    isRubyEnabled: true,
+const testNovelInfo = NovelInfo(
+  ncode: testNcode,
+  title: 'テスト小説',
+  writer: 'テスト作者',
+  novelType: 1,
+  generalAllNo: 3,
+  episodes: [],
+);
+
+/// 縦書き設定。
+const verticalTestSettings = AppSettings(
+  themeMode: ThemeMode.system,
+  fontSize: 16,
+  lineHeight: 1.5,
+  isVertical: true,
+  isIncognito: false,
+  isPageFlip: false,
+  isRubyEnabled: true,
+);
+
+/// 横書き設定。
+const horizontalTestSettings = AppSettings(
+  themeMode: ThemeMode.system,
+  fontSize: 16,
+  lineHeight: 1.5,
+  isVertical: false,
+  isIncognito: false,
+  isPageFlip: false,
+  isRubyEnabled: true,
+);
+
+/// 本文ページを、指定した設定と画面サイズで表示する。
+Future<void> pumpNovelPage(
+  WidgetTester tester, {
+  required AppSettings settings,
+  Size size = const Size(400, 800),
+  FakeViewPadding? viewPadding,
+}) async {
+  addTearDown(tester.view.reset);
+  tester.view.devicePixelRatio = 1;
+  tester.view.physicalSize = size;
+  if (viewPadding != null) {
+    tester.view.padding = viewPadding;
+  }
+
+  final repository = MockNovelRepository();
+  when(
+    repository.addToHistory(
+      source: anyNamed('source'),
+      workId: anyNamed('workId'),
+      title: anyNamed('title'),
+      writer: anyNamed('writer'),
+      lastEpisode: anyNamed('lastEpisode'),
+    ),
+  ).thenAnswer((_) async {});
+  when(
+    repository.watchNovelInfo(any, any),
+  ).thenAnswer((_) => Stream.value(testNovelInfo));
+  when(
+    repository.watchEpisodeList(any, any, any),
+  ).thenAnswer((_) => Stream.value(<Episode>[]));
+  when(
+    repository.getEpisode(any, any, any, revised: anyNamed('revised')),
+  ).thenAnswer((_) async => <NovelContentElement>[]);
+
+  final db = AppDatabase.memory();
+  addTearDown(db.close);
+  await tester.pumpWidget(
+    withServices(
+      buildTestServices(db: db, repository: repository, settings: settings),
+      const MaterialApp(
+        home: NovelPage(
+          source: NovelSource.narou,
+          workId: testNcode,
+          episode: 1,
+        ),
+      ),
+    ),
   );
+  await tester.pumpAndSettle();
 }
 
 /// NovelPageの履歴追加ロジックのテスト
 void main() {
   // 各グループで共通して使用するテストデータ
-  const testNcode = 'n0001';
-  const testNovelInfo = NovelInfo(
-    ncode: testNcode,
-    title: 'テスト小説',
-    writer: 'テスト作者',
-    novelType: 1,
-    generalAllNo: 3,
-  );
 
   group('NovelPage 履歴追加ロジック', () {
     test('episode番号が正の場合はそのまま使用される', () {
@@ -216,72 +266,9 @@ void main() {
   });
 
   group('NovelPage AppBar表示切替', () {
-    Future<void> pumpNovelPage(
-      WidgetTester tester, {
-      required Settings Function() createSettings,
-      Size size = const Size(400, 800),
-      FakeViewPadding? viewPadding,
-    }) async {
-      addTearDown(tester.view.reset);
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = size;
-      if (viewPadding != null) {
-        tester.view.padding = viewPadding;
-      }
-
-      final mockNovelRepository = MockNovelRepository();
-      when(
-        mockNovelRepository.addToHistory(
-          source: anyNamed('source'),
-          workId: anyNamed('workId'),
-          title: anyNamed('title'),
-          writer: anyNamed('writer'),
-          lastEpisode: anyNamed('lastEpisode'),
-        ),
-      ).thenAnswer((_) async {});
-      when(mockNovelRepository.dispose()).thenReturn(null);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            novelRepositoryProvider.overrideWithValue(mockNovelRepository),
-            settingsProvider.overrideWith(createSettings),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(testNovelInfo),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            novelContentProvider.overrideWith(
-              (
-                ref,
-                ({
-                  NovelSource source,
-                  String workId,
-                  int episode,
-                  String? revised,
-                })
-                arg,
-              ) async => [],
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelPage(
-              source: NovelSource.narou,
-              workId: testNcode,
-              episode: 1,
-            ),
-          ),
-        ),
-      );
-
-      // NovelInfoのStreamが処理されるまで待機
-      await tester.pumpAndSettle();
-    }
-
     testWidgets('読み込み完了後はAppBarが表示されないこと', (tester) async {
       // Arrange
-      await pumpNovelPage(tester, createSettings: HorizontalSettings.new);
+      await pumpNovelPage(tester, settings: horizontalTestSettings);
 
       // Assert: 読み込み後はAppBarを非表示にして本文に集中させる
       expect(find.byType(AppBar), findsNothing);
@@ -289,7 +276,7 @@ void main() {
 
     testWidgets('本文タップでAppBarが表示されること', (tester) async {
       // Arrange
-      await pumpNovelPage(tester, createSettings: HorizontalSettings.new);
+      await pumpNovelPage(tester, settings: horizontalTestSettings);
       expect(find.byType(AppBar), findsNothing);
 
       // Act: 本文をタップ
@@ -303,7 +290,7 @@ void main() {
 
     testWidgets('もう一度タップするとAppBarが隠れること', (tester) async {
       // Arrange
-      await pumpNovelPage(tester, createSettings: HorizontalSettings.new);
+      await pumpNovelPage(tester, settings: horizontalTestSettings);
 
       // Act: タップで表示 → もう一度タップで非表示
       await tester.tap(find.byType(PageView));
@@ -321,7 +308,7 @@ void main() {
       // Arrange: ステータスバー領域を再現
       await pumpNovelPage(
         tester,
-        createSettings: HorizontalSettings.new,
+        settings: horizontalTestSettings,
         viewPadding: const FakeViewPadding(top: 24),
       );
 
@@ -364,7 +351,7 @@ void main() {
 
     testWidgets('縦書きモードでも本文タップでAppBarがトグルされること', (tester) async {
       // Arrange
-      await pumpNovelPage(tester, createSettings: VerticalSettings.new);
+      await pumpNovelPage(tester, settings: verticalTestSettings);
       expect(find.byType(GestureShield), findsOneWidget);
       expect(find.byType(AppBar), findsNothing);
 
@@ -391,51 +378,7 @@ void main() {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(400, 800);
 
-      final mockNovelRepository = MockNovelRepository();
-      when(
-        mockNovelRepository.addToHistory(
-          source: anyNamed('source'),
-          workId: anyNamed('workId'),
-          title: anyNamed('title'),
-          writer: anyNamed('writer'),
-          lastEpisode: anyNamed('lastEpisode'),
-        ),
-      ).thenAnswer((_) async {});
-      when(mockNovelRepository.dispose()).thenReturn(null);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            novelRepositoryProvider.overrideWithValue(mockNovelRepository),
-            settingsProvider.overrideWith(VerticalSettings.new),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(testNovelInfo),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            novelContentProvider.overrideWith(
-              (
-                ref,
-                ({
-                  NovelSource source,
-                  String workId,
-                  int episode,
-                  String? revised,
-                })
-                arg,
-              ) async => [],
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelPage(
-              source: NovelSource.narou,
-              workId: testNcode,
-              episode: 1,
-            ),
-          ),
-        ),
-      );
+      await pumpNovelPage(tester, settings: verticalTestSettings);
 
       // NovelInfoのStreamが処理されるまで待機
       await tester.pumpAndSettle();
@@ -450,51 +393,7 @@ void main() {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(400, 800);
 
-      final mockNovelRepository = MockNovelRepository();
-      when(
-        mockNovelRepository.addToHistory(
-          source: anyNamed('source'),
-          workId: anyNamed('workId'),
-          title: anyNamed('title'),
-          writer: anyNamed('writer'),
-          lastEpisode: anyNamed('lastEpisode'),
-        ),
-      ).thenAnswer((_) async {});
-      when(mockNovelRepository.dispose()).thenReturn(null);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            novelRepositoryProvider.overrideWithValue(mockNovelRepository),
-            settingsProvider.overrideWith(HorizontalSettings.new),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(testNovelInfo),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            novelContentProvider.overrideWith(
-              (
-                ref,
-                ({
-                  NovelSource source,
-                  String workId,
-                  int episode,
-                  String? revised,
-                })
-                arg,
-              ) async => [],
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelPage(
-              source: NovelSource.narou,
-              workId: testNcode,
-              episode: 1,
-            ),
-          ),
-        ),
-      );
+      await pumpNovelPage(tester, settings: horizontalTestSettings);
 
       // NovelInfoのStreamが処理されるまで待機
       await tester.pumpAndSettle();

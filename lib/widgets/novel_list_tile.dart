@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/router/app_router.dart';
@@ -8,7 +7,7 @@ import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 
 /// 小説リストのタイルを表示するウィジェット。
-class NovelListTile extends HookWidget {
+class NovelListTile extends StatelessWidget {
   /// コンストラクタ。
   const NovelListTile({
     required this.item,
@@ -36,64 +35,47 @@ class NovelListTile extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    // タイトルの計算をメモ化してパフォーマンスを最適化
-    final title = useMemoized(
-      () => item.title ?? 'タイトルなし',
-      [item.title],
-    );
+    final title = item.title ?? 'タイトルなし';
 
     // ジャンル名の計算をメモ化
     // ジャンル一覧はサイト実装のマスタデータ（NovelSite.genres）から取得する
     // （なろう=数値ID / カクヨム=FANTASY 等のID体系が異なるため）
-    final genreName = useMemoized(
-      () {
-        if (item.genreId == null || item.genreId == '-1') {
-          return '不明';
-        }
-        final genres = defaultNovelSiteRegistry[item.source]!.genres;
-        return genres
-            .firstWhere(
-              (g) => g.id == item.genreId,
-              orElse: () => const GenreMaster(id: '', name: '不明'),
-            )
-            .name;
-      },
-      [item.genreId, item.source],
-    );
+    final genreName = () {
+      if (item.genreId == null || item.genreId == '-1') {
+        return '不明';
+      }
+      final genres = defaultNovelSiteRegistry[item.source]!.genres;
+      return genres
+          .firstWhere(
+            (g) => g.id == item.genreId,
+            orElse: () => const GenreMaster(id: '', name: '不明'),
+          )
+          .name;
+    }();
 
     // ステータスの計算をメモ化
     // 0: 完結, 1: 連載中, 2: 短編
-    final statusType = useMemoized(
-      () {
-        if (item.novelType == 2) return 2; // 短編
-        if (item.end == 1) return 1; // 連載中
-        return 0; // 完結
-      },
-      [item.novelType, item.end],
-    );
+    final statusType = () {
+      if (item.novelType == 2) return 2; // 短編
+      if (item.end == 1) return 1; // 連載中
+      return 0; // 完結
+    }();
 
     // サイト固有情報(pt/★)の計算をメモ化
     // 評価指標はサイトごとに異なるため、サイト実装（NovelSite.metaText）に委譲する
-    final pointSuffix = useMemoized(
-      () {
-        final text = defaultNovelSiteRegistry[item.source]!.metaText(item);
-        return text != null ? ' • $text' : '';
-      },
-      [item.source, item.allPoint],
-    );
+    final pointSuffix = () {
+      final text = defaultNovelSiteRegistry[item.source]!.metaText(item);
+      return text != null ? ' • $text' : '';
+    }();
 
-    // デフォルトのonTapハンドラーをメモ化
-    final defaultOnTap = useCallback(
-      () {
-        final workId = item.workId ?? item.ncode;
-        if (workId != null) {
-          appRouter.pushOverlay(
-            NovelDetailDest(source: item.source, workId: workId),
-          );
-        }
-      },
-      [item.ncode],
-    );
+    void defaultOnTap() {
+      final workId = item.workId ?? item.ncode;
+      if (workId != null) {
+        appRouter.pushOverlay(
+          NovelDetailDest(source: item.source, workId: workId),
+        );
+      }
+    }
 
     // ステータスに応じた色とラベル定義
     // 短編: Tertiary (アクセント) - Filled

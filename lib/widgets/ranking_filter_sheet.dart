@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:novelty/sites/novel_site.dart';
 
 /// ランキングフィルタ（ジャンル・連載状況）を選択するボトムシート
 ///
 /// ジャンル一覧はサイト実装のマスタデータ（[NovelSite.genres]）から受け取る。
-class RankingFilterSheet extends HookWidget {
+class RankingFilterSheet extends StatefulWidget {
   /// コンストラクタ
   const RankingFilterSheet({
     required this.genres,
@@ -32,26 +31,29 @@ class RankingFilterSheet extends HookWidget {
   onApply;
 
   @override
+  State<RankingFilterSheet> createState() => _RankingFilterSheetState();
+}
+
+class _RankingFilterSheetState extends State<RankingFilterSheet> {
+  late bool _showOnlyOngoing = widget.initialShowOnlyOngoing;
+  late String? _selectedGenreId = widget.initialSelectedGenreId;
+
+  // ジャンルデータの加工（カテゴリごとにグループ化）
+  late final Map<String, List<GenreMaster>> _groupedGenres = () {
+    final groups = <String, List<GenreMaster>>{};
+
+    for (final genre in widget.genres) {
+      // "名称〔カテゴリ〕" の形式をパース（なろう形式）
+      // カテゴリが無いジャンル（カクヨム等）はそのままの名前でグループ化
+      final match = RegExp('(.+)〔(.+)〕').firstMatch(genre.name);
+      final category = match?.group(2) ?? genre.name;
+      groups.putIfAbsent(category, () => []).add(genre);
+    }
+    return groups;
+  }();
+
+  @override
   Widget build(BuildContext context) {
-    // 状態管理
-    final showOnlyOngoing = useState(initialShowOnlyOngoing);
-    final selectedGenreId = useState(initialSelectedGenreId);
-
-    // ジャンルデータの加工（カテゴリごとにグループ化）
-    // useMemoizedで再計算を防ぐ
-    final groupedGenres = useMemoized(() {
-      final groups = <String, List<GenreMaster>>{};
-
-      for (final genre in genres) {
-        // "名称〔カテゴリ〕" の形式をパース（なろう形式）
-        // カテゴリが無いジャンル（カクヨム等）はそのままの名前でグループ化
-        final match = RegExp('(.+)〔(.+)〕').firstMatch(genre.name);
-        final category = match?.group(2) ?? genre.name;
-        groups.putIfAbsent(category, () => []).add(genre);
-      }
-      return groups;
-    }, [genres]);
-
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
       minChildSize: 0.5,
@@ -82,8 +84,8 @@ class RankingFilterSheet extends HookWidget {
                   TextButton(
                     onPressed: () {
                       // リセット
-                      showOnlyOngoing.value = false;
-                      selectedGenreId.value = null;
+                      _showOnlyOngoing = false;
+                      _selectedGenreId = null;
                     },
                     child: const Text('リセット'),
                   ),
@@ -93,9 +95,9 @@ class RankingFilterSheet extends HookWidget {
                   ),
                   TextButton(
                     onPressed: () {
-                      onApply(
-                        showOnlyOngoing: showOnlyOngoing.value,
-                        selectedGenreId: selectedGenreId.value,
+                      widget.onApply(
+                        showOnlyOngoing: _showOnlyOngoing,
+                        selectedGenreId: _selectedGenreId,
                       );
                       Navigator.pop(context);
                     },
@@ -124,8 +126,9 @@ class RankingFilterSheet extends HookWidget {
                   const SizedBox(height: 8),
                   SwitchListTile(
                     title: const Text('連載中作品のみ表示'),
-                    value: showOnlyOngoing.value,
-                    onChanged: (value) => showOnlyOngoing.value = value,
+                    value: _showOnlyOngoing,
+                    onChanged: (value) =>
+                        setState(() => _showOnlyOngoing = value),
                     contentPadding: EdgeInsets.zero,
                   ),
 
@@ -143,9 +146,10 @@ class RankingFilterSheet extends HookWidget {
                         ),
                       ),
                       // "指定なし"を選択するためのチップ等
-                      if (selectedGenreId.value != null)
+                      if (_selectedGenreId != null)
                         TextButton.icon(
-                          onPressed: () => selectedGenreId.value = null,
+                          onPressed: () =>
+                              setState(() => _selectedGenreId = null),
                           icon: const Icon(Icons.close, size: 16),
                           label: const Text('ジャンル解除'),
                           style: TextButton.styleFrom(
@@ -157,7 +161,7 @@ class RankingFilterSheet extends HookWidget {
                   const SizedBox(height: 8),
 
                   // グループ化されたジャンル
-                  ...groupedGenres.entries.map((entry) {
+                  ..._groupedGenres.entries.map((entry) {
                     final category = entry.key;
                     final items = entry.value;
 
@@ -181,16 +185,13 @@ class RankingFilterSheet extends HookWidget {
                           spacing: 8,
                           runSpacing: 8,
                           children: items.map((genre) {
-                            final isSelected =
-                                selectedGenreId.value == genre.id;
+                            final isSelected = _selectedGenreId == genre.id;
 
                             return FilterChip(
                               label: Text(genre.name),
                               selected: isSelected,
                               onSelected: (selected) {
-                                selectedGenreId.value = selected
-                                    ? genre.id
-                                    : null;
+                                _selectedGenreId = selected ? genre.id : null;
                               },
                               showCheckmark:
                                   false, // シンプルにするためチェックマークなし（色変化のみ）も選択肢

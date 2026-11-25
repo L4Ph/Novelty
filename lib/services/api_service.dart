@@ -11,10 +11,7 @@ import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/utils/decode_guard.dart';
 import 'package:novelty/utils/ncode_utils.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:tiny_http/tiny_http.dart';
-
-part 'api_service.g.dart';
 
 /// なろうAPIの小説情報取得時に指定する取得フィールド。
 const String _novelApiOfParameter =
@@ -46,14 +43,6 @@ const int allTimeRankingLimit = 500;
 /// User-Agent 基本的には最新になるようにする
 const String userAgent =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36';
-
-@Riverpod(keepAlive: true)
-/// APIサービスのプロバイダー
-ApiService apiService(Ref ref) {
-  final service = ApiService();
-  ref.onDispose(service.close);
-  return service;
-}
 
 /// APIサービスクラス。
 class ApiService {

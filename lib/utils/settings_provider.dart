@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:novelty/repositories/preferences_repository.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-part 'settings_provider.g.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 @immutable
 /// アプリケーションの設定を管理するクラス。
@@ -73,9 +71,20 @@ class AppSettings {
   }
 }
 
-@Riverpod(keepAlive: true)
-/// アプリケーションの設定を提供するプロバイダー。
-class Settings extends _$Settings {
+/// アプリケーションの設定を保持し、変更を購読者へ通知する。
+///
+/// アプリルートが1つ生成して [Scope] 経由で配る。設定の変更は
+/// [notifyListeners] で全体へ伝わるため、各画面は `state` を読むだけでよい。
+class SettingsController extends ChangeNotifier {
+  /// コンストラクタ。
+  ///
+  /// [initialState] はテストが読み込みを省くために使う。通常は省略し、
+  /// [load] で保存済みの設定を読み込む。
+  SettingsController(
+    this._prefs, {
+    Async<AppSettings> initialState = const AsyncLoading(),
+  }) : _state = initialState;
+
   static const _themeModeKey = 'theme_mode';
   static const _fontSizeKey = 'font_size';
   static const _lineHeightKey = 'line_height';
@@ -96,16 +105,27 @@ class Settings extends _$Settings {
   /// ルビが非表示の場合、より詰まった表示が可能。
   static const double minLineHeightWithoutRuby = 1;
 
-  PreferencesRepository? _repository;
+  final PreferencesRepository _prefs;
 
-  Future<PreferencesRepository> get _repo async {
-    _repository ??= ref.read(preferencesRepositoryProvider);
-    return _repository!;
+  Async<AppSettings> _state;
+
+  /// 現在の設定。読み込み中は [AsyncLoading]。
+  Async<AppSettings> get state => _state;
+
+  /// 読み込み済みの設定。未読み込みなら null。
+  AppSettings? get value => _state.valueOrNull;
+
+  /// オフラインモードが有効か。未読み込みなら false。
+  bool get isOfflineMode => value?.isOfflineMode ?? false;
+
+  void _setState(Async<AppSettings> next) {
+    _state = next;
+    notifyListeners();
   }
 
-  @override
-  Future<AppSettings> build() async {
-    final repo = await _repo;
+  /// 保存済みの設定を読み込む。アプリ起動時に一度だけ呼ぶ。
+  Future<void> load() async {
+    final repo = _prefs;
     final themeModeIndex =
         await repo.getInt(_themeModeKey) ?? ThemeMode.system.index;
     final fontSize = await repo.getDouble(_fontSizeKey) ?? 16.0;
@@ -116,112 +136,116 @@ class Settings extends _$Settings {
     final isRubyEnabled = await repo.getBool(_isRubyEnabledKey) ?? true;
     final isOfflineMode = await repo.getBool(_isOfflineModeKey) ?? false;
 
-    return AppSettings(
-      themeMode: ThemeMode.values[themeModeIndex],
-      fontSize: fontSize,
-      lineHeight: lineHeight,
-      isVertical: isVertical,
-      isIncognito: isIncognito,
-      isPageFlip: isPageFlip,
-      isRubyEnabled: isRubyEnabled,
-      isOfflineMode: isOfflineMode,
+    _setState(
+      AsyncData(
+        AppSettings(
+          themeMode: ThemeMode.values[themeModeIndex],
+          fontSize: fontSize,
+          lineHeight: lineHeight,
+          isVertical: isVertical,
+          isIncognito: isIncognito,
+          isPageFlip: isPageFlip,
+          isRubyEnabled: isRubyEnabled,
+          isOfflineMode: isOfflineMode,
+        ),
+      ),
     );
   }
 
   /// テーマモードを設定するメソッド。
   Future<void> setThemeMode(ThemeMode mode) async {
-    if (!state.hasValue) {
+    if (value == null) {
       throw StateError('Settings are not loaded');
     }
 
     try {
-      final repo = await _repo;
+      final repo = _prefs;
       final success = await repo.setInt(_themeModeKey, mode.index);
       if (!success) {
         throw Exception('Failed to save theme mode setting');
       }
-      state = AsyncData(state.value!.copyWith(themeMode: mode));
+      _setState(AsyncData(value!.copyWith(themeMode: mode)));
     } catch (e, stackTrace) {
       debugPrint(
         'Error saving theme mode setting: $e\nStack trace: $stackTrace',
       );
-      state = AsyncError(e, stackTrace);
+      _setState(AsyncError(e, stackTrace));
       rethrow;
     }
   }
 
   /// フォントサイズを設定するメソッド。
   Future<void> setFontSize(double size) async {
-    if (!state.hasValue) {
+    if (value == null) {
       throw StateError('Settings are not loaded');
     }
 
     try {
-      final repo = await _repo;
+      final repo = _prefs;
       final success = await repo.setDouble(_fontSizeKey, size);
       if (!success) {
         throw Exception('Failed to save font size setting');
       }
-      state = AsyncData(state.value!.copyWith(fontSize: size));
+      _setState(AsyncData(value!.copyWith(fontSize: size)));
     } catch (e, stackTrace) {
       debugPrint(
         'Error saving font size setting: $e\nStack trace: $stackTrace',
       );
-      state = AsyncError(e, stackTrace);
+      _setState(AsyncError(e, stackTrace));
       rethrow;
     }
   }
 
   /// 行間を設定するメソッド。
   Future<void> setLineHeight(double height) async {
-    if (!state.hasValue) {
+    if (value == null) {
       throw StateError('Settings are not loaded');
     }
 
     try {
-      final repo = await _repo;
+      final repo = _prefs;
       final success = await repo.setDouble(_lineHeightKey, height);
       if (!success) {
         throw Exception('Failed to save line height setting');
       }
-      state = AsyncData(state.value!.copyWith(lineHeight: height));
+      _setState(AsyncData(value!.copyWith(lineHeight: height)));
     } catch (e, stackTrace) {
       debugPrint(
         'Error saving line height setting: $e\nStack trace: $stackTrace',
       );
-      state = AsyncError(e, stackTrace);
+      _setState(AsyncError(e, stackTrace));
       rethrow;
     }
   }
 
   /// 縦書き設定を更新するメソッド。
   Future<void> setIsVertical({required bool isVertical}) async {
-    if (!state.hasValue) {
+    if (value == null) {
       throw StateError('Settings are not loaded');
     }
 
     try {
-      final repo = await _repo;
+      final repo = _prefs;
       final success = await repo.setBool(_isVerticalKey, isVertical);
       if (!success) {
         throw Exception('Failed to save vertical setting');
       }
-      state = AsyncData(state.value!.copyWith(isVertical: isVertical));
+      _setState(AsyncData(value!.copyWith(isVertical: isVertical)));
     } catch (e, stackTrace) {
       debugPrint('Error saving vertical setting: $e\nStack trace: $stackTrace');
-      state = AsyncError(e, stackTrace);
+      _setState(AsyncError(e, stackTrace));
       rethrow;
     }
   }
 
   /// シークレットモードを設定するメソッド。
   Future<void> setIsIncognito({required bool isIncognito}) async {
-    if (!state.hasValue) {
+    if (value == null) {
       throw StateError('Settings are not loaded');
     }
 
     try {
-      final repo = await _repo;
+      final repo = _prefs;
       final success = await repo.setBool(
         _isIncognitoKey,
         isIncognito,
@@ -229,24 +253,24 @@ class Settings extends _$Settings {
       if (!success) {
         throw Exception('Failed to save incognito setting');
       }
-      state = AsyncData(state.value!.copyWith(isIncognito: isIncognito));
+      _setState(AsyncData(value!.copyWith(isIncognito: isIncognito)));
     } catch (e, stackTrace) {
       debugPrint(
         'Error saving incognito setting: $e\nStack trace: $stackTrace',
       );
-      state = AsyncError(e, stackTrace);
+      _setState(AsyncError(e, stackTrace));
       rethrow;
     }
   }
 
   /// オフラインモードを設定するメソッド。
   Future<void> setIsOfflineMode({required bool isOfflineMode}) async {
-    if (!state.hasValue) {
+    if (value == null) {
       throw StateError('Settings are not loaded');
     }
 
     try {
-      final repo = await _repo;
+      final repo = _prefs;
       final success = await repo.setBool(
         _isOfflineModeKey,
         isOfflineMode,
@@ -254,34 +278,34 @@ class Settings extends _$Settings {
       if (!success) {
         throw Exception('Failed to save offline mode setting');
       }
-      state = AsyncData(state.value!.copyWith(isOfflineMode: isOfflineMode));
+      _setState(AsyncData(value!.copyWith(isOfflineMode: isOfflineMode)));
     } catch (e, stackTrace) {
       debugPrint(
         'Error saving offline mode setting: $e\nStack trace: $stackTrace',
       );
-      state = AsyncError(e, stackTrace);
+      _setState(AsyncError(e, stackTrace));
       rethrow;
     }
   }
 
   /// ページ送り設定を更新するメソッド。
   Future<void> setIsPageFlip({required bool isPageFlip}) async {
-    if (!state.hasValue) {
+    if (value == null) {
       throw StateError('Settings are not loaded');
     }
 
     try {
-      final repo = await _repo;
+      final repo = _prefs;
       final success = await repo.setBool(_isPageFlipKey, isPageFlip);
       if (!success) {
         throw Exception('Failed to save page flip setting');
       }
-      state = AsyncData(state.value!.copyWith(isPageFlip: isPageFlip));
+      _setState(AsyncData(value!.copyWith(isPageFlip: isPageFlip)));
     } catch (e, stackTrace) {
       debugPrint(
         'Error saving page flip setting: $e\nStack trace: $stackTrace',
       );
-      state = AsyncError(e, stackTrace);
+      _setState(AsyncError(e, stackTrace));
       rethrow;
     }
   }
@@ -295,13 +319,13 @@ class Settings extends _$Settings {
   /// 永続化処理は2段階で行われるため、2段階目が失敗した場合は
   /// 1段階目の変更をロールバックしてデータ整合性を保証します。
   Future<void> setIsRubyEnabled({required bool isRubyEnabled}) async {
-    if (!state.hasValue) {
+    if (value == null) {
       throw StateError('Settings are not loaded');
     }
 
     try {
-      final repo = await _repo;
-      final originalIsRubyEnabled = state.value!.isRubyEnabled;
+      final repo = _prefs;
+      final originalIsRubyEnabled = value!.isRubyEnabled;
 
       // Phase 1: isRubyEnabled設定を保存
       final success = await repo.setBool(_isRubyEnabledKey, isRubyEnabled);
@@ -312,7 +336,7 @@ class Settings extends _$Settings {
       // Phase 1成功後の例外もロールバック対象
       AppSettings newSettings;
       try {
-        newSettings = state.value!.copyWith(isRubyEnabled: isRubyEnabled);
+        newSettings = value!.copyWith(isRubyEnabled: isRubyEnabled);
       } catch (e, stackTrace) {
         debugPrint(
           'Failed to create new settings: $e\nStack trace: $stackTrace',
@@ -339,12 +363,12 @@ class Settings extends _$Settings {
         newSettings = newSettings.copyWith(lineHeight: minLineHeightWithRuby);
       }
 
-      state = AsyncData(newSettings);
+      _setState(AsyncData(newSettings));
     } catch (e, stackTrace) {
       debugPrint(
         'Error saving ruby enabled setting: $e\nStack trace: $stackTrace',
       );
-      state = AsyncError(e, stackTrace);
+      _setState(AsyncError(e, stackTrace));
       rethrow;
     }
   }
@@ -382,17 +406,4 @@ class Settings extends _$Settings {
       );
     }
   }
-}
-
-/// オフラインモードが有効かどうかを同期で取得するプロバイダー。
-///
-/// [settingsProvider] の値から派生し、取得中やエラー時は `false` を返す。
-@riverpod
-bool isOfflineMode(Ref ref) {
-  return ref
-      .watch(settingsProvider)
-      .maybeWhen(
-        data: (settings) => settings.isOfflineMode,
-        orElse: () => false,
-      );
 }

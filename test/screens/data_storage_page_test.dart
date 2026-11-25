@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/database/database.dart';
-import 'package:novelty/database/database_initialization.dart';
 import 'package:novelty/database/database_maintenance.dart';
 import 'package:novelty/screens/data_storage_page.dart';
 import 'package:novelty/services/backup_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../support/test_services.dart';
 import 'data_storage_page_test.mocks.dart';
 
 @GenerateMocks([BackupService])
@@ -23,18 +22,20 @@ void main() {
       mockBackupService = MockBackupService();
     });
 
+    late DatabaseMaintenanceController maintenance;
+
     Future<void> pumpPage(
       WidgetTester tester, {
       bool canUseFilePicker = true,
     }) async {
+      final db = AppDatabase.memory();
+      addTearDown(db.close);
+      maintenance = DatabaseMaintenanceController();
+      addTearDown(maintenance.dispose);
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            databaseInitializationProvider.overrideWith(
-              (ref) async => AppDatabase.memory(),
-            ),
-          ],
-          child: MaterialApp(
+        withServices(
+          buildTestServices(db: db, maintenance: maintenance),
+          MaterialApp(
             home: DataStoragePage(
               backupService: mockBackupService,
               canUseFilePicker: canUseFilePicker,
@@ -141,11 +142,8 @@ void main() {
 
         verify(mockBackupService.stageImport()).called(1);
 
-        final element = tester.element(find.byType(DataStoragePage));
-        final container = ProviderScope.containerOf(element);
-        final maintenance = container.read(databaseMaintenanceProvider);
-        expect(maintenance, isA<DatabaseMaintenanceBusy>());
-        final swap = (maintenance as DatabaseMaintenanceBusy).importSwap;
+        expect(maintenance.state, isA<DatabaseMaintenanceBusy>());
+        final swap = (maintenance.state as DatabaseMaintenanceBusy).importSwap;
         expect(swap, isNotNull);
         expect(swap!.pendingFilePath, '/tmp/novelty.db.import_pending');
       });

@@ -1,32 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:novelty/domain/ranking_filter_state.dart';
-import 'package:novelty/domain/search_state.dart';
+import 'package:novelty/database/database.dart';
 import 'package:novelty/screens/explore_page.dart';
-import 'package:novelty/sites/novel_source.dart';
-import 'package:novelty/utils/settings_provider.dart';
+
+import '../support/test_services.dart';
+
+/// ExplorePage を、指定した設定で表示する。
+Future<void> pumpExplore(WidgetTester tester, {required bool offline}) async {
+  final db = AppDatabase.memory();
+  addTearDown(db.close);
+  await tester.pumpWidget(
+    withServices(
+      buildTestServices(
+        db: db,
+        settings: offline ? offlineTestSettings : testSettings,
+      ),
+      const MaterialApp(home: ExplorePage()),
+    ),
+  );
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('ExplorePage', () {
     testWidgets('オフラインモード中はオフライン用の画面が表示される', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(true),
-            searchStateProvider.overrideWithValue(const SearchState()),
-            rankingFilterStateProvider(
-              NovelSource.narou,
-              'd',
-            ).overrideWithValue(const RankingFilterState()),
-          ],
-          child: const MaterialApp(
-            home: ExplorePage(),
-          ),
-        ),
-      );
+      await pumpExplore(tester, offline: true);
 
       await tester.pumpAndSettle();
 
@@ -38,21 +37,7 @@ void main() {
     });
 
     testWidgets('オフラインモード中に検索アイコンをタップすると説明が表示される', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(true),
-            searchStateProvider.overrideWithValue(const SearchState()),
-            rankingFilterStateProvider(
-              NovelSource.narou,
-              'd',
-            ).overrideWithValue(const RankingFilterState()),
-          ],
-          child: const MaterialApp(
-            home: ExplorePage(),
-          ),
-        ),
-      );
+      await pumpExplore(tester, offline: true);
 
       await tester.pumpAndSettle();
 
@@ -69,21 +54,7 @@ void main() {
     });
 
     testWidgets('オフラインモード中にフィルターアイコンをタップすると説明が表示される', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(true),
-            searchStateProvider.overrideWithValue(const SearchState()),
-            rankingFilterStateProvider(
-              NovelSource.narou,
-              'd',
-            ).overrideWithValue(const RankingFilterState()),
-          ],
-          child: const MaterialApp(
-            home: ExplorePage(),
-          ),
-        ),
-      );
+      await pumpExplore(tester, offline: true);
 
       await tester.pumpAndSettle();
 
@@ -100,17 +71,7 @@ void main() {
     });
 
     testWidgets('プロバイダ切替でランキングタブが切り替わる', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(true),
-            searchStateProvider.overrideWithValue(const SearchState()),
-          ],
-          child: const MaterialApp(
-            home: ExplorePage(),
-          ),
-        ),
-      );
+      await pumpExplore(tester, offline: true);
 
       await tester.pumpAndSettle();
 

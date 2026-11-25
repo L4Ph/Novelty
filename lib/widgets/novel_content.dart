@@ -3,19 +3,18 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
-import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/utils/tategaki_converter.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
 import 'package:tategaki/tategaki.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 /// 小説のコンテンツを表示するウィジェット。
-class NovelContent extends HookConsumerWidget {
+class NovelContent extends StatefulWidget {
   /// コンストラクタ。
   const NovelContent({
     required this.source,
@@ -46,25 +45,47 @@ class NovelContent extends HookConsumerWidget {
   final bool isAppBarVisible;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
-    final contentAsync = ref.watch(
-      novelContentProvider(
-        source: source,
-        workId: workId,
-        episode: episode,
-        revised: revised,
-      ),
-    );
+  State<NovelContent> createState() => _NovelContentState();
+}
 
+class _NovelContentState extends State<NovelContent> {
+  Async<List<NovelContentElement>> _content = const AsyncLoading();
+  var _loaded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loaded) return;
+    _loaded = true;
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    try {
+      final content = await context.services.repository.getEpisode(
+        widget.source,
+        widget.workId,
+        widget.episode,
+        revised: widget.revised,
+      );
+      if (!mounted) return;
+      setState(() => _content = AsyncData(content));
+    } on Object catch (error, stackTrace) {
+      if (!mounted) return;
+      setState(() => _content = AsyncError(error, stackTrace));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
-      top: !isAppBarVisible, // AppBarが表示されている場合は上は不要
+      top: !widget.isAppBarVisible, // AppBarが表示されている場合は上は不要
       child: NovelContentBody(
-        source: source,
-        workId: workId,
-        episode: episode,
-        settings: settings,
-        content: contentAsync,
+        source: widget.source,
+        workId: widget.workId,
+        episode: widget.episode,
+        settings: context.services.settings.state,
+        content: _content,
       ),
     );
   }
@@ -72,7 +93,7 @@ class NovelContent extends HookConsumerWidget {
 
 /// 設定とコンテンツの状態に応じて表示を切り替える内部ウィジェット。
 @visibleForTesting
-class NovelContentBody extends HookWidget {
+class NovelContentBody extends StatefulWidget {
   /// コンストラクタ
   const NovelContentBody({
     required this.source,
@@ -93,66 +114,97 @@ class NovelContentBody extends HookWidget {
   final int episode;
 
   /// 設定の状態
-  final AsyncValue<AppSettings> settings;
+  final Async<AppSettings> settings;
 
   /// コンテンツの状態
-  final AsyncValue<List<NovelContentElement>> content;
+  final Async<List<NovelContentElement>> content;
+
+  @override
+  State<NovelContentBody> createState() => _NovelContentBodyState();
+}
+
+class _NovelContentBodyState extends State<NovelContentBody> {
+  List<TategakiElement>? _tategakiElements;
+  List<NovelContentElement>? _tategakiFor;
+  bool? _tategakiRubyEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _applyImmersiveMode();
+  }
+
+  @override
+  void didUpdateWidget(NovelContentBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.settings, widget.settings)) {
+      _applyImmersiveMode();
+    }
+  }
+
+  /// エピソード表示中は常にimmersiveStickyモードにする。
+  void _applyImmersiveMode() {
+    unawaited(() async {
+      try {
+        // 縦書き・横書き問わず常にimmersiveStickyを使用
+        await SystemChrome.setEnabledSystemUIMode(
+          SystemUiMode.immersiveSticky,
+        );
+      } on PlatformException catch (e, s) {
+        // プラットフォームチャネルのエラーをログに出力
+        debugPrint('Failed to set SystemUIMode: $e\n$s');
+      }
+    }());
+  }
+
+  @override
+  void dispose() {
+    // クリーンアップ: ウィジェット破棄時はedgeToEdgeに戻す
+    unawaited(
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.edgeToEdge,
+      ).catchError((Object e, StackTrace s) {
+        debugPrint('Failed to reset SystemUIMode on dispose: $e\n$s');
+        return;
+      }),
+    );
+    super.dispose();
+  }
+
+  /// 縦書き要素への変換をキャッシュする。
+  ///
+  /// 同一のコンテンツ・ルビ設定なら同じリストインスタンスを返すことで、
+  /// TategakiText / TategakiTextPaged 側のレイアウトキャッシュが有効になる。
+  List<TategakiElement>? _tategaki(
+    List<NovelContentElement>? content,
+    bool isRubyEnabled,
+  ) {
+    if (identical(_tategakiFor, content) &&
+        _tategakiRubyEnabled == isRubyEnabled) {
+      return _tategakiElements;
+    }
+    _tategakiFor = content;
+    _tategakiRubyEnabled = isRubyEnabled;
+    return _tategakiElements = content == null
+        ? null
+        : TategakiConverter.convert(content, isRubyEnabled: isRubyEnabled);
+  }
 
   @override
   Widget build(BuildContext context) {
-    // テーマのbrightnessとテキストカラーの計算をメモ化
-    final textColor = useMemoized(() {
-      final brightness = Theme.of(context).brightness;
-      return brightness == Brightness.dark ? Colors.white : Colors.black;
-    }, [Theme.of(context).brightness]);
-
-    // エピソード表示中は常にimmersiveStickyモードを設定
-    useEffect(() {
-      Future<void> setUiMode() async {
-        try {
-          // 縦書き・横書き問わず常にimmersiveStickyを使用
-          await SystemChrome.setEnabledSystemUIMode(
-            SystemUiMode.immersiveSticky,
-          );
-        } on PlatformException catch (e, s) {
-          // プラットフォームチャネルのエラーをログに出力
-          debugPrint('Failed to set SystemUIMode: $e\n$s');
-        }
-      }
-
-      // エピソード表示中は常にUIモードを設定
-      unawaited(setUiMode());
-
-      // クリーンアップ: ウィジェット破棄時はedgeToEdgeに戻す
-      return () {
-        unawaited(
-          SystemChrome.setEnabledSystemUIMode(
-            SystemUiMode.edgeToEdge,
-          ).catchError((Object e, StackTrace s) {
-            debugPrint('Failed to reset SystemUIMode on dispose: $e\n$s');
-          }),
-        );
-      };
-    }, [settings]);
-
-    // 縦書き要素への変換をメモ化する。
-    // 同一のコンテンツ・ルビ設定なら同じリストインスタンスを返すことで、
-    // TategakiText / TategakiTextPaged 側のレイアウトキャッシュが有効になる。
-    final contentData = content.value;
-    final settingsData = settings.value;
-    final tategakiElements = useMemoized(
-      () => contentData == null
-          ? null
-          : TategakiConverter.convert(
-              contentData,
-              isRubyEnabled: settingsData?.isRubyEnabled ?? true,
-            ),
-      [contentData, settingsData?.isRubyEnabled],
+    final contentData = widget.content.valueOrNull;
+    final settingsData = widget.settings.valueOrNull;
+    final textColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+    final tategakiElements = _tategaki(
+      contentData,
+      settingsData?.isRubyEnabled ?? true,
     );
 
-    return settings.when(
+    return widget.settings.when(
       data: (settingsData) {
-        return content.when(
+        return widget.content.when(
           data: (contentData) {
             // 小説本文は固定のバンドルフォント(源暎こぶり明朝)を使用する
             final textStyle = TextStyle(
@@ -195,7 +247,7 @@ class NovelContentBody extends HookWidget {
                       style: textStyle,
                       child: TategakiTextPaged(
                         key: PageStorageKey<String>(
-                          'novel_paged_${workId}_$episode',
+                          'novel_paged_${widget.workId}_${widget.episode}',
                         ),
                         elements,
                         width: constraints.maxWidth,
@@ -221,7 +273,7 @@ class NovelContentBody extends HookWidget {
                         child: TategakiText(
                           elements,
                           key: PageStorageKey<String>(
-                            'novel_vertical_${workId}_$episode',
+                            'novel_vertical_${widget.workId}_${widget.episode}',
                           ),
                           height: constraints.maxHeight,
                         ),
@@ -234,7 +286,7 @@ class NovelContentBody extends HookWidget {
 
             return SingleChildScrollView(
               key: PageStorageKey<String>(
-                'novel_horizontal_${workId}_$episode',
+                'novel_horizontal_${widget.workId}_${widget.episode}',
               ),
               padding: horizontalModePadding,
               child: RepaintBoundary(

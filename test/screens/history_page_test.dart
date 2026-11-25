@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:novelty/app_services.dart';
+
 import 'package:novelty/database/database.dart';
 import 'package:novelty/router/app_router.dart';
 import 'package:novelty/router/destinations.dart';
 import 'package:novelty/screens/history_page.dart';
 import 'package:novelty/sites/novel_source.dart';
-import 'package:tiny_state/tiny_state.dart';
+import '../support/test_services.dart';
 
 @GenerateMocks([AppDatabase])
 import 'history_page_test.mocks.dart';
@@ -70,14 +70,9 @@ void main() {
       ).thenAnswer((_) => Stream.value(testHistoryData));
 
       await tester.pumpWidget(
-        Scope(
-          services: <Type, Object>{
-            AppServices: AppServices(
-              db: mockDatabase,
-              now: () => fixedTime,
-            ),
-          },
-          child: const MaterialApp(
+        withServices(
+          buildTestServices(db: mockDatabase, now: () => fixedTime),
+          const MaterialApp(
             home: Scaffold(
               body: HistoryPage(),
             ),
@@ -111,14 +106,9 @@ void main() {
       ).thenAnswer((_) => Stream.value(<HistoryData>[]));
 
       await tester.pumpWidget(
-        Scope(
-          services: <Type, Object>{
-            AppServices: AppServices(
-              db: mockDatabase,
-              now: () => fixedTime,
-            ),
-          },
-          child: const MaterialApp(
+        withServices(
+          buildTestServices(db: mockDatabase, now: () => fixedTime),
+          const MaterialApp(
             home: Scaffold(
               body: HistoryPage(),
             ),
@@ -139,14 +129,9 @@ void main() {
       ).thenAnswer((_) => Stream.error(Exception('Database error')));
 
       await tester.pumpWidget(
-        Scope(
-          services: <Type, Object>{
-            AppServices: AppServices(
-              db: mockDatabase,
-              now: () => fixedTime,
-            ),
-          },
-          child: const MaterialApp(
+        withServices(
+          buildTestServices(db: mockDatabase, now: () => fixedTime),
+          const MaterialApp(
             home: Scaffold(
               body: HistoryPage(),
             ),
@@ -179,14 +164,9 @@ void main() {
         ).thenAnswer((_) => Stream.value(testHistoryData));
 
         await tester.pumpWidget(
-          Scope(
-            services: <Type, Object>{
-              AppServices: AppServices(
-                db: mockDatabase,
-                now: () => fixedTime,
-              ),
-            },
-            child: const MaterialApp(home: HistoryPage()),
+          withServices(
+            buildTestServices(db: mockDatabase, now: () => fixedTime),
+            const MaterialApp(home: HistoryPage()),
           ),
         );
 
@@ -240,14 +220,9 @@ void main() {
         ).thenAnswer((_) => Stream.value(testHistoryData));
 
         await tester.pumpWidget(
-          Scope(
-            services: <Type, Object>{
-              AppServices: AppServices(
-                db: mockDatabase,
-                now: () => fixedTime,
-              ),
-            },
-            child: const MaterialApp(
+          withServices(
+            buildTestServices(db: mockDatabase, now: () => fixedTime),
+            const MaterialApp(
               home: Scaffold(
                 body: HistoryPage(),
               ),

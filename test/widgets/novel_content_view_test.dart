@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/widgets/kenten_text_widget.dart';
@@ -54,12 +53,6 @@ void main() {
           ),
         ),
       );
-
-      // ウィジェットがHookWidgetであることを確認
-      final widget = tester.widget<NovelContentView>(
-        find.byType(NovelContentView),
-      );
-      expect(widget, isA<HookWidget>());
 
       // RichTextが正しく表示されていることを確認
       expect(find.byType(RichText), findsOneWidget);

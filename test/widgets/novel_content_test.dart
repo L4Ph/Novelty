@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/novel_content.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
 import 'package:tategaki/tategaki.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 /// テスト用のデフォルトAppSettingsインスタンス。
 AppSettings get defaultTestSettings => const AppSettings(
@@ -30,8 +30,8 @@ void main() {
   // 各テストでウィジェットをポンプするためのヘルパー関数
   Future<void> pumpWidget(
     WidgetTester tester, {
-    required AsyncValue<List<NovelContentElement>> contentValue,
-    required AsyncValue<AppSettings> settingsValue,
+    required Async<List<NovelContentElement>> contentValue,
+    required Async<AppSettings> settingsValue,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -64,7 +64,7 @@ void main() {
     final exception = Exception('Content Error');
     await pumpWidget(
       tester,
-      contentValue: AsyncValue.error(exception, StackTrace.empty),
+      contentValue: AsyncError(exception, StackTrace.empty),
       settingsValue: AsyncData(defaultTestSettings),
     );
     await tester.pumpAndSettle();
@@ -76,7 +76,7 @@ void main() {
     await pumpWidget(
       tester,
       contentValue: AsyncData(testContent),
-      settingsValue: AsyncValue.error(exception, StackTrace.empty),
+      settingsValue: AsyncError(exception, StackTrace.empty),
     );
     await tester.pumpAndSettle();
     expect(find.textContaining('Error: $exception'), findsOneWidget);

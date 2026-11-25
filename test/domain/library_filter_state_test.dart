@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/domain/library_filter_state.dart';
 import 'package:novelty/sites/novel_source.dart';
@@ -91,17 +90,17 @@ void main() {
     });
   });
 
-  group('LibraryFilterStateNotifier', () {
+  group('LibraryFilterController', () {
     test('setSourceがジャンルフィルタをリセットして状態を更新する', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+      final controller = LibraryFilterController();
+      addTearDown(controller.dispose);
 
-      container.read(libraryFilterStateProvider.notifier)
+      controller
         ..setSelectedGenreId('FANTASY')
         ..setShowOnlyOngoing(value: true)
         ..setSource(NovelSource.kakuyomu);
 
-      final state = container.read(libraryFilterStateProvider);
+      final state = controller.state;
       expect(state.source, NovelSource.kakuyomu);
       // サイト切替時はジャンルフィルタがリセットされる
       expect(state.selectedGenreId, isNull);
@@ -109,33 +108,30 @@ void main() {
     });
 
     test('setSelectedGenreId / setShowOnlyOngoing が状態を更新する', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+      final controller = LibraryFilterController();
+      addTearDown(controller.dispose);
 
-      container.read(libraryFilterStateProvider.notifier)
+      controller
         ..setSource(NovelSource.narou)
         ..setSelectedGenreId('201')
         ..setShowOnlyOngoing(value: true);
 
-      final state = container.read(libraryFilterStateProvider);
+      final state = controller.state;
       expect(state.source, NovelSource.narou);
       expect(state.selectedGenreId, '201');
       expect(state.showOnlyOngoing, isTrue);
     });
 
     test('resetが初期状態に戻す', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+      final controller = LibraryFilterController();
+      addTearDown(controller.dispose);
 
-      container.read(libraryFilterStateProvider.notifier)
+      controller
         ..setSource(NovelSource.kakuyomu)
         ..setSelectedGenreId('FANTASY')
         ..reset();
 
-      expect(
-        container.read(libraryFilterStateProvider),
-        const LibraryFilterState(),
-      );
+      expect(controller.state, const LibraryFilterState());
     });
   });
 }

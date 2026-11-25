@@ -1,55 +1,116 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/download_result.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/repositories/preferences_repository.dart';
 import 'package:novelty/screens/novel_detail_page.dart';
+import 'package:novelty/services/api_service.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 import '../helpers/clipboard.dart';
+import '../support/test_services.dart';
+import 'novel_detail_page_test.mocks.dart';
 
-/// テスト用のライブラリ状態Notifier
-class FakeLibraryStatus extends LibraryStatus {
-  @override
-  Stream<bool> build(NovelSource source, String workId) => Stream.value(false);
+@GenerateMocks([AppDatabase, NovelRepository])
+/// 実DBの監視ストリームを解除してからテストを終える。
+Future<void> unmountPage(WidgetTester tester) async {
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump(const Duration(seconds: 1));
 }
 
-/// ライブラリ登録済みを返すテスト用のNotifier
-class FakeInLibraryStatus extends LibraryStatus {
-  @override
-  Stream<bool> build(NovelSource source, String workId) => Stream.value(true);
-}
-
-/// ダウンロード完了時にライブラリ追加を促す結果を返すテスト用のNotifier
-class FakeDownloadStatus extends DownloadStatus {
-  @override
-  Stream<bool> build(NovelSource source, String workId) => Stream.value(false);
-
-  @override
-  Future<DownloadResult> executeDownload(NovelInfo novelInfo) async {
-    return const DownloadResult.success(needsLibraryAddition: true);
+/// 詳細ページを、指定したリポジトリ/DB の状態で表示する。
+Future<void> pumpNovelDetail(
+  WidgetTester tester, {
+  required NovelSource source,
+  required String workId,
+  NovelInfo? novelInfo,
+  List<Episode> episodes = const [],
+  bool inLibrary = false,
+  bool offline = false,
+  int? lastReadEpisode,
+  DownloadResult? downloadResult,
+  AppDatabase? database,
+}) async {
+  final mockDb = database == null ? MockAppDatabase() : null;
+  if (mockDb != null) {
+    when(
+      mockDb.watchIsInLibrary(source, workId),
+    ).thenAnswer((_) => Stream.value(inLibrary));
   }
-}
+  final db = database ?? mockDb!;
 
-/// テスト用の設定Notifier
-class FakeSettings extends Settings {
-  @override
-  Future<AppSettings> build() async {
-    return const AppSettings(
-      fontSize: 16,
-      isVertical: false,
-      themeMode: ThemeMode.system,
-      lineHeight: 1.5,
-      isIncognito: false,
-      isPageFlip: false,
-      isRubyEnabled: true,
+  final repository = MockNovelRepository();
+  final info =
+      novelInfo ?? NovelInfo(source: source, workId: workId, title: '作品');
+  when(repository.watchNovelInfo(source, workId)).thenAnswer(
+    (_) => Stream.value(info),
+  );
+  when(repository.watchEpisodeList(source, workId, 1)).thenAnswer(
+    (_) => Stream.value(episodes),
+  );
+  when(
+    repository.watchDownloadProgress(source, workId),
+  ).thenAnswer((_) => const Stream<DownloadProgress>.empty());
+  when(
+    repository.watchLastReadEpisode(source, workId),
+  ).thenAnswer((_) => Stream.value(lastReadEpisode));
+
+  final result = downloadResult;
+  if (result != null) {
+    when(repository.downloadNovelInfo(info)).thenAnswer((_) async => result);
+  }
+
+  // 実DBを渡された場合は、ミューテーションだけ本物のリポジトリへ委譲する。
+  if (database != null) {
+    final real = NovelRepository(
+      apiService: ApiService(),
+      settings: SettingsController(
+        PreferencesRepository(),
+        initialState: const AsyncData(testSettings),
+      ),
+      db: database,
+    );
+    for (final deleteDownloads in [true, false]) {
+      when(
+        repository.removeFromLibrary(
+          source,
+          workId,
+          deleteDownloads: deleteDownloads,
+        ),
+      ).thenAnswer(
+        (_) => real.removeFromLibrary(
+          source,
+          workId,
+          deleteDownloads: deleteDownloads,
+        ),
+      );
+    }
+    when(repository.addNovelInfoToLibrary(info)).thenAnswer(
+      (_) => real.addNovelInfoToLibrary(info),
     );
   }
+
+  await tester.pumpWidget(
+    withServices(
+      buildTestServices(
+        db: db,
+        repository: repository,
+        settings: offline ? offlineTestSettings : testSettings,
+      ),
+      MaterialApp(
+        home: NovelDetailPage(source: source, workId: workId),
+      ),
+    ),
+  );
 }
 
 void main() {
@@ -59,35 +120,15 @@ void main() {
     const testNcode = 'n1234ab';
 
     testWidgets('非公開作品のバナーが表示される', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(false),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
-                NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
-                  title: '非公開作品のタイトル',
-                  isPrivate: true,
-                ),
-              ),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
-            lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
-          ),
+      await pumpNovelDetail(
+        tester,
+        source: NovelSource.narou,
+        workId: testNcode,
+        novelInfo: const NovelInfo(
+          workId: testNcode,
+          ncode: testNcode,
+          title: '非公開作品のタイトル',
+          isPrivate: true,
         ),
       );
 
@@ -104,34 +145,14 @@ void main() {
     });
 
     testWidgets('なろう作品でもソースバッジが表示される', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(false),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
-                NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
-                  title: 'バッジテスト小説',
-                ),
-              ),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
-            lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
-          ),
+      await pumpNovelDetail(
+        tester,
+        source: NovelSource.narou,
+        workId: testNcode,
+        novelInfo: const NovelInfo(
+          workId: testNcode,
+          ncode: testNcode,
+          title: 'バッジテスト小説',
         ),
       );
 
@@ -142,36 +163,14 @@ void main() {
 
     testWidgets('カクヨム作品でもソースバッジが表示される', (tester) async {
       const kakuyomuWorkId = '16818023211929539879';
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(false),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
-                const NovelInfo(
-                  source: NovelSource.kakuyomu,
-                  workId: kakuyomuWorkId,
-                  title: 'バッジテスト小説',
-                ),
-              ),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
-            lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelDetailPage(
-              source: NovelSource.kakuyomu,
-              workId: kakuyomuWorkId,
-            ),
-          ),
+      await pumpNovelDetail(
+        tester,
+        source: NovelSource.kakuyomu,
+        workId: kakuyomuWorkId,
+        novelInfo: const NovelInfo(
+          source: NovelSource.kakuyomu,
+          workId: kakuyomuWorkId,
+          title: 'バッジテスト小説',
         ),
       );
 
@@ -181,34 +180,14 @@ void main() {
     });
 
     testWidgets('公開作品では非公開バナーが表示されない', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(false),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
-                NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
-                  title: '公開作品のタイトル',
-                ),
-              ),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
-            lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
-          ),
+      await pumpNovelDetail(
+        tester,
+        source: NovelSource.narou,
+        workId: testNcode,
+        novelInfo: const NovelInfo(
+          workId: testNcode,
+          ncode: testNcode,
+          title: '公開作品のタイトル',
         ),
       );
 
@@ -225,35 +204,16 @@ void main() {
     });
 
     testWidgets('オフラインモード中は一括ダウンロードメニューが無効化される', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(true),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
-                NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
-                  title: 'オフライン小説',
-                ),
-              ),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
-            lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
-          ),
+      await pumpNovelDetail(
+        tester,
+        source: NovelSource.narou,
+        workId: testNcode,
+        novelInfo: const NovelInfo(
+          workId: testNcode,
+          ncode: testNcode,
+          title: 'オフライン小説',
         ),
+        offline: true,
       );
 
       await tester.pumpAndSettle();
@@ -275,35 +235,16 @@ void main() {
     });
 
     testWidgets('オフラインモード中でもライブラリ追加ボタンは有効', (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(true),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
-                NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
-                  title: 'オフライン小説',
-                ),
-              ),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
-            lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
-          ),
+      await pumpNovelDetail(
+        tester,
+        source: NovelSource.narou,
+        workId: testNcode,
+        novelInfo: const NovelInfo(
+          workId: testNcode,
+          ncode: testNcode,
+          title: 'オフライン小説',
         ),
+        offline: true,
       );
 
       await tester.pumpAndSettle();
@@ -320,34 +261,14 @@ void main() {
       final clipboardMock = installClipboardMock(tester);
       addTearDown(clipboardMock.dispose);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(false),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
-                NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
-                  title: '共有テスト小説',
-                ),
-              ),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
-            lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelDetailPage(source: NovelSource.narou, workId: testNcode),
-          ),
+      await pumpNovelDetail(
+        tester,
+        source: NovelSource.narou,
+        workId: testNcode,
+        novelInfo: const NovelInfo(
+          workId: testNcode,
+          ncode: testNcode,
+          title: '共有テスト小説',
         ),
       );
 
@@ -369,36 +290,14 @@ void main() {
       final clipboardMock = installClipboardMock(tester);
       addTearDown(clipboardMock.dispose);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(false),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
-                const NovelInfo(
-                  source: NovelSource.kakuyomu,
-                  workId: kakuyomuWorkId,
-                  title: 'カクヨム共有テスト小説',
-                ),
-              ),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
-            lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelDetailPage(
-              source: NovelSource.kakuyomu,
-              workId: kakuyomuWorkId,
-            ),
-          ),
+      await pumpNovelDetail(
+        tester,
+        source: NovelSource.kakuyomu,
+        workId: kakuyomuWorkId,
+        novelInfo: const NovelInfo(
+          source: NovelSource.kakuyomu,
+          workId: kakuyomuWorkId,
+          title: 'カクヨム共有テスト小説',
         ),
       );
 
@@ -419,62 +318,39 @@ void main() {
       const kakuyomuWorkId = '1177354054891139802';
       const kakuyomuEpisodeId = '1177354054891141560';
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(false),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
-                const NovelInfo(
-                  source: NovelSource.kakuyomu,
-                  workId: kakuyomuWorkId,
-                  title: 'カクヨム話数テスト小説',
-                  generalAllNo: 3,
-                ),
-              ),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(
-                const [
-                  Episode(
-                    source: NovelSource.kakuyomu,
-                    index: 1,
-                    subtitle: '第一話',
-                    url:
-                        'https://kakuyomu.jp/works/$kakuyomuWorkId/episodes/$kakuyomuEpisodeId',
-                  ),
-                  Episode(
-                    source: NovelSource.kakuyomu,
-                    index: 2,
-                    subtitle: '第二話',
-                    url:
-                        'https://kakuyomu.jp/works/$kakuyomuWorkId/episodes/1177354054891141561',
-                  ),
-                  Episode(
-                    source: NovelSource.kakuyomu,
-                    index: 3,
-                    subtitle: '第三話',
-                    url:
-                        'https://kakuyomu.jp/works/$kakuyomuWorkId/episodes/1177354054891141562',
-                  ),
-                ],
-              ),
-            ),
-            downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-            libraryStatusProvider.overrideWith2((_) => FakeLibraryStatus()),
-            lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-          ],
-          child: const MaterialApp(
-            home: NovelDetailPage(
-              source: NovelSource.kakuyomu,
-              workId: kakuyomuWorkId,
-            ),
-          ),
+      await pumpNovelDetail(
+        tester,
+        source: NovelSource.kakuyomu,
+        workId: kakuyomuWorkId,
+        novelInfo: const NovelInfo(
+          source: NovelSource.kakuyomu,
+          workId: kakuyomuWorkId,
+          title: 'カクヨム話数テスト小説',
+          generalAllNo: 3,
         ),
+        episodes: const [
+          Episode(
+            source: NovelSource.kakuyomu,
+            index: 1,
+            subtitle: '第一話',
+            url:
+                'https://kakuyomu.jp/works/$kakuyomuWorkId/episodes/$kakuyomuEpisodeId',
+          ),
+          Episode(
+            source: NovelSource.kakuyomu,
+            index: 2,
+            subtitle: '第二話',
+            url:
+                'https://kakuyomu.jp/works/$kakuyomuWorkId/episodes/1177354054891141561',
+          ),
+          Episode(
+            source: NovelSource.kakuyomu,
+            index: 3,
+            subtitle: '第三話',
+            url:
+                'https://kakuyomu.jp/works/$kakuyomuWorkId/episodes/1177354054891141562',
+          ),
+        ],
       );
 
       await tester.pumpAndSettle();
@@ -506,45 +382,20 @@ void main() {
         subtitle: '第1話',
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            isOfflineModeProvider.overrideWithValue(false),
-            novelInfoWithCacheProvider.overrideWith(
-              (ref, args) => Stream.value(
-                NovelInfo(
-                  source: args.$1,
-                  workId: args.$2,
-                  ncode: args.$2,
-                  title: 'テスト作品',
-                ),
-              ),
-            ),
-            episodeListProvider.overrideWith(
-              (ref, args) => Stream.value(<Episode>[]),
-            ),
-            downloadProgressProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-            libraryStatusProvider.overrideWith2(
-              (_) => FakeInLibraryStatus(),
-            ),
-            downloadStatusProvider.overrideWith2(
-              (_) => FakeDownloadStatus(),
-            ),
-            lastReadEpisodeProvider.overrideWith(
-              (ref, args) => Stream.value(null),
-            ),
-            appDatabaseProvider.overrideWithValue(database),
-            settingsProvider.overrideWith(FakeSettings.new),
-          ],
-          child: const MaterialApp(
-            home: NovelDetailPage(
-              source: NovelSource.narou,
-              workId: testNcode,
-            ),
-          ),
+      await pumpNovelDetail(
+        tester,
+        source: NovelSource.narou,
+        workId: testNcode,
+        novelInfo: const NovelInfo(
+          workId: testNcode,
+          ncode: testNcode,
+          title: 'テスト作品',
         ),
+        inLibrary: true,
+        downloadResult: const DownloadResult.success(
+          needsLibraryAddition: true,
+        ),
+        database: database,
       );
       await tester.pumpAndSettle();
       return database;
@@ -573,6 +424,8 @@ void main() {
         1,
       );
       expect(episode!.content, isNull);
+
+      await unmountPage(tester);
     });
 
     testWidgets('ダウンロード済みの話を残してライブラリから外せる', (tester) async {
@@ -596,6 +449,8 @@ void main() {
         1,
       );
       expect(episode!.content, isNotNull);
+
+      await unmountPage(tester);
     });
 
     testWidgets('キャンセルするとライブラリに残る', (tester) async {
@@ -613,6 +468,7 @@ void main() {
         await database.isInLibrary(NovelSource.narou, testNcode),
         isTrue,
       );
+      await unmountPage(tester);
       final episode = await database.getEpisodeData(
         NovelSource.narou,
         testNcode,
@@ -637,6 +493,7 @@ void main() {
         await database.isInLibrary(NovelSource.narou, testNcode),
         isTrue,
       );
+      await unmountPage(tester);
       final episode = await database.getEpisodeData(
         NovelSource.narou,
         testNcode,

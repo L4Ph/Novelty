@@ -17,29 +17,7 @@ import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:tiny_http/tiny_http.dart';
-
-part 'novel_repository.g.dart';
-
-@Riverpod(keepAlive: true)
-/// 小説のダウンロードと管理を行うリポジトリ。
-NovelRepository novelRepository(Ref ref) {
-  final apiService = ref.watch(apiServiceProvider);
-  final settings = ref.watch(settingsProvider);
-  final db = ref.watch(appDatabaseProvider);
-
-  final repository = NovelRepository(
-    ref: ref,
-    apiService: apiService,
-    settings: settings,
-    db: db,
-  );
-
-  ref.onDispose(repository.dispose);
-
-  return repository;
-}
 
 /// 小説のダウンロードと管理を行うリポジトリクラス。
 class NovelRepository {
@@ -48,22 +26,23 @@ class NovelRepository {
   /// [sites] はテスト時にサイト実装を差し替えるために注入できる。
   /// 省略時は [defaultNovelSiteRegistry] を使用する。
   NovelRepository({
-    required this.ref,
     required this.apiService,
     required this.settings,
     required AppDatabase db,
+    NetworkFallbackBus? fallback,
     Map<NovelSource, NovelSite>? sites,
   }) : _db = db,
+       _fallback = fallback ?? NetworkFallbackBus(),
        _sites = sites ?? defaultNovelSiteRegistry;
-
-  /// アプリケーションの設定を取得するためのリファレンス。
-  final Ref ref;
 
   /// APIサービスを通じて小説データを取得するためのサービス。
   final ApiService apiService;
 
   /// アプリケーションの設定。
-  final AsyncValue<AppSettings> settings;
+  final SettingsController settings;
+
+  /// キャッシュフォールバックの通知先。
+  final NetworkFallbackBus _fallback;
 
   final AppDatabase _db;
 
@@ -118,9 +97,6 @@ class NovelRepository {
     // LibraryEntriesテーブルに追加
     await _db.addToLibrary(source, workId);
 
-    // Providersを無効化してUIを更新
-    ref.invalidate(libraryNovelsProvider);
-
     return true;
   }
 
@@ -141,9 +117,6 @@ class NovelRepository {
         await deleteDownloadedNovel(source, workId);
       }
     });
-
-    // Providersを無効化してUIを更新
-    ref.invalidate(libraryNovelsProvider);
   }
 
   /// 小説を閲覧履歴に追加する。
@@ -333,7 +306,7 @@ class NovelRepository {
     final cached = await _db.getEpisodeData(source, workId, episode);
 
     // ネットワーク接続状態を確認
-    final isOffline = ref.read(isOfflineModeProvider);
+    final isOffline = settings.isOfflineMode;
 
     // 1. オフラインの場合はキャッシュを強制的に使用
     if (isOffline) {
@@ -573,7 +546,7 @@ class NovelRepository {
     final end = page * 100;
 
     // ネットワーク接続状態を確認
-    final isOffline = ref.read(isOfflineModeProvider);
+    final isOffline = settings.isOfflineMode;
 
     // オフラインの場合はDBから取得
     if (isOffline) {
@@ -662,7 +635,7 @@ class NovelRepository {
   /// 取得失敗時はキャッシュがあればフォールバックイベントを発行し、
   /// キャッシュが無い場合はエラーを呼び出し元に伝える。
   Future<void> _refreshNovelInfo(NovelSource source, String workId) async {
-    final isOffline = ref.read(isOfflineModeProvider);
+    final isOffline = settings.isOfflineMode;
     if (isOffline) {
       final cached = await _db.getNovel(source, workId);
       if (cached == null) {
@@ -752,7 +725,7 @@ class NovelRepository {
     int page,
     int start,
   ) async {
-    final isOffline = ref.read(isOfflineModeProvider);
+    final isOffline = settings.isOfflineMode;
     if (isOffline) {
       final cached = await _db.getEpisodesRange(
         source,
@@ -822,156 +795,50 @@ class NovelRepository {
   /// フォールバックイベントを発行する。
   void _emitFallbackEvent(String message) {
     try {
-      ref.read(networkFallbackEventProvider.notifier).emit(message);
-    } on Exception catch (e) {
+      _fallback.emit(message);
+    } on Object catch (e) {
       debugPrint('フォールバックイベントの発行に失敗: $e');
     }
   }
-}
 
-// ==================== Providers ====================
-
-@riverpod
-/// 小説の情報を取得し、DBにキャッシュするプロバイダー。
-Stream<NovelInfo> novelInfoWithCache(
-  Ref ref,
-  NovelSource source,
-  String workId,
-) {
-  ref.keepAlive();
-  final repository = ref.watch(novelRepositoryProvider);
-
-  return repository.watchNovelInfo(source, workId);
-}
-
-@riverpod
-/// 小説のコンテンツを取得するプロバイダー。
-Future<List<NovelContentElement>> novelContent(
-  Ref ref, {
-  required NovelSource source,
-  required String workId,
-  required int episode,
-  String? revised,
-}) async {
-  final repository = ref.read(novelRepositoryProvider);
-  return repository.getEpisode(
-    source,
-    workId,
-    episode,
-    revised: revised,
-  );
-}
-
-@riverpod
-/// 小説のライブラリ状態を管理するプロバイダー。
-class LibraryStatus extends _$LibraryStatus {
-  @override
-  Stream<bool> build(NovelSource source, String workId) {
-    final db = ref.watch(appDatabaseProvider);
-    return db.watchIsInLibrary(source, workId);
-  }
-
-  /// ライブラリに登録するメソッド。
+  /// 小説情報をライブラリに登録する。
   ///
   /// 登録は冪等なので、登録済みでも呼び出して問題ない。
   /// 登録解除はダウンロード済み本文の削除を伴う確認が必要なため、
   /// 画面からは [NovelRepository.removeFromLibrary] を
   /// 確認ダイアログ経由で呼ぶこと。
-  Future<void> addToLibrary(NovelInfo novelInfo) async {
-    final db = ref.read(appDatabaseProvider);
-
-    state = const AsyncValue.loading();
-    try {
-      // 事前にNovelsテーブルに小説情報が存在することを保証する必要がある。
-      // 通常はfetchNovelInfoによって挿入済み。
-      await db.insertNovel(novelInfo.toDbCompanion());
-      await db.addToLibrary(
-        novelInfo.source,
-        novelInfo.resolvedWorkId ??
-            (throw StateError('NovelInfo has neither workId nor ncode')),
-      );
-
-      ref.invalidate(libraryNovelsProvider);
-    } on Exception catch (e, st) {
-      state = AsyncValue.error(e, st);
-    }
-  }
-}
-
-@riverpod
-/// 小説のダウンロード進捗を監視するプロバイダー。
-Stream<DownloadProgress?> downloadProgress(
-  Ref ref,
-  NovelSource source,
-  String workId,
-) {
-  final repo = ref.watch(novelRepositoryProvider);
-  return repo.watchDownloadProgress(source, workId);
-}
-
-@riverpod
-/// 小説のダウンロード状態を管理するプロバイダー。
-///
-/// 小説のダウンロード状態を監視し、ダウンロードの開始を行うためのプロバイダー。
-class DownloadStatus extends _$DownloadStatus {
-  @override
-  Stream<bool> build(NovelSource source, String workId) {
-    // ダウンロード状態の監視は不要になったため、ダミーを返す
-    return Stream.value(false);
+  Future<void> addNovelInfoToLibrary(NovelInfo novelInfo) async {
+    // 事前にNovelsテーブルに小説情報が存在することを保証する必要がある。
+    // 通常はfetchNovelInfoによって挿入済み。
+    await _db.insertNovel(novelInfo.toDbCompanion());
+    await _db.addToLibrary(
+      novelInfo.source,
+      novelInfo.resolvedWorkId ??
+          (throw StateError('NovelInfo has neither workId nor ncode')),
+    );
   }
 
-  /// 小説のダウンロードを実行するメソッド。
+  /// 小説情報から作品全体をダウンロードする。
   ///
-  /// Permission処理を含み、結果を[DownloadResult]で返す。
-  /// UIでの処理（Dialog、SnackBar表示等）は呼び出し側で行う。
-  Future<DownloadResult> executeDownload(NovelInfo novelInfo) async {
-    final repo = ref.read(novelRepositoryProvider);
-    final previousState = state;
-    state = const AsyncValue.loading();
+  /// 権限処理と結果表示は呼び出し側が担う。
+  Future<DownloadResult> downloadNovelInfo(NovelInfo novelInfo) async {
+    final workId = novelInfo.resolvedWorkId;
+    final totalEpisodes = novelInfo.generalAllNo;
+    if (workId == null) {
+      return const DownloadResult.error('作品IDを取得できませんでした');
+    }
+    if (totalEpisodes == null) {
+      return const DownloadResult.error('話数を取得できませんでした');
+    }
 
     try {
-      final workId = novelInfo.resolvedWorkId;
-      final totalEpisodes = novelInfo.generalAllNo;
-      if (workId == null) {
-        return const DownloadResult.error('作品IDを取得できませんでした');
-      }
-      if (totalEpisodes == null) {
-        return const DownloadResult.error('話数を取得できませんでした');
-      }
-
-      final result = await repo.downloadNovelWithResult(
+      return await downloadNovelWithResult(
         novelInfo.source,
         workId,
         totalEpisodes,
       );
-
-      return result;
-    } on Exception catch (e, st) {
-      state = AsyncValue.error(e, st);
-      await Future<void>.delayed(const Duration(seconds: 2));
-      state = previousState;
+    } on Exception catch (e) {
       return DownloadResult.error(e.toString());
     }
   }
-}
-
-@riverpod
-/// エピソードリストをページ単位で取得するプロバイダー。
-Stream<List<Episode>> episodeList(
-  Ref ref,
-  NovelSource source,
-  String workId,
-  int page,
-) {
-  ref.keepAlive();
-  final repository = ref.watch(novelRepositoryProvider);
-
-  return repository.watchEpisodeList(source, workId, page);
-}
-
-@Riverpod(keepAlive: true)
-/// 最後に読んだエピソード番号を取得するプロバイダー
-Stream<int?> lastReadEpisode(Ref ref, NovelSource source, String workId) {
-  final repository = ref.watch(novelRepositoryProvider);
-  return repository.watchLastReadEpisode(source, workId);
 }

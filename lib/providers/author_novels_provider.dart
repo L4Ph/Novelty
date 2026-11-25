@@ -2,19 +2,18 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'author_novels_provider.g.dart';
-
-@riverpod
-/// 指定したuserIdの作者の小説一覧を取得するFutureProvider
-Future<List<NovelInfo>> authorNovels(Ref ref, int userId) async {
-  if (ref.read(isOfflineModeProvider)) {
+/// 指定したuserIdの作者の小説一覧を取得する。
+Future<List<NovelInfo>> fetchAuthorNovels(
+  ApiService api,
+  SettingsController settings,
+  int userId,
+) async {
+  if (settings.isOfflineMode) {
     throw const OfflineException();
   }
 
-  final apiService = ref.read(apiServiceProvider);
   final query = NovelSearchQuery(userid: [userId]);
-  final result = await apiService.searchNovels(query);
+  final result = await api.searchNovels(query);
   return result.novels;
 }

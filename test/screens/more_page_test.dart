@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:novelty/database/database.dart';
 import 'package:novelty/screens/more_page.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../support/test_services.dart';
 
 /// path_providerのモック実装
 class FakePathProviderPlatform extends Fake
@@ -30,11 +32,12 @@ void main() {
   });
 
   testWidgets('オフラインモードスイッチが表示される', (tester) async {
+    final db = AppDatabase.memory();
+    addTearDown(db.close);
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: MorePage(),
-        ),
+      withServices(
+        buildTestServices(db: db),
+        const MaterialApp(home: MorePage()),
       ),
     );
     await tester.pumpAndSettle();
@@ -44,11 +47,12 @@ void main() {
   });
 
   testWidgets('オフラインモードスイッチを切り替えると設定が永続化される', (tester) async {
+    final db = AppDatabase.memory();
+    addTearDown(db.close);
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: MorePage(),
-        ),
+      withServices(
+        buildTestServices(db: db),
+        const MaterialApp(home: MorePage()),
       ),
     );
     await tester.pumpAndSettle();

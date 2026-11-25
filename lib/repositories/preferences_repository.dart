@@ -1,11 +1,4 @@
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-part 'preferences_repository.g.dart';
-
-/// SharedPreferencesをラップするRepositoryのプロバイダー
-@Riverpod(keepAlive: true)
-PreferencesRepository preferencesRepository(Ref ref) => PreferencesRepository();
 
 /// SharedPreferencesをラップするRepository
 class PreferencesRepository {

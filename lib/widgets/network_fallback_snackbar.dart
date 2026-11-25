@@ -1,45 +1,75 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/providers/network_fallback_event_provider.dart';
-import 'package:novelty/utils/settings_provider.dart';
 
 /// ネットワークフォールバックイベントを購読し、スナックバーで通知するラッパー。
 ///
 /// キャッシュフォールバックが発生した際に、表示中のデータが最新でない可能性を
 /// ユーザーに伝える。永続的なヘッダーは表示しない。
-class NetworkFallbackSnackbar extends ConsumerWidget {
+class NetworkFallbackSnackbar extends StatefulWidget {
   /// コンストラクタ。
-  const NetworkFallbackSnackbar({required this.child, super.key});
+  const NetworkFallbackSnackbar({
+    required this.bus,
+    required this.child,
+    super.key,
+  });
+
+  /// イベントの発行元。
+  final NetworkFallbackBus bus;
 
   /// ラップする子ウィジェット。
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(networkFallbackEventProvider, (_, next) {
-      if (next != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.message),
-            action: SnackBarAction(
-              label: 'オフラインモードをオン',
-              onPressed: () {
-                unawaited(
-                  ref
-                      .read(settingsProvider.notifier)
-                      .setIsOfflineMode(isOfflineMode: true),
-                );
-              },
-            ),
-          ),
-        );
-        // イベントを消費して重複表示を防ぐ
-        ref.read(networkFallbackEventProvider.notifier).clear();
-      }
-    });
+  State<NetworkFallbackSnackbar> createState() =>
+      _NetworkFallbackSnackbarState();
+}
 
-    return child;
+class _NetworkFallbackSnackbarState extends State<NetworkFallbackSnackbar> {
+  @override
+  void initState() {
+    super.initState();
+    widget.bus.addListener(_onEvent);
   }
+
+  @override
+  void didUpdateWidget(NetworkFallbackSnackbar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.bus, widget.bus)) {
+      oldWidget.bus.removeListener(_onEvent);
+      widget.bus.addListener(_onEvent);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.bus.removeListener(_onEvent);
+    super.dispose();
+  }
+
+  void _onEvent() {
+    final event = widget.bus.event;
+    if (event == null || !mounted) return;
+    // イベントを消費して重複表示を防ぐ
+    widget.bus.clear();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(event.message),
+        action: SnackBarAction(
+          label: 'オフラインモードをオン',
+          onPressed: () {
+            if (!mounted) return;
+            unawaited(
+              context.services.settings.setIsOfflineMode(isOfflineMode: true),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

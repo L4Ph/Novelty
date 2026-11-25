@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -10,115 +8,63 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/sites/novel_source.dart';
-import 'package:novelty/utils/settings_provider.dart';
+import 'package:novelty/utils/async_subscription.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 @GenerateMocks([db.AppDatabase, ApiService, NovelRepository])
 import 'novel_info_offline_test.mocks.dart';
 
-class MockSettings extends Settings {
-  @override
-  Future<AppSettings> build() async => const AppSettings(
-    fontSize: 16,
-    isVertical: false,
-    themeMode: ThemeMode.system,
-    lineHeight: 1.5,
-    isIncognito: false,
-    isPageFlip: false,
-    isRubyEnabled: true,
-  );
-}
-
 void main() {
-  group('NovelInfo Provider (Repository Mock)', () {
+  group('NovelInfo stream (Repository Mock)', () {
     late MockNovelRepository mockRepository;
-    late MockAppDatabase mockDatabase;
-    late MockApiService mockApiService;
-    late ProviderContainer container;
 
-    setUp(() {
-      mockRepository = MockNovelRepository();
-      mockDatabase = MockAppDatabase();
-      mockApiService = MockApiService();
-      container = ProviderContainer(
-        overrides: [
-          novelRepositoryProvider.overrideWithValue(mockRepository),
-          db.appDatabaseProvider.overrideWithValue(mockDatabase),
-          apiServiceProvider.overrideWithValue(mockApiService),
-          settingsProvider.overrideWith(MockSettings.new),
-        ],
+    setUp(() => mockRepository = MockNovelRepository());
+
+    test('watches the repository stream and exposes its data', () async {
+      const testNovelInfo = NovelInfo(
+        ncode: 'N1234AB',
+        title: 'Repository Title',
+        novelType: 1,
       );
+
+      final controller = StreamController<NovelInfo>.broadcast();
+      controller.onListen = () => controller.add(testNovelInfo);
+      when(
+        mockRepository.watchNovelInfo(NovelSource.narou, any),
+      ).thenAnswer((_) => controller.stream);
+
+      final binding = AsyncSubscription<NovelInfo>(
+        mockRepository.watchNovelInfo(NovelSource.narou, 'N1234AB'),
+      );
+      addTearDown(binding.cancel);
+      addTearDown(controller.close);
+
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      expect(binding.state.valueOrNull?.title, 'Repository Title');
+      verify(
+        mockRepository.watchNovelInfo(NovelSource.narou, any),
+      ).called(1);
     });
 
-    tearDown(() {
-      container.dispose();
+    test('propagates repository errors', () async {
+      final controller = StreamController<NovelInfo>.broadcast();
+      controller.onListen = () {
+        scheduleMicrotask(() => controller.addError(Exception('Repo Error')));
+      };
+      when(
+        mockRepository.watchNovelInfo(NovelSource.narou, any),
+      ).thenAnswer((_) => controller.stream);
+
+      final binding = AsyncSubscription<NovelInfo>(
+        mockRepository.watchNovelInfo(NovelSource.narou, 'N1234AB'),
+      );
+      addTearDown(binding.cancel);
+      addTearDown(controller.close);
+
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      expect(binding.state, isA<AsyncError<NovelInfo>>());
     });
-
-    test(
-      'novelInfoWithCacheProvider should return data from repository stream',
-      () async {
-        const testNcode = 'N1234AB';
-        const testNovelInfo = NovelInfo(
-          ncode: testNcode,
-          title: 'Repository Title',
-          novelType: 1,
-        );
-
-        // Use broadcast controller to support multiple listeners if needed
-        final controller = StreamController<NovelInfo>.broadcast();
-        controller.onListen = () => controller.add(testNovelInfo);
-
-        // Use any to match normalized ncode
-        when(mockRepository.watchNovelInfo(NovelSource.narou, any)).thenAnswer(
-          (_) => controller.stream,
-        );
-
-        final states = <AsyncValue<NovelInfo>>[];
-        final sub = container.listen(
-          novelInfoWithCacheProvider(NovelSource.narou, testNcode),
-          (_, next) => states.add(next),
-        );
-
-        // Wait for microtasks
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-
-        expect(
-          states.map((s) => s.asData?.value.title).where((t) => t != null),
-          contains('Repository Title'),
-        );
-        sub.close();
-      },
-    );
-
-    test(
-      'novelInfoWithCacheProvider should propagate repository errors',
-      () async {
-        const testNcode = 'N1234AB';
-
-        final controller = StreamController<NovelInfo>.broadcast();
-        controller.onListen = () {
-          scheduleMicrotask(() => controller.addError(Exception('Repo Error')));
-        };
-
-        // Use any to match normalized ncode
-        when(mockRepository.watchNovelInfo(NovelSource.narou, any)).thenAnswer(
-          (_) => controller.stream,
-        );
-
-        final states = <AsyncValue<NovelInfo>>[];
-        final sub = container.listen(
-          novelInfoWithCacheProvider(NovelSource.narou, testNcode),
-          (_, next) => states.add(next),
-        );
-
-        // Wait for microtasks
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-
-        expect(
-          states.any((s) => s.hasError),
-          isTrue,
-        );
-        sub.close();
-      },
-    );
   });
 }
