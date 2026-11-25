@@ -317,6 +317,7 @@ class _EnrichedSearchResultsState extends State<_EnrichedSearchResults> {
   final _enriched = <EnrichedNovelData>[];
   var _isEnriching = false;
   var _lastEnrichedCount = 0;
+  Future<void> _enrichQueue = Future<void>.value();
 
   @override
   void initState() {
@@ -327,7 +328,7 @@ class _EnrichedSearchResultsState extends State<_EnrichedSearchResults> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    unawaited(_enrichNewResults());
+    _scheduleEnrich();
   }
 
   @override
@@ -336,8 +337,11 @@ class _EnrichedSearchResultsState extends State<_EnrichedSearchResults> {
     super.dispose();
   }
 
-  void _onSearchChanged() {
-    unawaited(_enrichNewResults());
+  void _onSearchChanged() => _scheduleEnrich();
+
+  /// 結果の取りこぼしを避けるため、前の強化処理の後に続ける。
+  void _scheduleEnrich() {
+    _enrichQueue = _enrichQueue.then((_) => _enrichNewResults());
   }
 
   /// 新しい結果が追加されたときに強化処理を実行する。

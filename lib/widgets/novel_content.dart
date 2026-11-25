@@ -52,6 +52,9 @@ class _NovelContentState extends State<NovelContent> {
   Async<List<NovelContentElement>> _content = const AsyncLoading();
   var _loaded = false;
 
+  /// 取得の世代。古い取得の結果が新しい表示を上書きしないようにする。
+  var _request = 0;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -75,6 +78,7 @@ class _NovelContentState extends State<NovelContent> {
   }
 
   Future<void> _load() async {
+    final request = ++_request;
     try {
       final content = await context.services.repository.getEpisode(
         widget.source,
@@ -82,10 +86,10 @@ class _NovelContentState extends State<NovelContent> {
         widget.episode,
         revised: widget.revised,
       );
-      if (!mounted) return;
+      if (!mounted || request != _request) return;
       setState(() => _content = AsyncData(content));
     } on Object catch (error, stackTrace) {
-      if (!mounted) return;
+      if (!mounted || request != _request) return;
       setState(() => _content = AsyncError(error, stackTrace));
     }
   }
