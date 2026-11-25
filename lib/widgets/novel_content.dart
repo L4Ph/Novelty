@@ -60,6 +60,20 @@ class _NovelContentState extends State<NovelContent> {
     unawaited(_load());
   }
 
+  @override
+  void didUpdateWidget(NovelContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // PageView reuses this State when the reader pages forward, so a new
+    // episode or revision has to drop the cached body.
+    if (oldWidget.episode != widget.episode ||
+        oldWidget.revised != widget.revised ||
+        oldWidget.workId != widget.workId ||
+        oldWidget.source != widget.source) {
+      _content = const AsyncLoading();
+      unawaited(_load());
+    }
+  }
+
   Future<void> _load() async {
     try {
       final content = await context.services.repository.getEpisode(

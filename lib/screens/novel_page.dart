@@ -141,6 +141,7 @@ class _NovelPageState extends State<NovelPage> {
     if (_hasAddedInitialHistory) return;
     _hasAddedInitialHistory = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _updateHistory(novelInfo, _currentEpisode);
     });
   }

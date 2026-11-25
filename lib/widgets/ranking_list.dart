@@ -37,7 +37,10 @@ class _RankingListState extends State<RankingList> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final ranking = _ranking ??= RankingController(
+    // didChangeDependencies fires again on theme/MediaQuery changes; binding
+    // twice would double the scroll listener and the initial fetch.
+    if (_ranking != null) return;
+    final ranking = _ranking = RankingController(
       source: widget.source,
       rankingType: widget.rankingType,
       filter: widget.filter,
