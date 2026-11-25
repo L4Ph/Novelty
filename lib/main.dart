@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/database/database_initialization.dart';
 import 'package:novelty/database/database_maintenance.dart';
@@ -15,6 +16,7 @@ import 'package:novelty/services/backup_service.dart';
 import 'package:novelty/utils/font_family.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/network_fallback_snackbar.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 export 'package:novelty/database/database_initialization.dart';
 
@@ -304,19 +306,29 @@ class _AppWithSettings extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
 
+    // Bridge for the migration: widgets below read their services from Scope
+    // instead of through ref, and riverpod still owns the instances.
+    final services = AppServices(
+      db: ref.watch(appDatabaseProvider),
+      now: DateTime.now,
+    );
+
     return settings.when(
-      data: (settings) => MaterialApp.router(
-        title: 'Novelty',
-        locale: appLocale,
-        supportedLocales: appSupportedLocales,
-        localizationsDelegates: appLocalizationsDelegates,
-        themeMode: settings.themeMode,
-        theme: appTheme(Brightness.light),
-        darkTheme: appTheme(Brightness.dark),
-        routerConfig: appRouterConfig,
-        builder: (context, child) => ImportSwapResultHandler(
-          child: DatabaseMaintenanceOverlay(
-            child: NetworkFallbackSnackbar(child: child!),
+      data: (settings) => Scope(
+        services: <Type, Object>{AppServices: services},
+        child: MaterialApp.router(
+          title: 'Novelty',
+          locale: appLocale,
+          supportedLocales: appSupportedLocales,
+          localizationsDelegates: appLocalizationsDelegates,
+          themeMode: settings.themeMode,
+          theme: appTheme(Brightness.light),
+          darkTheme: appTheme(Brightness.dark),
+          routerConfig: appRouterConfig,
+          builder: (context, child) => ImportSwapResultHandler(
+            child: DatabaseMaintenanceOverlay(
+              child: NetworkFallbackSnackbar(child: child!),
+            ),
           ),
         ),
       ),

@@ -61,6 +61,8 @@ dependencies:
     path: packages/tiny_http
   tiny_router:
     path: packages/tiny_router
+  tiny_state:
+    path: packages/tiny_state
   url_launcher: ^6.3.2
 dev_dependencies:
   build_runner: 2.15.1

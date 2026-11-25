@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/screens/history_page.dart';
 import 'package:novelty/sites/novel_source.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 @GenerateMocks([AppDatabase])
 import 'history_page_visual_test.mocks.dart';
@@ -125,12 +126,13 @@ void main() {
       ).thenAnswer((_) => Stream.value(testHistoryData));
 
       await tester.pumpWidget(
-        ProviderScope(
-          retry: (_, _) => null,
-          overrides: [
-            appDatabaseProvider.overrideWithValue(mockDatabase),
-            currentTimeProvider.overrideWithValue(fixedTime),
-          ],
+        Scope(
+          services: <Type, Object>{
+            AppServices: AppServices(
+              db: mockDatabase,
+              now: () => fixedTime,
+            ),
+          },
           child: MaterialApp(
             title: 'Novelty - History Test',
             theme: ThemeData(

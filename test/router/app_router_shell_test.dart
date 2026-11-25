@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:novelty/database/database_providers.dart';
+import 'package:novelty/app_services.dart';
+import 'package:novelty/database/database.dart';
 import 'package:novelty/router/app_router.dart';
 import 'package:novelty/router/destinations.dart';
 import 'package:novelty/screens/about_page.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 void main() {
   setUp(appRouter.reset);
@@ -20,7 +22,15 @@ void main() {
             (ref) => Stream.value(<dynamic>[]),
           ),
         ],
-        child: MaterialApp.router(routerConfig: appRouterConfig),
+        child: Scope(
+          services: <Type, Object>{
+            AppServices: AppServices(
+              db: AppDatabase.memory(),
+              now: DateTime.now,
+            ),
+          },
+          child: MaterialApp.router(routerConfig: appRouterConfig),
+        ),
       ),
     );
     // The library tab keeps a progress indicator spinning, so settling would
