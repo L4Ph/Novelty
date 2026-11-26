@@ -99,12 +99,12 @@ class RankingState {
       'error: $error)';
 }
 
-/// ランキングのロジックを保持し、変更を購読者へ通知する。
+/// Holds the ranking logic and notifies listeners on change.
 ///
-/// ランキング画面が `(source, rankingType)` ごとに1つ生成して保持する。
-/// フィルタが変わると先頭から取り直す。
+/// The ranking screen creates one per `(source, rankingType)` and keeps it.
+/// A filter change reloads from the first page.
 class RankingController extends ChangeNotifier {
-  /// コンストラクタ。
+  /// Creates the controller.
   RankingController({
     required NovelSource source,
     required String rankingType,
@@ -131,7 +131,7 @@ class RankingController extends ChangeNotifier {
 
   RankingState _state = const RankingState();
 
-  /// 現在のランキング状態。
+  /// The current ranking state.
   RankingState get state => _state;
 
   void _setState(RankingState next) {
@@ -152,7 +152,7 @@ class RankingController extends ChangeNotifier {
     unawaited(refresh());
   }
 
-  /// 初回取得を開始する。画面の initState から呼ぶ。
+  /// Starts the first fetch. Called from the screen's initState.
   void start() {
     unawaited(Future.microtask(fetchNextPage));
   }

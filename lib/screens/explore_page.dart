@@ -33,7 +33,7 @@ class _ExplorePageState extends State<ExplorePage>
   late final VoidCallback _tabListener;
   NovelSearchController? _search;
 
-  /// ランキング種別ごとのフィルタ。タブを切り替えても状態を保つ。
+  /// One filter per ranking type, kept across tab switches.
   final _filters = <String, RankingFilterController>{};
 
   RankingFilterController _filterFor(String rankingType) =>
@@ -313,7 +313,7 @@ class _EnrichedSearchResults extends StatefulWidget {
 }
 
 class _EnrichedSearchResultsState extends State<_EnrichedSearchResults> {
-  // ローカル状態で強化済みデータを管理（フラッシュ防止）
+  // Enriched data is held here so the list does not flash while loading.
   final _enriched = <EnrichedNovelData>[];
   var _isEnriching = false;
   var _lastEnrichedCount = 0;
@@ -339,17 +339,17 @@ class _EnrichedSearchResultsState extends State<_EnrichedSearchResults> {
 
   void _onSearchChanged() => _scheduleEnrich();
 
-  /// 結果の取りこぼしを避けるため、前の強化処理の後に続ける。
+  /// Queued behind the previous run so no result is skipped.
   void _scheduleEnrich() {
     _enrichQueue = _enrichQueue.then((_) => _enrichNewResults());
   }
 
-  /// 新しい結果が追加されたときに強化処理を実行する。
+  /// Enriches the results that arrived since the last run.
   Future<void> _enrichNewResults() async {
     if (!mounted) return;
     final results = widget.search.state.results;
 
-    // 新しい結果がない場合はスキップ（リセット時は捨てる）
+    // Nothing new: return, clearing the cache when the list was reset.
     if (results.length <= _lastEnrichedCount) {
       if (results.isEmpty && _enriched.isNotEmpty) {
         setState(() {
@@ -363,12 +363,12 @@ class _EnrichedSearchResultsState extends State<_EnrichedSearchResults> {
     setState(() => _isEnriching = true);
 
     try {
-      // データベースからライブラリ状態を取得
+      // Library membership comes from the database.
       final libraryNovels = await context.services.db.getLibraryNovels();
       final libraryWorkIds = libraryNovels.map((novel) => novel.workId).toSet();
       if (!mounted) return;
 
-      // 新しい結果のみを強化
+      // Only the new results are enriched.
       final newResults = results.sublist(_lastEnrichedCount);
       setState(() {
         _enriched.addAll(

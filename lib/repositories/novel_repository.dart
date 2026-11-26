@@ -41,7 +41,7 @@ class NovelRepository {
   /// アプリケーションの設定。
   final SettingsController settings;
 
-  /// キャッシュフォールバックの通知先。
+  /// Where cache-fallback events are reported.
   final NetworkFallbackBus _fallback;
 
   final AppDatabase _db;
@@ -801,15 +801,15 @@ class NovelRepository {
     }
   }
 
-  /// 小説情報をライブラリに登録する。
+  /// Adds the novel to the library.
   ///
   /// 登録は冪等なので、登録済みでも呼び出して問題ない。
   /// 登録解除はダウンロード済み本文の削除を伴う確認が必要なため、
   /// 画面からは [NovelRepository.removeFromLibrary] を
   /// 確認ダイアログ経由で呼ぶこと。
   Future<void> addNovelInfoToLibrary(NovelInfo novelInfo) async {
-    // 事前にNovelsテーブルに小説情報が存在することを保証する必要がある。
-    // 通常はfetchNovelInfoによって挿入済み。
+    // The novels row has to exist first. It usually does: fetchNovelInfo
+    // inserts it before the user can ask for the library.
     await _db.insertNovel(novelInfo.toDbCompanion());
     await _db.addToLibrary(
       novelInfo.source,
@@ -818,9 +818,9 @@ class NovelRepository {
     );
   }
 
-  /// 小説情報から作品全体をダウンロードする。
+  /// Downloads a whole work from its novel info.
   ///
-  /// 権限処理と結果表示は呼び出し側が担う。
+  /// Permissions and result display belong to the caller.
   Future<DownloadResult> downloadNovelInfo(NovelInfo novelInfo) async {
     final workId = novelInfo.resolvedWorkId;
     final totalEpisodes = novelInfo.generalAllNo;

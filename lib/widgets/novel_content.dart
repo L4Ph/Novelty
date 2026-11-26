@@ -52,7 +52,7 @@ class _NovelContentState extends State<NovelContent> {
   Async<List<NovelContentElement>> _content = const AsyncLoading();
   var _loaded = false;
 
-  /// 取得の世代。古い取得の結果が新しい表示を上書きしないようにする。
+  /// Load generation, so an older fetch cannot overwrite a newer body.
   var _request = 0;
 
   @override
@@ -97,7 +97,8 @@ class _NovelContentState extends State<NovelContent> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      top: !widget.isAppBarVisible, // AppBarが表示されている場合は上は不要
+      // The AppBar already covers the top when it is visible.
+      top: !widget.isAppBarVisible,
       child: NovelContentBody(
         source: widget.source,
         workId: widget.workId,
@@ -160,16 +161,16 @@ class _NovelContentBodyState extends State<NovelContentBody> {
     }
   }
 
-  /// エピソード表示中は常にimmersiveStickyモードにする。
+  /// Keeps the UI in immersive sticky mode while an episode is open.
   void _applyImmersiveMode() {
     unawaited(() async {
       try {
-        // 縦書き・横書き問わず常にimmersiveStickyを使用
+        // Always immersive sticky, vertical or horizontal.
         await SystemChrome.setEnabledSystemUIMode(
           SystemUiMode.immersiveSticky,
         );
       } on PlatformException catch (e, s) {
-        // プラットフォームチャネルのエラーをログに出力
+        // Log platform-channel failures instead of crashing the reader.
         debugPrint('Failed to set SystemUIMode: $e\n$s');
       }
     }());
@@ -177,7 +178,7 @@ class _NovelContentBodyState extends State<NovelContentBody> {
 
   @override
   void dispose() {
-    // クリーンアップ: ウィジェット破棄時はedgeToEdgeに戻す
+    // Restore edge-to-edge when the reader goes away.
     unawaited(
       SystemChrome.setEnabledSystemUIMode(
         SystemUiMode.edgeToEdge,
@@ -189,10 +190,10 @@ class _NovelContentBodyState extends State<NovelContentBody> {
     super.dispose();
   }
 
-  /// 縦書き要素への変換をキャッシュする。
+  /// Caches the vertical-writing conversion.
   ///
-  /// 同一のコンテンツ・ルビ設定なら同じリストインスタンスを返すことで、
-  /// TategakiText / TategakiTextPaged 側のレイアウトキャッシュが有効になる。
+  /// Returning the same list instance for unchanged content and ruby settings
+  /// keeps the layout cache inside TategakiText / TategakiTextPaged warm.
   List<TategakiElement>? _tategaki(
     List<NovelContentElement>? content,
     bool isRubyEnabled,

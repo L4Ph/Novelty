@@ -7,8 +7,8 @@ final _closeFutures = <AppDatabase, Future<void>>{};
 
 /// DBのクローズをインスタンスごとに一度だけ実行し、その完了を待つ。
 ///
-/// アプリルートの破棄時と、インポート適用時の明示的なクローズが競合しない
-/// よう、進行中のクローズがあればそれを返す。
+/// Returns the in-flight close when there is one, so the shutdown at the app
+/// root and the explicit close during an import swap cannot collide.
 /// (Driftのclose()には二重呼び出しのガードがないため)
 Future<void> closeAppDatabaseSafely(AppDatabase db) {
   final existing = _closeFutures[db];
@@ -28,14 +28,14 @@ Future<void> closeAppDatabaseSafely(AppDatabase db) {
   return future;
 }
 
-/// ライブラリに登録されている小説のリスト。
+/// The novels in the library.
 Stream<List<dynamic>> watchLibraryNovels(AppDatabase db) =>
     db.watchLibraryNovels();
 
-/// 日付ごとにグループ化された閲覧履歴のリスト。
+/// Reading history grouped by day.
 ///
-/// `now` を受け取るのは、日付ラベルの境界が呼び出し側（とテスト）の時計で
-/// 決まるようにするため。UI は `StreamLoader` でこれを購読する。
+/// Takes `now` so the day boundaries follow the caller's clock (and a test can
+/// pin it). The UI subscribes through `StreamLoader`.
 Stream<List<HistoryGroup>> watchGroupedHistory(AppDatabase db, DateTime now) {
   return db.watchHistory().map(
     (historyItems) => HistoryGrouping.groupByDate(historyItems, now),
