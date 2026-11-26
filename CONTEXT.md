@@ -59,5 +59,7 @@
 
 - 複数プロバイダ抽象化: [ADR-0001](./docs/adr/0001-multi-provider-abstraction.md)
 - Hybrid JSON と FTS 廃止: [ADR-0002](./docs/adr/0002-compact-hybrid.md)
+- ルーティングを内製 `tiny_router` に: [ADR-0003](./docs/adr/0003-in-house-router.md)
+- 状態管理を内製 `tiny_state` に: [ADR-0004](./docs/adr/0004-in-house-state.md)
 - カクヨムは公式APIなし・公開HTMLの取得解析のみ（robots.txt遵守）
 - フェーズ分割（P1〜P4）: エピック #240
