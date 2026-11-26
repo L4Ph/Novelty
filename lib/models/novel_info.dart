@@ -384,8 +384,6 @@ extension NovelInfoEx on NovelInfo {
       genreId: Value(genreId),
       generalAllNo: Value(generalAllNo),
       keyword: Value(keyword),
-      generalFirstup: Value(int.tryParse(generalFirstup ?? '')),
-      generalLastup: Value(int.tryParse(generalLastup ?? '')),
       globalPoint: Value(globalPoint),
       reviewCount: Value(reviewCnt),
       rateCount: Value(allHyokaCnt),

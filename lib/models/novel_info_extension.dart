@@ -43,13 +43,8 @@ extension NovelInfoFromDb on db.Novel {
       genreId: genreId,
       generalAllNo: generalAllNo,
       keyword: keyword,
-      // DB定義はIntColumnだが、NovelInfoはString期待。
-      // 現状の実装(toDbCompanion)ではint.tryParseしており、
-      // 日付文字列がパースできずnullになっている可能性が高いが、
-      // 値が入っている場合は文字列として返す。
-      generalFirstup: generalFirstup?.toString(),
-      generalLastup: generalLastup?.toString(),
-
+      // general_firstup / general_lastup は v20 で撤去した。どちらも
+      // 日時文字列を int.tryParse で読んでいたため DB 上は常に NULL だった。
       globalPoint: globalPoint,
 
       reviewCnt: reviewCount,
