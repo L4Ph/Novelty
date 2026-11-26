@@ -16,7 +16,7 @@ class NetworkFallbackSnackbar extends StatefulWidget {
     super.key,
   });
 
-  /// イベントの発行元。
+  /// Where events come from.
   final NetworkFallbackBus bus;
 
   /// ラップする子ウィジェット。
@@ -52,7 +52,7 @@ class _NetworkFallbackSnackbarState extends State<NetworkFallbackSnackbar> {
   void _onEvent() {
     final event = widget.bus.event;
     if (event == null || !mounted) return;
-    // イベントを消費して重複表示を防ぐ
+    // Consume the event so it is shown once.
     widget.bus.clear();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

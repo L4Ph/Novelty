@@ -164,7 +164,7 @@ class _DownloadListItem extends StatelessWidget {
               ),
               builder: (context, progressSnapshot) {
                 final progress = progressSnapshot.data;
-                // 進捗イベントが来るまではDBの集計値で表示する
+                // Until a progress event arrives, show the DB totals.
                 final current =
                     progress?.currentEpisode ?? summary.successCount;
                 final total = progress?.totalEpisodes ?? summary.totalEpisodes;

@@ -73,7 +73,7 @@ class _NovelContentViewState extends State<NovelContentView> {
   TextStyle? _spansStyle;
   bool? _spansRubyEnabled;
 
-  /// span生成は要素・スタイル・ルビ設定が変わった時だけ行う。
+  /// Builds the spans only when the elements, style or ruby setting change.
   List<InlineSpan> _buildSpans(TextStyle style) {
     if (identical(_spansFor, widget.elements) &&
         _spansStyle == style &&
@@ -94,12 +94,12 @@ class _NovelContentViewState extends State<NovelContentView> {
   Widget build(BuildContext context) {
     final defaultStyle = DefaultTextStyle.of(context).style;
 
-    // ルビの高さを考慮して、行の高さを少し多めに確保する
-    // ルビ無効時は StrutStyle を使わず、lineHeight をそのまま反映
+    // Leave room for ruby above the line. Without ruby, skip StrutStyle so
+    // the configured line height applies unchanged.
     final strutStyle = widget.isRubyEnabled
         ? StrutStyle(
             fontSize: defaultStyle.fontSize,
-            height: 1.8, // 行間の倍率
+            height: 1.8, // line-height multiplier
             forceStrutHeight: true,
           )
         : null;

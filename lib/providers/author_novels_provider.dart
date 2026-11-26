@@ -3,7 +3,7 @@ import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
-/// 指定したuserIdの作者の小説一覧を取得する。
+/// Fetches the novels of the author with [userId].
 Future<List<NovelInfo>> fetchAuthorNovels(
   ApiService api,
   SettingsController settings,

@@ -53,7 +53,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 日付ラベル
+                    // Day heading.
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -66,7 +66,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         ),
                       ),
                     ),
-                    // グループ内のアイテム
+                    // Items in that day.
                     ...group.items.map((item) {
                       final workId = item.workId;
                       final title = item.title ?? 'タイトルなし';
@@ -102,8 +102,8 @@ class _HistoryPageState extends State<HistoryPage> {
                         ),
                         onTap: () {
                           if (lastEpisode != null && lastEpisode > 0) {
-                            // 本文を開く際は目次(小説詳細)も積むことで、
-                            // 戻るボタンで本文から目次へ遷移できるようにする
+                            // Push the table of contents (the detail page) as
+                            // well, so back goes from the body to the list.
                             appRouter
                               ..pushOverlay(
                                 NovelDetailDest(

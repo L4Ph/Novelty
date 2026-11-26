@@ -92,7 +92,7 @@ class _SearchModalState extends State<SearchModal> {
                       _setQuery(
                         _query.copyWith(
                           source: source,
-                          // サイト切替時はなろう固有の詳細条件をリセットする
+                          // Drop narou-specific conditions when the site changes.
                           title: isNarou && _query.title,
                           ex: isNarou && _query.ex,
                           keyword: isNarou && _query.keyword,
@@ -100,7 +100,7 @@ class _SearchModalState extends State<SearchModal> {
                           genreId: isNarou ? _query.genreId : null,
                           type: isNarou ? _query.type : null,
                           order: isNarou ? _query.order : 'new',
-                          // カクヨム固有の条件もリセットする
+                          // Drop kakuyomu-specific conditions too.
                           serialStatus: isNarou ? null : _query.serialStatus,
                           totalCharacterCountRange: isNarou
                               ? null

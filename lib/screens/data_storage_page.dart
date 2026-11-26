@@ -28,7 +28,7 @@ class DataStoragePage extends StatefulWidget {
 class _DataStoragePageState extends State<DataStoragePage> {
   /// バックアップサービス。
   /// インポートでDBインスタンスが差し替わるため、
-  /// 使用のたびに現在の接続から生成する。
+  /// Built from the current connection on each use.
   BackupService get _backupService =>
       widget.backupService ?? BackupService(context.services.db);
 
@@ -267,7 +267,7 @@ class _DataStoragePageState extends State<DataStoragePage> {
     // 読み込みが完了したので、データベースを切り替える。
     // 切り替え中は画面全体がアンマウントされて再初期化されるため、
     // 結果は再初期化後にスナックバーで通知される
-    // (DatabaseMaintenanceController 経由)。
+    // (through DatabaseMaintenanceController).
     _maintenance.startImportSwap(
       payload: ImportSwapPayload(pendingFilePath: staged.pendingFilePath!),
     );

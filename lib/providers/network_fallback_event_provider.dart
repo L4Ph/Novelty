@@ -18,23 +18,23 @@ class NetworkFallbackEventData {
   int get hashCode => message.hashCode;
 }
 
-/// キャッシュフォールバックイベントを配るバス。
+/// Delivers cache-fallback events.
 ///
-/// リポジトリが [emit] し、UI側は [event] を購読して、表示中のデータが
-/// 最新でない可能性があることをユーザーに伝える。
+/// The repository [emit]s one; the UI watches [event] and tells the user that
+/// what is on screen may be stale.
 class NetworkFallbackBus extends ChangeNotifier {
   NetworkFallbackEventData? _event;
 
-  /// 最後に発行されたイベント。未消費なら非null。
+  /// The last published event, non-null until it is consumed.
   NetworkFallbackEventData? get event => _event;
 
-  /// イベントを発行する。
+  /// Publishes an event.
   void emit(String message) {
     _event = NetworkFallbackEventData(message: message);
     notifyListeners();
   }
 
-  /// イベントをクリアする。
+  /// Clears the event.
   void clear() {
     if (_event == null) return;
     _event = null;
