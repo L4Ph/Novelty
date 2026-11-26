@@ -43,8 +43,8 @@ extension NovelInfoFromDb on db.Novel {
       genreId: genreId,
       generalAllNo: generalAllNo,
       keyword: keyword,
-      // general_firstup / general_lastup は v20 で撤去した。日時は
-      // novelUpdatedAt が持っている。
+      // general_firstup / general_lastup は v20 で撤去した。どちらも
+      // 日時文字列を int.tryParse で読んでいたため DB 上は常に NULL だった。
       globalPoint: globalPoint,
 
       reviewCnt: reviewCount,
