@@ -11,9 +11,9 @@ import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/gesture_shield.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
-/// 小説のページを表示するウィジェット。
+/// The reader: one episode per page, paged horizontally or vertically.
 class NovelPage extends StatefulWidget {
-  /// コンストラクタ。
+  /// Creates the page.
   const NovelPage({
     required this.source,
     required this.workId,
@@ -22,38 +22,37 @@ class NovelPage extends StatefulWidget {
     this.revised,
   });
 
-  /// 提供サイト（プロバイダ）。
+  /// The source site.
   final NovelSource source;
 
-  /// サイト共通の作品ID（なろうはNコード）。
+  /// Id of the work in that site (an N-code for narou).
   final String workId;
 
-  /// 表示するエピソード番号。
+  /// Episode to open.
   final int? episode;
 
-  /// 改稿日時（指定された場合、キャッシュ判定に使用）
+  /// Revision timestamp, used for the cache check when given.
   final String? revised;
 
-  /// AppBarに表示するタイトルを生成する。
+  /// Builds the AppBar title.
   ///
-  /// - 短編の場合: 小説タイトルのみ
-  /// - 連載の場合: 「第X話 サブタイトル」または「第X話」
+  /// - short story: the novel title only.
+  /// - serialised: "Episode X subtitle", or "Episode X" without one.
   @visibleForTesting
   static String buildTitle(
     NovelInfo novelInfo,
     int currentEpisodeNum,
     Episode? currentEpisode,
   ) {
-    // 短編の場合はタイトルのみ
+    // Short stories show the title only.
     if (novelInfo.novelType == 2) {
       return novelInfo.title ?? '';
     }
 
-    // 連載の場合
+    // Serialised.
     final subtitle = currentEpisode?.subtitle;
 
-    // サブタイトルがある場合は「第X話 サブタイトル」
-    // ない場合は「第X話」のみ
+    // With a subtitle: "Episode X <subtitle>"; without one: "Episode X".
     if (subtitle != null && subtitle.isNotEmpty) {
       return '第$currentEpisodeNum話 $subtitle';
     } else {
@@ -106,7 +105,7 @@ class _NovelPageState extends State<NovelPage> {
     if (mounted) setState(() {});
   }
 
-  /// 表示中の話が属する目次ページだけを購読する。
+  /// Subscribes only to the table-of-contents page the visible episode is on.
   void _syncEpisodeList() {
     final page = ((_currentEpisode - 1) ~/ 100) + 1;
     if (page == _episodeListPage) return;
@@ -136,7 +135,7 @@ class _NovelPageState extends State<NovelPage> {
     return map;
   }
 
-  /// 最初の履歴追加（novelInfoが読み込まれたら一度だけ実行）。
+  /// Adds the first history entry, once the novel info has loaded.
   void _addInitialHistory(NovelInfo novelInfo) {
     if (_hasAddedInitialHistory) return;
     _hasAddedInitialHistory = true;
@@ -215,7 +214,7 @@ class _NovelPageState extends State<NovelPage> {
     );
     if (itemCount != _pageControllerItemCount) {
       _pageControllerItemCount = itemCount;
-      // itemCountが変わったらページ位置をリセット
+      // Reset the page position when itemCount changes.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!pageController.hasClients) return;
         final targetPage = _getInitialPage(_currentEpisode);
@@ -251,7 +250,7 @@ class _NovelPageState extends State<NovelPage> {
             : null,
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
-          // 本文タップでAppBarの表示/非表示を切り替える
+          // Tap the body to show or hide the AppBar.
           onTap: () => setState(() => _isAppBarVisible = !_isAppBarVisible),
           child: Stack(
             children: [
@@ -274,8 +273,8 @@ class _NovelPageState extends State<NovelPage> {
                     totalEpisodes,
                   );
 
-                  // 指定されたエピソードかつ改稿日時が指定されている場合はそちらを優先
-                  // それ以外はNovelInfoから取得した改稿日時を使用
+                  // Prefer the revision passed to this page for the requested
+                  // episode; otherwise use the one from NovelInfo.
                   final revisedDate =
                       (episodeNum == widget.episode && widget.revised != null)
                       ? widget.revised
@@ -292,7 +291,7 @@ class _NovelPageState extends State<NovelPage> {
                   );
                 },
               ),
-              // 縦書きモード時、ホームジェスチャーとの競合を防ぐためシールドを表示
+              // Block the home gesture in vertical mode.
               if (settings.isVertical) const GestureShield(),
             ],
           ),
@@ -301,12 +300,12 @@ class _NovelPageState extends State<NovelPage> {
     );
   }
 
-  /// PageViewのアイテム数を決定する。
+  /// How many pages the PageView holds.
   ///
-  /// - 1話だけの小説: 1ページ
-  /// - 第1話（2話以上）: 2ページ（現在 + 次）
-  /// - 最終話: 2ページ（前 + 現在）
-  /// - 中間エピソード: 3ページ（前 + 現在 + 次）
+  /// - single-episode novel: 1 page.
+  /// - first episode of several: 2 pages (current + next).
+  /// - last episode: 2 pages (previous + current).
+  /// - anything in between: 3 pages (previous + current + next).
   static int _getItemCount(int currentEpisode, int totalEpisodes) {
     if (totalEpisodes == 1) return 1;
     if (currentEpisode == 1) return 2;
@@ -314,15 +313,15 @@ class _NovelPageState extends State<NovelPage> {
     return 3;
   }
 
-  /// PageControllerの初期ページインデックスを決定する。
+  /// The PageController's initial page index.
   ///
-  /// - 第1話: 0（最初のページ）
-  /// - それ以外: 1（中央のページ）
+  /// - first episode: 0 (the first page).
+  /// - otherwise: 1 (the middle page).
   static int _getInitialPage(int currentEpisode) {
     return currentEpisode == 1 ? 0 : 1;
   }
 
-  /// PageViewのindexから実際のエピソード番号を計算する。
+  /// Episode number for a PageView index.
   static int _getEpisodeNumber(
     int index,
     int currentEpisode,
@@ -331,20 +330,20 @@ class _NovelPageState extends State<NovelPage> {
     if (totalEpisodes == 1) return 1;
 
     if (currentEpisode == 1) {
-      // 第1話: [1話, 2話]
+      // First episode: [1, 2].
       return index + 1;
     }
 
     if (currentEpisode == totalEpisodes) {
-      // 最終話: [totalEpisodes-1話, totalEpisodes話]
+      // Last episode: [n-1, n].
       return totalEpisodes - 1 + index;
     }
 
-    // 中間エピソード: [current-1話, current話, current+1話]
+    // Middle: [current-1, current, current+1].
     return currentEpisode - 1 + index;
   }
 
-  /// ページ変更時の処理を行う。
+  /// Handles a page change.
   void _handlePageChanged(
     int index,
     int totalEpisodes,
@@ -354,23 +353,23 @@ class _NovelPageState extends State<NovelPage> {
     final current = _currentEpisode;
 
     if (current == 1) {
-      // 第1話から第2話へ移動
+      // First episode, moving to the second.
       if (index == 1 && totalEpisodes > 1) {
         setState(() => _currentEpisode = 2);
         _updateHistory(novelInfo, 2);
         _syncEpisodeList();
       }
     } else if (current == totalEpisodes) {
-      // 最終話から前のエピソードへ移動
+      // Last episode, moving to the previous.
       if (index == 0 && totalEpisodes > 1) {
         setState(() => _currentEpisode = totalEpisodes - 1);
         _updateHistory(novelInfo, totalEpisodes - 1);
         _syncEpisodeList();
       }
     } else {
-      // 中間エピソードの通常処理
+      // Middle episodes.
       if (index == 0) {
-        // 前のエピソードへ
+        // Previous episode.
         setState(() => _currentEpisode--);
         _updateHistory(novelInfo, _currentEpisode);
         _syncEpisodeList();
@@ -380,7 +379,7 @@ class _NovelPageState extends State<NovelPage> {
           }
         });
       } else if (index == 2) {
-        // 次のエピソードへ
+        // Next episode.
         setState(() => _currentEpisode++);
         _updateHistory(novelInfo, _currentEpisode);
         _syncEpisodeList();

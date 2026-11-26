@@ -27,31 +27,31 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-/// アプリ全体で固定するロケール。
-/// 日本語(日本)に固定し、OSのロケールに関わらず
-/// 日本語環境として動作させる。
+/// The locale the app is pinned to.
+/// Japanese (Japan) regardless of the OS locale, so the app always
+/// behaves as a Japanese environment.
 const appLocale = Locale('ja', 'JP');
 
-/// アプリ全体でサポートするロケール。
-/// 日本語(日本)のみをサポートし、OSのロケールに関わらず
-/// 日本語環境として動作させることで、CJKフォントの
-/// 中国語グリフへのフォールバックを防ぐ。
+/// The locales the app supports.
+/// Japanese (Japan) only, regardless of the OS locale, so CJK text does
+/// not fall back to Chinese glyphs.
+
 const appSupportedLocales = <Locale>[appLocale];
 
-/// アプリ全体で使用するローカライゼーションデリゲート。
+/// The localisation delegates the app uses.
 const appLocalizationsDelegates = <LocalizationsDelegate<dynamic>>[
   GlobalMaterialLocalizations.delegate,
   GlobalWidgetsLocalizations.delegate,
   GlobalCupertinoLocalizations.delegate,
 ];
 
-/// アプリケーションのエントリーポイント。
+/// The application entry point.
 ///
-/// すべての長寿命インスタンス（DB・設定・リポジトリ）を所有し、DBの
-/// 初期化状態に応じて進捗スプラッシュ、リカバリー画面、メイン画面を出し分ける。
-/// 配下へは [Scope] で [AppServices] を配る。
+/// Owns every long-lived instance (database, settings, repository) and picks
+/// between the progress splash, the recovery screen and the main screen from
+/// the database state. Hands [AppServices] down through a [Scope].
 class MyApp extends StatefulWidget {
-  /// コンストラクタ。
+  /// Creates the app.
   const MyApp({super.key});
 
   @override
@@ -95,10 +95,10 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
-  /// 新しいDBを開き、そのDBに結びついたサービス一式を組み立てる。
+  /// Opens a new database and builds the service bundle bound to it.
   ///
-  /// 置き換え時もこの経路を通るので、画面は常に開いている接続のリポジトリを
-  /// 受け取る。
+  /// The import swap takes this path too, so a screen only ever receives a
+  /// repository over a connection that is still open.
   Future<void> _openDatabase() async {
     final db = AppDatabase();
     final services = AppServices(
@@ -141,13 +141,13 @@ class _MyAppState extends State<MyApp> {
     unawaited(_performImportSwap(swap));
   }
 
-  /// インポート適用(DBファイルの置き換え)を実行する。
+  /// Replaces the database file.
   ///
-  /// 状態が [DatabaseMaintenanceBusy] にpayload付きで変わった時点で、次の
-  /// フレームでは配下の画面がアンマウントされ、DBへのストリーム購読が
-  /// 全てキャンセルされる。購読の解除を待ってから接続を閉じ、ファイルを
-  /// 置き換えて新しい接続を開く。
-  /// (pause状態の購読が残っているとDriftのclose()は完了しない)
+  /// By the time the state turns into [DatabaseMaintenanceBusy] with a payload,
+  /// the next frame unmounts every screen below and cancels their stream
+  /// subscriptions. The connection is closed only after that, and the file is
+  /// swapped before the new connection is opened.
+  /// (Drift's close() never completes while a paused subscription is attached.)
   Future<void> _performImportSwap(ImportSwapPayload payload) async {
     await SchedulerBinding.instance.endOfFrame;
 
@@ -165,7 +165,7 @@ class _MyAppState extends State<MyApp> {
 
     await _openDatabase();
 
-    // フレーム完了後に結果をセットする（ビルド中の通知を避ける）。
+    // Set the result after the frame so nothing notifies mid-build.
     SchedulerBinding.instance.addPostFrameCallback((_) {
       // Screens on the stacks belong to the database that was just replaced.
       appRouter.reset();
@@ -185,8 +185,8 @@ class _MyAppState extends State<MyApp> {
         final maintenance = _maintenance.state;
         if (maintenance is DatabaseMaintenanceBusy &&
             maintenance.importSwap != null) {
-          // DBファイル置き換え中は、DB関連の購読を一切作らない
-          // ブロッキング画面のみを表示する。
+          // While the file is being replaced, build no subscription at all:
+          // only the blocking screen is shown.
           return _startupApp(
             home: DatabaseMaintenanceScreen(
               operationLabel: maintenance.operationLabel,
@@ -237,7 +237,7 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-/// 設定を読み込み、テーマとルーターを適用したメインアプリ。
+/// The main app once settings are readable: theme and router.
 class _AppWithSettings extends StatelessWidget {
   const _AppWithSettings({required this.services});
 
@@ -284,25 +284,24 @@ Widget _startupApp({required Widget home}) => MaterialApp(
   home: home,
 );
 
-/// DBを停止して行う保守操作の実行中に、
-/// 配下の画面全体をブロッキング画面で覆うオーバーレイ。
+/// Covers the screens below while a database maintenance operation runs.
 ///
-/// [DatabaseMaintenanceBusy] の間は不透明なブロッキング画面を最前面に重ね、
-/// 配下のUIへのタッチを物理的に遮断する。
-/// 配下の画面は破棄されずに保持されるため、操作完了後の
-/// フィードバック(ダイアログ等)をそのまま表示できる。
+/// While [DatabaseMaintenanceBusy], an opaque screen sits on top and blocks
+/// touches. The screens below are kept, so feedback for the finished
+/// operation (dialogs and the like) can still be shown.
+
 class DatabaseMaintenanceOverlay extends StatelessWidget {
-  /// コンストラクタ。
+  /// Creates the overlay.
   const DatabaseMaintenanceOverlay({
     required this.maintenance,
     required this.child,
     super.key,
   });
 
-  /// 実行状態の取得元。
+  /// Where the state is read from.
   final DatabaseMaintenanceController maintenance;
 
-  /// 配下に表示する画面。
+  /// The screen to show below.
   final Widget child;
 
   @override
@@ -315,10 +314,10 @@ class DatabaseMaintenanceOverlay extends StatelessWidget {
           return child;
         }
         if (state.importSwap != null) {
-          // DBファイルを置き換える間は配下の画面をアンマウントし、
-          // DBへのストリーム購読を全てキャンセルさせる。
-          // pause状態の購読が残っているとDriftのclose()が完了しないため、
-          // 子を含めずブロッキング画面のみを返す。
+          // Unmount the screens below while the file is being replaced, so
+          // every stream subscription is cancelled. Drift's close() never
+          // completes while a paused subscription is attached, so only the
+          // blocking screen is returned here.
           return DatabaseMaintenanceScreen(
             operationLabel: state.operationLabel,
           );
@@ -338,23 +337,23 @@ class DatabaseMaintenanceOverlay extends StatelessWidget {
   }
 }
 
-/// インポート適用の結果を検知してスナックバーで通知するウィジェット。
+/// Reports the result of an import swap in a snackbar.
 ///
-/// 適用処理は画面全体のアンマウントを伴うため、結果の通知は
-/// 再初期化後の画面ツリーで行う必要がある。マウント時に未消費の結果を
-/// 拾い、マウント中の変更も監視して一度だけ表示して消費する。
+/// The swap unmounts the whole tree, so the result can only be reported by
+/// the tree rebuilt afterwards. On mount it picks up an unconsumed result and
+/// also watches for one arriving later, showing it once.
 class ImportSwapResultHandler extends StatefulWidget {
-  /// コンストラクタ。
+  /// Creates the handler.
   const ImportSwapResultHandler({
     required this.maintenance,
     required this.child,
     super.key,
   });
 
-  /// 結果の取得元。
+  /// Where the result is read from.
   final DatabaseMaintenanceController maintenance;
 
-  /// 配下に表示する画面。
+  /// The screen to show below.
   final Widget child;
 
   @override
@@ -366,7 +365,7 @@ class _ImportSwapResultHandlerState extends State<ImportSwapResultHandler> {
   @override
   void initState() {
     super.initState();
-    // 再初期化の完了前に確定していた結果を拾う
+    // Pick up a result that was already decided before this tree mounted.
     WidgetsBinding.instance.addPostFrameCallback((_) => _consumeResult());
     widget.maintenance.addListener(_onMaintenanceChanged);
   }

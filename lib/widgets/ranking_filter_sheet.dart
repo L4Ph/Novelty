@@ -82,11 +82,11 @@ class _RankingFilterSheetState extends State<RankingFilterSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextButton(
-                    onPressed: () {
+                    onPressed: () => setState(() {
                       // リセット
                       _showOnlyOngoing = false;
                       _selectedGenreId = null;
-                    },
+                    }),
                     child: const Text('リセット'),
                   ),
                   Text(
@@ -190,9 +190,9 @@ class _RankingFilterSheetState extends State<RankingFilterSheet> {
                             return FilterChip(
                               label: Text(genre.name),
                               selected: isSelected,
-                              onSelected: (selected) {
+                              onSelected: (selected) => setState(() {
                                 _selectedGenreId = selected ? genre.id : null;
-                              },
+                              }),
                               showCheckmark:
                                   false, // シンプルにするためチェックマークなし（色変化のみ）も選択肢
                               // checkmarkColor:

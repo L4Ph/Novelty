@@ -3,9 +3,9 @@ import 'package:novelty/repositories/preferences_repository.dart';
 import 'package:tiny_state/tiny_state.dart';
 
 @immutable
-/// アプリケーションの設定を管理するクラス。
+/// The settings the app runs with.
 class AppSettings {
-  /// コンストラクタ。
+  /// Creates the settings.
   const AppSettings({
     required this.themeMode,
     required this.fontSize,
@@ -17,37 +17,38 @@ class AppSettings {
     this.isOfflineMode = false,
   });
 
-  /// テーマモード (system, light, dark)。
+  /// Theme mode (system, light, dark).
   final ThemeMode themeMode;
 
-  /// フォントサイズ。
+  /// Font size.
   final double fontSize;
 
-  /// 行間。
+  /// Line height.
   final double lineHeight;
 
-  /// 縦書き設定。
+  /// Vertical writing.
   final bool isVertical;
 
-  /// シークレットモード (履歴を残さない)。
+  /// Incognito: do not record reading history.
   final bool isIncognito;
 
-  /// ページ送り設定 (true: ページ送り, false: スクロール)。
+  /// Page flip (true) or scroll (false).
   final bool isPageFlip;
 
-  /// ルビ（ふりがな）の表示設定。
+  /// Ruby (furigana) rendering.
   ///
-  /// `true` の場合、ルビが表示されます（デフォルト）。
-  /// `false` の場合、ルビは非表示になりベーステキストのみが表示されます。
-  /// これにより、行間をより小さく設定することができます。
+  /// When `true` ruby is shown (the default).
+  /// When `false` the base text is shown without ruby, which allows a
+  /// smaller line height.
   final bool isRubyEnabled;
 
-  /// オフラインモード設定。
+  /// Offline mode.
   ///
-  /// `true` の場合、ネットワーク通信を行わず、ダウンロード済みのコンテンツのみを利用します。
+  /// When `true` no network requests are made; only downloaded content is
+  /// used.
   final bool isOfflineMode;
 
-  /// 設定をコピーするメソッド。
+  /// Returns a copy with the given fields replaced.
   AppSettings copyWith({
     ThemeMode? themeMode,
     double? fontSize,
@@ -71,15 +72,15 @@ class AppSettings {
   }
 }
 
-/// アプリケーションの設定を保持し、変更を購読者へ通知する。
+/// Holds the settings and notifies listeners on change.
 ///
-/// アプリルートが1つ生成して [Scope] 経由で配る。設定の変更は
-/// [notifyListeners] で全体へ伝わるため、各画面は `state` を読むだけでよい。
+/// The app root creates one and hands it out through the [Scope]. A change
+/// reaches everything through [notifyListeners], so screens only read `state`.
 class SettingsController extends ChangeNotifier {
-  /// コンストラクタ。
+  /// Creates the controller.
   ///
-  /// [initialState] はテストが読み込みを省くために使う。通常は省略し、
-  /// [load] で保存済みの設定を読み込む。
+  /// [initialState] lets tests skip loading. Production omits it and calls
+  /// [load] to read the stored settings.
   SettingsController(
     this._prefs, {
     Async<AppSettings> initialState = const AsyncLoading(),
@@ -94,28 +95,28 @@ class SettingsController extends ChangeNotifier {
   static const _isRubyEnabledKey = 'is_ruby_enabled';
   static const _isOfflineModeKey = 'is_offline_mode';
 
-  /// ルビ表示時の最小行間。
+  /// Smallest line height while ruby is shown.
   ///
-  /// ルビが重なることを防ぐための最小値。
-  /// 理論値1.25に安全マージンを加えた値。
+  /// Anything smaller overlaps the ruby; 1.25 is the theoretical minimum,
+  /// so this adds a safety margin.
   static const double minLineHeightWithRuby = 1.3;
 
-  /// ルビ非表示時の最小行間。
+  /// Smallest line height without ruby.
   ///
-  /// ルビが非表示の場合、より詰まった表示が可能。
+  /// Without ruby the text can be set tighter.
   static const double minLineHeightWithoutRuby = 1;
 
   final PreferencesRepository _prefs;
 
   Async<AppSettings> _state;
 
-  /// 現在の設定。読み込み中は [AsyncLoading]。
+  /// The current settings; [AsyncLoading] until loaded.
   Async<AppSettings> get state => _state;
 
-  /// 読み込み済みの設定。未読み込みなら null。
+  /// The loaded settings, or null before that.
   AppSettings? get value => _state.valueOrNull;
 
-  /// オフラインモードが有効か。未読み込みなら false。
+  /// Whether offline mode is on. False until loaded.
   bool get isOfflineMode => value?.isOfflineMode ?? false;
 
   void _setState(Async<AppSettings> next) {
@@ -123,7 +124,7 @@ class SettingsController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 保存済みの設定を読み込む。アプリ起動時に一度だけ呼ぶ。
+  /// Reads the stored settings. Called once at startup.
   Future<void> load() async {
     final repo = _prefs;
     final themeModeIndex =
@@ -152,7 +153,7 @@ class SettingsController extends ChangeNotifier {
     );
   }
 
-  /// テーマモードを設定するメソッド。
+  /// Sets the theme mode.
   Future<void> setThemeMode(ThemeMode mode) async {
     if (value == null) {
       throw StateError('Settings are not loaded');
@@ -174,7 +175,7 @@ class SettingsController extends ChangeNotifier {
     }
   }
 
-  /// フォントサイズを設定するメソッド。
+  /// Sets the font size.
   Future<void> setFontSize(double size) async {
     if (value == null) {
       throw StateError('Settings are not loaded');
@@ -196,7 +197,7 @@ class SettingsController extends ChangeNotifier {
     }
   }
 
-  /// 行間を設定するメソッド。
+  /// Sets the line height.
   Future<void> setLineHeight(double height) async {
     if (value == null) {
       throw StateError('Settings are not loaded');
@@ -218,7 +219,7 @@ class SettingsController extends ChangeNotifier {
     }
   }
 
-  /// 縦書き設定を更新するメソッド。
+  /// Sets vertical writing.
   Future<void> setIsVertical({required bool isVertical}) async {
     if (value == null) {
       throw StateError('Settings are not loaded');
@@ -238,7 +239,7 @@ class SettingsController extends ChangeNotifier {
     }
   }
 
-  /// シークレットモードを設定するメソッド。
+  /// Sets incognito mode.
   Future<void> setIsIncognito({required bool isIncognito}) async {
     if (value == null) {
       throw StateError('Settings are not loaded');
@@ -263,7 +264,7 @@ class SettingsController extends ChangeNotifier {
     }
   }
 
-  /// オフラインモードを設定するメソッド。
+  /// Sets offline mode.
   Future<void> setIsOfflineMode({required bool isOfflineMode}) async {
     if (value == null) {
       throw StateError('Settings are not loaded');
@@ -288,7 +289,7 @@ class SettingsController extends ChangeNotifier {
     }
   }
 
-  /// ページ送り設定を更新するメソッド。
+  /// Sets page flip.
   Future<void> setIsPageFlip({required bool isPageFlip}) async {
     if (value == null) {
       throw StateError('Settings are not loaded');
@@ -310,14 +311,14 @@ class SettingsController extends ChangeNotifier {
     }
   }
 
-  /// ルビ表示設定を更新するメソッド。
+  /// Sets ruby rendering.
   ///
-  /// ルビを有効にする場合、行間が [minLineHeightWithRuby] 未満であれば
-  /// 自動的に [minLineHeightWithRuby] に調整します。
-  /// これはルビが重なることを防ぐためです。
+  /// Enabling ruby raises a line height below [minLineHeightWithRuby] to
+  /// that minimum, so the ruby cannot overlap.
+
   ///
-  /// 永続化処理は2段階で行われるため、2段階目が失敗した場合は
-  /// 1段階目の変更をロールバックしてデータ整合性を保証します。
+  /// Persisting takes two steps. If the second fails, the first is rolled
+  /// back so the stored settings stay consistent.
   Future<void> setIsRubyEnabled({required bool isRubyEnabled}) async {
     if (value == null) {
       throw StateError('Settings are not loaded');
@@ -327,13 +328,13 @@ class SettingsController extends ChangeNotifier {
       final repo = _prefs;
       final originalIsRubyEnabled = value!.isRubyEnabled;
 
-      // Phase 1: isRubyEnabled設定を保存
+      // Phase 1: store isRubyEnabled.
       final success = await repo.setBool(_isRubyEnabledKey, isRubyEnabled);
       if (!success) {
         throw Exception('Failed to save ruby enabled setting');
       }
 
-      // Phase 1成功後の例外もロールバック対象
+      // A failure after phase 1 succeeded is rolled back too.
       AppSettings newSettings;
       try {
         newSettings = value!.copyWith(isRubyEnabled: isRubyEnabled);
@@ -341,19 +342,19 @@ class SettingsController extends ChangeNotifier {
         debugPrint(
           'Failed to create new settings: $e\nStack trace: $stackTrace',
         );
-        // Phase 1をロールバック
+        // Roll back phase 1.
         await _rollbackIsRubyEnabled(repo, originalIsRubyEnabled);
         rethrow;
       }
 
-      // Phase 2: 必要に応じて行間を調整（失敗時はロールバック）
+      // Phase 2: adjust the line height when needed (rolled back on failure).
       if (isRubyEnabled && newSettings.lineHeight < minLineHeightWithRuby) {
         final lineHeightSuccess = await repo.setDouble(
           _lineHeightKey,
           minLineHeightWithRuby,
         );
         if (!lineHeightSuccess) {
-          // ロールバック: isRubyEnabledを元に戻す
+          // Roll back isRubyEnabled.
           await _rollbackIsRubyEnabled(repo, originalIsRubyEnabled);
           throw Exception(
             'Failed to save line height setting. '
@@ -373,9 +374,10 @@ class SettingsController extends ChangeNotifier {
     }
   }
 
-  /// isRubyEnabledのロールバック処理。
+  /// Rolls isRubyEnabled back.
   ///
-  /// ロールバック処理自体が失敗した場合は、クリティカルエラーとして扱う。
+  /// A failure here leaves the stored settings inconsistent, so it is
+  /// rethrown as a critical error.
   Future<void> _rollbackIsRubyEnabled(
     PreferencesRepository repo,
     bool originalValue,
@@ -395,7 +397,7 @@ class SettingsController extends ChangeNotifier {
         );
       }
     } on Exception catch (rollbackError, rollbackStackTrace) {
-      // Exceptionの場合はそのまま再スロー
+      // Rethrow exceptions unchanged.
       debugPrint(
         'CRITICAL: Rollback threw exception: $rollbackError\n'
         '$rollbackStackTrace',

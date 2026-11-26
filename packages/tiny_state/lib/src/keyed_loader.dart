@@ -39,10 +39,15 @@ class KeyedLoader<T> extends StatefulWidget {
 class _KeyedLoaderState<T> extends State<KeyedLoader<T>> {
   Async<T> _state = AsyncLoading<T>();
   CancelToken? _token;
+  var _started = false;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Started here rather than in initState so that [KeyedLoader.load] may read
+    // inherited widgets (a Scope, a Theme) on its first line.
+    if (_started) return;
+    _started = true;
     _start(widget.loadKey);
   }
 

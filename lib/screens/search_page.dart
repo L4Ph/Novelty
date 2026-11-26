@@ -5,15 +5,15 @@ import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
-/// 小説検索画面
+/// Library search screen.
 class SearchPage extends StatefulWidget {
-  /// コンストラクタ
+  /// Creates the page.
   const SearchPage({
     super.key,
     this.initialQuery,
   });
 
-  /// 初期検索クエリ
+  /// The query the page opens with.
   final NovelSearchQuery? initialQuery;
 
   @override
@@ -28,7 +28,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
-    // initialQuery にキーワードがあれば初期テキストとして使用する
+    // Use the initial query as the starting text when it has a keyword.
     _searchController = TextEditingController(text: widget.initialQuery?.word);
     _query = widget.initialQuery ?? const NovelSearchQuery();
   }
@@ -55,13 +55,10 @@ class _SearchPageState extends State<SearchPage> {
   Future<List<Novel>?> _search(NovelSearchQuery query) async {
     final db = context.services.db;
 
-    // モーダルから総合クエリが渡された場合、キーワードが空でも検索したい
-    // 通常、DB 検索は FTS に依存するためキーワードが必要
-    // ただし、キーワードなしの「ジャンルで絞り込み」もサポートしたい
-    // 現状は既存ロジックのまま: キーワードがあれば FTS を使用
-    // キーワードがなく他の絞り込みがある場合、ライブラリ全件を取得して絞り込む
-    // SearchPage は元々テキスト検索用のため、テキスト検索を前提とする
-    // その後、結果を絞り込む
+    // The modal can pass a full query with an empty keyword. DB search relies
+    // on FTS and therefore needs a keyword, but filtering by genre alone has to
+    // work too. Kept from the original page: use FTS when there is text, and
+    // load the whole library when there are only filters.
 
     final searchText = query.word ?? '';
 
@@ -70,9 +67,9 @@ class _SearchPageState extends State<SearchPage> {
     if (searchText.trim().isNotEmpty) {
       novels = await db.searchNovels(searchText);
     } else {
-      // 検索テキストがなく他の絞り込みがある場合、条件に一致するライブラリ全件を表示する
-      // ただし元の SearchPage は初期状態では空だった
-      // initialQuery に何らかの絞り込みがあれば、ライブラリ全件を取得する
+      // No keyword but other filters: show the whole library, then filter.
+      // A bare page with no filters stays empty.
+
       final hasFilters = query != const NovelSearchQuery();
       if (hasFilters) {
         novels = await db.getLibraryNovels();
@@ -81,33 +78,26 @@ class _SearchPageState extends State<SearchPage> {
       }
     }
 
-    // NovelSearchQuery に基づいてメモリ内で絞り込む
+    // Filter in memory by the query.
     final filteredNovels = novels.where((novel) {
       final q = query;
 
-      // ジャンルで絞り込み
+      // Genre.
       if (q.genreId != null && q.genreId!.isNotEmpty) {
-        // DB 上の genre_id は nullable な String
+        // genre_id is a nullable String in the DB.
         if (novel.genreId == null || !q.genreId!.contains(novel.genreId)) {
           return false;
         }
       }
 
-      // 種別で絞り込み
+      // Novel type.
       if (q.type != null) {
-        // novelType: 0: 短編, 1: 連載中
-        // end: 0: 短編 or 完結済, 1: 連載中
-        // クエリ種別: t(短編), r(連載中), er(完結済), re(すべて連載), ter(短編+完結)
-
-        final isShort = novel.novelType == 0; // 短編
-        // 連載小説の場合:
-        // novelType=1 なら連載
-        // end=1 -> 連載中
-        // end=0 -> 完結済 -- ただしコメントには「0: 短編 or 完結済」とある
-        // 標準的ななろうの対応関係やアプリ内の使用法を確認する
-        // 想定:
-        // novelType=1, end=1 => 連載中 (r)
-        // novelType=1, end=0 => 完結済連載 (er)
+        // novelType: 0 = short story, 1 = serialised.
+        // end: 0 = short story or finished, 1 = ongoing.
+        // Query type: t (short), r (ongoing), er (finished),
+        // re (all serialised), ter (short + finished).
+        final isShort = novel.novelType == 0; // short story
+        // Serialised novels: end decides between ongoing (r) and finished (er).
 
         if (q.type == 't') {
           if (!isShort) return false;
@@ -118,47 +108,47 @@ class _SearchPageState extends State<SearchPage> {
         } else if (q.type == 're') {
           if (isShort) return false;
         } else if (q.type == 'ter') {
-          // 短編かつ完結済み連載? いいえ、和集合。
-          // 短編 または 完結済み連載。
+          // Short story or finished serialised story: the union of both.
+
           if (!isShort && novel.end != 0) return false;
         }
       }
 
-      // 検索対象で絞り込み (タイトル, 作者, キーワード)
-      // DB 検索は FTS に一致したフィールドを既に検索している
-      // ただしタイトルのみに限定したい場合はここでチェックが必要
-      // DB 検索は OR の広い検索になる
-      if (searchText.isNotEmpty) {
-        // ユーザーがタイトルのみ指定した場合、タイトル内で一致するかを確認する
-        // ただし DB 検索は全一致を返す
-        // この段階で厳密なフィールド絞り込みを実装するのは過剰かもしれない
-        // 特に厳密さが求められていない限り
-        // なろう API ではこれらを「検索対象に含める」として扱う
-        // デフォルトが全て false の場合（UI では「全て」または特定のデフォルトを意味する）
-        // ただし SearchModal はユーザーが選択した値を渡す
+      // Target fields (title, author, keyword) are not narrowed here: the FTS
+      // query already searched them, and the narou API treats them as
+      // "include in the search" rather than as strict field filters.
 
-        // シンプルな方法: 特定フィールドが選択された場合のみ厳密に絞り込む?
-        // 実際、なろう API では何もチェックされていないと通常は無効またはデフォルト扱い
-        // この UI ではチェックをデフォルトにする?
-        // 過剰設計を避けるため、現状は厳密なフィールド検証をスキップ
-        // 誤検知が見られない限り
+      if (searchText.isNotEmpty) {
+
+
+
+
+
+
+
+
+
+
+
+
+
       }
 
       return true;
     }).toList();
 
-    // 並び替え
-    // order: new (新しい順), old (古い順) など
-    // DB の結果は FTS の順位で並ぶことがある
-    // ただし特定の並び替えが指定されている場合:
+    // Ordering: the DB result follows the FTS rank (or the library's added-at
+    // order), and the query's order is applied client-side. Sorting by
+    // novelUpdatedAt/lastup is intentionally left out.
+
     if (query.order == 'new') {
-      // ライブラリの追加日時? それとも小説の更新日時?
-      // ライブラリ検索では通常「追加日」または「小説の更新日」
-      // 検索は DB の並び順（Rank 順）、ライブラリ取得は追加日順に依存する
-      // または getLibraryNovels の追加日順
-      // 並び替えをサポートする場合は `filteredNovels` を並べ替える必要がある
-      // novel.novelUpdatedAt は String? "YYYY-MM-DD..."
-      // novel.generalLastup は int? (タイムスタンプ?)
+
+
+
+
+
+
+
     }
 
     return filteredNovels;
@@ -170,7 +160,7 @@ class _SearchPageState extends State<SearchPage> {
       appBar: AppBar(
         title: TextField(
           controller: _searchController,
-          // クエリを持たずに来た場合のみオートフォーカス
+          // Autofocus only when the page is opened without a query.
           autofocus:
               widget.initialQuery?.word == null ||
               widget.initialQuery!.word!.isEmpty,
@@ -240,7 +230,7 @@ class _SearchPageState extends State<SearchPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // 小説の検索結果
+        // Search results.
         Text(
           '小説 (${novels.length})',
           style: Theme.of(context).textTheme.titleMedium,
