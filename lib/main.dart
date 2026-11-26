@@ -267,7 +267,9 @@ class _AppWithSettings extends StatelessWidget {
         ),
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stackTrace) => Center(child: Text('Error: $err')),
+      error: (err, stackTrace) => _startupApp(
+        home: Center(child: Text('Error: $err')),
+      ),
     );
   }
 }
