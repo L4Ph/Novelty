@@ -28,7 +28,7 @@ const testNovelInfo = NovelInfo(
   episodes: [],
 );
 
-/// 縦書き設定。
+/// Vertical-writing settings.
 const verticalTestSettings = AppSettings(
   themeMode: ThemeMode.system,
   fontSize: 16,
@@ -39,7 +39,7 @@ const verticalTestSettings = AppSettings(
   isRubyEnabled: true,
 );
 
-/// 横書き設定。
+/// Horizontal-writing settings.
 const horizontalTestSettings = AppSettings(
   themeMode: ThemeMode.system,
   fontSize: 16,
@@ -50,7 +50,7 @@ const horizontalTestSettings = AppSettings(
   isRubyEnabled: true,
 );
 
-/// 本文ページを、指定した設定と画面サイズで表示する。
+/// Pumps the reader with the given settings and view size.
 Future<void> pumpNovelPage(
   WidgetTester tester, {
   required AppSettings settings,

@@ -184,7 +184,7 @@ void main() {
       );
       expect(find.text('Initial Novel'), findsOneWidget);
 
-      // 新しいクエリ用にモックの応答を更新してから、フィルタを変更する
+      // Update the mock before changing the filter, so the reload sees it.
       when(api.searchNovels(any)).thenAnswer(
         (_) async => NovelSearchResult(novels: filteredNovels, allCount: 1),
       );

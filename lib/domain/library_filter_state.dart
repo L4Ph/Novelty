@@ -54,9 +54,9 @@ class LibraryFilterState {
       '$showOnlyOngoing, selectedGenreId: $selectedGenreId)';
 }
 
-/// ライブラリのフィルタ状態を保持し、変更を購読者へ通知する。
+/// Holds the library filter and notifies listeners on change.
 ///
-/// ライブラリ画面が1つ生成して保持する。
+/// The library screen creates one and keeps it.
 class LibraryFilterController extends ChangeNotifier {
   LibraryFilterState _state = const LibraryFilterState();
 

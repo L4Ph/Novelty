@@ -5,7 +5,7 @@ import 'package:novelty/screens/explore_page.dart';
 
 import '../support/test_services.dart';
 
-/// ExplorePage を、指定した設定で表示する。
+/// Pumps ExplorePage with the given settings.
 Future<void> pumpExplore(WidgetTester tester, {required bool offline}) async {
   final db = AppDatabase.memory();
   addTearDown(db.close);

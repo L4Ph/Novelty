@@ -54,9 +54,9 @@ class RankingFilterState {
       '$showOnlyOngoing, selectedGenreId: $selectedGenreId)';
 }
 
-/// ランキングタイプごとのフィルタ状態を保持し、変更を購読者へ通知する。
+/// Holds a filter and notifies listeners on change.
 ///
-/// ランキング画面が `(source, rankingType)` ごとに1つ生成して保持する。
+/// The ranking screen creates one per `(source, rankingType)` and keeps it.
 class RankingFilterController extends ChangeNotifier {
   /// Creates the controller.
   RankingFilterController({required NovelSource source})

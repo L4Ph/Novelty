@@ -195,7 +195,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       await Future<void>.delayed(Duration.zero);
 
-      // タブ切替等でコントローラが破棄される
+      // The controller is disposed, as it is on a tab switch.
       controller.dispose();
 
       // APIレスポンスが遅れて返る（破棄後の完了）

@@ -150,7 +150,7 @@ void main() {
       );
       await Future<void>.delayed(Duration.zero);
 
-      // 画面離脱等でコントローラが破棄される
+      // The controller is disposed, as when the screen goes away.
       controller.dispose();
 
       // 検索が遅れて完了する（破棄後の完了）

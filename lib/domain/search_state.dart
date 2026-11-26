@@ -95,9 +95,10 @@ extension SearchStateEx on SearchState {
   bool get hasMore => results.length < allCount;
 }
 
-/// 検索状態を保持し、変更を購読者へ通知する。
+/// Holds the search state and notifies listeners on change.
 ///
-/// 画面が1つ生成して保持する。検索の実行とページングもここが担う。
+/// One per screen, owned by the screen. Running the search and paging through
+/// results live here too.
 class NovelSearchController extends ChangeNotifier {
   /// Creates the controller.
   NovelSearchController({

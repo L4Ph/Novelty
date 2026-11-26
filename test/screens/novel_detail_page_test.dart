@@ -21,13 +21,13 @@ import '../support/test_services.dart';
 import 'novel_detail_page_test.mocks.dart';
 
 @GenerateMocks([AppDatabase, NovelRepository])
-/// 実DBの監視ストリームを解除してからテストを終える。
+/// Unmounts the page so drift's watched stream is cancelled first.
 Future<void> unmountPage(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pump(const Duration(seconds: 1));
 }
 
-/// 詳細ページを、指定したリポジトリ/DB の状態で表示する。
+/// Pumps the detail page with the given repository and database state.
 Future<void> pumpNovelDetail(
   WidgetTester tester, {
   required NovelSource source,
@@ -69,7 +69,7 @@ Future<void> pumpNovelDetail(
     when(repository.downloadNovelInfo(info)).thenAnswer((_) async => result);
   }
 
-  // 実DBを渡された場合は、ミューテーションだけ本物のリポジトリへ委譲する。
+  // With a real database, delegate mutations to the real repository.
   if (database != null) {
     final real = NovelRepository(
       apiService: ApiService(),
