@@ -7,5 +7,5 @@ environment:
 resolution: workspace
 
 dev_dependencies:
-  test:
+  test: 1.32.0
   very_good_analysis: ^10.3.0

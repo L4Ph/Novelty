@@ -8,8 +8,8 @@ environment:
 resolution: workspace
 
 dependencies:
-  meta:
+  meta: 1.19.0
 
 dev_dependencies:
-  test:
+  test: 1.32.0
   very_good_analysis: ^10.3.0
