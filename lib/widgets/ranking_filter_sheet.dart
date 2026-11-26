@@ -38,13 +38,13 @@ class _RankingFilterSheetState extends State<RankingFilterSheet> {
   late bool _showOnlyOngoing = widget.initialShowOnlyOngoing;
   late String? _selectedGenreId = widget.initialSelectedGenreId;
 
-  // ジャンルデータの加工（カテゴリごとにグループ化）
+  // Group the genres by their category.
   late final Map<String, List<GenreMaster>> _groupedGenres = () {
     final groups = <String, List<GenreMaster>>{};
 
     for (final genre in widget.genres) {
-      // "名称〔カテゴリ〕" の形式をパース（なろう形式）
-      // カテゴリが無いジャンル（カクヨム等）はそのままの名前でグループ化
+      // Narou writes "name〔category〕".
+      // Sites without a category (kakuyomu and friends) group by their name.
       final match = RegExp('(.+)〔(.+)〕').firstMatch(genre.name);
       final category = match?.group(2) ?? genre.name;
       groups.putIfAbsent(category, () => []).add(genre);

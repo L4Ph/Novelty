@@ -46,7 +46,7 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
   late final AsyncSubscription<DownloadProgress?> _downloadProgress;
   late final AsyncSubscription<int?> _lastReadEpisode;
 
-  /// 読み込み済みの目次ページ。キーは1始まりのページ番号。
+  /// Loaded table-of-contents pages, keyed by page number (1-based).
   final _episodePages = <int, Async<List<Episode>>>{};
   final _episodeSubscriptions = <int, StreamSubscription<List<Episode>>>{};
 
@@ -110,7 +110,7 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  /// 目次の1ページ分を購読する。ページは一度だけ購読する。
+  /// Subscribes to one page of the table of contents, once.
   void _bindEpisodePage(int page) {
     if (_episodeSubscriptions.containsKey(page)) return;
     _episodePages[page] = const AsyncLoading();
@@ -209,7 +209,7 @@ class _NovelDetailPageState extends State<NovelDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. ノベル情報
+    // 1. Novel info.
     final novelInfoAsync = _novelInfo.state;
 
     // 2. エピソードリストのリアクティブな集約

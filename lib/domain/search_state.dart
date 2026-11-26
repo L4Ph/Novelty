@@ -99,7 +99,7 @@ extension SearchStateEx on SearchState {
 ///
 /// 画面が1つ生成して保持する。検索の実行とページングもここが担う。
 class NovelSearchController extends ChangeNotifier {
-  /// コンストラクタ。
+  /// Creates the controller.
   NovelSearchController({
     required ApiService api,
     required SettingsController settings,
@@ -115,7 +115,7 @@ class NovelSearchController extends ChangeNotifier {
 
   SearchState _state = const SearchState();
 
-  /// 現在の検索状態。
+  /// The current search state.
   SearchState get state => _state;
 
   void _setState(SearchState next) {

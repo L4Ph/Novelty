@@ -56,9 +56,9 @@ class NovelListTile extends StatelessWidget {
     // ステータスの計算をメモ化
     // 0: 完結, 1: 連載中, 2: 短編
     final statusType = () {
-      if (item.novelType == 2) return 2; // 短編
-      if (item.end == 1) return 1; // 連載中
-      return 0; // 完結
+      if (item.novelType == 2) return 2; // short story
+      if (item.end == 1) return 1; // ongoing
+      return 0; // finished
     }();
 
     // サイト固有情報(pt/★)の計算をメモ化

@@ -26,8 +26,8 @@ class ImportSwapPayload {
 
 /// A maintenance operation is running.
 ///
-/// [operationLabel] is the user-facing description, e.g.
-/// "データベースをインポートしています…".
+/// [operationLabel] is the user-facing description, e.g. "Importing the
+/// database…".
 class DatabaseMaintenanceBusy extends DatabaseMaintenanceState {
   /// Creates the state.
   const DatabaseMaintenanceBusy(this.operationLabel, {this.importSwap});
@@ -91,8 +91,7 @@ class DatabaseMaintenanceController extends ChangeNotifier {
   /// Sets [DatabaseMaintenanceBusy] while it runs and returns to
   /// [DatabaseMaintenanceIdle] afterwards, whether it succeeded or not.
   ///
-  /// [label] is the user-facing description, e.g.
-  /// "データベースをインポートしています…".
+  /// [label] is the user-facing description, e.g. "Importing the database…".
   Future<T> run<T>({
     required String label,
     required Future<T> Function() task,
@@ -110,7 +109,7 @@ class DatabaseMaintenanceController extends ChangeNotifier {
   /// The app root unmounts the screens below and, once every stream
   /// subscription is cancelled, replaces the file. The calling screen is
   /// unmounted too, so it must not show feedback after this call.
-  /// この呼び出し以降に画面側でフィードバックを表示してはいけない。
+  /// The calling screen is gone, so it must not show feedback afterwards.
   /// The result lands in `importSwapResult`.
   void startImportSwap({required ImportSwapPayload payload}) {
     _setState(

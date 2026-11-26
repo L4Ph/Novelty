@@ -5,7 +5,7 @@ import 'package:novelty/utils/value_wrapper.dart';
 /// ランキングのフィルタ状態を表すモデル。
 @immutable
 class RankingFilterState {
-  /// コンストラクタ。
+  /// Creates the controller.
   const RankingFilterState({
     this.source = NovelSource.narou,
     this.showOnlyOngoing = false,
@@ -58,13 +58,13 @@ class RankingFilterState {
 ///
 /// ランキング画面が `(source, rankingType)` ごとに1つ生成して保持する。
 class RankingFilterController extends ChangeNotifier {
-  /// コンストラクタ。
+  /// Creates the controller.
   RankingFilterController({required NovelSource source})
     : _state = RankingFilterState(source: source);
 
   RankingFilterState _state;
 
-  /// 現在のフィルタ状態。
+  /// The current filter.
   RankingFilterState get state => _state;
 
   void _setState(RankingFilterState next) {

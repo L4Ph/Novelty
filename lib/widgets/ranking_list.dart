@@ -23,7 +23,7 @@ class RankingList extends StatefulWidget {
   /// ランキングの種類。
   final String rankingType;
 
-  /// このタブのフィルタ。親が所有し、タブ切り替えを跨いで保持される。
+  /// Filter for this tab. The parent owns it, so it survives tab switches.
   final RankingFilterController filter;
 
   @override
@@ -61,7 +61,7 @@ class _RankingListState extends State<RankingList> {
     super.dispose();
   }
 
-  // 下端に近づいたら次のページを読み込む
+  // Load the next page near the bottom.
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     final maxScroll = _scrollController.position.maxScrollExtent;
@@ -117,7 +117,7 @@ class _RankingListState extends State<RankingList> {
 
           return NovelListTile(
             item: rankingState.novels[index],
-            // 順位は現在のリストのインデックス + 1
+            // Rank is the index in the current list, plus one.
             rank: index + 1,
           );
         },

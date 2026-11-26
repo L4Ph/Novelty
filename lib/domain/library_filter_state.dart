@@ -60,7 +60,7 @@ class LibraryFilterState {
 class LibraryFilterController extends ChangeNotifier {
   LibraryFilterState _state = const LibraryFilterState();
 
-  /// 現在のフィルタ状態。
+  /// The current filter.
   LibraryFilterState get state => _state;
 
   void _setState(LibraryFilterState next) {

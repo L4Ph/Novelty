@@ -92,7 +92,7 @@ class _SearchModalState extends State<SearchModal> {
                       _setQuery(
                         _query.copyWith(
                           source: source,
-                          // Drop narou-specific conditions when the site changes.
+                          // Drop narou-specific conditions on a site change.
                           title: isNarou && _query.title,
                           ex: isNarou && _query.ex,
                           keyword: isNarou && _query.keyword,
