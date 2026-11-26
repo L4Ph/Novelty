@@ -1,14 +1,15 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:novelty/domain/search_state.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
-import 'package:novelty/services/api_service.dart';
+import 'package:novelty/repositories/preferences_repository.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 import '../providers/novel_info_offline_test.mocks.dart';
 
@@ -118,31 +119,39 @@ void main() {
     });
   });
 
-  group('SearchStateNotifier（破棄時の安全性）', () {
-    test('プロバイダ破棄後にsearchが完了しても例外を投げない', () async {
+  group('NovelSearchController（破棄時の安全性）', () {
+    test('破棄後にsearchが完了しても例外を投げない', () async {
       final mockApiService = MockApiService();
       final completer = Completer<NovelSearchResult>();
       when(
         mockApiService.searchNovels(any),
       ).thenAnswer((_) => completer.future);
 
-      final container = ProviderContainer(
-        overrides: [
-          apiServiceProvider.overrideWithValue(mockApiService),
-          isOfflineModeProvider.overrideWithValue(false),
-        ],
+      final controller = NovelSearchController(
+        api: mockApiService,
+        settings: SettingsController(
+          PreferencesRepository(),
+          initialState: const AsyncData(
+            AppSettings(
+              fontSize: 16,
+              isVertical: false,
+              themeMode: ThemeMode.system,
+              lineHeight: 1.5,
+              isIncognito: false,
+              isPageFlip: false,
+              isRubyEnabled: true,
+            ),
+          ),
+        ),
       );
 
-      // 購読を保持（プロバイダを生きたままにする）
-      final subscription = container.listen(searchStateProvider, (_, _) {});
-      final searchFuture = container
-          .read(searchStateProvider.notifier)
-          .search(const NovelSearchQuery(word: 'test'));
+      final searchFuture = controller.search(
+        const NovelSearchQuery(word: 'test'),
+      );
       await Future<void>.delayed(Duration.zero);
 
-      // 画面離脱等でプロバイダが破棄される
-      subscription.close();
-      container.dispose();
+      // The controller is disposed, as when the screen goes away.
+      controller.dispose();
 
       // 検索が遅れて完了する（破棄後の完了）
       completer.complete(

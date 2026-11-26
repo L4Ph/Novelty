@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/screens/library_page.dart';
 import 'package:novelty/sites/novel_source.dart';
-import 'package:novelty/utils/settings_provider.dart';
+
+import '../support/test_services.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -36,21 +36,18 @@ void main() {
       await database.close();
     });
 
+    /// Unmounts the page so drift's watched stream is cancelled before the
+    /// test ends; a live subscription leaves a pending timer behind.
+    Future<void> unmount(WidgetTester tester) async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 1));
+    }
+
     Future<void> pumpLibraryPage(WidgetTester tester) async {
-      // drift の監視ストリームはテスト終了時に pending timer を残すため、
-      // 一覧はスナップショットを流し込む。
-      final novels = await database.getLibraryNovels();
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            appDatabaseProvider.overrideWithValue(database),
-            libraryNovelsProvider.overrideWith(
-              (ref) => Stream.value(novels),
-            ),
-            settingsProvider.overrideWith(FakeSettings.new),
-            isOfflineModeProvider.overrideWithValue(false),
-          ],
-          child: const MaterialApp(home: LibraryPage()),
+        withServices(
+          buildTestServices(db: database),
+          const MaterialApp(home: LibraryPage()),
         ),
       );
       await tester.pumpAndSettle();
@@ -64,6 +61,8 @@ void main() {
 
       expect(find.text('"テスト作品"をライブラリから削除しますか？'), findsOneWidget);
       expect(find.text('ダウンロード済みの話も削除しますか？'), findsOneWidget);
+
+      await unmount(tester);
     });
 
     testWidgets('ダウンロード済みの話も削除してライブラリから外せる', (tester) async {
@@ -83,6 +82,8 @@ void main() {
         1,
       );
       expect(episode!.content, isNull);
+
+      await unmount(tester);
     });
 
     testWidgets('ダウンロード済みの話を残してライブラリから外せる', (tester) async {
@@ -102,6 +103,8 @@ void main() {
         1,
       );
       expect(episode!.content, isNotNull);
+
+      await unmount(tester);
     });
 
     testWidgets('キャンセルするとライブラリに残る', (tester) async {
@@ -121,22 +124,8 @@ void main() {
         1,
       );
       expect(episode!.content, isNotNull);
+
+      await unmount(tester);
     });
   });
-}
-
-/// テスト用の設定Notifier
-class FakeSettings extends Settings {
-  @override
-  Future<AppSettings> build() async {
-    return const AppSettings(
-      fontSize: 16,
-      isVertical: false,
-      themeMode: ThemeMode.system,
-      lineHeight: 1.5,
-      isIncognito: false,
-      isPageFlip: false,
-      isRubyEnabled: true,
-    );
-  }
 }

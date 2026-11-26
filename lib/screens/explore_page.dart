@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:novelty/database/database.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/domain/novel_enrichment.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/domain/search_state.dart';
@@ -12,7 +10,6 @@ import 'package:novelty/router/app_router.dart';
 import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
-import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/app_bar_source_dropdown.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
@@ -20,24 +17,44 @@ import 'package:novelty/widgets/ranking_list.dart';
 import 'package:novelty/widgets/search_modal.dart';
 
 /// "見つける"ページのウィジェット。
-class ExplorePage extends ConsumerStatefulWidget {
+class ExplorePage extends StatefulWidget {
   /// コンストラクタ。
   const ExplorePage({super.key});
 
   @override
-  ConsumerState<ExplorePage> createState() => _ExplorePageState();
+  State<ExplorePage> createState() => _ExplorePageState();
 }
 
-class _ExplorePageState extends ConsumerState<ExplorePage>
+class _ExplorePageState extends State<ExplorePage>
     with TickerProviderStateMixin {
   NovelSource _source = NovelSource.narou;
   late TabController _tabController;
   NovelSearchQuery _searchQuery = const NovelSearchQuery();
   late final VoidCallback _tabListener;
+  NovelSearchController? _search;
+
+  /// One filter per ranking type, kept across tab switches.
+  final _filters = <String, RankingFilterController>{};
+
+  RankingFilterController _filterFor(String rankingType) =>
+      _filters.putIfAbsent(
+        rankingType,
+        () => RankingFilterController(source: _source),
+      );
 
   /// 現在のサイトのランキング種別一覧。
   List<RankingTypeMaster> get _rankingTypes =>
       defaultNovelSiteRegistry[_source]!.rankingTypes;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _search ??= NovelSearchController(
+      api: context.services.api,
+      settings: context.services.settings,
+      sites: context.services.sites,
+    );
+  }
 
   @override
   void initState() {
@@ -51,9 +68,8 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
         return;
       }
 
-      final searchState = ref.read(searchStateProvider);
-      if (searchState.isSearching) {
-        ref.read(searchStateProvider.notifier).reset();
+      if (_search?.state.isSearching ?? false) {
+        _search!.reset();
       }
     };
     _tabController.addListener(_tabListener);
@@ -64,6 +80,10 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
     _tabController
       ..removeListener(_tabListener)
       ..dispose();
+    for (final filter in _filters.values) {
+      filter.dispose();
+    }
+    _search?.dispose();
     super.dispose();
   }
 
@@ -72,6 +92,10 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
     if (source == _source) {
       return;
     }
+    for (final filter in _filters.values) {
+      filter.dispose();
+    }
+    _filters.clear();
     setState(() {
       _source = source;
       _tabController
@@ -85,7 +109,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
   }
 
   Future<void> _performSearch() async {
-    await ref.read(searchStateProvider.notifier).search(_searchQuery);
+    await _search!.search(_searchQuery);
   }
 
   void _showSearchModal() {
@@ -114,9 +138,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
     final site = defaultNovelSiteRegistry[_source]!;
 
     // 現在のフィルタ状態を取得
-    final currentFilter = ref.read(
-      rankingFilterStateProvider(_source, currentRankingType),
-    );
+    final currentFilter = _filterFor(currentRankingType).state;
 
     unawaited(
       showModalBottomSheet<void>(
@@ -129,12 +151,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
           initialSelectedGenreId: currentFilter.selectedGenreId,
           onApply: ({required showOnlyOngoing, required selectedGenreId}) {
             // Providerの状態を更新
-            ref.read(
-                rankingFilterStateProvider(
-                  _source,
-                  currentRankingType,
-                ).notifier,
-              )
+            _filterFor(currentRankingType)
               ..setShowOnlyOngoing(value: showOnlyOngoing)
               ..setSelectedGenreId(selectedGenreId);
           },
@@ -145,8 +162,15 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
 
   @override
   Widget build(BuildContext context) {
-    final searchState = ref.watch(searchStateProvider);
-    final isOfflineMode = ref.watch(isOfflineModeProvider);
+    return ListenableBuilder(
+      listenable: _search!,
+      builder: (context, _) => _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
+    final searchState = _search!.state;
+    final isOfflineMode = context.services.settings.isOfflineMode;
 
     return PopScope(
       canPop: !searchState.isSearching,
@@ -154,7 +178,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
         if (didPop) {
           return;
         }
-        ref.read(searchStateProvider.notifier).reset();
+        _search!.reset();
       },
       child: Scaffold(
         appBar: AppBar(
@@ -183,9 +207,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
             if (searchState.isSearching)
               IconButton(
                 icon: const Icon(Icons.clear),
-                onPressed: () {
-                  ref.read(searchStateProvider.notifier).reset();
-                },
+                onPressed: _search!.reset,
               ),
             IconButton(
               icon: const Icon(Icons.search),
@@ -218,6 +240,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
             ? searchState.isLoading && searchState.results.isEmpty
                   ? const Center(child: CircularProgressIndicator())
                   : _EnrichedSearchResults(
+                      search: _search!,
                       onModifySearch: _showSearchModal,
                     )
             : isOfflineMode
@@ -229,6 +252,7 @@ class _ExplorePageState extends ConsumerState<ExplorePage>
                     RankingList(
                       source: _source,
                       rankingType: type.id,
+                      filter: _filterFor(type.id),
                       key: PageStorageKey<String>(
                         '${_source.dbId}_${type.id}',
                       ),
@@ -275,77 +299,114 @@ class _OfflineExploreBody extends StatelessWidget {
 }
 
 /// 検索結果を表示するヘルパーウィジェット
-class _EnrichedSearchResults extends HookConsumerWidget {
-  const _EnrichedSearchResults({required this.onModifySearch});
+class _EnrichedSearchResults extends StatefulWidget {
+  const _EnrichedSearchResults({
+    required this.search,
+    required this.onModifySearch,
+  });
+
+  final NovelSearchController search;
   final VoidCallback onModifySearch;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final searchState = ref.watch(searchStateProvider);
+  State<_EnrichedSearchResults> createState() => _EnrichedSearchResultsState();
+}
 
-    // ローカル状態で強化済みデータを管理（フラッシュ防止）
-    final enrichedData = useState<List<EnrichedNovelData>>([]);
-    final isEnriching = useState(false);
-    final lastEnrichedCount = useState(0);
+class _EnrichedSearchResultsState extends State<_EnrichedSearchResults> {
+  // Enriched data is held here so the list does not flash while loading.
+  final _enriched = <EnrichedNovelData>[];
+  var _isEnriching = false;
+  var _lastEnrichedCount = 0;
+  Future<void> _enrichQueue = Future<void>.value();
 
-    // 新しい結果が追加されたときに強化処理を実行
-    useEffect(
-      () {
-        Future<void> enrichNewResults() async {
-          final results = searchState.results;
-          final alreadyEnriched = lastEnrichedCount.value;
+  @override
+  void initState() {
+    super.initState();
+    widget.search.addListener(_onSearchChanged);
+  }
 
-          // 新しい結果がない場合はスキップ
-          if (results.length <= alreadyEnriched) {
-            // リセットされた場合（結果が減った場合）
-            if (results.isEmpty && enrichedData.value.isNotEmpty) {
-              enrichedData.value = [];
-              lastEnrichedCount.value = 0;
-            }
-            return;
-          }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scheduleEnrich();
+  }
 
-          isEnriching.value = true;
+  @override
+  void dispose() {
+    widget.search.removeListener(_onSearchChanged);
+    super.dispose();
+  }
 
-          try {
-            // データベースからライブラリ状態を取得
-            final db = ref.read(appDatabaseProvider);
-            final libraryNovels = await db.getLibraryNovels();
-            final libraryWorkIds = libraryNovels
-                .map((novel) => novel.workId)
-                .toSet();
+  void _onSearchChanged() => _scheduleEnrich();
 
-            // 新しい結果のみを強化
-            final newResults = results.sublist(alreadyEnriched);
-            final newEnrichedData = newResults.map((novel) {
-              final isInLibrary = libraryWorkIds.contains(novel.workId);
-              return EnrichedNovelData(
-                novel: novel,
-                isInLibrary: isInLibrary,
-              );
-            }).toList();
+  /// Queued behind the previous run so no result is skipped.
+  ///
+  /// A failed run is caught here: if the error reached the chain, every later
+  /// `.then` would be skipped and enrichment would stop for good.
+  void _scheduleEnrich() {
+    _enrichQueue = _enrichQueue.then((_) => _enrichNewResults()).catchError((
+      Object error,
+      StackTrace stackTrace,
+    ) {
+      debugPrint('Failed to enrich search results: $error\n$stackTrace');
+    });
+  }
 
-            // 既存のデータに追加
-            enrichedData.value = [...enrichedData.value, ...newEnrichedData];
-            lastEnrichedCount.value = results.length;
-          } finally {
-            isEnriching.value = false;
-          }
-        }
+  /// Enriches the results that arrived since the last run.
+  Future<void> _enrichNewResults() async {
+    if (!mounted) return;
+    final results = widget.search.state.results;
 
-        unawaited(enrichNewResults());
-        return null;
-      },
-      [searchState.results.length],
-    );
+    // Nothing new: return, clearing the cache when the list was reset.
+    if (results.length <= _lastEnrichedCount) {
+      if (results.isEmpty && _enriched.isNotEmpty) {
+        setState(() {
+          _enriched.clear();
+          _lastEnrichedCount = 0;
+        });
+      }
+      return;
+    }
+
+    setState(() => _isEnriching = true);
+
+    try {
+      // Library membership comes from the database.
+      final libraryNovels = await context.services.db.getLibraryNovels();
+      final libraryWorkIds = libraryNovels.map((novel) => novel.workId).toSet();
+      if (!mounted) return;
+
+      // Only the new results are enriched.
+      final newResults = results.sublist(_lastEnrichedCount);
+      setState(() {
+        _enriched.addAll(
+          newResults.map(
+            (novel) => EnrichedNovelData(
+              novel: novel,
+              isInLibrary: libraryWorkIds.contains(novel.workId),
+            ),
+          ),
+        );
+        _lastEnrichedCount = results.length;
+      });
+    } on Object catch (error, stackTrace) {
+      debugPrint('Failed to enrich search results: $error\n$stackTrace');
+    } finally {
+      if (mounted) setState(() => _isEnriching = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final searchState = widget.search.state;
 
     // 初回ローディング中
-    if (searchState.isLoading && enrichedData.value.isEmpty) {
+    if (searchState.isLoading && _enriched.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
     // データがない場合
-    if (enrichedData.value.isEmpty && !isEnriching.value) {
+    if (_enriched.isEmpty && !_isEnriching) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -355,7 +416,7 @@ class _EnrichedSearchResults extends HookConsumerWidget {
             const Text('検索結果がありません'),
             const SizedBox(height: 16),
             OutlinedButton(
-              onPressed: onModifySearch,
+              onPressed: widget.onModifySearch,
               child: const Text('検索条件を変更'),
             ),
           ],
@@ -364,19 +425,15 @@ class _EnrichedSearchResults extends HookConsumerWidget {
     }
 
     final hasMore = searchState.hasMore;
-    final data = enrichedData.value;
     final totalCount = searchState.allCount;
 
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          color:
-              Theme.of(
-                context,
-              ).colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.5,
-              ),
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           width: double.infinity,
           child: Text(
             '$totalCount 件ヒット',
@@ -387,7 +444,7 @@ class _EnrichedSearchResults extends HookConsumerWidget {
           child: ListView(
             key: const PageStorageKey('search_results'),
             children: [
-              ...data.map(
+              ..._enriched.map(
                 (enrichedItem) => NovelListTile(
                   item: enrichedItem.novel,
                   enrichedData: enrichedItem,
@@ -400,13 +457,8 @@ class _EnrichedSearchResults extends HookConsumerWidget {
                     child: searchState.isLoading
                         ? const CircularProgressIndicator()
                         : TextButton(
-                            onPressed: () {
-                              unawaited(
-                                ref
-                                    .read(searchStateProvider.notifier)
-                                    .loadMore(),
-                              );
-                            },
+                            onPressed: () =>
+                                unawaited(widget.search.loadMore()),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [

@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   testWidgets('App should start without crashing', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MyApp(),
-      ),
-    );
+    await tester.pumpWidget(const MyApp());
 
     // Pump a few frames to allow initial rendering
     await tester.pump();
@@ -19,14 +17,9 @@ void main() {
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 
-  testWidgets('App should have provider scope', (tester) async {
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MyApp(),
-      ),
-    );
+  testWidgets('App should own its services', (tester) async {
+    await tester.pumpWidget(const MyApp());
 
-    expect(find.byType(ProviderScope), findsOneWidget);
     expect(find.byType(MyApp), findsOneWidget);
   });
 }

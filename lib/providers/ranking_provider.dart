@@ -6,13 +6,11 @@ import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/utils/value_wrapper.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-part 'ranking_provider.g.dart';
 
 /// ランキング取得フローのデバッグログを出力する。
 ///
@@ -101,29 +99,72 @@ class RankingState {
       'error: $error)';
 }
 
-@riverpod
-/// ランキングのロジックを管理するNotifier
+/// Holds the ranking logic and notifies listeners on change.
 ///
-/// familyキーは `(source, rankingType)`。
-class RankingNotifier extends _$RankingNotifier {
-  @override
-  RankingState build(NovelSource source, String rankingType) {
-    // Watch filter state to trigger rebuild when it changes
-    ref.watch(rankingFilterStateProvider(source, rankingType));
+/// The ranking screen creates one per `(source, rankingType)` and keeps it.
+/// A filter change reloads from the first page.
+class RankingController extends ChangeNotifier {
+  /// Creates the controller.
+  RankingController({
+    required NovelSource source,
+    required String rankingType,
+    required RankingFilterController filter,
+    required ApiService api,
+    required SettingsController settings,
+    Map<NovelSource, NovelSite>? sites,
+  }) : _source = source,
+       _rankingType = rankingType,
+       _filter = filter,
+       _api = api,
+       _settings = settings,
+       _sites = sites ?? defaultNovelSiteRegistry {
+    _filter.addListener(_onFilterChanged);
+  }
 
-    // Initial fetch
+  final NovelSource _source;
+  final String _rankingType;
+  final RankingFilterController _filter;
+  final ApiService _api;
+  final SettingsController _settings;
+  final Map<NovelSource, NovelSite> _sites;
+  bool _disposed = false;
+
+  RankingState _state = const RankingState();
+
+  /// The current ranking state.
+  RankingState get state => _state;
+
+  void _setState(RankingState next) {
+    _state = next;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    if (_disposed) return;
+    _disposed = true;
+    _filter.removeListener(_onFilterChanged);
+    super.dispose();
+  }
+
+  void _onFilterChanged() {
+    if (_disposed) return;
+    unawaited(refresh());
+  }
+
+  /// Starts the first fetch. Called from the screen's initState.
+  void start() {
     unawaited(Future.microtask(fetchNextPage));
-    return const RankingState();
   }
 
   /// 次のページを取得する
   Future<void> fetchNextPage() async {
-    final currentState = state;
+    final currentState = _state;
     _logRanking(
-      'fetchNextPage: source=$source rankingType=$rankingType '
+      'fetchNextPage: _source=$_source _rankingType=$_rankingType '
       'page=${currentState.page} isLoading=${currentState.isLoading} '
       'isLoadingMore=${currentState.isLoadingMore} '
-      'hasMore=${currentState.hasMore} mounted=${ref.mounted}',
+      'hasMore=${currentState.hasMore} active=${!_disposed}',
     );
     if (currentState.isLoading ||
         currentState.isLoadingMore ||
@@ -131,40 +172,46 @@ class RankingNotifier extends _$RankingNotifier {
       return;
     }
 
-    if (ref.read(isOfflineModeProvider)) {
-      state = currentState.copyWith(
-        error: const Value<Object?>(OfflineException()),
+    if (_settings.isOfflineMode) {
+      _setState(
+        currentState.copyWith(
+          error: const Value<Object?>(OfflineException()),
+        ),
       );
       return;
     }
 
     final isFirstPage = currentState.page == 1;
-    state = currentState.copyWith(
-      isLoading: isFirstPage,
-      isLoadingMore: !isFirstPage,
+    _setState(
+      currentState.copyWith(
+        isLoading: isFirstPage,
+        isLoadingMore: !isFirstPage,
+      ),
     );
 
     try {
-      final filter = ref.read(rankingFilterStateProvider(source, rankingType));
+      final filter = _filter.state;
 
-      if (source == NovelSource.narou) {
+      if (_source == NovelSource.narou) {
         await _fetchNarouRanking(filter, currentState);
       } else {
         await _fetchSiteRanking(filter, currentState);
       }
     } on Object catch (e, stackTrace) {
       _logRanking(
-        'fetchNextPage: ERROR source=$source rankingType=$rankingType '
-        'mounted=${ref.mounted} error=$e\n$stackTrace',
+        'fetchNextPage: ERROR _source=$_source _rankingType=$_rankingType '
+        'active=${!_disposed} error=$e\n$stackTrace',
       );
       // タブ切替等でプロバイダが破棄された場合は状態を更新しない
-      if (!ref.mounted) {
+      if (_disposed) {
         return;
       }
-      state = state.copyWith(
-        isLoading: false,
-        isLoadingMore: false,
-        error: Value<Object?>(e),
+      _setState(
+        _state.copyWith(
+          isLoading: false,
+          isLoadingMore: false,
+          error: Value<Object?>(e),
+        ),
       );
     }
   }
@@ -174,8 +221,7 @@ class RankingNotifier extends _$RankingNotifier {
     RankingFilterState filter,
     RankingState currentState,
   ) async {
-    final apiService = ref.read(apiServiceProvider);
-    final order = _mapRankingTypeToOrder(rankingType);
+    final order = _mapRankingTypeToOrder(_rankingType);
 
     final newNovels = <NovelInfo>[];
     var currentPageToFetch = currentState.page;
@@ -194,14 +240,14 @@ class RankingNotifier extends _$RankingNotifier {
 
       _logRanking(
         'fetchNextPage(narou): API page=$currentPageToFetch '
-        'mounted=${ref.mounted}',
+        'active=${!_disposed}',
       );
-      final result = await apiService.searchNovels(query);
+      final result = await _api.searchNovels(query);
 
       // タブ切替等でプロバイダが破棄された場合は中断する
-      if (!ref.mounted) {
+      if (_disposed) {
         _logRanking(
-          'fetchNextPage(narou): プロバイダ破棄のため中断 '
+          'fetchNextPage(narou): コントローラ破棄のため中断 '
           '(page=$currentPageToFetch)',
         );
         return;
@@ -232,13 +278,15 @@ class RankingNotifier extends _$RankingNotifier {
       pagesFetched++;
     }
 
-    state = currentState.copyWith(
-      novels: [...currentState.novels, ...newNovels],
-      isLoading: false,
-      isLoadingMore: false,
-      page: currentPageToFetch, // Update to the next page to fetch
-      hasMore: hasMoreOnServer || newNovels.length >= 20,
-      error: const Value<Object?>(null),
+    _setState(
+      currentState.copyWith(
+        novels: [...currentState.novels, ...newNovels],
+        isLoading: false,
+        isLoadingMore: false,
+        page: currentPageToFetch, // Update to the next page to fetch
+        hasMore: hasMoreOnServer || newNovels.length >= 20,
+        error: const Value<Object?>(null),
+      ),
     );
   }
 
@@ -247,25 +295,25 @@ class RankingNotifier extends _$RankingNotifier {
     RankingFilterState filter,
     RankingState currentState,
   ) async {
-    final site = ref.read(novelSiteRegistryProvider)[source]!;
+    final site = _sites[_source]!;
     _logRanking(
-      'fetchNextPage(${source.dbId}): ランキング取得 page=${currentState.page} '
-      'mounted=${ref.mounted}',
+      'fetchNextPage(${_source.dbId}): ランキング取得 page=${currentState.page} '
+      'active=${!_disposed}',
     );
     final result = await site.fetchRanking(
-      rankingType,
+      _rankingType,
       page: currentState.page,
     );
 
     // タブ切替等でプロバイダが破棄された場合は中断する
-    if (!ref.mounted) {
+    if (_disposed) {
       _logRanking(
-        'fetchNextPage(${source.dbId}): プロバイダ破棄のため中断',
+        'fetchNextPage(${_source.dbId}): コントローラ破棄のため中断',
       );
       return;
     }
     _logRanking(
-      'fetchNextPage(${source.dbId}): 取得成功 ${result.novels.length}件',
+      'fetchNextPage(${_source.dbId}): 取得成功 ${result.novels.length}件',
     );
 
     // クライアントサイドでフィルタを適用
@@ -281,19 +329,21 @@ class RankingNotifier extends _$RankingNotifier {
 
     // サーバーが返す hasNextPage で次のページ有無を判定する
     final hasMore = result.hasNextPage;
-    state = currentState.copyWith(
-      novels: [...currentState.novels, ...filtered],
-      isLoading: false,
-      isLoadingMore: false,
-      page: currentState.page + 1,
-      hasMore: hasMore,
-      error: const Value<Object?>(null),
+    _setState(
+      currentState.copyWith(
+        novels: [...currentState.novels, ...filtered],
+        isLoading: false,
+        isLoadingMore: false,
+        page: currentState.page + 1,
+        hasMore: hasMore,
+        error: const Value<Object?>(null),
+      ),
     );
   }
 
   /// データをリフレッシュする
   Future<void> refresh() async {
-    state = const RankingState();
+    _setState(const RankingState());
     await fetchNextPage();
   }
 
@@ -320,7 +370,7 @@ class RankingNotifier extends _$RankingNotifier {
     int page,
   ) {
     return NovelSearchQuery(
-      source: source,
+      source: _source,
       order: order,
       st: (page - 1) * 20 + 1, // 1-based start
       genreId: filter.selectedGenreId != null

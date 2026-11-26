@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mockito/mockito.dart';
+import 'package:novelty/database/database.dart';
+import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_search_result.dart';
-import 'package:novelty/services/api_service.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/ranking_list.dart';
 
+import '../support/test_services.dart';
 import 'ranking_list_test.mocks.dart';
 
 void main() {
@@ -43,14 +44,18 @@ void main() {
       ).thenAnswer((_) async => searchResult);
 
       // ウィジェットをテスト
+      final db = AppDatabase.memory();
+      addTearDown(db.close);
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            apiServiceProvider.overrideWithValue(mockApiService),
-          ],
-          child: const MaterialApp(
+        withServices(
+          buildTestServices(db: db, api: mockApiService),
+          MaterialApp(
             home: Scaffold(
-              body: RankingList(source: NovelSource.narou, rankingType: 'test'),
+              body: RankingList(
+                source: NovelSource.narou,
+                rankingType: 'test',
+                filter: RankingFilterController(source: NovelSource.narou),
+              ),
             ),
           ),
         ),
@@ -78,14 +83,18 @@ void main() {
         mockApiService.searchNovels(any),
       ).thenAnswer((_) async => searchResult);
 
+      final db = AppDatabase.memory();
+      addTearDown(db.close);
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            apiServiceProvider.overrideWithValue(mockApiService),
-          ],
-          child: const MaterialApp(
+        withServices(
+          buildTestServices(db: db, api: mockApiService),
+          MaterialApp(
             home: Scaffold(
-              body: RankingList(source: NovelSource.narou, rankingType: 'test'),
+              body: RankingList(
+                source: NovelSource.narou,
+                rankingType: 'test',
+                filter: RankingFilterController(source: NovelSource.narou),
+              ),
             ),
           ),
         ),

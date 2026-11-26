@@ -1,120 +1,128 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:riverpod/legacy.dart' show StateProvider;
+import 'package:flutter/foundation.dart';
 
-/// DBを停止して行う保守操作(インポート/エクスポート)の実行状態。
+/// The state of a maintenance operation (import/export) that stops the DB.
 ///
-/// 実行中はアプリ全体の操作をブロックするための状態として扱い、
-/// アプリルートで監視してブロッキング画面を重ねて表示する。
+/// Treated as a global state while it runs: the app root watches it and
+/// shows a blocking screen on top.
 sealed class DatabaseMaintenanceState {
-  /// コンストラクタ
+  /// Creates the state.
   const DatabaseMaintenanceState();
 }
 
-/// 保守操作が実行されていない通常状態。
+/// Nothing is running.
 class DatabaseMaintenanceIdle extends DatabaseMaintenanceState {
-  /// コンストラクタ
+  /// Creates the state.
   const DatabaseMaintenanceIdle();
 }
 
-/// インポート適用(DBファイルの置き換え)に必要な情報。
+/// What an import swap (replacing the database file) needs.
 class ImportSwapPayload {
-  /// コンストラクタ
+  /// Creates the payload.
   const ImportSwapPayload({required this.pendingFilePath});
 
-  /// ステージング済みの新しいDBファイルのパス
+  /// Path of the staged replacement file.
   final String pendingFilePath;
 }
 
-/// 保守操作の実行中。
+/// A maintenance operation is running.
 ///
-/// [operationLabel] には「データベースをインポートしています…」のような
-/// ユーザー向けの操作説明を設定する。
+/// [operationLabel] is the user-facing description, e.g. "Importing the
+/// database…".
 class DatabaseMaintenanceBusy extends DatabaseMaintenanceState {
-  /// コンストラクタ
+  /// Creates the state.
   const DatabaseMaintenanceBusy(this.operationLabel, {this.importSwap});
 
-  /// ユーザー向けの操作説明
+  /// User-facing description of the operation.
   final String operationLabel;
 
-  /// インポート適用(DBファイル置き換え)の情報。
+  /// Details of an import swap.
   ///
-  /// 非nullの場合、アプリルートは配下の画面を全てアンマウントして
-  /// ブロッキング画面のみを表示する。これによりDBへのストリーム購読が
-  /// 全てキャンセルされ、安全にDBをクローズできる。
-  /// (pause状態の購読が残っているとDriftのclose()は完了しない)
+  /// When non-null, the app root unmounts every screen below and shows only
+  /// the blocking screen, which cancels every stream subscription on the DB
+  /// so it can be closed safely.
+  /// (Drift's close() never completes while a paused subscription is attached.)
   final ImportSwapPayload? importSwap;
 }
 
-/// インポート適用(DBファイル置き換え)の結果。
+/// Result of an import swap.
 ///
-/// 再初期化後に一度だけスナックバーで通知して消費する。
+/// Shown once in a snackbar after re-initialisation, then consumed.
 class ImportSwapResult {
-  /// コンストラクタ
+  /// Creates the result.
   const ImportSwapResult({required this.success, this.error});
 
-  /// 置き換えに成功したかどうか
+  /// Whether the swap succeeded.
   final bool success;
 
-  /// 失敗時のエラー内容
+  /// The failure, when it did not.
   final String? error;
 }
 
-/// データベース保守操作の実行状態を管理するプロバイダー。
+/// Owns the state of database maintenance operations.
 ///
-/// インポート/エクスポートなど、DBファイルを直接操作する間は
-/// 必ず [DatabaseMaintenanceBusy] にして他の操作をブロックすること。
-final StateProvider<DatabaseMaintenanceState> databaseMaintenanceProvider =
-    StateProvider<DatabaseMaintenanceState>(
-      (ref) => const DatabaseMaintenanceIdle(),
-    );
+/// The app root creates one and hands it out through the `Scope`. Whenever the
+/// database file is touched directly, set `busy` to [DatabaseMaintenanceBusy]
+/// so other operations are blocked.
+class DatabaseMaintenanceController extends ChangeNotifier {
+  DatabaseMaintenanceState _state = const DatabaseMaintenanceIdle();
 
-/// インポート適用の結果を保持するプロバイダー。
-///
-/// 適用処理がセットし、再初期化後のUIが一度だけ消費する。
-final StateProvider<ImportSwapResult?> importSwapResultProvider =
-    StateProvider<ImportSwapResult?>((ref) => null);
+  /// The current state.
+  DatabaseMaintenanceState get state => _state;
 
-/// 保守操作をブロッキング状態で実行するガードヘルパー。
-///
-/// 実行中は [DatabaseMaintenanceBusy] にしてアプリ全体の操作をブロックし、
-/// 完了・失敗に関わらず終了時に [DatabaseMaintenanceIdle] へ戻す。
-///
-/// [label] には「データベースをインポートしています…」のような
-/// ユーザー向けの操作説明を指定する。
-Future<T> runWithDatabaseMaintenance<T>(
-  WidgetRef ref, {
-  required String label,
-  required Future<T> Function() task,
-}) async {
-  ref.read(databaseMaintenanceProvider.notifier).state =
-      DatabaseMaintenanceBusy(label);
-  try {
-    return await task();
-  } finally {
-    ref.read(databaseMaintenanceProvider.notifier).state =
-        const DatabaseMaintenanceIdle();
+  ImportSwapResult? _importSwapResult;
+
+  /// Unconsumed import result. Consumed by `takeImportSwapResult`.
+  ImportSwapResult? get importSwapResult => _importSwapResult;
+
+  /// Takes the import result and consumes it.
+  ImportSwapResult? takeImportSwapResult() {
+    final result = _importSwapResult;
+    _importSwapResult = null;
+    return result;
   }
-}
 
-/// インポート適用(DBファイルの置き換え)フェーズを開始する。
-///
-/// 呼び出すとアプリルートが配下の画面をアンマウントし、DBへの
-/// ストリーム購読が全てキャンセルされたうえでファイル置き換えが
-/// 実行される。呼び出し元の画面もアンマウントされるため、
-/// この呼び出し以降に画面側でフィードバックを表示してはいけない。
-/// 結果は [importSwapResultProvider] にセットされる。
-void startImportSwap(WidgetRef ref, {required ImportSwapPayload payload}) {
-  ref
-      .read(databaseMaintenanceProvider.notifier)
-      .state = DatabaseMaintenanceBusy(
-    'データベースを切り替えています…',
-    importSwap: payload,
-  );
-}
+  void _setState(DatabaseMaintenanceState next) {
+    _state = next;
+    notifyListeners();
+  }
 
-/// インポート適用フェーズを終了し、結果をセットする。
-void finishImportSwap(WidgetRef ref, {required ImportSwapResult result}) {
-  ref.read(importSwapResultProvider.notifier).state = result;
-  ref.read(databaseMaintenanceProvider.notifier).state =
-      const DatabaseMaintenanceIdle();
+  /// Runs an operation while blocking the app.
+  ///
+  /// Sets [DatabaseMaintenanceBusy] while it runs and returns to
+  /// [DatabaseMaintenanceIdle] afterwards, whether it succeeded or not.
+  ///
+  /// [label] is the user-facing description, e.g. "Importing the database…".
+  Future<T> run<T>({
+    required String label,
+    required Future<T> Function() task,
+  }) async {
+    _setState(DatabaseMaintenanceBusy(label));
+    try {
+      return await task();
+    } finally {
+      _setState(const DatabaseMaintenanceIdle());
+    }
+  }
+
+  /// Starts the import swap phase.
+  ///
+  /// The app root unmounts the screens below and, once every stream
+  /// subscription is cancelled, replaces the file. The calling screen is
+  /// unmounted too, so it must not show feedback after this call.
+  /// The calling screen is gone, so it must not show feedback afterwards.
+  /// The result lands in `importSwapResult`.
+  void startImportSwap({required ImportSwapPayload payload}) {
+    _setState(
+      DatabaseMaintenanceBusy(
+        'データベースを切り替えています…',
+        importSwap: payload,
+      ),
+    );
+  }
+
+  /// Ends the import swap phase and stores the result.
+  void finishImportSwap({required ImportSwapResult result}) {
+    _importSwapResult = result;
+    _setState(const DatabaseMaintenanceIdle());
+  }
 }

@@ -55,10 +55,10 @@ UI (NovelListTile / NovelDetailPage)
 
 ```
 ExplorePage (source 切替)
-  ├─ RankingNotifier(source, rankingType)
+  ├─ RankingController(source, rankingType)
   │    ├─ narou   → ApiService.searchNovels (order パラメータ)
   │    └─ kakuyomu → KakuyomuSite.fetchRanking (HTML)
-  └─ SearchState → source で分岐して検索
+  └─ NovelSearchController → source で分岐して検索
 ```
 
 - フィルタ状態（`RankingFilterState` / `LibraryFilterState`）は `source` + `selectedGenreId: String?` を持つ

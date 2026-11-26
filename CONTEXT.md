@@ -35,7 +35,7 @@
 `NovelSource` ごとの実装（`lib/sites/`）。マスタデータ（`genres` / `rankingTypes`）と
 読書コア（`fetchNovelInfo` / `fetchToc` / `fetchEpisode`）、探索（`searchNovels` / `fetchRanking`）を提供する。
 レジストリ `novelSiteRegistry`（`Map<NovelSource, NovelSite>`）で管理する。
-Riverpodプロバイダ `novelSiteRegistryProvider` で注入可能（テスト時はオーバーライドする）。
+アプリルートが `AppServices.sites` として配る（テストでは `Scope` に差し替えを入れる）。
 
 - なろうの取得は従来の `ApiService` が担当し、サイト実装（`NarouSite`）はマスタデータのみ保持する。
 
@@ -59,5 +59,7 @@ Riverpodプロバイダ `novelSiteRegistryProvider` で注入可能（テスト�
 
 - 複数プロバイダ抽象化: [ADR-0001](./docs/adr/0001-multi-provider-abstraction.md)
 - Hybrid JSON と FTS 廃止: [ADR-0002](./docs/adr/0002-compact-hybrid.md)
+- ルーティングを内製 `tiny_router` に: [ADR-0003](./docs/adr/0003-in-house-router.md)
+- 状態管理を内製 `tiny_state` に: [ADR-0004](./docs/adr/0004-in-house-state.md)
 - カクヨムは公式APIなし・公開HTMLの取得解析のみ（robots.txt遵守）
 - フェーズ分割（P1〜P4）: エピック #240

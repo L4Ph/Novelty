@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:novelty/database/database.dart';
 import 'package:novelty/database/database_maintenance.dart';
 import 'package:novelty/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,36 +11,39 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<ProviderContainer> pumpMyApp(
-    WidgetTester tester, {
-    required Future<AppDatabase> Function() dbInit,
-  }) async {
-    SharedPreferences.setMockInitialValues({});
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          databaseInitializationProvider.overrideWith((ref) => dbInit()),
-        ],
-        child: const MyApp(),
-      ),
-    );
-    return ProviderScope.containerOf(tester.element(find.byType(MyApp)));
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  /// Pumps the real app with a database that never finishes opening, and
+  /// returns nothing: the maintenance controller is the root's own instance, so
+  /// these tests drive the overlay widget directly instead.
+  Future<void> pumpMyApp(WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
   }
 
   group('データベースメンテナンスのブロッキング', () {
     testWidgets('Busy状態ではDB初期化中でもブロッキング画面が表示される', (
       tester,
     ) async {
-      final container = await pumpMyApp(
-        tester,
-        dbInit: () => Completer<AppDatabase>().future,
+      final maintenance = DatabaseMaintenanceController();
+      addTearDown(maintenance.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DatabaseMaintenanceOverlay(
+            maintenance: maintenance,
+            child: const Scaffold(body: Center(child: Text('配下の画面'))),
+          ),
+        ),
       );
 
-      container.read(databaseMaintenanceProvider.notifier).state =
-          const DatabaseMaintenanceBusy('データベースをインポートしています…');
+      maintenance.startImportSwap(
+        payload: const ImportSwapPayload(
+          pendingFilePath: '/tmp/novelty.db.import_pending',
+        ),
+      );
       await tester.pump();
 
-      expect(find.text('データベースをインポートしています…'), findsOneWidget);
+      expect(find.text('データベースを切り替えています…'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsWidgets);
     });
 
@@ -50,28 +51,32 @@ void main() {
       tester,
     ) async {
       var tapped = 0;
+      final maintenance = DatabaseMaintenanceController();
+      addTearDown(maintenance.dispose);
+
       await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: DatabaseMaintenanceOverlay(
-              child: Scaffold(
-                body: Center(
-                  child: TextButton(
-                    onPressed: () => tapped++,
-                    child: const Text('配下のボタン'),
-                  ),
+        MaterialApp(
+          home: DatabaseMaintenanceOverlay(
+            maintenance: maintenance,
+            child: Scaffold(
+              body: Center(
+                child: TextButton(
+                  onPressed: () => tapped++,
+                  child: const Text('配下のボタン'),
                 ),
               ),
             ),
           ),
         ),
       );
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(DatabaseMaintenanceOverlay)),
-      );
 
-      container.read(databaseMaintenanceProvider.notifier).state =
-          const DatabaseMaintenanceBusy('データベースをエクスポートしています…');
+      final task = Completer<void>();
+      unawaited(
+        maintenance.run<void>(
+          label: 'データベースをエクスポートしています…',
+          task: () => task.future,
+        ),
+      );
       await tester.pump();
 
       // ブロッキング画面が表示され、配下の画面は破棄されずに維持される
@@ -84,8 +89,7 @@ void main() {
       expect(tapped, 0);
 
       // Idleに戻すと配下が再び操作できる
-      container.read(databaseMaintenanceProvider.notifier).state =
-          const DatabaseMaintenanceIdle();
+      task.complete();
       await tester.pump();
       expect(find.text('データベースをエクスポートしています…'), findsNothing);
       await tester.tap(find.text('配下のボタン'));
@@ -94,44 +98,49 @@ void main() {
     });
 
     testWidgets('Idle状態ではブロッキング画面は表示されない', (tester) async {
-      await pumpMyApp(
-        tester,
-        dbInit: () => Completer<AppDatabase>().future,
-      );
-      await tester.pump();
+      final maintenance = DatabaseMaintenanceController();
+      addTearDown(maintenance.dispose);
 
-      // ブロッキング画面ではなく、通常のマイグレーションスプラッシュが表示される
-      expect(find.text('データベースをインポートしています…'), findsNothing);
-      expect(find.text('読書データを最新の状態に更新しています。'), findsOneWidget);
-    });
-
-    testWidgets('インポート適用中は配下の画面がアンマウントされる', (tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: DatabaseMaintenanceOverlay(
-              child: Scaffold(body: Center(child: Text('配下の画面'))),
-            ),
+        MaterialApp(
+          home: DatabaseMaintenanceOverlay(
+            maintenance: maintenance,
+            child: const Scaffold(body: Center(child: Text('配下の画面'))),
           ),
         ),
       );
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(DatabaseMaintenanceOverlay)),
+
+      expect(find.text('配下の画面'), findsOneWidget);
+      expect(find.text('データベースをエクスポートしています…'), findsNothing);
+    });
+
+    testWidgets('インポート適用中は配下の画面がアンマウントされる', (tester) async {
+      final maintenance = DatabaseMaintenanceController();
+      addTearDown(maintenance.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DatabaseMaintenanceOverlay(
+            maintenance: maintenance,
+            child: const Scaffold(body: Center(child: Text('配下の画面'))),
+          ),
+        ),
       );
 
       // 通常のBusy状態では配下の画面は維持される
-      container.read(databaseMaintenanceProvider.notifier).state =
-          const DatabaseMaintenanceBusy('データベースをエクスポートしています…');
+      unawaited(
+        maintenance.run<void>(
+          label: 'データベースをエクスポートしています…',
+          task: () => Completer<void>().future,
+        ),
+      );
       await tester.pump();
       expect(find.text('配下の画面'), findsOneWidget);
 
       // インポート適用(payload付き)では配下の画面がアンマウントされる。
       // DBへのストリーム購読を全てキャンセルさせるため。
-      container
-          .read(databaseMaintenanceProvider.notifier)
-          .state = const DatabaseMaintenanceBusy(
-        'データベースを切り替えています…',
-        importSwap: ImportSwapPayload(
+      maintenance.startImportSwap(
+        payload: const ImportSwapPayload(
           pendingFilePath: '/tmp/novelty.db.import_pending',
         ),
       );
@@ -148,10 +157,8 @@ void main() {
     });
 
     testWidgets('起動中の画面もダークテーマを持つ', (tester) async {
-      await pumpMyApp(
-        tester,
-        dbInit: () => Completer<AppDatabase>().future,
-      );
+      await pumpMyApp(tester);
+      await tester.pump();
 
       final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
       expect(app.darkTheme?.brightness, Brightness.dark);

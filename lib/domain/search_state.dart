@@ -4,13 +4,11 @@ import 'package:novelty/models/novel_info_extension.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/models/novel_search_result.dart';
 import 'package:novelty/services/api_service.dart';
+import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/utils/value_wrapper.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-part 'search_state.g.dart';
 
 /// 検索状態を表すクラス。
 @immutable
@@ -97,22 +95,53 @@ extension SearchStateEx on SearchState {
   bool get hasMore => results.length < allCount;
 }
 
-/// 検索状態を管理するNotifierプロバイダー。
-@riverpod
-class SearchStateNotifier extends _$SearchStateNotifier {
+/// Holds the search state and notifies listeners on change.
+///
+/// One per screen, owned by the screen. Running the search and paging through
+/// results live here too.
+class NovelSearchController extends ChangeNotifier {
+  /// Creates the controller.
+  NovelSearchController({
+    required ApiService api,
+    required SettingsController settings,
+    Map<NovelSource, NovelSite>? sites,
+  }) : _api = api,
+       _settings = settings,
+       _sites = sites ?? defaultNovelSiteRegistry;
+
+  final ApiService _api;
+  final SettingsController _settings;
+  final Map<NovelSource, NovelSite> _sites;
+  bool _disposed = false;
+
+  SearchState _state = const SearchState();
+
+  /// The current search state.
+  SearchState get state => _state;
+
+  void _setState(SearchState next) {
+    _state = next;
+    notifyListeners();
+  }
+
   @override
-  SearchState build() => const SearchState();
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 
   /// 検索を実行する。
   ///
   /// 新しい検索条件で検索を開始し、結果をリセットする。
   Future<void> search(NovelSearchQuery query) async {
-    state = SearchState(query: query, isLoading: true, isSearching: true);
+    _setState(SearchState(query: query, isLoading: true, isSearching: true));
 
-    if (ref.read(isOfflineModeProvider)) {
-      state = state.copyWith(
-        isLoading: false,
-        error: const Value<Object?>(OfflineException()),
+    if (_settings.isOfflineMode) {
+      _setState(
+        _state.copyWith(
+          isLoading: false,
+          error: const Value<Object?>(OfflineException()),
+        ),
       );
       return;
     }
@@ -121,30 +150,31 @@ class SearchStateNotifier extends _$SearchStateNotifier {
       final result = await _searchBySource(query);
 
       // 画面離脱等でプロバイダが破棄された場合は状態を更新しない
-      if (!ref.mounted) {
+      if (_disposed) {
         debugPrint(
-          '[Novelty][Search] search: プロバイダ破棄のため中断 '
+          '[Novelty][Search] search: コントローラ破棄のため中断 '
           '(source=${query.source})',
         );
         return;
       }
-      state = state.copyWith(
-        results: result.novels,
-        allCount: result.allCount,
-        isLoading: false,
-        error: const Value<Object?>(null),
+      _setState(
+        _state.copyWith(
+          results: result.novels,
+          allCount: result.allCount,
+          isLoading: false,
+          error: const Value<Object?>(null),
+        ),
       );
     } on Object catch (e, stackTrace) {
       debugPrint(
         '[Novelty][Search] search: ERROR source=${query.source} '
-        'mounted=${ref.mounted} error=$e\n$stackTrace',
+        'active=${!_disposed} error=$e\n$stackTrace',
       );
-      if (!ref.mounted) {
+      if (_disposed) {
         return;
       }
-      state = state.copyWith(
-        isLoading: false,
-        error: Value<Object?>(e),
+      _setState(
+        _state.copyWith(isLoading: false, error: Value<Object?>(e)),
       );
     }
   }
@@ -153,60 +183,62 @@ class SearchStateNotifier extends _$SearchStateNotifier {
   ///
   /// 現在の検索条件で次のページを取得し、結果に追加する。
   Future<void> loadMore() async {
-    if (state.isLoading || !state.hasMore) return;
+    if (_state.isLoading || !_state.hasMore) return;
 
-    if (ref.read(isOfflineModeProvider)) {
-      state = state.copyWith(
-        isLoading: false,
-        error: const Value<Object?>(OfflineException()),
+    if (_settings.isOfflineMode) {
+      _setState(
+        _state.copyWith(
+          isLoading: false,
+          error: const Value<Object?>(OfflineException()),
+        ),
       );
       return;
     }
 
-    state = state.copyWith(
-      isLoading: true,
-      error: const Value<Object?>(null),
+    _setState(
+      _state.copyWith(isLoading: true, error: const Value<Object?>(null)),
     );
 
     try {
-      final nextQuery = state.query.copyWith(
-        st: state.results.length + 1,
+      final nextQuery = _state.query.copyWith(
+        st: _state.results.length + 1,
       );
 
       final result = await _searchBySource(nextQuery);
 
       // 画面離脱等でプロバイダが破棄された場合は状態を更新しない
-      if (!ref.mounted) {
+      if (_disposed) {
         debugPrint(
-          '[Novelty][Search] loadMore: プロバイダ破棄のため中断',
+          '[Novelty][Search] loadMore: コントローラ破棄のため中断',
         );
         return;
       }
-      final newResults = [...state.results, ...result.novels];
+      final newResults = [..._state.results, ...result.novels];
 
-      state = state.copyWith(
-        results: newResults,
-        isLoading: false,
-        error: const Value<Object?>(null),
+      _setState(
+        _state.copyWith(
+          results: newResults,
+          isLoading: false,
+          error: const Value<Object?>(null),
+        ),
       );
     } on Object catch (e, stackTrace) {
       debugPrint(
-        '[Novelty][Search] loadMore: ERROR mounted=${ref.mounted} '
+        '[Novelty][Search] loadMore: ERROR active=${!_disposed} '
         'error=$e\n$stackTrace',
       );
-      if (!ref.mounted) {
+      if (_disposed) {
         return;
       }
-      state = state.copyWith(
-        isLoading: false,
-        error: Value<Object?>(e),
+      _setState(
+        _state.copyWith(isLoading: false, error: Value<Object?>(e)),
       );
     }
   }
 
   /// 検索状態をリセットする。
   void reset() {
-    state = const SearchState();
+    _setState(const SearchState());
   }
 
   /// sourceに応じて検索を実行する。
@@ -214,9 +246,9 @@ class SearchStateNotifier extends _$SearchStateNotifier {
   /// なろうは [ApiService]、カクヨムはサイト実装へ振り分ける。
   Future<NovelSearchResult> _searchBySource(NovelSearchQuery query) async {
     if (query.source == NovelSource.narou) {
-      final apiService = ref.read(apiServiceProvider);
+      final apiService = _api;
       return apiService.searchNovels(query);
     }
-    return defaultNovelSiteRegistry[query.source]!.searchNovels(query);
+    return _sites[query.source]!.searchNovels(query);
   }
 }

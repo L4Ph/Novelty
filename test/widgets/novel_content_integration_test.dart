@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:narou_parser/narou_parser.dart';
 import 'package:novelty/widgets/novel_content_view.dart';
@@ -8,16 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('NovelContent integration test with ruby setting', () {
-    late ProviderContainer container;
-
-    setUp(() {
-      SharedPreferences.setMockInitialValues({});
-      container = ProviderContainer();
-    });
-
-    tearDown(() {
-      container.dispose();
-    });
+    setUp(() => SharedPreferences.setMockInitialValues({}));
 
     testWidgets('isRubyEnabledがtrueのときルビを表示する', (tester) async {
       final elements = <NovelContentElement>[

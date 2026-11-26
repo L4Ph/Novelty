@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:novelty/app_services.dart';
+import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/author_novels_provider.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 /// 作者の小説一覧ページ
-class AuthorNovelsPage extends ConsumerWidget {
+class AuthorNovelsPage extends StatefulWidget {
   /// コンストラクタ
   const AuthorNovelsPage({required this.userId, super.key});
 
@@ -12,18 +16,47 @@ class AuthorNovelsPage extends ConsumerWidget {
   final int userId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final novelsAsync = ref.watch(authorNovelsProvider(userId));
+  State<AuthorNovelsPage> createState() => _AuthorNovelsPageState();
+}
+
+class _AuthorNovelsPageState extends State<AuthorNovelsPage> {
+  Async<List<NovelInfo>> _novels = const AsyncLoading();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_novels is! AsyncLoading<List<NovelInfo>>) return;
+    unawaited(_load());
+  }
+
+  Future<void> _load() async {
+    try {
+      final novels = await fetchAuthorNovels(
+        context.services.api,
+        context.services.settings,
+        widget.userId,
+      );
+      if (!mounted) return;
+      setState(() => _novels = AsyncData(novels));
+    } on Object catch (error, stackTrace) {
+      debugPrint('作者の作品一覧取得エラー: $error\n$stackTrace');
+      if (!mounted) return;
+      setState(() => _novels = AsyncError(error, stackTrace));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final novelsAsync = _novels;
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            novelsAsync.whenOrNull(
-              data: (novels) => novels.isNotEmpty
-                  ? Text(novels.first.writer ?? '作者の作品')
-                  : null,
-            ) ??
-            const Text('作者の作品'),
+        title: switch (novelsAsync) {
+          AsyncData(:final value) when value.isNotEmpty => Text(
+            value.first.writer ?? '作者の作品',
+          ),
+          _ => const Text('作者の作品'),
+        },
       ),
       body: novelsAsync.when(
         data: (novels) {
@@ -46,12 +79,9 @@ class AuthorNovelsPage extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(),
         ),
-        error: (error, stackTrace) {
-          debugPrint('作者の作品一覧取得エラー: $error\n$stackTrace');
-          return const Center(
-            child: Text('データの読み込み中に問題が発生しました'),
-          );
-        },
+        error: (error, stackTrace) => const Center(
+          child: Text('データの読み込み中に問題が発生しました'),
+        ),
       ),
     );
   }

@@ -1,6 +1,4 @@
 import 'package:drift/drift.dart' as drift;
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:narou_parser/narou_parser.dart';
@@ -10,40 +8,38 @@ import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/providers/network_fallback_event_provider.dart';
 import 'package:novelty/repositories/novel_repository.dart';
+import 'package:novelty/repositories/preferences_repository.dart';
 import 'package:novelty/services/api_service.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/ncode_utils.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:tiny_http/tiny_http.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 import '../providers/novel_info_offline_test.mocks.dart';
+import '../support/test_services.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  late NetworkFallbackBus fallbackBus;
+  setUp(() {
+    fallbackBus = NetworkFallbackBus();
+    _fallbackBus = fallbackBus;
+  });
+
   group('NovelRepository fetchEpisodeList', () {
     late MockAppDatabase mockDatabase;
     late MockApiService mockApiService;
-    late ProviderContainer container;
+    late NovelRepository repository;
 
     setUp(() {
       mockDatabase = MockAppDatabase();
       mockApiService = MockApiService();
     });
 
-    ProviderContainer createContainer({bool isOffline = false}) {
-      return ProviderContainer(
-        overrides: [
-          db.appDatabaseProvider.overrideWithValue(mockDatabase),
-          apiServiceProvider.overrideWithValue(mockApiService),
-          settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineModeProvider.overrideWithValue(isOffline),
-        ],
-      );
-    }
-
     tearDown(() {
-      container.dispose();
+      repository.dispose();
     });
 
     const testNcode = 'n1234ab';
@@ -51,7 +47,11 @@ void main() {
     const page = 1;
 
     test('should return cached episodes when offline', () async {
-      container = createContainer(isOffline: true); // Offline
+      repository = _repositoryFor(
+        mockDatabase,
+        mockApiService,
+        isOffline: true,
+      );
 
       when(
         mockDatabase.getEpisodesRange(
@@ -70,8 +70,6 @@ void main() {
           ),
         ],
       );
-
-      final repository = container.read(novelRepositoryProvider);
       final result = await repository.fetchEpisodeList(
         NovelSource.narou,
         testNcode,
@@ -92,7 +90,7 @@ void main() {
     });
 
     test('should fetch from API and save to DB when online', () async {
-      container = createContainer(); // Online
+      repository = _repositoryFor(mockDatabase, mockApiService); // Online
 
       final episodes = [
         const Episode(
@@ -108,8 +106,6 @@ void main() {
       ).thenAnswer((_) async => episodes);
 
       when(mockDatabase.upsertEpisodes(any)).thenAnswer((_) async => {});
-
-      final repository = container.read(novelRepositoryProvider);
       final result = await repository.fetchEpisodeList(
         NovelSource.narou,
         testNcode,
@@ -123,7 +119,7 @@ void main() {
     });
 
     test('should fallback to cache when online fetch fails', () async {
-      container = createContainer(); // Online
+      repository = _repositoryFor(mockDatabase, mockApiService); // Online
 
       when(
         mockApiService.fetchEpisodeList(normalizedNcode, page),
@@ -146,8 +142,6 @@ void main() {
           ),
         ],
       );
-
-      final repository = container.read(novelRepositoryProvider);
       final result = await repository.fetchEpisodeList(
         NovelSource.narou,
         testNcode,
@@ -174,30 +168,19 @@ void main() {
 
     late db.AppDatabase database;
     late MockApiService mockApiService;
-    late ProviderContainer container;
+    late NovelRepository repository;
     NetworkFallbackEventData? fallbackEvent;
 
     setUp(() {
       database = db.AppDatabase.memory();
       mockApiService = MockApiService();
-      container =
-          ProviderContainer(
-            overrides: [
-              db.appDatabaseProvider.overrideWithValue(database),
-              apiServiceProvider.overrideWithValue(mockApiService),
-              settingsProvider.overrideWith(FakeSettings.new),
-              isOfflineModeProvider.overrideWithValue(false),
-            ],
-          )..listen(
-            networkFallbackEventProvider,
-            (_, next) => fallbackEvent = next,
-            fireImmediately: true,
-          );
+      repository = _repositoryFor(database, mockApiService);
+      fallbackBus.addListener(() => fallbackEvent = fallbackBus.event);
       fallbackEvent = null;
     });
 
     tearDown(() async {
-      container.dispose();
+      repository.dispose();
       await database.close();
     });
 
@@ -228,8 +211,6 @@ void main() {
           );
         },
       );
-
-      final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
 
       await expectLater(
@@ -248,8 +229,6 @@ void main() {
       when(
         mockApiService.fetchNovelInfo(normalizedNcode),
       ).thenThrow(_networkFailure());
-
-      final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
 
       await expectLater(
@@ -271,8 +250,6 @@ void main() {
       when(
         mockApiService.fetchNovelInfo(normalizedNcode),
       ).thenThrow(const NovelNotFoundException());
-
-      final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
 
       await expectLater(
@@ -293,8 +270,6 @@ void main() {
           title: 'fresh title',
         ),
       );
-
-      final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
 
       await expectLater(
@@ -310,8 +285,6 @@ void main() {
       when(
         mockApiService.fetchNovelInfo(normalizedNcode),
       ).thenThrow(const NovelNotFoundException());
-
-      final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
 
       await expectLater(
@@ -336,8 +309,6 @@ void main() {
       when(
         mockApiService.fetchNovelInfo(normalizedNcode),
       ).thenThrow(_networkFailure());
-
-      final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
 
       await expectLater(
@@ -350,21 +321,8 @@ void main() {
     });
 
     test('オフラインかつキャッシュが無い場合はOfflineExceptionを投げる', () async {
-      container.dispose();
-      container =
-          ProviderContainer(
-            overrides: [
-              db.appDatabaseProvider.overrideWithValue(database),
-              apiServiceProvider.overrideWithValue(mockApiService),
-              settingsProvider.overrideWith(FakeSettings.new),
-              isOfflineModeProvider.overrideWithValue(true),
-            ],
-          )..listen(
-            networkFallbackEventProvider,
-            (_, _) {},
-          );
-
-      final repository = container.read(novelRepositoryProvider);
+      repository.dispose();
+      repository = _repositoryFor(database, mockApiService, isOffline: true);
       final stream = repository.watchNovelInfo(NovelSource.narou, testNcode);
 
       await expectLater(
@@ -382,23 +340,16 @@ void main() {
 
     late db.AppDatabase database;
     late MockApiService mockApiService;
-    late ProviderContainer container;
+    late NovelRepository repository;
 
     setUp(() {
       database = db.AppDatabase.memory();
       mockApiService = MockApiService();
-      container = ProviderContainer(
-        overrides: [
-          db.appDatabaseProvider.overrideWithValue(database),
-          apiServiceProvider.overrideWithValue(mockApiService),
-          settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineModeProvider.overrideWithValue(false),
-        ],
-      );
+      repository = _repositoryFor(database, mockApiService);
     });
 
     tearDown(() async {
-      container.dispose();
+      repository.dispose();
       await database.close();
     });
 
@@ -424,8 +375,6 @@ void main() {
           statusCode: 500,
         ),
       );
-
-      final repository = container.read(novelRepositoryProvider);
       final result = await repository.downloadSingleEpisode(
         NovelSource.narou,
         testNcode,
@@ -452,8 +401,6 @@ void main() {
       when(
         mockApiService.fetchEpisode(normalizedNcode, episodeId),
       ).thenThrow(const FormatException('レスポンスの形式が不正です'));
-
-      final repository = container.read(novelRepositoryProvider);
       final result = await repository.downloadSingleEpisode(
         NovelSource.narou,
         testNcode,
@@ -478,8 +425,6 @@ void main() {
       when(
         mockApiService.fetchEpisode(normalizedNcode, episodeId),
       ).thenThrow(const _UnexpectedFailure());
-
-      final repository = container.read(novelRepositoryProvider);
 
       await expectLater(
         repository.downloadSingleEpisode(
@@ -507,30 +452,19 @@ void main() {
 
     late db.AppDatabase database;
     late MockApiService mockApiService;
-    late ProviderContainer container;
+    late NovelRepository repository;
     NetworkFallbackEventData? fallbackEvent;
 
     setUp(() {
       database = db.AppDatabase.memory();
       mockApiService = MockApiService();
-      container =
-          ProviderContainer(
-            overrides: [
-              db.appDatabaseProvider.overrideWithValue(database),
-              apiServiceProvider.overrideWithValue(mockApiService),
-              settingsProvider.overrideWith(FakeSettings.new),
-              isOfflineModeProvider.overrideWithValue(false),
-            ],
-          )..listen(
-            networkFallbackEventProvider,
-            (_, next) => fallbackEvent = next,
-            fireImmediately: true,
-          );
+      repository = _repositoryFor(database, mockApiService);
+      fallbackBus.addListener(() => fallbackEvent = fallbackBus.event);
       fallbackEvent = null;
     });
 
     tearDown(() async {
-      container.dispose();
+      repository.dispose();
       await database.close();
     });
 
@@ -570,8 +504,6 @@ void main() {
           ];
         },
       );
-
-      final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchEpisodeList(
         NovelSource.narou,
         testNcode,
@@ -598,8 +530,6 @@ void main() {
       when(
         mockApiService.fetchEpisodeList(normalizedNcode, page),
       ).thenThrow(_networkFailure());
-
-      final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchEpisodeList(
         NovelSource.narou,
         testNcode,
@@ -638,8 +568,6 @@ void main() {
           ),
         ],
       );
-
-      final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchEpisodeList(
         NovelSource.narou,
         testNcode,
@@ -664,8 +592,6 @@ void main() {
       when(
         mockApiService.fetchEpisodeList(normalizedNcode, page),
       ).thenThrow(_networkFailure());
-
-      final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchEpisodeList(
         NovelSource.narou,
         testNcode,
@@ -679,24 +605,11 @@ void main() {
     });
 
     test('オフラインかつキャッシュが無い場合はOfflineExceptionを投げる', () async {
-      container.dispose();
-      container =
-          ProviderContainer(
-            overrides: [
-              db.appDatabaseProvider.overrideWithValue(database),
-              apiServiceProvider.overrideWithValue(mockApiService),
-              settingsProvider.overrideWith(FakeSettings.new),
-              isOfflineModeProvider.overrideWithValue(true),
-            ],
-          )..listen(
-            networkFallbackEventProvider,
-            (_, _) {},
-          );
+      repository.dispose();
+      repository = _repositoryFor(database, mockApiService, isOffline: true);
       await database.insertNovel(
         NovelInfo(ncode: normalizedNcode, title: 'test').toDbCompanion(),
       );
-
-      final repository = container.read(novelRepositoryProvider);
       final stream = repository.watchEpisodeList(
         NovelSource.narou,
         testNcode,
@@ -718,30 +631,19 @@ void main() {
 
     late db.AppDatabase database;
     late MockApiService mockApiService;
-    late ProviderContainer container;
+    late NovelRepository repository;
     NetworkFallbackEventData? fallbackEvent;
 
     setUp(() {
       database = db.AppDatabase.memory();
       mockApiService = MockApiService();
-      container =
-          ProviderContainer(
-            overrides: [
-              db.appDatabaseProvider.overrideWithValue(database),
-              apiServiceProvider.overrideWithValue(mockApiService),
-              settingsProvider.overrideWith(FakeSettings.new),
-              isOfflineModeProvider.overrideWithValue(false),
-            ],
-          )..listen(
-            networkFallbackEventProvider,
-            (_, next) => fallbackEvent = next,
-            fireImmediately: true,
-          );
+      repository = _repositoryFor(database, mockApiService);
+      fallbackBus.addListener(() => fallbackEvent = fallbackBus.event);
       fallbackEvent = null;
     });
 
     tearDown(() async {
-      container.dispose();
+      repository.dispose();
       await database.close();
     });
 
@@ -761,8 +663,6 @@ void main() {
 
     test('改稿がなければキャッシュを返し通信しない', () async {
       await insertEpisodeContent();
-
-      final repository = container.read(novelRepositoryProvider);
       final content = await repository.getEpisode(
         NovelSource.narou,
         normalizedNcode,
@@ -781,8 +681,6 @@ void main() {
       when(
         mockApiService.fetchEpisode(normalizedNcode, episodeId),
       ).thenThrow(_networkFailure());
-
-      final repository = container.read(novelRepositoryProvider);
       final content = await repository.getEpisode(
         NovelSource.narou,
         normalizedNcode,
@@ -803,38 +701,21 @@ void main() {
   group('DownloadStatus executeDownload', () {
     late MockAppDatabase mockDatabase;
     late MockApiService mockApiService;
-    late ProviderContainer container;
+    late NovelRepository repository;
 
     setUp(() {
       mockDatabase = MockAppDatabase();
       mockApiService = MockApiService();
-      container = ProviderContainer(
-        overrides: [
-          db.appDatabaseProvider.overrideWithValue(mockDatabase),
-          apiServiceProvider.overrideWithValue(mockApiService),
-          settingsProvider.overrideWith(FakeSettings.new),
-          novelRepositoryProvider.overrideWith(
-            (ref) => NovelRepository(
-              ref: ref,
-              apiService: mockApiService,
-              settings: ref.watch(settingsProvider),
-              db: mockDatabase,
-            ),
-          ),
-        ],
-      );
+      repository = _repositoryFor(mockDatabase, mockApiService);
     });
 
-    tearDown(() => container.dispose());
+    tearDown(() => repository.dispose());
 
     test('reports an error when the episode count is unknown', () async {
       // generalAllNo deliberately absent.
       const novel = NovelInfo(ncode: 'n1234ab', workId: 'n1234ab');
 
-      final notifier = container.read(
-        downloadStatusProvider(novel.source, novel.resolvedWorkId!).notifier,
-      );
-      final result = await notifier.executeDownload(novel);
+      final result = await repository.downloadNovelInfo(novel);
 
       final message = switch (result) {
         DownloadResultError(:final message) => message,
@@ -849,21 +730,6 @@ void main() {
   });
 }
 
-class FakeSettings extends Settings {
-  @override
-  Future<AppSettings> build() async {
-    return const AppSettings(
-      fontSize: 16,
-      isVertical: false,
-      themeMode: ThemeMode.system,
-      lineHeight: 1.5,
-      isIncognito: false,
-      isPageFlip: false,
-      isRubyEnabled: true,
-    );
-  }
-}
-
 /// 通信失敗を模す例外。
 TinyHttpStatusException _networkFailure() => TinyHttpStatusException(
   uri: Uri.parse('https://ncode.syosetu.com/n1234ab/'),
@@ -874,3 +740,23 @@ TinyHttpStatusException _networkFailure() => TinyHttpStatusException(
 class _UnexpectedFailure implements Exception {
   const _UnexpectedFailure();
 }
+
+NovelRepository _repositoryFor(
+  db.AppDatabase db,
+  ApiService api, {
+  bool isOffline = false,
+}) {
+  return NovelRepository(
+    apiService: api,
+    settings: SettingsController(
+      PreferencesRepository(),
+      initialState: AsyncData(
+        isOffline ? offlineTestSettings : testSettings,
+      ),
+    ),
+    db: db,
+    fallback: _fallbackBus,
+  );
+}
+
+NetworkFallbackBus? _fallbackBus;

@@ -2,29 +2,13 @@ import 'dart:async';
 
 import 'package:novelty/database/database.dart';
 import 'package:novelty/utils/history_grouping.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-part 'database_providers.g.dart';
-
-@Riverpod(keepAlive: true)
-/// アプリケーションデータベースのインスタンスを提供するプロバイダー。
-///
-/// 再初期化(invalidate)時に旧インスタンスの接続が残り続けると
-/// 同じDBファイルへの接続が多重に開かれるため、破棄時にクローズする。
-AppDatabase appDatabase(Ref ref) {
-  final db = AppDatabase();
-  ref.onDispose(() {
-    unawaited(closeAppDatabaseSafely(db));
-  });
-  return db;
-}
 
 final _closeFutures = <AppDatabase, Future<void>>{};
 
 /// DBのクローズをインスタンスごとに一度だけ実行し、その完了を待つ。
 ///
-/// プロバイダー破棄時のクローズと、インポート適用時の明示的な
-/// クローズが競合しないよう、進行中のクローズがあればそれを返す。
+/// Returns the in-flight close when there is one, so the shutdown at the app
+/// root and the explicit close during an import swap cannot collide.
 /// (Driftのclose()には二重呼び出しのガードがないため)
 Future<void> closeAppDatabaseSafely(AppDatabase db) {
   final existing = _closeFutures[db];
@@ -44,23 +28,16 @@ Future<void> closeAppDatabaseSafely(AppDatabase db) {
   return future;
 }
 
-@riverpod
-/// ライブラリに登録されている小説のリストを監視するプロバイダー。
-Stream<List<dynamic>> libraryNovels(Ref ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return db.watchLibraryNovels();
-}
+/// The novels in the library.
+Stream<List<dynamic>> watchLibraryNovels(AppDatabase db) =>
+    db.watchLibraryNovels();
 
-@riverpod
-/// 現在時刻を提供するプロバイダー。主に履歴のグループ化に使用される。
-DateTime currentTime(Ref ref) => DateTime.now();
-
-@riverpod
-/// 日付ごとにグループ化された閲覧履歴のリストを監視するプロバイダー。
-Stream<List<HistoryGroup>> groupedHistory(Ref ref) {
-  final now = ref.watch(currentTimeProvider);
-  final db = ref.watch(appDatabaseProvider);
-  return db.watchHistory().map((historyItems) {
-    return HistoryGrouping.groupByDate(historyItems, now);
-  });
+/// Reading history grouped by day.
+///
+/// Takes `now` so the day boundaries follow the caller's clock (and a test can
+/// pin it). The UI subscribes through `StreamLoader`.
+Stream<List<HistoryGroup>> watchGroupedHistory(AppDatabase db, DateTime now) {
+  return db.watchHistory().map(
+    (historyItems) => HistoryGrouping.groupByDate(historyItems, now),
+  );
 }

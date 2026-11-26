@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/router/app_router.dart';
 import 'package:novelty/utils/settings_provider.dart';
 
 /// 表示設定ページ
-class AppearanceSettingsPage extends ConsumerWidget {
+class AppearanceSettingsPage extends StatelessWidget {
   /// コンストラクタ
   const AppearanceSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
+  Widget build(BuildContext context) {
+    final settings = context.services.settings.state;
 
     return Scaffold(
       appBar: AppBar(
@@ -20,7 +20,7 @@ class AppearanceSettingsPage extends ConsumerWidget {
       body: settings.when(
         data: (data) => ListView(
           children: [
-            _buildThemeSection(context, ref, data),
+            _buildThemeSection(context, data),
           ],
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -31,7 +31,6 @@ class AppearanceSettingsPage extends ConsumerWidget {
 
   Widget _buildThemeSection(
     BuildContext context,
-    WidgetRef ref,
     AppSettings settings,
   ) {
     return Column(
@@ -51,7 +50,7 @@ class AppearanceSettingsPage extends ConsumerWidget {
           groupValue: settings.themeMode,
           onChanged: (value) async {
             if (value != null) {
-              await ref.read(settingsProvider.notifier).setThemeMode(value);
+              await context.services.settings.setThemeMode(value);
             }
           },
           child: const Column(

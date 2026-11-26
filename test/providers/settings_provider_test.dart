@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:novelty/repositories/preferences_repository.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -20,26 +20,26 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Settings Provider', () {
-    late ProviderContainer container;
+    late SettingsController settings;
 
     setUp(() {
       // path_providerのモック設定
       PathProviderPlatform.instance = FakePathProviderPlatform();
       SharedPreferences.setMockInitialValues({});
-      container = ProviderContainer();
+      settings = SettingsController(PreferencesRepository());
     });
 
     tearDown(() {
-      container.dispose();
+      settings.dispose();
     });
 
     test('should return default settings when no preferences exist', () async {
       SharedPreferences.setMockInitialValues({});
 
-      final settings = await container.read(settingsProvider.future);
+      await settings.load();
 
-      expect(settings.fontSize, equals(16.0));
-      expect(settings.isVertical, equals(false));
+      expect(settings.value!.fontSize, equals(16.0));
+      expect(settings.value!.isVertical, equals(false));
     });
 
     test('should load saved preferences', () async {
@@ -48,40 +48,40 @@ void main() {
         'is_vertical': true,
       });
 
-      final settings = await container.read(settingsProvider.future);
+      await settings.load();
 
-      expect(settings.fontSize, equals(18.0));
-      expect(settings.isVertical, equals(true));
+      expect(settings.value!.fontSize, equals(18.0));
+      expect(settings.value!.isVertical, equals(true));
     });
 
     test('should update font size setting', () async {
       SharedPreferences.setMockInitialValues({});
 
       // Wait for initial state to load
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setFontSize(20);
 
-      final asyncValue = container.read(settingsProvider);
-      expect(asyncValue.hasValue, isTrue);
-      final settings = asyncValue.value!;
-      expect(settings.fontSize, equals(20.0));
+      final asyncValue = settings.state;
+      expect(asyncValue.valueOrNull != null, isTrue);
+      final values = asyncValue.valueOrNull!;
+      expect(values.fontSize, equals(20.0));
     });
 
     test('should update isVertical setting', () async {
       SharedPreferences.setMockInitialValues({});
 
       // Wait for initial state to load
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsVertical(isVertical: true);
 
-      final asyncValue = container.read(settingsProvider);
-      expect(asyncValue.hasValue, isTrue);
-      final settings = asyncValue.value!;
-      expect(settings.isVertical, isTrue);
+      final asyncValue = settings.state;
+      expect(asyncValue.valueOrNull != null, isTrue);
+      final values = asyncValue.valueOrNull!;
+      expect(values.isVertical, isTrue);
     });
 
     test(
@@ -89,9 +89,9 @@ void main() {
       () async {
         SharedPreferences.setMockInitialValues({});
 
-        final settings = await container.read(settingsProvider.future);
+        await settings.load();
 
-        expect(settings.isRubyEnabled, equals(true));
+        expect(settings.value!.isRubyEnabled, equals(true));
       },
     );
 
@@ -100,9 +100,9 @@ void main() {
         'is_ruby_enabled': false,
       });
 
-      final settings = await container.read(settingsProvider.future);
+      await settings.load();
 
-      expect(settings.isRubyEnabled, equals(false));
+      expect(settings.value!.isRubyEnabled, equals(false));
     });
 
     test(
@@ -110,9 +110,9 @@ void main() {
       () async {
         SharedPreferences.setMockInitialValues({});
 
-        final settings = await container.read(settingsProvider.future);
+        await settings.load();
 
-        expect(settings.isOfflineMode, equals(false));
+        expect(settings.value!.isOfflineMode, equals(false));
       },
     );
 
@@ -121,83 +121,71 @@ void main() {
         'is_offline_mode': true,
       });
 
-      final settings = await container.read(settingsProvider.future);
+      await settings.load();
 
-      expect(settings.isOfflineMode, equals(true));
+      expect(settings.value!.isOfflineMode, equals(true));
     });
 
     test('should update isOfflineMode setting', () async {
       SharedPreferences.setMockInitialValues({});
 
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsOfflineMode(isOfflineMode: true);
 
-      final asyncValue = container.read(settingsProvider);
-      expect(asyncValue.hasValue, isTrue);
-      final settings = asyncValue.value!;
-      expect(settings.isOfflineMode, isTrue);
+      final asyncValue = settings.state;
+      expect(asyncValue.valueOrNull != null, isTrue);
+      final values = asyncValue.valueOrNull!;
+      expect(values.isOfflineMode, isTrue);
     });
 
     test('should persist isOfflineMode to SharedPreferences', () async {
       SharedPreferences.setMockInitialValues({});
 
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsOfflineMode(isOfflineMode: true);
 
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getBool('is_offline_mode'), equals(true));
     });
 
-    test(
-      'isOfflineModeProvider returns default false when settings not loaded',
-      () {
-        SharedPreferences.setMockInitialValues({});
+    test('isOfflineMode is false before the settings are loaded', () async {
+      SharedPreferences.setMockInitialValues({});
 
-        final isOfflineMode = container.read(isOfflineModeProvider);
+      expect(settings.isOfflineMode, isFalse);
+    });
 
-        expect(isOfflineMode, isFalse);
-      },
-    );
+    test('isOfflineMode is true when offline mode is enabled', () async {
+      SharedPreferences.setMockInitialValues({'is_offline_mode': true});
 
-    test(
-      'isOfflineModeProvider returns true when offline mode is enabled',
-      () async {
-        SharedPreferences.setMockInitialValues({
-          'is_offline_mode': true,
-        });
+      await settings.load();
 
-        await container.read(settingsProvider.future);
-
-        final isOfflineMode = container.read(isOfflineModeProvider);
-
-        expect(isOfflineMode, isTrue);
-      },
-    );
+      expect(settings.isOfflineMode, isTrue);
+    });
 
     test('should update isRubyEnabled setting', () async {
       SharedPreferences.setMockInitialValues({});
 
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsRubyEnabled(isRubyEnabled: false);
 
-      final asyncValue = container.read(settingsProvider);
-      expect(asyncValue.hasValue, isTrue);
-      final settings = asyncValue.value!;
-      expect(settings.isRubyEnabled, isFalse);
+      final asyncValue = settings.state;
+      expect(asyncValue.valueOrNull != null, isTrue);
+      final values = asyncValue.valueOrNull!;
+      expect(values.isRubyEnabled, isFalse);
     });
 
     test('should persist isRubyEnabled to SharedPreferences', () async {
       SharedPreferences.setMockInitialValues({});
 
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsRubyEnabled(isRubyEnabled: false);
 
       final prefs = await SharedPreferences.getInstance();
@@ -209,16 +197,16 @@ void main() {
         'line_height': 1.0,
       });
 
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsRubyEnabled(isRubyEnabled: true);
 
-      final asyncValue = container.read(settingsProvider);
-      expect(asyncValue.hasValue, isTrue);
-      final settings = asyncValue.value!;
-      expect(settings.isRubyEnabled, isTrue);
-      expect(settings.lineHeight, equals(1.3));
+      final asyncValue = settings.state;
+      expect(asyncValue.valueOrNull != null, isTrue);
+      final values = asyncValue.valueOrNull!;
+      expect(values.isRubyEnabled, isTrue);
+      expect(values.lineHeight, equals(1.3));
     });
 
     test('setIsRubyEnabled(true)でlineHeight>=1.3なら値を保持', () async {
@@ -226,16 +214,16 @@ void main() {
         'line_height': 1.5,
       });
 
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsRubyEnabled(isRubyEnabled: true);
 
-      final asyncValue = container.read(settingsProvider);
-      expect(asyncValue.hasValue, isTrue);
-      final settings = asyncValue.value!;
-      expect(settings.isRubyEnabled, isTrue);
-      expect(settings.lineHeight, equals(1.5));
+      final asyncValue = settings.state;
+      expect(asyncValue.valueOrNull != null, isTrue);
+      final values = asyncValue.valueOrNull!;
+      expect(values.isRubyEnabled, isTrue);
+      expect(values.lineHeight, equals(1.5));
     });
 
     test('setIsRubyEnabled(false)でlineHeightはそのまま保持', () async {
@@ -243,16 +231,16 @@ void main() {
         'line_height': 1.0,
       });
 
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsRubyEnabled(isRubyEnabled: false);
 
-      final asyncValue = container.read(settingsProvider);
-      expect(asyncValue.hasValue, isTrue);
-      final settings = asyncValue.value!;
-      expect(settings.isRubyEnabled, isFalse);
-      expect(settings.lineHeight, equals(1.0));
+      final asyncValue = settings.state;
+      expect(asyncValue.valueOrNull != null, isTrue);
+      final values = asyncValue.valueOrNull!;
+      expect(values.isRubyEnabled, isFalse);
+      expect(values.lineHeight, equals(1.0));
     });
 
     test('自動調整後のlineHeightがSharedPreferencesに永続化される', () async {
@@ -260,9 +248,9 @@ void main() {
         'line_height': 1.0,
       });
 
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsRubyEnabled(isRubyEnabled: true);
 
       final prefs = await SharedPreferences.getInstance();
@@ -275,16 +263,16 @@ void main() {
         'line_height': 1.3,
       });
 
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsRubyEnabled(isRubyEnabled: true);
 
-      final asyncValue = container.read(settingsProvider);
-      expect(asyncValue.hasValue, isTrue);
-      final settings = asyncValue.value!;
-      expect(settings.isRubyEnabled, isTrue);
-      expect(settings.lineHeight, equals(1.3));
+      final asyncValue = settings.state;
+      expect(asyncValue.valueOrNull != null, isTrue);
+      final values = asyncValue.valueOrNull!;
+      expect(values.isRubyEnabled, isTrue);
+      expect(values.lineHeight, equals(1.3));
     });
 
     test('setIsRubyEnabled(true)でlineHeight<1.0の極端な値でも1.3に調整される', () async {
@@ -292,16 +280,16 @@ void main() {
         'line_height': 0.5,
       });
 
-      await container.read(settingsProvider.future);
+      await settings.load();
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsRubyEnabled(isRubyEnabled: true);
 
-      final asyncValue = container.read(settingsProvider);
-      expect(asyncValue.hasValue, isTrue);
-      final settings = asyncValue.value!;
-      expect(settings.isRubyEnabled, isTrue);
-      expect(settings.lineHeight, equals(1.3));
+      final asyncValue = settings.state;
+      expect(asyncValue.valueOrNull != null, isTrue);
+      final values = asyncValue.valueOrNull!;
+      expect(values.isRubyEnabled, isTrue);
+      expect(values.lineHeight, equals(1.3));
     });
   });
 

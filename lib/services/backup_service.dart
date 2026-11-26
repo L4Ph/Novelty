@@ -206,13 +206,11 @@ class BackupService {
   /// 既存のDBファイルを `.bak` に退避したうえで、DB接続をクローズし、
   /// ステージング済みファイルにリネームで置き換える。
   /// 失敗時は `.bak` から元のDBファイルを復元して例外をスローする。
-  /// いずれの場合も、呼び出し側でプロバイダーを再初期化して
-  /// データベースを開き直すこと。
+  /// The caller re-opens the database afterwards, either way.
   ///
-  /// 注意: 呼び出し前に `appDatabaseProvider` をinvalidateして
-  /// DB依存プロバイダを全て破棄(ストリーム購読をキャンセル)しておくこと。
-  /// 購読がpause状態で残っているとDriftのclose()は完了しない
-  /// (実測で確認済み)。
+  /// Note: the caller must unmount every screen below and cancel every
+  /// subscription on this connection before calling. Drift's close() never
+  /// completes while a paused subscription is still attached (measured).
   Future<void> applyImportSwap(String pendingFilePath) async {
     final dbFile = await databaseFile();
     final backupFile = File('${dbFile.path}.bak');

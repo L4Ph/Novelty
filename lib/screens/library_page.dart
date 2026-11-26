@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/domain/library_filter_state.dart';
 import 'package:novelty/models/novel_info_extension.dart';
@@ -16,43 +16,54 @@ import 'package:novelty/widgets/novel_list_tile.dart';
 import 'package:novelty/widgets/ranking_filter_sheet.dart';
 import 'package:novelty/widgets/remove_from_library_dialog.dart';
 import 'package:novelty/widgets/search_modal.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 /// "ライブラリ"ページのウィジェット。
-class LibraryPage extends ConsumerWidget {
+class LibraryPage extends StatefulWidget {
   /// コンストラクタ。
   const LibraryPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final libraryNovelsAsync = ref.watch(libraryNovelsProvider);
-    final filter = ref.watch(libraryFilterStateProvider);
+  State<LibraryPage> createState() => _LibraryPageState();
+}
 
-    // フィルタリング処理
-    final filteredNovelsAsync = libraryNovelsAsync.whenData((novels) {
-      return novels.cast<Novel>().where((novel) {
-        // サイト絞り込みフィルタ
-        if (filter.source != null && novel.source != filter.source) {
-          return false;
-        }
+class _LibraryPageState extends State<LibraryPage> {
+  final _filter = LibraryFilterController();
+  Stream<List<dynamic>>? _novels;
 
-        // 連載中のみフィルタ
-        if (filter.showOnlyOngoing) {
-          // end: 1 = 連載中, 0 = 完結/短編
-          if (novel.end != 1) {
-            return false;
-          }
-        }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _novels ??= watchLibraryNovels(context.services.db);
+  }
 
-        // ジャンルフィルタ
-        if (filter.selectedGenreId != null) {
-          if (novel.genreId != filter.selectedGenreId) {
-            return false;
-          }
-        }
+  @override
+  void dispose() {
+    _filter.dispose();
+    super.dispose();
+  }
 
-        return true;
-      }).toList();
-    });
+  bool _matches(Novel novel, LibraryFilterState filter) {
+    if (filter.source != null && novel.source != filter.source) return false;
+    if (filter.showOnlyOngoing && novel.end != 1) return false;
+    if (filter.selectedGenreId != null &&
+        novel.genreId != filter.selectedGenreId) {
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _filter,
+      builder: (context, _) => _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
+    final repository = context.services.repository;
+    final filter = _filter.state;
 
     void showFilterSheet() {
       // ジャンル一覧は選択中のサイトのマスタデータを使用する
@@ -67,18 +78,11 @@ class LibraryPage extends ConsumerWidget {
             genres: genres,
             initialShowOnlyOngoing: filter.showOnlyOngoing,
             initialSelectedGenreId: filter.selectedGenreId,
-            onApply:
-                ({
-                  required showOnlyOngoing,
-                  required selectedGenreId,
-                }) {
-                  ref
-                      .read(libraryFilterStateProvider.notifier)
-                      .setShowOnlyOngoing(value: showOnlyOngoing);
-                  ref
-                      .read(libraryFilterStateProvider.notifier)
-                      .setSelectedGenreId(selectedGenreId);
-                },
+            onApply: ({required showOnlyOngoing, required selectedGenreId}) {
+              _filter
+                ..setShowOnlyOngoing(value: showOnlyOngoing)
+                ..setSelectedGenreId(selectedGenreId);
+            },
           ),
         ),
       );
@@ -97,11 +101,7 @@ class LibraryPage extends ConsumerWidget {
                   sources: NovelSource.values,
                   selected: filter.source,
                   allLabel: 'すべて',
-                  onChanged: (source) {
-                    ref
-                        .read(libraryFilterStateProvider.notifier)
-                        .setSource(source);
-                  },
+                  onChanged: _filter.setSource,
                 ),
               ),
             ),
@@ -133,77 +133,73 @@ class LibraryPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: filteredNovelsAsync.when(
-              data: (novels) {
-                if (novels.isEmpty) {
-                  // フィルタ適用中の場合はメッセージを変えるなどの配慮も可能だが、
-                  // シンプルに「見つかりません」でも良い。
-                  // ここでは元のメッセージを維持しつつ、フィルタ時は「条件に一致する小説がありません」とするのが親切。
-                  if (libraryNovelsAsync.asData?.value.isNotEmpty ?? false) {
-                    return const Center(child: Text('条件に一致する小説がありません'));
-                  }
-                  return const Center(child: Text('ライブラリに小説がありません'));
-                }
-                return ListView.builder(
-                  itemCount: novels.length,
-                  itemBuilder: (context, index) {
-                    final novel = novels[index];
+      body: StreamLoader<List<dynamic>>(
+        stream: _novels!,
+        builder: (context, state) => state.when(
+          data: (novels) {
+            final all = novels.cast<Novel>();
+            // Materialised: a lazy WhereIterable re-runs the predicate for
+            // every elementAt, which is quadratic over the rows on screen.
+            final filtered = all
+                .where((novel) => _matches(novel, filter))
+                .toList();
+            if (filtered.isEmpty) {
+              return Center(
+                child: Text(
+                  all.isEmpty ? 'ライブラリに小説がありません' : '条件に一致する小説がありません',
+                ),
+              );
+            }
+            return ListView.builder(
+              itemCount: filtered.length,
+              itemBuilder: (context, index) {
+                final novel = filtered[index];
 
-                    // NovelListTileを使用するため、NovelInfoに変換
-                    final novelData = novel.toModel();
-
-                    return NovelListTile(
-                      item: novelData,
-                      onLongPress: () async {
-                        final messenger = ScaffoldMessenger.of(context);
-                        final repository = ref.read(novelRepositoryProvider);
-
-                        final action = await showRemoveFromLibraryDialog(
-                          context,
-                          novelTitle: novel.title ?? 'タイトルなし',
-                        );
-                        if (action == null ||
-                            action == RemoveFromLibraryAction.cancel) {
-                          return;
-                        }
-
-                        try {
-                          await repository.removeFromLibrary(
-                            novel.source,
-                            novel.workId,
-                            deleteDownloads:
-                                action ==
-                                RemoveFromLibraryAction.deleteDownloads,
-                          );
-
-                          if (!messenger.mounted) return;
-                          messenger.showSnackBar(
-                            const SnackBar(
-                              content: Text('ライブラリから削除しました'),
-                            ),
-                          );
-                        } on Object catch (e) {
-                          if (!messenger.mounted) return;
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text('ライブラリから削除できませんでした: $e'),
-                            ),
-                          );
-                        }
-                      },
-                    );
-                  },
+                return NovelListTile(
+                  item: novel.toModel(),
+                  onLongPress: () =>
+                      _removeFromLibrary(context, repository, novel),
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
-            ),
-          ),
-        ],
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stackTrace) => Center(child: Text('Error: $err')),
+        ),
       ),
     );
+  }
+
+  Future<void> _removeFromLibrary(
+    BuildContext context,
+    NovelRepository repository,
+    Novel novel,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final action = await showRemoveFromLibraryDialog(
+      context,
+      novelTitle: novel.title ?? 'タイトルなし',
+    );
+    if (action == null || action == RemoveFromLibraryAction.cancel) {
+      return;
+    }
+
+    try {
+      await repository.removeFromLibrary(
+        novel.source,
+        novel.workId,
+        deleteDownloads: action == RemoveFromLibraryAction.deleteDownloads,
+      );
+
+      if (!messenger.mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('ライブラリから削除しました')),
+      );
+    } on Object catch (e) {
+      if (!messenger.mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text('ライブラリから削除できませんでした: $e')),
+      );
+    }
   }
 }

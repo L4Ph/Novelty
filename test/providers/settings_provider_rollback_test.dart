@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -6,6 +5,7 @@ import 'package:novelty/repositories/preferences_repository.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 import 'settings_provider_rollback_test.mocks.dart';
 
@@ -25,22 +25,18 @@ void main() {
 
   group('Settings Provider ロールバック機構', () {
     late MockPreferencesRepository mockPrefsRepo;
-    late ProviderContainer container;
+    late SettingsController settings;
 
     setUp(() {
       // path_providerのモック設定
       PathProviderPlatform.instance = FakePathProviderPlatform();
       mockPrefsRepo = MockPreferencesRepository();
 
-      container = ProviderContainer(
-        overrides: [
-          preferencesRepositoryProvider.overrideWithValue(mockPrefsRepo),
-        ],
-      );
+      settings = SettingsController(mockPrefsRepo);
     });
 
     tearDown(() {
-      container.dispose();
+      settings.dispose();
     });
 
     test('isRubyEnabled永続化失敗時、例外がスローされる', () async {
@@ -51,14 +47,14 @@ void main() {
       when(mockPrefsRepo.getBool(any)).thenAnswer((_) async => null);
 
       // 初期状態をロード
-      await container.read(settingsProvider.future);
+      await settings.load();
 
       // isRubyEnabledの永続化を失敗させる
       when(
         mockPrefsRepo.setBool('is_ruby_enabled', false),
       ).thenAnswer((_) async => false);
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
 
       await expectLater(
         settingsNotifier.setIsRubyEnabled(isRubyEnabled: false),
@@ -80,7 +76,7 @@ void main() {
       ).thenAnswer((_) async => false);
 
       // 初期状態をロード
-      await container.read(settingsProvider.future);
+      await settings.load();
 
       // Phase 1: isRubyEnabledの永続化は成功
       when(
@@ -97,7 +93,7 @@ void main() {
         mockPrefsRepo.setBool('is_ruby_enabled', false),
       ).thenAnswer((_) async => true);
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
 
       await expectLater(
         settingsNotifier.setIsRubyEnabled(isRubyEnabled: true),
@@ -122,7 +118,7 @@ void main() {
       ).thenAnswer((_) async => false);
 
       // 初期状態をロード
-      await container.read(settingsProvider.future);
+      await settings.load();
 
       // Phase 1: isRubyEnabledの永続化は成功
       when(
@@ -139,7 +135,7 @@ void main() {
         mockPrefsRepo.setBool('is_ruby_enabled', false),
       ).thenAnswer((_) async => false);
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
 
       await expectLater(
         settingsNotifier.setIsRubyEnabled(isRubyEnabled: true),
@@ -167,7 +163,7 @@ void main() {
       ).thenAnswer((_) async => false);
 
       // 初期状態をロード
-      await container.read(settingsProvider.future);
+      await settings.load();
 
       // Phase 1: isRubyEnabledの永続化は成功
       when(
@@ -179,18 +175,29 @@ void main() {
         mockPrefsRepo.setDouble('line_height', 1.3),
       ).thenAnswer((_) async => true);
 
-      final settingsNotifier = container.read(settingsProvider.notifier);
+      final settingsNotifier = settings;
       await settingsNotifier.setIsRubyEnabled(isRubyEnabled: true);
 
-      final asyncValue = container.read(settingsProvider);
-      expect(asyncValue.hasValue, isTrue);
-      final settings = asyncValue.value!;
-      expect(settings.isRubyEnabled, isTrue);
-      expect(settings.lineHeight, equals(1.3));
+      final asyncValue = settings.state;
+      expect(asyncValue.valueOrNull != null, isTrue);
+      final values = asyncValue.valueOrNull!;
+      expect(values.isRubyEnabled, isTrue);
+      expect(values.lineHeight, equals(1.3));
 
       // 永続化が呼ばれたことを確認
       verify(mockPrefsRepo.setBool('is_ruby_enabled', true)).called(1);
       verify(mockPrefsRepo.setDouble('line_height', 1.3)).called(1);
+    });
+
+    test('読み込みに失敗するとAsyncErrorになり、起動スピナーのままにならない', () async {
+      when(
+        mockPrefsRepo.getInt(any),
+      ).thenThrow(StateError('preferences are unavailable'));
+
+      await settings.load();
+
+      expect(settings.value, isNull);
+      expect(settings.state, isA<AsyncError<AppSettings>>());
     });
   });
 }

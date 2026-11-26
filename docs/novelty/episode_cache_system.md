@@ -537,19 +537,18 @@ Future<NovelDownloadSummary?> getNovelDownloadSummary(String ncode) async {
 }
 ```
 
-### 9.3. Provider
+### 9.3. 取得経路
+
+本文は `NovelRepository.getEpisode` が唯一の入口で、画面は
+`Scope` から受け取ったリポジトリを直接呼ぶ。
 
 ```dart
-@riverpod
-Future<List<NovelContentElement>> novelContent(
-  Ref ref, {
-  required String ncode,
-  required int episode,
+Future<List<NovelContentElement>> getEpisode(
+  NovelSource source,
+  String workId,
+  int episode, {
   String? revised,
-}) async {
-  final repository = ref.read(novelRepositoryProvider);
-  return repository.getEpisode(ncode, episode, revised: revised);
-}
+}) async { /* キャッシュ判定→必要なら取得 */ }
 ```
 
 ### 9.4. UI層での使用例
@@ -560,13 +559,12 @@ onTap: () {
   context.push('/novel/$ncode/$episodeNumber?revised=${episode.revised}');
 }
 
-// または Provider経由で
-final content = ref.watch(
-  novelContentProvider(
-    ncode: ncode,
-    episode: episodeNumber,
-    revised: episode.revised,
-  ),
+// またはリポジトリを直接呼ぶ
+final content = await context.services.repository.getEpisode(
+  source,
+  workId,
+  episodeNumber,
+  revised: episode.revised,
 );
 ```
 

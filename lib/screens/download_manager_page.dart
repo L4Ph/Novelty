@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/database/database.dart';
+import 'package:novelty/models/download_progress.dart';
 import 'package:novelty/models/novel_download_summary.dart';
 import 'package:novelty/models/novel_info.dart';
 import 'package:novelty/models/novel_info_extension.dart';
-import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/router/app_router.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/widgets/novel_list_tile.dart';
 
 /// ダウンロード管理画面
-class DownloadManagerPage extends ConsumerWidget {
+class DownloadManagerPage extends StatelessWidget {
   /// コンストラクタ
   const DownloadManagerPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -41,13 +41,13 @@ class DownloadManagerPage extends ConsumerWidget {
 }
 
 /// ダウンロード中タブ
-class _DownloadingTab extends ConsumerWidget {
+class _DownloadingTab extends StatelessWidget {
   /// コンストラクタ
   const _DownloadingTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final db = ref.watch(appDatabaseProvider);
+  Widget build(BuildContext context) {
+    final db = context.services.db;
 
     return StreamBuilder<List<NovelDownloadSummary>>(
       stream: db.watchDownloadingNovels(),
@@ -84,13 +84,13 @@ class _DownloadingTab extends ConsumerWidget {
 }
 
 /// 完了タブ
-class _CompletedTab extends ConsumerWidget {
+class _CompletedTab extends StatelessWidget {
   /// コンストラクタ
   const _CompletedTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final db = ref.watch(appDatabaseProvider);
+  Widget build(BuildContext context) {
+    final db = context.services.db;
 
     return StreamBuilder<List<NovelDownloadSummary>>(
       stream: db.watchCompletedDownloads(),
@@ -127,7 +127,7 @@ class _CompletedTab extends ConsumerWidget {
 }
 
 /// ダウンロード中リストアイテム
-class _DownloadListItem extends ConsumerWidget {
+class _DownloadListItem extends StatelessWidget {
   /// コンストラクタ
   const _DownloadListItem({
     required this.summary,
@@ -137,8 +137,8 @@ class _DownloadListItem extends ConsumerWidget {
   final NovelDownloadSummary summary;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final db = ref.watch(appDatabaseProvider);
+  Widget build(BuildContext context) {
+    final db = context.services.db;
 
     return FutureBuilder<Novel?>(
       future: db.getNovel(NovelSource.narou, summary.ncode),
@@ -154,79 +154,43 @@ class _DownloadListItem extends ConsumerWidget {
               title: summary.ncode,
             );
 
-        final progressAsync = ref.watch(
-          downloadProgressProvider(NovelSource.narou, summary.ncode),
-        );
-
         return Column(
           children: [
             NovelListTile(item: novelData),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: progressAsync.when(
-                data: (progress) {
-                  final current =
-                      progress?.currentEpisode ?? summary.successCount;
-                  final total =
-                      progress?.totalEpisodes ?? summary.totalEpisodes;
-                  final progressValue = total > 0 ? current / total : 0.0;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LinearProgressIndicator(
-                        value: progressValue,
-                        minHeight: 8,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '$current / $total 話',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  );
-                },
-                loading: () {
-                  final current = summary.successCount;
-                  final total = summary.totalEpisodes;
-                  final progressValue = total > 0 ? current / total : 0.0;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LinearProgressIndicator(
-                        value: progressValue,
-                        minHeight: 8,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '$current / $total 話',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  );
-                },
-                error: (e, s) {
-                  final current = summary.successCount;
-                  final total = summary.totalEpisodes;
-                  final progressValue = total > 0 ? current / total : 0.0;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LinearProgressIndicator(
-                        value: progressValue,
-                        minHeight: 8,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '$current / $total 話',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  );
-                },
+            StreamBuilder<DownloadProgress?>(
+              stream: context.services.repository.watchDownloadProgress(
+                NovelSource.narou,
+                summary.ncode,
               ),
+              builder: (context, progressSnapshot) {
+                final progress = progressSnapshot.data;
+                // Until a progress event arrives, show the DB totals.
+                final current =
+                    progress?.currentEpisode ?? summary.successCount;
+                final total = progress?.totalEpisodes ?? summary.totalEpisodes;
+                final progressValue = total > 0 ? current / total : 0.0;
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      LinearProgressIndicator(
+                        value: progressValue,
+                        minHeight: 8,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '$current / $total 話',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
         );
@@ -236,7 +200,7 @@ class _DownloadListItem extends ConsumerWidget {
 }
 
 /// 完了リストアイテム
-class _CompletedListItem extends ConsumerWidget {
+class _CompletedListItem extends StatelessWidget {
   /// コンストラクタ
   const _CompletedListItem({
     required this.summary,
@@ -246,8 +210,8 @@ class _CompletedListItem extends ConsumerWidget {
   final NovelDownloadSummary summary;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final db = ref.watch(appDatabaseProvider);
+  Widget build(BuildContext context) {
+    final db = context.services.db;
 
     return FutureBuilder<Novel?>(
       future: db.getNovel(NovelSource.narou, summary.ncode),

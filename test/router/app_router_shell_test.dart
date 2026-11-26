@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:novelty/database/database_providers.dart';
+import 'package:novelty/database/database.dart';
 import 'package:novelty/router/app_router.dart';
 import 'package:novelty/router/destinations.dart';
 import 'package:novelty/screens/about_page.dart';
+
+import '../support/test_services.dart';
 
 void main() {
   setUp(appRouter.reset);
@@ -12,15 +13,12 @@ void main() {
   testWidgets('the shell shows the tab bar and an overlay covers it', (
     tester,
   ) async {
+    final db = AppDatabase.memory();
+    addTearDown(db.close);
     await tester.pumpWidget(
-      ProviderScope(
-        retry: (_, _) => null,
-        overrides: [
-          libraryNovelsProvider.overrideWith(
-            (ref) => Stream.value(<dynamic>[]),
-          ),
-        ],
-        child: MaterialApp.router(routerConfig: appRouterConfig),
+      withServices(
+        buildTestServices(db: db),
+        MaterialApp.router(routerConfig: appRouterConfig),
       ),
     );
     // The library tab keeps a progress indicator spinning, so settling would

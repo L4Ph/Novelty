@@ -1,7 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-part 'network_fallback_event_provider.g.dart';
 
 /// ネットワーク取得失敗時のキャッシュフォールバックを通知するイベントデータ。
 @immutable
@@ -21,19 +18,26 @@ class NetworkFallbackEventData {
   int get hashCode => message.hashCode;
 }
 
-/// キャッシュフォールバックイベントを提供するプロバイダー。
+/// Delivers cache-fallback events.
 ///
-/// UI側はこのプロバイダーを購読し、イベント発生時にスナックバー等を表示して、
-/// 表示中のデータが最新でない可能性があることをユーザーに伝える。
-@Riverpod(keepAlive: true)
-class NetworkFallbackEvent extends _$NetworkFallbackEvent {
-  @override
-  NetworkFallbackEventData? build() => null;
+/// The repository [emit]s one; the UI watches [event] and tells the user that
+/// what is on screen may be stale.
+class NetworkFallbackBus extends ChangeNotifier {
+  NetworkFallbackEventData? _event;
 
-  /// イベントを発行する。
-  void emit(String message) =>
-      state = NetworkFallbackEventData(message: message);
+  /// The last published event, non-null until it is consumed.
+  NetworkFallbackEventData? get event => _event;
 
-  /// イベントをクリアする。
-  void clear() => state = null;
+  /// Publishes an event.
+  void emit(String message) {
+    _event = NetworkFallbackEventData(message: message);
+    notifyListeners();
+  }
+
+  /// Clears the event.
+  void clear() {
+    if (_event == null) return;
+    _event = null;
+    notifyListeners();
+  }
 }

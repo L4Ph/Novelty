@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/router/app_router.dart';
 import 'package:novelty/router/destinations.dart';
 import 'package:novelty/utils/settings_provider.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 /// "もっと"ページ（設定ハブ）のウィジェット。
-class MorePage extends ConsumerStatefulWidget {
+class MorePage extends StatelessWidget {
   /// コンストラクタ
   const MorePage({super.key});
 
   @override
-  ConsumerState<MorePage> createState() => _MorePageState();
-}
-
-class _MorePageState extends ConsumerState<MorePage> {
-  @override
   Widget build(BuildContext context) {
-    final settingsAsync = ref.watch(settingsProvider);
+    final settingsAsync = context.services.settings.state;
 
     return Scaffold(
       body: CustomScrollView(
@@ -41,13 +37,13 @@ class _MorePageState extends ConsumerState<MorePage> {
           ),
           SliverList(
             delegate: SliverChildListDelegate([
-              _buildQuickActions(settingsAsync),
+              _buildQuickActions(context, settingsAsync),
               const Divider(),
-              _buildFeaturesSection(),
+              _buildFeaturesSection(context),
               const Divider(),
-              _buildSettingsSection(),
+              _buildSettingsSection(context),
               const Divider(),
-              _buildAppInfoSection(),
+              _buildAppInfoSection(context),
               const SizedBox(height: 32),
             ]),
           ),
@@ -56,7 +52,10 @@ class _MorePageState extends ConsumerState<MorePage> {
     );
   }
 
-  Widget _buildQuickActions(AsyncValue<AppSettings> settingsAsync) {
+  Widget _buildQuickActions(
+    BuildContext context,
+    Async<AppSettings> settingsAsync,
+  ) {
     return Column(
       children: [
         settingsAsync.when(
@@ -65,11 +64,9 @@ class _MorePageState extends ConsumerState<MorePage> {
             title: const Text('オフラインモード'),
             subtitle: const Text('通信を行わず、保存済みのコンテンツのみ利用します'),
             value: settings.isOfflineMode,
-            onChanged: (value) async {
-              await ref
-                  .read(settingsProvider.notifier)
-                  .setIsOfflineMode(isOfflineMode: value);
-            },
+            onChanged: (value) => context.services.settings.setIsOfflineMode(
+              isOfflineMode: value,
+            ),
           ),
           loading: () => const ListTile(
             leading: CircularProgressIndicator(),
@@ -83,11 +80,8 @@ class _MorePageState extends ConsumerState<MorePage> {
             title: const Text('シークレットモード'),
             subtitle: const Text('閲覧履歴の記録を一時停止します'),
             value: settings.isIncognito,
-            onChanged: (value) async {
-              await ref
-                  .read(settingsProvider.notifier)
-                  .setIsIncognito(isIncognito: value);
-            },
+            onChanged: (value) =>
+                context.services.settings.setIsIncognito(isIncognito: value),
           ),
           loading: () => const ListTile(
             leading: CircularProgressIndicator(),
@@ -99,11 +93,11 @@ class _MorePageState extends ConsumerState<MorePage> {
     );
   }
 
-  Widget _buildFeaturesSection() {
+  Widget _buildFeaturesSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader('機能'),
+        _sectionHeader(context, '機能'),
         ListTile(
           leading: const Icon(Icons.download),
           title: const Text('ダウンロードキュー'),
@@ -113,11 +107,11 @@ class _MorePageState extends ConsumerState<MorePage> {
     );
   }
 
-  Widget _buildSettingsSection() {
+  Widget _buildSettingsSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader('設定'),
+        _sectionHeader(context, '設定'),
         ListTile(
           leading: const Icon(Icons.palette_outlined),
           title: const Text('一般設定'), // Appearance
@@ -137,11 +131,11 @@ class _MorePageState extends ConsumerState<MorePage> {
     );
   }
 
-  Widget _buildAppInfoSection() {
+  Widget _buildAppInfoSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader('アプリ情報'),
+        _sectionHeader(context, 'アプリ情報'),
         ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('アプリについて'),
@@ -151,7 +145,7 @@ class _MorePageState extends ConsumerState<MorePage> {
     );
   }
 
-  Widget _sectionHeader(String title) {
+  Widget _sectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Text(

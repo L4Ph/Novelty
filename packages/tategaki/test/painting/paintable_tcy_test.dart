@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tategaki/src/painting/paintable_tcy.dart';
 
@@ -75,9 +74,7 @@ void main() {
     group('描画サイズ（横書きのまま描画するため軸交換しない）', () {
       testWidgets('heightはpainterのheightと等しい', (tester) async {
         await tester.pumpWidget(
-          const ProviderScope(
-            child: MaterialApp(home: SizedBox()),
-          ),
+          const MaterialApp(home: SizedBox()),
         );
         final painter = TextPainter(
           text: const TextSpan(
@@ -92,9 +89,7 @@ void main() {
 
       testWidgets('widthとbaseWidthは実際の描画幅（painterのwidth）と等しい', (tester) async {
         await tester.pumpWidget(
-          const ProviderScope(
-            child: MaterialApp(home: SizedBox()),
-          ),
+          const MaterialApp(home: SizedBox()),
         );
         final painter = TextPainter(
           text: const TextSpan(

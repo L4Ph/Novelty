@@ -1,20 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/models/novel_info.dart';
-import 'package:novelty/repositories/novel_repository.dart';
 import 'package:novelty/router/app_router.dart';
 import 'package:novelty/sites/novel_source.dart';
+import 'package:novelty/utils/async_subscription.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:novelty/widgets/gesture_shield.dart';
 import 'package:novelty/widgets/novel_content.dart';
 
-/// 小説のページを表示するウィジェット。
-class NovelPage extends HookConsumerWidget {
-  /// コンストラクタ。
+/// The reader: one episode per page, paged horizontally or vertically.
+class NovelPage extends StatefulWidget {
+  /// Creates the page.
   const NovelPage({
     required this.source,
     required this.workId,
@@ -23,205 +22,166 @@ class NovelPage extends HookConsumerWidget {
     this.revised,
   });
 
-  /// 提供サイト（プロバイダ）。
+  /// The source site.
   final NovelSource source;
 
-  /// サイト共通の作品ID（なろうはNコード）。
+  /// Id of the work in that site (an N-code for narou).
   final String workId;
 
-  /// 表示するエピソード番号。
+  /// Episode to open.
   final int? episode;
 
-  /// 改稿日時（指定された場合、キャッシュ判定に使用）
+  /// Revision timestamp, used for the cache check when given.
   final String? revised;
 
+  /// Builds the AppBar title.
+  ///
+  /// - short story: the novel title only.
+  /// - serialised: "Episode X subtitle", or "Episode X" without one.
+  @visibleForTesting
+  static String buildTitle(
+    NovelInfo novelInfo,
+    int currentEpisodeNum,
+    Episode? currentEpisode,
+  ) {
+    // Short stories show the title only.
+    if (novelInfo.novelType == 2) {
+      return novelInfo.title ?? '';
+    }
+
+    // Serialised.
+    final subtitle = currentEpisode?.subtitle;
+
+    // With a subtitle: "Episode X <subtitle>"; without one: "Episode X".
+    if (subtitle != null && subtitle.isNotEmpty) {
+      return '第$currentEpisodeNum話 $subtitle';
+    } else {
+      return '第$currentEpisodeNum話';
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final novelInfoAsync = ref.watch(
-      novelInfoWithCacheProvider(source, workId),
+  State<NovelPage> createState() => _NovelPageState();
+}
+
+class _NovelPageState extends State<NovelPage> {
+  late int _currentEpisode = widget.episode ?? 1;
+  var _hasAddedInitialHistory = false;
+  var _isAppBarVisible = false;
+  var _bound = false;
+
+  PageController? _pageController;
+  int _pageControllerItemCount = 0;
+
+  late final AsyncSubscription<NovelInfo> _novelInfo;
+  AsyncSubscription<List<Episode>>? _episodeList;
+  int _episodeListPage = 0;
+
+  Map<int, String?>? _episodeMap;
+  NovelInfo? _episodeMapFor;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_bound) return;
+    _bound = true;
+    _novelInfo = AsyncSubscription(
+      context.services.repository.watchNovelInfo(widget.source, widget.workId),
+      onChanged: _rebuild,
     );
-    final initialEpisode = episode ?? 1;
+    _syncEpisodeList();
+  }
 
-    // 現在のエピソード番号をローカル状態で管理
-    final currentEpisode = useState(initialEpisode);
+  @override
+  void dispose() {
+    _pageController?.dispose();
+    unawaited(_novelInfo.cancel());
+    final episodeList = _episodeList;
+    if (episodeList != null) unawaited(episodeList.cancel());
+    super.dispose();
+  }
 
-    // 初回履歴追加フラグ（重複追加を防ぐ）
-    final hasAddedInitialHistory = useRef(false);
+  void _rebuild() {
+    if (mounted) setState(() {});
+  }
 
-    // AppBarの表示状態を管理（本文に集中できるよう初期状態は非表示）
-    final isAppBarVisible = useState(false);
+  /// Subscribes only to the table-of-contents page the visible episode is on.
+  void _syncEpisodeList() {
+    final page = ((_currentEpisode - 1) ~/ 100) + 1;
+    if (page == _episodeListPage) return;
+    _episodeListPage = page;
+    final previous = _episodeList;
+    if (previous != null) unawaited(previous.cancel());
+    _episodeList = AsyncSubscription(
+      context.services.repository.watchEpisodeList(
+        widget.source,
+        widget.workId,
+        page,
+      ),
+      onChanged: _rebuild,
+    );
+  }
 
-    // 最初の履歴追加（novelInfoが読み込まれたら実行）
-    useEffect(() {
-      if (novelInfoAsync.hasValue && !hasAddedInitialHistory.value) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _updateHistory(ref, novelInfoAsync.value!, currentEpisode.value);
-          hasAddedInitialHistory.value = true;
-        });
-      }
-      return null;
-    }, [novelInfoAsync.hasValue]);
+  Map<int, String?> _episodeRevisions(NovelInfo novelInfo) {
+    if (identical(_episodeMapFor, novelInfo) && _episodeMap != null) {
+      return _episodeMap!;
+    }
+    final episodes = novelInfo.episodes;
+    final map = episodes == null
+        ? <int, String?>{}
+        : {for (final e in episodes) ?e.index: e.revised};
+    _episodeMapFor = novelInfo;
+    _episodeMap = map;
+    return map;
+  }
 
-    return novelInfoAsync.when(
+  /// Adds the first history entry, once the novel info has loaded.
+  void _addInitialHistory(NovelInfo novelInfo) {
+    if (_hasAddedInitialHistory) return;
+    _hasAddedInitialHistory = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _updateHistory(novelInfo, _currentEpisode);
+    });
+  }
+
+  void _updateHistory(NovelInfo novelInfo, int episode) {
+    unawaited(
+      context.services.repository.addToHistory(
+        source: widget.source,
+        workId: widget.workId,
+        title: novelInfo.title ?? '',
+        writer: novelInfo.writer ?? '',
+        lastEpisode: episode,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settingsAsync = context.services.settings.state;
+
+    return _novelInfo.state.when(
       data: (novelInfo) {
-        final totalEpisodes = novelInfo.generalAllNo ?? 1;
-        final settings = ref.watch(settingsProvider);
-
-        // PageViewのitemCountとinitialPageを動的に決定
-        final itemCount = _getItemCount(currentEpisode.value, totalEpisodes);
-        final initialPageIndex = _getInitialPage(currentEpisode.value);
-
-        // 改稿日時マップを作成
-        final episodeMap = useMemoized(() {
-          final episodes = novelInfo.episodes;
-          if (episodes == null) {
-            return <int, String?>{};
-          }
-          return {for (final e in episodes) ?e.index: e.revised};
-        }, [novelInfo]);
-
-        // 現在のエピソード番号が含まれるページを計算
-        final currentPage = ((currentEpisode.value - 1) ~/ 100) + 1;
-
-        // エピソードリストを監視
-        final episodeListAsync = ref.watch(
-          episodeListProvider(source, workId, currentPage),
-        );
-
-        // 現在のエピソードを取得
-        final currentEpisodeData = episodeListAsync.maybeWhen(
-          data: (episodes) {
-            return episodes.firstWhere(
-              (e) => e.index == currentEpisode.value,
-              orElse: () => const Episode(),
-            );
-          },
-          orElse: () => null,
-        );
-
-        // PageControllerをメモ化（itemCountが変わったときのみ再作成）
-        final pageController = useMemoized(
-          () => PageController(initialPage: initialPageIndex),
-          [itemCount],
-        );
-
-        // itemCountが変わったらページ位置をリセット
-        useEffect(() {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (pageController.hasClients) {
-              final targetPage = _getInitialPage(currentEpisode.value);
-              if (pageController.page?.round() != targetPage) {
-                pageController.jumpToPage(targetPage);
-              }
-            }
-          });
-          return null;
-        }, [itemCount]);
-
-        return settings.when(
-          data: (settings) {
-            // The reader pages horizontally, so the iOS back gesture would
-            // fight the page swipe. Refusing the pop turns the gesture off;
-            // the back button above calls appRouter.pop directly.
-            return PopScope(
-              canPop: false,
-              onPopInvokedWithResult: (didPop, _) {
-                if (!didPop) {
-                  appRouter.pop();
-                }
-              },
-              child: Scaffold(
-                appBar: isAppBarVisible.value
-                    ? AppBar(
-                        leading: BackButton(onPressed: appRouter.pop),
-                        title: Text(
-                          buildTitle(
-                            novelInfo,
-                            currentEpisode.value,
-                            currentEpisodeData,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      )
-                    : null,
-                body: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  // 本文タップでAppBarの表示/非表示を切り替える
-                  onTap: () {
-                    isAppBarVisible.value = !isAppBarVisible.value;
-                  },
-                  child: Stack(
-                    children: [
-                      PageView.builder(
-                        scrollDirection: settings.isVertical
-                            ? Axis.vertical
-                            : Axis.horizontal,
-                        controller: pageController,
-                        itemCount: itemCount,
-                        onPageChanged: (index) {
-                          _handlePageChanged(
-                            index,
-                            currentEpisode,
-                            totalEpisodes,
-                            pageController,
-                            ref,
-                            novelInfo,
-                          );
-                        },
-                        itemBuilder: (context, index) {
-                          final episodeNum = _getEpisodeNumber(
-                            index,
-                            currentEpisode.value,
-                            totalEpisodes,
-                          );
-
-                          // 指定されたエピソードかつ改稿日時が指定されている場合はそちらを優先
-                          // それ以外はNovelInfoから取得した改稿日時を使用
-                          final revisedDate =
-                              (episodeNum == episode && revised != null)
-                              ? revised
-                              : episodeMap[episodeNum];
-
-                          return RepaintBoundary(
-                            child: NovelContent(
-                              source: source,
-                              workId: workId,
-                              episode: episodeNum,
-                              revised: revisedDate,
-                              isAppBarVisible: isAppBarVisible.value,
-                            ),
-                          );
-                        },
-                      ),
-                      // 縦書きモード時、ホームジェスチャーとの競合を防ぐためシールドを表示
-                      if (settings.isVertical) const GestureShield(),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-          loading: () => Scaffold(
-            appBar: AppBar(),
-            body: const Center(child: CircularProgressIndicator()),
+        _addInitialHistory(novelInfo);
+        return settingsAsync.when(
+          data: (settings) => _buildReader(context, novelInfo, settings),
+          loading: () => _scaffoldWith(
+            const Center(child: CircularProgressIndicator()),
           ),
-          error: (e, s) => Scaffold(
-            appBar: AppBar(),
-            body: Center(child: Text('Error: $e')),
-          ),
+          error: (error, stackTrace) =>
+              _scaffoldWith(Center(child: Text('Error: $error'))),
         );
       },
-      loading: () => Scaffold(
-        appBar: AppBar(),
-        body: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (e, s) => Scaffold(
+      loading: () =>
+          _scaffoldWith(const Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => Scaffold(
         appBar: AppBar(),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('エラーが発生しました: $e'),
+              Text('エラーが発生しました: $error'),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(),
@@ -234,26 +194,118 @@ class NovelPage extends HookConsumerWidget {
     );
   }
 
-  void _updateHistory(WidgetRef ref, NovelInfo novelInfo, int episode) {
-    unawaited(
-      ref
-          .read(novelRepositoryProvider)
-          .addToHistory(
-            source: source,
-            workId: workId,
-            title: novelInfo.title ?? '',
-            writer: novelInfo.writer ?? '',
-            lastEpisode: episode,
+  Widget _scaffoldWith(Widget body) => Scaffold(appBar: AppBar(), body: body);
+
+  Widget _buildReader(
+    BuildContext context,
+    NovelInfo novelInfo,
+    AppSettings settings,
+  ) {
+    final totalEpisodes = novelInfo.generalAllNo ?? 1;
+    final itemCount = _getItemCount(_currentEpisode, totalEpisodes);
+    final episodeMap = _episodeRevisions(novelInfo);
+    final currentEpisodeData = _episodeList?.state.valueOrNull?.firstWhere(
+      (e) => e.index == _currentEpisode,
+      orElse: () => const Episode(),
+    );
+
+    final pageController = _pageController ??= PageController(
+      initialPage: _getInitialPage(_currentEpisode),
+    );
+    if (itemCount != _pageControllerItemCount) {
+      _pageControllerItemCount = itemCount;
+      // Reset the page position when itemCount changes.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!pageController.hasClients) return;
+        final targetPage = _getInitialPage(_currentEpisode);
+        if (pageController.page?.round() != targetPage) {
+          pageController.jumpToPage(targetPage);
+        }
+      });
+    }
+
+    // The reader pages horizontally, so the iOS back gesture would
+    // fight the page swipe. Refusing the pop turns the gesture off;
+    // the back button above calls appRouter.pop directly.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          appRouter.pop();
+        }
+      },
+      child: Scaffold(
+        appBar: _isAppBarVisible
+            ? AppBar(
+                leading: BackButton(onPressed: appRouter.pop),
+                title: Text(
+                  NovelPage.buildTitle(
+                    novelInfo,
+                    _currentEpisode,
+                    currentEpisodeData,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )
+            : null,
+        body: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          // Tap the body to show or hide the AppBar.
+          onTap: () => setState(() => _isAppBarVisible = !_isAppBarVisible),
+          child: Stack(
+            children: [
+              PageView.builder(
+                scrollDirection: settings.isVertical
+                    ? Axis.vertical
+                    : Axis.horizontal,
+                controller: pageController,
+                itemCount: itemCount,
+                onPageChanged: (index) => _handlePageChanged(
+                  index,
+                  totalEpisodes,
+                  pageController,
+                  novelInfo,
+                ),
+                itemBuilder: (context, index) {
+                  final episodeNum = _getEpisodeNumber(
+                    index,
+                    _currentEpisode,
+                    totalEpisodes,
+                  );
+
+                  // Prefer the revision passed to this page for the requested
+                  // episode; otherwise use the one from NovelInfo.
+                  final revisedDate =
+                      (episodeNum == widget.episode && widget.revised != null)
+                      ? widget.revised
+                      : episodeMap[episodeNum];
+
+                  return RepaintBoundary(
+                    child: NovelContent(
+                      source: widget.source,
+                      workId: widget.workId,
+                      episode: episodeNum,
+                      revised: revisedDate,
+                      isAppBarVisible: _isAppBarVisible,
+                    ),
+                  );
+                },
+              ),
+              // Block the home gesture in vertical mode.
+              if (settings.isVertical) const GestureShield(),
+            ],
           ),
+        ),
+      ),
     );
   }
 
-  /// PageViewのアイテム数を決定する。
+  /// How many pages the PageView holds.
   ///
-  /// - 1話だけの小説: 1ページ
-  /// - 第1話（2話以上）: 2ページ（現在 + 次）
-  /// - 最終話: 2ページ（前 + 現在）
-  /// - 中間エピソード: 3ページ（前 + 現在 + 次）
+  /// - single-episode novel: 1 page.
+  /// - first episode of several: 2 pages (current + next).
+  /// - last episode: 2 pages (previous + current).
+  /// - anything in between: 3 pages (previous + current + next).
   static int _getItemCount(int currentEpisode, int totalEpisodes) {
     if (totalEpisodes == 1) return 1;
     if (currentEpisode == 1) return 2;
@@ -261,15 +313,15 @@ class NovelPage extends HookConsumerWidget {
     return 3;
   }
 
-  /// PageControllerの初期ページインデックスを決定する。
+  /// The PageController's initial page index.
   ///
-  /// - 第1話: 0（最初のページ）
-  /// - それ以外: 1（中央のページ）
+  /// - first episode: 0 (the first page).
+  /// - otherwise: 1 (the middle page).
   static int _getInitialPage(int currentEpisode) {
     return currentEpisode == 1 ? 0 : 1;
   }
 
-  /// PageViewのindexから実際のエピソード番号を計算する。
+  /// Episode number for a PageView index.
   static int _getEpisodeNumber(
     int index,
     int currentEpisode,
@@ -278,90 +330,65 @@ class NovelPage extends HookConsumerWidget {
     if (totalEpisodes == 1) return 1;
 
     if (currentEpisode == 1) {
-      // 第1話: [1話, 2話]
+      // First episode: [1, 2].
       return index + 1;
     }
 
     if (currentEpisode == totalEpisodes) {
-      // 最終話: [totalEpisodes-1話, totalEpisodes話]
+      // Last episode: [n-1, n].
       return totalEpisodes - 1 + index;
     }
 
-    // 中間エピソード: [current-1話, current話, current+1話]
+    // Middle: [current-1, current, current+1].
     return currentEpisode - 1 + index;
   }
 
-  /// ページ変更時の処理を行う。
+  /// Handles a page change.
   void _handlePageChanged(
     int index,
-    ValueNotifier<int> currentEpisode,
     int totalEpisodes,
     PageController pageController,
-    WidgetRef ref,
     NovelInfo novelInfo,
   ) {
-    final current = currentEpisode.value;
+    final current = _currentEpisode;
 
     if (current == 1) {
-      // 第1話から第2話へ移動
+      // First episode, moving to the second.
       if (index == 1 && totalEpisodes > 1) {
-        currentEpisode.value = 2;
-        _updateHistory(ref, novelInfo, 2);
+        setState(() => _currentEpisode = 2);
+        _updateHistory(novelInfo, 2);
+        _syncEpisodeList();
       }
     } else if (current == totalEpisodes) {
-      // 最終話から前のエピソードへ移動
+      // Last episode, moving to the previous.
       if (index == 0 && totalEpisodes > 1) {
-        currentEpisode.value = totalEpisodes - 1;
-        _updateHistory(ref, novelInfo, totalEpisodes - 1);
+        setState(() => _currentEpisode = totalEpisodes - 1);
+        _updateHistory(novelInfo, totalEpisodes - 1);
+        _syncEpisodeList();
       }
     } else {
-      // 中間エピソードの通常処理
+      // Middle episodes.
       if (index == 0) {
-        // 前のエピソードへ
-        currentEpisode.value--;
-        _updateHistory(ref, novelInfo, currentEpisode.value);
+        // Previous episode.
+        setState(() => _currentEpisode--);
+        _updateHistory(novelInfo, _currentEpisode);
+        _syncEpisodeList();
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (pageController.hasClients) {
             pageController.jumpToPage(1);
           }
         });
       } else if (index == 2) {
-        // 次のエピソードへ
-        currentEpisode.value++;
-        _updateHistory(ref, novelInfo, currentEpisode.value);
+        // Next episode.
+        setState(() => _currentEpisode++);
+        _updateHistory(novelInfo, _currentEpisode);
+        _syncEpisodeList();
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (pageController.hasClients) {
             pageController.jumpToPage(1);
           }
         });
       }
-    }
-  }
-
-  /// AppBarに表示するタイトルを生成する。
-  ///
-  /// - 短編の場合: 小説タイトルのみ
-  /// - 連載の場合: 「第X話 サブタイトル」または「第X話」
-  @visibleForTesting
-  static String buildTitle(
-    NovelInfo novelInfo,
-    int currentEpisodeNum,
-    Episode? currentEpisode,
-  ) {
-    // 短編の場合はタイトルのみ
-    if (novelInfo.novelType == 2) {
-      return novelInfo.title ?? '';
-    }
-
-    // 連載の場合
-    final subtitle = currentEpisode?.subtitle;
-
-    // サブタイトルがある場合は「第X話 サブタイトル」
-    // ない場合は「第X話」のみ
-    if (subtitle != null && subtitle.isNotEmpty) {
-      return '第$currentEpisodeNum話 $subtitle';
-    } else {
-      return '第$currentEpisodeNum話';
     }
   }
 }

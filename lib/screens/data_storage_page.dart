@@ -1,18 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:novelty/app_services.dart';
 import 'package:novelty/database/database.dart';
 import 'package:novelty/database/database_maintenance.dart';
 import 'package:novelty/router/app_router.dart';
 import 'package:novelty/services/backup_service.dart';
 import 'package:novelty/services/file_picker.dart';
 import 'package:novelty/utils/clipboard_helper.dart';
-import 'package:novelty/utils/settings_provider.dart';
 
 /// データとストレージページ
 /// データベース全体のバックアップ・復元機能を提供
-class DataStoragePage extends ConsumerStatefulWidget {
+class DataStoragePage extends StatefulWidget {
   /// コンストラクタ
   const DataStoragePage({super.key, this.backupService, this.canUseFilePicker});
 
@@ -23,15 +22,18 @@ class DataStoragePage extends ConsumerStatefulWidget {
   final bool? canUseFilePicker;
 
   @override
-  ConsumerState<DataStoragePage> createState() => _DataStoragePageState();
+  State<DataStoragePage> createState() => _DataStoragePageState();
 }
 
-class _DataStoragePageState extends ConsumerState<DataStoragePage> {
+class _DataStoragePageState extends State<DataStoragePage> {
   /// バックアップサービス。
   /// インポートでDBインスタンスが差し替わるため、
-  /// 使用のたびに現在のプロバイダーから生成する。
+  /// Built from the current connection on each use.
   BackupService get _backupService =>
-      widget.backupService ?? BackupService(ref.read(appDatabaseProvider));
+      widget.backupService ?? BackupService(context.services.db);
+
+  DatabaseMaintenanceController get _maintenance =>
+      context.services.maintenance;
 
   @override
   Widget build(BuildContext context) {
@@ -131,8 +133,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
     String? filePath;
     Object? error;
     try {
-      filePath = await runWithDatabaseMaintenance(
-        ref,
+      filePath = await _maintenance.run(
         label: 'データベースをエクスポートしています…',
         task: _backupService.exportDatabaseToFile,
       );
@@ -161,7 +162,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
 
   /// ストレージ設定セクションを構築
   Widget _buildStorageSection() {
-    final settingsAsync = ref.watch(settingsProvider);
+    final settingsAsync = context.services.settings.state;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,8 +245,7 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
     ImportStagedResult? staged;
     Object? error;
     try {
-      staged = await runWithDatabaseMaintenance(
-        ref,
+      staged = await _maintenance.run(
         label: 'バックアップファイルを読み込んでいます…',
         task: _backupService.stageImport,
       );
@@ -267,9 +267,8 @@ class _DataStoragePageState extends ConsumerState<DataStoragePage> {
     // 読み込みが完了したので、データベースを切り替える。
     // 切り替え中は画面全体がアンマウントされて再初期化されるため、
     // 結果は再初期化後にスナックバーで通知される
-    // (importSwapResultProvider 経由)。
-    startImportSwap(
-      ref,
+    // (through DatabaseMaintenanceController).
+    _maintenance.startImportSwap(
       payload: ImportSwapPayload(pendingFilePath: staged.pendingFilePath!),
     );
   }

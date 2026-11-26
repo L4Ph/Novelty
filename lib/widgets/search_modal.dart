@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:novelty/models/novel_search_query.dart';
 import 'package:novelty/sites/novel_site_registry.dart';
 import 'package:novelty/sites/novel_source.dart';
@@ -11,7 +9,7 @@ import 'package:novelty/widgets/sort_selection_sheet.dart';
 import 'package:novelty/widgets/source_selector.dart';
 
 /// 検索条件を指定するモーダルウィジェット
-class SearchModal extends HookConsumerWidget {
+class SearchModal extends StatefulWidget {
   /// コンストラクタ
   const SearchModal({
     required this.initialQuery,
@@ -26,14 +24,30 @@ class SearchModal extends HookConsumerWidget {
   final ValueChanged<NovelSearchQuery> onSearch;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final query = useState(initialQuery);
-    final showAdvanced = useState(false);
-    final searchController = useTextEditingController(text: query.value.word);
-    final notWordController = useTextEditingController(
-      text: query.value.notword,
-    );
+  State<SearchModal> createState() => _SearchModalState();
+}
 
+class _SearchModalState extends State<SearchModal> {
+  late NovelSearchQuery _query = widget.initialQuery;
+  var _showAdvanced = false;
+  late final TextEditingController _searchController = TextEditingController(
+    text: _query.word,
+  );
+  late final TextEditingController _notWordController = TextEditingController(
+    text: _query.notword,
+  );
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _notWordController.dispose();
+    super.dispose();
+  }
+
+  void _setQuery(NovelSearchQuery query) => setState(() => _query = query);
+
+  @override
+  Widget build(BuildContext context) {
     return DraggableScrollableSheet(
       initialChildSize: 0.9,
       minChildSize: 0.5,
@@ -69,27 +83,29 @@ class SearchModal extends HookConsumerWidget {
                   // プロバイダ切替
                   SourceSelector(
                     sources: NovelSource.values,
-                    selected: query.value.source,
+                    selected: _query.source,
                     onChanged: (source) {
                       if (source == null) {
                         return;
                       }
                       final isNarou = source == NovelSource.narou;
-                      query.value = query.value.copyWith(
-                        source: source,
-                        // サイト切替時はなろう固有の詳細条件をリセットする
-                        title: isNarou && query.value.title,
-                        ex: isNarou && query.value.ex,
-                        keyword: isNarou && query.value.keyword,
-                        wname: isNarou && query.value.wname,
-                        genreId: isNarou ? query.value.genreId : null,
-                        type: isNarou ? query.value.type : null,
-                        order: isNarou ? query.value.order : 'new',
-                        // カクヨム固有の条件もリセットする
-                        serialStatus: isNarou ? null : query.value.serialStatus,
-                        totalCharacterCountRange: isNarou
-                            ? null
-                            : query.value.totalCharacterCountRange,
+                      _setQuery(
+                        _query.copyWith(
+                          source: source,
+                          // Drop narou-specific conditions on a site change.
+                          title: isNarou && _query.title,
+                          ex: isNarou && _query.ex,
+                          keyword: isNarou && _query.keyword,
+                          wname: isNarou && _query.wname,
+                          genreId: isNarou ? _query.genreId : null,
+                          type: isNarou ? _query.type : null,
+                          order: isNarou ? _query.order : 'new',
+                          // Drop kakuyomu-specific conditions too.
+                          serialStatus: isNarou ? null : _query.serialStatus,
+                          totalCharacterCountRange: isNarou
+                              ? null
+                              : _query.totalCharacterCountRange,
+                        ),
                       );
                     },
                   ),
@@ -97,7 +113,7 @@ class SearchModal extends HookConsumerWidget {
 
                   // キーワード
                   TextField(
-                    controller: searchController,
+                    controller: _searchController,
 
                     decoration: InputDecoration(
                       labelText: '検索キーワード',
@@ -110,14 +126,14 @@ class SearchModal extends HookConsumerWidget {
                     ),
                     textInputAction: TextInputAction.search,
                     onChanged: (text) {
-                      query.value = query.value.copyWith(word: text);
+                      _setQuery(_query.copyWith(word: text));
                     },
-                    onSubmitted: (_) => onSearch(query.value),
+                    onSubmitted: (_) => widget.onSearch(_query),
                   ),
                   const SizedBox(height: 16),
 
                   // なろう固有の詳細検索条件（カクヨムでは非表示）
-                  if (query.value.source == NovelSource.narou) ...[
+                  if (_query.source == NovelSource.narou) ...[
                     // 検索対象（チップ）
                     Text(
                       '検索対象',
@@ -130,32 +146,34 @@ class SearchModal extends HookConsumerWidget {
                       children: [
                         FilterChip(
                           label: const Text('タイトル'),
-                          selected: query.value.title,
+                          selected: _query.title,
                           onSelected: (selected) {
-                            query.value = query.value.copyWith(title: selected);
+                            _setQuery(_query.copyWith(title: selected));
                           },
                         ),
                         FilterChip(
                           label: const Text('あらすじ'),
-                          selected: query.value.ex,
+                          selected: _query.ex,
                           onSelected: (selected) {
-                            query.value = query.value.copyWith(ex: selected);
+                            _setQuery(_query.copyWith(ex: selected));
                           },
                         ),
                         FilterChip(
                           label: const Text('キーワード'),
-                          selected: query.value.keyword,
+                          selected: _query.keyword,
                           onSelected: (selected) {
-                            query.value = query.value.copyWith(
-                              keyword: selected,
+                            _setQuery(
+                              _query.copyWith(
+                                keyword: selected,
+                              ),
                             );
                           },
                         ),
                         FilterChip(
                           label: const Text('作者名'),
-                          selected: query.value.wname,
+                          selected: _query.wname,
                           onSelected: (selected) {
-                            query.value = query.value.copyWith(wname: selected);
+                            _setQuery(_query.copyWith(wname: selected));
                           },
                         ),
                       ],
@@ -174,9 +192,9 @@ class SearchModal extends HookConsumerWidget {
                           genreList.any(
                             (g) =>
                                 g['id'].toString() ==
-                                query.value.genreId?.firstOrNull,
+                                _query.genreId?.firstOrNull,
                           )
-                          ? int.tryParse(query.value.genreId?.firstOrNull ?? '')
+                          ? int.tryParse(_query.genreId?.firstOrNull ?? '')
                           : null,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
@@ -199,8 +217,10 @@ class SearchModal extends HookConsumerWidget {
                         ),
                       ],
                       onChanged: (value) {
-                        query.value = query.value.copyWith(
-                          genreId: value == null ? null : [value.toString()],
+                        _setQuery(
+                          _query.copyWith(
+                            genreId: value == null ? null : [value.toString()],
+                          ),
                         );
                       },
                     ),
@@ -217,25 +237,27 @@ class SearchModal extends HookConsumerWidget {
                       children: [
                         ChoiceChip(
                           label: const Text('すべて'),
-                          selected: query.value.type == null,
+                          selected: _query.type == null,
                           onSelected: (selected) {
                             if (selected) {
-                              query.value = query.value.copyWith(type: null);
+                              _setQuery(_query.copyWith(type: null));
                             }
                           },
                         ),
                         ...novelTypes.entries.map((entry) {
                           return ChoiceChip(
                             label: Text(entry.value),
-                            selected: query.value.type == entry.key,
+                            selected: _query.type == entry.key,
                             onSelected: (selected) {
                               if (selected) {
-                                query.value = query.value.copyWith(
-                                  type: entry.key,
+                                _setQuery(
+                                  _query.copyWith(
+                                    type: entry.key,
+                                  ),
                                 );
-                              } else if (query.value.type == entry.key) {
+                              } else if (_query.type == entry.key) {
                                 // 任意: 選択解除で「すべて」に戻る
-                                query.value = query.value.copyWith(type: null);
+                                _setQuery(_query.copyWith(type: null));
                               }
                             },
                           );
@@ -268,10 +290,12 @@ class SearchModal extends HookConsumerWidget {
                               isScrollControlled: true,
                               useSafeArea: true,
                               builder: (context) => SortSelectionSheet(
-                                currentOrder: query.value.order,
+                                currentOrder: _query.order,
                                 onOrderSelected: (newOrder) {
-                                  query.value = query.value.copyWith(
-                                    order: newOrder,
+                                  _setQuery(
+                                    _query.copyWith(
+                                      order: newOrder,
+                                    ),
                                   );
                                   Navigator.pop(context);
                                 },
@@ -285,8 +309,7 @@ class SearchModal extends HookConsumerWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                novelOrders[query.value.order] ??
-                                    query.value.order,
+                                novelOrders[_query.order] ?? _query.order,
                                 style: Theme.of(context).textTheme.bodyLarge,
                               ),
                               const Icon(Icons.arrow_drop_down),
@@ -300,13 +323,13 @@ class SearchModal extends HookConsumerWidget {
                     // 詳細設定
                     ExpansionTile(
                       title: const Text('詳細設定'),
-                      initiallyExpanded: showAdvanced.value,
+                      initiallyExpanded: _showAdvanced,
                       onExpansionChanged: (expanded) =>
-                          showAdvanced.value = expanded,
+                          _showAdvanced = expanded,
                       children: [
                         const SizedBox(height: 8),
                         TextField(
-                          controller: notWordController,
+                          controller: _notWordController,
 
                           decoration: InputDecoration(
                             labelText: '除外キーワード',
@@ -317,7 +340,7 @@ class SearchModal extends HookConsumerWidget {
                             filled: true,
                           ),
                           onChanged: (text) {
-                            query.value = query.value.copyWith(notword: text);
+                            _setQuery(_query.copyWith(notword: text));
                           },
                         ),
                         const SizedBox(height: 16),
@@ -325,7 +348,7 @@ class SearchModal extends HookConsumerWidget {
                     ),
                   ], // なろう固有の詳細検索条件ここまで
                   // カクヨム固有の検索条件（なろうでは非表示）
-                  if (query.value.source == NovelSource.kakuyomu) ...[
+                  if (_query.source == NovelSource.kakuyomu) ...[
                     Text(
                       'ジャンル',
                       style: Theme.of(context).textTheme.titleSmall,
@@ -334,7 +357,7 @@ class SearchModal extends HookConsumerWidget {
                     DropdownButtonFormField<String?>(
                       key: const Key('kakuyomu_genre'),
                       menuMaxHeight: MediaQuery.of(context).size.height * 0.5,
-                      initialValue: query.value.genreId?.firstOrNull,
+                      initialValue: _query.genreId?.firstOrNull,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -358,8 +381,10 @@ class SearchModal extends HookConsumerWidget {
                             ),
                       ],
                       onChanged: (value) {
-                        query.value = query.value.copyWith(
-                          genreId: value == null ? null : [value],
+                        _setQuery(
+                          _query.copyWith(
+                            genreId: value == null ? null : [value],
+                          ),
                         );
                       },
                     ),
@@ -371,7 +396,7 @@ class SearchModal extends HookConsumerWidget {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String?>(
                       key: const Key('kakuyomu_serial_status'),
-                      initialValue: query.value.serialStatus,
+                      initialValue: _query.serialStatus,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -395,8 +420,10 @@ class SearchModal extends HookConsumerWidget {
                         ),
                       ],
                       onChanged: (value) {
-                        query.value = query.value.copyWith(
-                          serialStatus: value,
+                        _setQuery(
+                          _query.copyWith(
+                            serialStatus: value,
+                          ),
                         );
                       },
                     ),
@@ -408,7 +435,7 @@ class SearchModal extends HookConsumerWidget {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String?>(
                       key: const Key('kakuyomu_char_count_range'),
-                      initialValue: query.value.totalCharacterCountRange,
+                      initialValue: _query.totalCharacterCountRange,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -440,8 +467,10 @@ class SearchModal extends HookConsumerWidget {
                         ),
                       ],
                       onChanged: (value) {
-                        query.value = query.value.copyWith(
-                          totalCharacterCountRange: value,
+                        _setQuery(
+                          _query.copyWith(
+                            totalCharacterCountRange: value,
+                          ),
                         );
                       },
                     ),
@@ -460,7 +489,7 @@ class SearchModal extends HookConsumerWidget {
                 padding: const EdgeInsets.all(16),
                 child: FilledButton.icon(
                   key: const Key('search_button'),
-                  onPressed: () => onSearch(query.value),
+                  onPressed: () => widget.onSearch(_query),
                   icon: const Icon(Icons.search),
                   label: const Text('検索する'),
                   style: FilledButton.styleFrom(

@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novelty/domain/ranking_filter_state.dart';
 import 'package:novelty/sites/novel_source.dart';
@@ -98,53 +97,38 @@ void main() {
     });
   });
 
-  group('RankingFilterStateNotifier', () {
+  group('RankingFilterController', () {
     test('familyキー(source, rankingType)ごとに初期状態を保持する', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+      final narou = RankingFilterController(source: NovelSource.narou);
+      final kakuyomu = RankingFilterController(source: NovelSource.kakuyomu);
+      addTearDown(narou.dispose);
+      addTearDown(kakuyomu.dispose);
 
-      final narouState = container.read(
-        rankingFilterStateProvider(NovelSource.narou, 'd'),
-      );
-      final kakuyomuState = container.read(
-        rankingFilterStateProvider(NovelSource.kakuyomu, 'daily'),
-      );
-
-      expect(narouState.source, NovelSource.narou);
-      expect(kakuyomuState.source, NovelSource.kakuyomu);
+      expect(narou.state.source, NovelSource.narou);
+      expect(kakuyomu.state.source, NovelSource.kakuyomu);
     });
 
     test('setSelectedGenreId / setShowOnlyOngoing が状態を更新する', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      container.read(
-          rankingFilterStateProvider(NovelSource.kakuyomu, 'daily').notifier,
-        )
+      final controller = RankingFilterController(source: NovelSource.kakuyomu);
+      addTearDown(controller.dispose);
+      controller
         ..setSelectedGenreId('FANTASY')
         ..setShowOnlyOngoing(value: true);
 
-      final state = container.read(
-        rankingFilterStateProvider(NovelSource.kakuyomu, 'daily'),
-      );
+      final state = controller.state;
       expect(state.selectedGenreId, 'FANTASY');
       expect(state.showOnlyOngoing, isTrue);
     });
 
     test('resetがsourceを保持したままフィルタをクリアする', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      container.read(
-          rankingFilterStateProvider(NovelSource.kakuyomu, 'daily').notifier,
-        )
+      final controller = RankingFilterController(source: NovelSource.kakuyomu);
+      addTearDown(controller.dispose);
+      controller
         ..setSelectedGenreId('FANTASY')
         ..setShowOnlyOngoing(value: true)
         ..reset();
 
-      final state = container.read(
-        rankingFilterStateProvider(NovelSource.kakuyomu, 'daily'),
-      );
+      final state = controller.state;
       expect(state.source, NovelSource.kakuyomu);
       expect(state.selectedGenreId, isNull);
       expect(state.showOnlyOngoing, isFalse);

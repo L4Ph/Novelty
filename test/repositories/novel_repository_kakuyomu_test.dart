@@ -1,22 +1,21 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kakuyomu_parser/kakuyomu_parser.dart';
 import 'package:mockito/mockito.dart';
-import 'package:novelty/database/database.dart' as db;
 import 'package:novelty/models/episode.dart';
 import 'package:novelty/repositories/novel_repository.dart';
-import 'package:novelty/services/api_service.dart';
+import 'package:novelty/repositories/preferences_repository.dart';
 import 'package:novelty/sites/kakuyomu/kakuyomu_site.dart';
 import 'package:novelty/sites/novel_site.dart';
 import 'package:novelty/sites/novel_source.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:tiny_http/tiny_http.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 import '../providers/novel_info_offline_test.mocks.dart';
+import '../support/test_services.dart';
 
 /// パスごとにフィクスチャを返す偽の transport。
 class _FixtureAdapter implements HttpTransport {
@@ -64,7 +63,7 @@ void main() {
   group('NovelRepository（カクヨム）', () {
     late MockAppDatabase mockDatabase;
     late MockApiService mockApiService;
-    late ProviderContainer container;
+    late NovelRepository repository;
     late KakuyomuSite kakuyomuSite;
 
     setUp(() {
@@ -82,29 +81,19 @@ void main() {
       kakuyomuSite = KakuyomuSite(
         http: TinyHttp(transport: adapter, minInterval: Duration.zero),
       );
-      container = ProviderContainer(
-        overrides: [
-          db.appDatabaseProvider.overrideWithValue(mockDatabase),
-          apiServiceProvider.overrideWithValue(mockApiService),
-          settingsProvider.overrideWith(FakeSettings.new),
-          isOfflineModeProvider.overrideWithValue(false),
-          novelRepositoryProvider.overrideWith(
-            (ref) => NovelRepository(
-              ref: ref,
-              apiService: mockApiService,
-              settings: ref.watch(settingsProvider),
-              db: mockDatabase,
-              sites: <NovelSource, NovelSite>{
-                NovelSource.kakuyomu: kakuyomuSite,
-              },
-            ),
-          ),
-        ],
+      repository = NovelRepository(
+        apiService: mockApiService,
+        settings: SettingsController(
+          PreferencesRepository(),
+          initialState: const AsyncData(testSettings),
+        ),
+        db: mockDatabase,
+        sites: <NovelSource, NovelSite>{NovelSource.kakuyomu: kakuyomuSite},
       );
     });
 
     tearDown(() {
-      container.dispose();
+      repository.dispose();
     });
 
     test('カクヨム作品をライブラリに追加できる', () async {
@@ -115,8 +104,6 @@ void main() {
       when(
         mockDatabase.addToLibrary(NovelSource.kakuyomu, _workId),
       ).thenAnswer((_) async => 1);
-
-      final repository = container.read(novelRepositoryProvider);
       final added = await repository.addNovelToLibrary(
         NovelSource.kakuyomu,
         _workId,
@@ -135,8 +122,6 @@ void main() {
       when(
         mockDatabase.getEpisodesRange(NovelSource.kakuyomu, _workId, 1, 100),
       ).thenAnswer((_) async => <Episode>[]);
-
-      final repository = container.read(novelRepositoryProvider);
       final episodes = await repository.fetchEpisodeList(
         NovelSource.kakuyomu,
         _workId,
@@ -157,8 +142,6 @@ void main() {
       when(
         mockDatabase.getEpisodeUrl(NovelSource.kakuyomu, _workId, 1),
       ).thenAnswer((_) async => _episodeUrl);
-
-      final repository = container.read(novelRepositoryProvider);
       final content = await repository.getEpisode(
         NovelSource.kakuyomu,
         _workId,
@@ -185,19 +168,4 @@ void main() {
       ).called(1);
     });
   });
-}
-
-class FakeSettings extends Settings {
-  @override
-  Future<AppSettings> build() async {
-    return const AppSettings(
-      fontSize: 16,
-      isVertical: false,
-      themeMode: ThemeMode.system,
-      lineHeight: 1.5,
-      isIncognito: false,
-      isPageFlip: false,
-      isRubyEnabled: true,
-    );
-  }
 }
