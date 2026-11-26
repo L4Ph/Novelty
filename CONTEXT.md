@@ -35,7 +35,7 @@
 `NovelSource` ごとの実装（`lib/sites/`）。マスタデータ（`genres` / `rankingTypes`）と
 読書コア（`fetchNovelInfo` / `fetchToc` / `fetchEpisode`）、探索（`searchNovels` / `fetchRanking`）を提供する。
 レジストリ `novelSiteRegistry`（`Map<NovelSource, NovelSite>`）で管理する。
-Riverpodプロバイダ `novelSiteRegistryProvider` で注入可能（テスト時はオーバーライドする）。
+アプリルートが `AppServices.sites` として配る（テストでは `Scope` に差し替えを入れる）。
 
 - なろうの取得は従来の `ApiService` が担当し、サイト実装（`NarouSite`）はマスタデータのみ保持する。
 

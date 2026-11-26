@@ -183,6 +183,54 @@ void main() {
       expect(seen.last.valueOrNull, equals(2));
     });
   });
+
+  group('KeyedLoader', () {
+    testWidgets('may read an inherited widget on the first load', (
+      tester,
+    ) async {
+      // The loader starts in didChangeDependencies, not initState, so a load
+      // closure can look services up through the context.
+      final api = _FakeApi();
+      final seen = <Async<_FakeApi>>[];
+
+      await tester.pumpWidget(
+        _ApiScope(
+          api: api,
+          child: _host(
+            Builder(
+              builder: (context) => KeyedLoader<_FakeApi>(
+                loadKey: 'k',
+                load: (_) async => _ApiScope.of(context),
+                builder: (context, state) {
+                  seen.add(state);
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(seen.last.valueOrNull, same(api));
+    });
+  });
+}
+
+/// Provides [_FakeApi] the way `Scope` provides services.
+class _ApiScope extends InheritedWidget {
+  const _ApiScope({required this.api, required super.child});
+
+  final _FakeApi api;
+
+  static _FakeApi of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_ApiScope>();
+    assert(scope != null, 'No _ApiScope above this widget');
+    return scope!.api;
+  }
+
+  @override
+  bool updateShouldNotify(_ApiScope oldWidget) => api != oldWidget.api;
 }
 
 class _FakeApi {}

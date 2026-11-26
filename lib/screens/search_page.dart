@@ -118,21 +118,7 @@ class _SearchPageState extends State<SearchPage> {
       // query already searched them, and the narou API treats them as
       // "include in the search" rather than as strict field filters.
 
-      if (searchText.isNotEmpty) {
-
-
-
-
-
-
-
-
-
-
-
-
-
-      }
+      if (searchText.isNotEmpty) {}
 
       return true;
     }).toList();
@@ -141,15 +127,7 @@ class _SearchPageState extends State<SearchPage> {
     // order), and the query's order is applied client-side. Sorting by
     // novelUpdatedAt/lastup is intentionally left out.
 
-    if (query.order == 'new') {
-
-
-
-
-
-
-
-    }
+    if (query.order == 'new') {}
 
     return filteredNovels;
   }

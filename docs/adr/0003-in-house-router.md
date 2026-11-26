@@ -30,7 +30,7 @@ typed routes も中身は `String` で、`NovelDetailRoute(source: 'narou', work
 
 7. **deep link は配線しない。** Flutter の `Router` は `routeInformationProvider` / `routeInformationParser` の両方が null でも動く（アプリ状態から組み立てる用途が公式に想定されている）。将来 URL から復元したくなったら `RouteInformationParser` を足す。URL の語彙は公開契約になるため、決める時期を先送りする。
 
-8. **loader と `push<T>` の戻り値は持たない。** データ取得は Riverpod の責務で、二重系にすると剥がせなくなる。`push` の戻り値は現状14箇所すべて未使用（`push<void>` / `unawaited`）で、実装するとスタックが「値」でなくなる（Completer をエントリに載せる必要が出る）。
+8. **loader と `push<T>` の戻り値は持たない。** データ取得はリポジトリの責務で、二重系にすると剥がせなくなる。`push` の戻り値は現状14箇所すべて未使用（`push<void>` / `unawaited`）で、実装するとスタックが「値」でなくなる（Completer をエントリに載せる必要が出る）。
 
 9. **DBインポート適用後に `appRouter.reset()`。** スタック上の画面は入れ替え前の DB に属するため、ライブラリへ戻す。
 
@@ -39,7 +39,7 @@ typed routes も中身は `String` で、`NovelDetailRoute(source: 'narou', work
 - タブ・シェル・タブバー（アプリが 4本 + overlay を組む）
 - URL・deep link
 - データ取得・キャッシュ（loader）
-- 状態管理（Riverpod を経由しない。`RouteStack` は自前のリスナーだけを持つ）
+- 状態管理（`RouteStack` は自前のリスナーだけを持つ）
 
 ## 代替案
 

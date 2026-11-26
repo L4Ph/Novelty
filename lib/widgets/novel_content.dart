@@ -13,9 +13,13 @@ import 'package:novelty/widgets/novel_content_view.dart';
 import 'package:tategaki/tategaki.dart';
 import 'package:tiny_state/tiny_state.dart';
 
-/// 小説のコンテンツを表示するウィジェット。
-class NovelContent extends StatefulWidget {
-  /// コンストラクタ。
+/// Displays the body of one episode.
+///
+/// The episode is the load key: `PageView` reuses this widget's state when the
+/// reader pages forward, and [KeyedLoader] drops the previous body when the key
+/// changes.
+class NovelContent extends StatelessWidget {
+  /// Creates the widget.
   const NovelContent({
     required this.source,
     required this.workId,
@@ -25,86 +29,44 @@ class NovelContent extends StatefulWidget {
     super.key,
   });
 
-  /// 提供サイト（プロバイダ）。
+  /// The source site.
   final NovelSource source;
 
-  /// サイト共通の作品ID（なろうはNコード）。
+  /// Id of the work in that site (an N-code for narou).
   final String workId;
 
-  /// 小説のエピソード番号
+  /// Episode to display.
   final int episode;
 
-  /// 改稿日時
+  /// Revision timestamp, used for the cache check when given.
   final String? revised;
 
-  /// AppBarが表示されているかどうか。
+  /// Whether the AppBar is visible.
   ///
-  /// `true` の場合、上部のセーフエリアはAppBarが確保するため
-  /// 本文側では上部のパディングを不要にする。
-  /// `false` の場合、本文側で上部のセーフエリアを確保する。
+  /// When `true` the AppBar owns the top safe area, so the body does not pad
+  /// for it; when `false` the body does.
   final bool isAppBarVisible;
-
-  @override
-  State<NovelContent> createState() => _NovelContentState();
-}
-
-class _NovelContentState extends State<NovelContent> {
-  Async<List<NovelContentElement>> _content = const AsyncLoading();
-  var _loaded = false;
-
-  /// Load generation, so an older fetch cannot overwrite a newer body.
-  var _request = 0;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_loaded) return;
-    _loaded = true;
-    unawaited(_load());
-  }
-
-  @override
-  void didUpdateWidget(NovelContent oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // PageView reuses this State when the reader pages forward, so a new
-    // episode or revision has to drop the cached body.
-    if (oldWidget.episode != widget.episode ||
-        oldWidget.revised != widget.revised ||
-        oldWidget.workId != widget.workId ||
-        oldWidget.source != widget.source) {
-      _content = const AsyncLoading();
-      unawaited(_load());
-    }
-  }
-
-  Future<void> _load() async {
-    final request = ++_request;
-    try {
-      final content = await context.services.repository.getEpisode(
-        widget.source,
-        widget.workId,
-        widget.episode,
-        revised: widget.revised,
-      );
-      if (!mounted || request != _request) return;
-      setState(() => _content = AsyncData(content));
-    } on Object catch (error, stackTrace) {
-      if (!mounted || request != _request) return;
-      setState(() => _content = AsyncError(error, stackTrace));
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       // The AppBar already covers the top when it is visible.
-      top: !widget.isAppBarVisible,
-      child: NovelContentBody(
-        source: widget.source,
-        workId: widget.workId,
-        episode: widget.episode,
-        settings: context.services.settings.state,
-        content: _content,
+      top: !isAppBarVisible,
+      child: KeyedLoader<List<NovelContentElement>>(
+        loadKey: (source, workId, episode, revised),
+        load: (_) => context.services.repository.getEpisode(
+          source,
+          workId,
+          episode,
+          revised: revised,
+        ),
+        builder: (context, content) => NovelContentBody(
+          source: source,
+          workId: workId,
+          episode: episode,
+          settings: context.services.settings.state,
+          content: content,
+        ),
       ),
     );
   }
