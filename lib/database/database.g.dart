@@ -179,28 +179,6 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
-  static const drift.VerificationMeta _generalFirstupMeta =
-      const drift.VerificationMeta('generalFirstup');
-  @override
-  late final drift.GeneratedColumn<int> generalFirstup =
-      drift.GeneratedColumn<int>(
-        'general_firstup',
-        aliasedName,
-        true,
-        type: DriftSqlType.int,
-        requiredDuringInsert: false,
-      );
-  static const drift.VerificationMeta _generalLastupMeta =
-      const drift.VerificationMeta('generalLastup');
-  @override
-  late final drift.GeneratedColumn<int> generalLastup =
-      drift.GeneratedColumn<int>(
-        'general_lastup',
-        aliasedName,
-        true,
-        type: DriftSqlType.int,
-        requiredDuringInsert: false,
-      );
   static const drift.VerificationMeta _globalPointMeta =
       const drift.VerificationMeta('globalPoint');
   @override
@@ -383,8 +361,6 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
     istensei,
     istenni,
     keyword,
-    generalFirstup,
-    generalLastup,
     globalPoint,
     fav,
     reviewCount,
@@ -503,24 +479,6 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
       context.handle(
         _keywordMeta,
         keyword.isAcceptableOrUnknown(data['keyword']!, _keywordMeta),
-      );
-    }
-    if (data.containsKey('general_firstup')) {
-      context.handle(
-        _generalFirstupMeta,
-        generalFirstup.isAcceptableOrUnknown(
-          data['general_firstup']!,
-          _generalFirstupMeta,
-        ),
-      );
-    }
-    if (data.containsKey('general_lastup')) {
-      context.handle(
-        _generalLastupMeta,
-        generalLastup.isAcceptableOrUnknown(
-          data['general_lastup']!,
-          _generalLastupMeta,
-        ),
       );
     }
     if (data.containsKey('global_point')) {
@@ -712,14 +670,6 @@ class $NovelsTable extends Novels with drift.TableInfo<$NovelsTable, Novel> {
         DriftSqlType.string,
         data['${effectivePrefix}keyword'],
       ),
-      generalFirstup: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}general_firstup'],
-      ),
-      generalLastup: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}general_lastup'],
-      ),
       globalPoint: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}global_point'],
@@ -844,12 +794,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
   /// キーワード
   final String? keyword;
 
-  /// 初回掲載日 YYYY-MM-DD HH:MM:SS
-  final int? generalFirstup;
-
-  /// 最終掲載日 YYYY-MM-DD HH:MM:SS
-  final int? generalLastup;
-
   /// 総合評価ポイント (ブックマーク数×2)+評価ポイントで算出
   final int? globalPoint;
 
@@ -914,8 +858,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     this.istensei,
     this.istenni,
     this.keyword,
-    this.generalFirstup,
-    this.generalLastup,
     this.globalPoint,
     this.fav,
     this.reviewCount,
@@ -982,12 +924,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     }
     if (!nullToAbsent || keyword != null) {
       map['keyword'] = drift.Variable<String>(keyword);
-    }
-    if (!nullToAbsent || generalFirstup != null) {
-      map['general_firstup'] = drift.Variable<int>(generalFirstup);
-    }
-    if (!nullToAbsent || generalLastup != null) {
-      map['general_lastup'] = drift.Variable<int>(generalLastup);
     }
     if (!nullToAbsent || globalPoint != null) {
       map['global_point'] = drift.Variable<int>(globalPoint);
@@ -1081,12 +1017,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       keyword: keyword == null && nullToAbsent
           ? const drift.Value.absent()
           : drift.Value(keyword),
-      generalFirstup: generalFirstup == null && nullToAbsent
-          ? const drift.Value.absent()
-          : drift.Value(generalFirstup),
-      generalLastup: generalLastup == null && nullToAbsent
-          ? const drift.Value.absent()
-          : drift.Value(generalLastup),
       globalPoint: globalPoint == null && nullToAbsent
           ? const drift.Value.absent()
           : drift.Value(globalPoint),
@@ -1155,8 +1085,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       istensei: serializer.fromJson<int?>(json['istensei']),
       istenni: serializer.fromJson<int?>(json['istenni']),
       keyword: serializer.fromJson<String?>(json['keyword']),
-      generalFirstup: serializer.fromJson<int?>(json['generalFirstup']),
-      generalLastup: serializer.fromJson<int?>(json['generalLastup']),
       globalPoint: serializer.fromJson<int?>(json['globalPoint']),
       fav: serializer.fromJson<int?>(json['fav']),
       reviewCount: serializer.fromJson<int?>(json['reviewCount']),
@@ -1194,8 +1122,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       'istensei': serializer.toJson<int?>(istensei),
       'istenni': serializer.toJson<int?>(istenni),
       'keyword': serializer.toJson<String?>(keyword),
-      'generalFirstup': serializer.toJson<int?>(generalFirstup),
-      'generalLastup': serializer.toJson<int?>(generalLastup),
       'globalPoint': serializer.toJson<int?>(globalPoint),
       'fav': serializer.toJson<int?>(fav),
       'reviewCount': serializer.toJson<int?>(reviewCount),
@@ -1231,8 +1157,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     drift.Value<int?> istensei = const drift.Value.absent(),
     drift.Value<int?> istenni = const drift.Value.absent(),
     drift.Value<String?> keyword = const drift.Value.absent(),
-    drift.Value<int?> generalFirstup = const drift.Value.absent(),
-    drift.Value<int?> generalLastup = const drift.Value.absent(),
     drift.Value<int?> globalPoint = const drift.Value.absent(),
     drift.Value<int?> fav = const drift.Value.absent(),
     drift.Value<int?> reviewCount = const drift.Value.absent(),
@@ -1265,12 +1189,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     istensei: istensei.present ? istensei.value : this.istensei,
     istenni: istenni.present ? istenni.value : this.istenni,
     keyword: keyword.present ? keyword.value : this.keyword,
-    generalFirstup: generalFirstup.present
-        ? generalFirstup.value
-        : this.generalFirstup,
-    generalLastup: generalLastup.present
-        ? generalLastup.value
-        : this.generalLastup,
     globalPoint: globalPoint.present ? globalPoint.value : this.globalPoint,
     fav: fav.present ? fav.value : this.fav,
     reviewCount: reviewCount.present ? reviewCount.value : this.reviewCount,
@@ -1307,12 +1225,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
       istensei: data.istensei.present ? data.istensei.value : this.istensei,
       istenni: data.istenni.present ? data.istenni.value : this.istenni,
       keyword: data.keyword.present ? data.keyword.value : this.keyword,
-      generalFirstup: data.generalFirstup.present
-          ? data.generalFirstup.value
-          : this.generalFirstup,
-      generalLastup: data.generalLastup.present
-          ? data.generalLastup.value
-          : this.generalLastup,
       globalPoint: data.globalPoint.present
           ? data.globalPoint.value
           : this.globalPoint,
@@ -1370,8 +1282,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
           ..write('istensei: $istensei, ')
           ..write('istenni: $istenni, ')
           ..write('keyword: $keyword, ')
-          ..write('generalFirstup: $generalFirstup, ')
-          ..write('generalLastup: $generalLastup, ')
           ..write('globalPoint: $globalPoint, ')
           ..write('fav: $fav, ')
           ..write('reviewCount: $reviewCount, ')
@@ -1409,8 +1319,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
     istensei,
     istenni,
     keyword,
-    generalFirstup,
-    generalLastup,
     globalPoint,
     fav,
     reviewCount,
@@ -1447,8 +1355,6 @@ class Novel extends drift.DataClass implements drift.Insertable<Novel> {
           other.istensei == this.istensei &&
           other.istenni == this.istenni &&
           other.keyword == this.keyword &&
-          other.generalFirstup == this.generalFirstup &&
-          other.generalLastup == this.generalLastup &&
           other.globalPoint == this.globalPoint &&
           other.fav == this.fav &&
           other.reviewCount == this.reviewCount &&
@@ -1483,8 +1389,6 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
   final drift.Value<int?> istensei;
   final drift.Value<int?> istenni;
   final drift.Value<String?> keyword;
-  final drift.Value<int?> generalFirstup;
-  final drift.Value<int?> generalLastup;
   final drift.Value<int?> globalPoint;
   final drift.Value<int?> fav;
   final drift.Value<int?> reviewCount;
@@ -1518,8 +1422,6 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     this.istensei = const drift.Value.absent(),
     this.istenni = const drift.Value.absent(),
     this.keyword = const drift.Value.absent(),
-    this.generalFirstup = const drift.Value.absent(),
-    this.generalLastup = const drift.Value.absent(),
     this.globalPoint = const drift.Value.absent(),
     this.fav = const drift.Value.absent(),
     this.reviewCount = const drift.Value.absent(),
@@ -1554,8 +1456,6 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     this.istensei = const drift.Value.absent(),
     this.istenni = const drift.Value.absent(),
     this.keyword = const drift.Value.absent(),
-    this.generalFirstup = const drift.Value.absent(),
-    this.generalLastup = const drift.Value.absent(),
     this.globalPoint = const drift.Value.absent(),
     this.fav = const drift.Value.absent(),
     this.reviewCount = const drift.Value.absent(),
@@ -1591,8 +1491,6 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     drift.Expression<int>? istensei,
     drift.Expression<int>? istenni,
     drift.Expression<String>? keyword,
-    drift.Expression<int>? generalFirstup,
-    drift.Expression<int>? generalLastup,
     drift.Expression<int>? globalPoint,
     drift.Expression<int>? fav,
     drift.Expression<int>? reviewCount,
@@ -1627,8 +1525,6 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
       if (istensei != null) 'istensei': istensei,
       if (istenni != null) 'istenni': istenni,
       if (keyword != null) 'keyword': keyword,
-      if (generalFirstup != null) 'general_firstup': generalFirstup,
-      if (generalLastup != null) 'general_lastup': generalLastup,
       if (globalPoint != null) 'global_point': globalPoint,
       if (fav != null) 'fav': fav,
       if (reviewCount != null) 'review_count': reviewCount,
@@ -1665,8 +1561,6 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     drift.Value<int?>? istensei,
     drift.Value<int?>? istenni,
     drift.Value<String?>? keyword,
-    drift.Value<int?>? generalFirstup,
-    drift.Value<int?>? generalLastup,
     drift.Value<int?>? globalPoint,
     drift.Value<int?>? fav,
     drift.Value<int?>? reviewCount,
@@ -1701,8 +1595,6 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
       istensei: istensei ?? this.istensei,
       istenni: istenni ?? this.istenni,
       keyword: keyword ?? this.keyword,
-      generalFirstup: generalFirstup ?? this.generalFirstup,
-      generalLastup: generalLastup ?? this.generalLastup,
       globalPoint: globalPoint ?? this.globalPoint,
       fav: fav ?? this.fav,
       reviewCount: reviewCount ?? this.reviewCount,
@@ -1775,12 +1667,6 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
     if (keyword.present) {
       map['keyword'] = drift.Variable<String>(keyword.value);
     }
-    if (generalFirstup.present) {
-      map['general_firstup'] = drift.Variable<int>(generalFirstup.value);
-    }
-    if (generalLastup.present) {
-      map['general_lastup'] = drift.Variable<int>(generalLastup.value);
-    }
     if (globalPoint.present) {
       map['global_point'] = drift.Variable<int>(globalPoint.value);
     }
@@ -1851,8 +1737,6 @@ class NovelsCompanion extends drift.UpdateCompanion<Novel> {
           ..write('istensei: $istensei, ')
           ..write('istenni: $istenni, ')
           ..write('keyword: $keyword, ')
-          ..write('generalFirstup: $generalFirstup, ')
-          ..write('generalLastup: $generalLastup, ')
           ..write('globalPoint: $globalPoint, ')
           ..write('fav: $fav, ')
           ..write('reviewCount: $reviewCount, ')
@@ -3555,8 +3439,6 @@ typedef $$NovelsTableCreateCompanionBuilder =
       drift.Value<int?> istensei,
       drift.Value<int?> istenni,
       drift.Value<String?> keyword,
-      drift.Value<int?> generalFirstup,
-      drift.Value<int?> generalLastup,
       drift.Value<int?> globalPoint,
       drift.Value<int?> fav,
       drift.Value<int?> reviewCount,
@@ -3592,8 +3474,6 @@ typedef $$NovelsTableUpdateCompanionBuilder =
       drift.Value<int?> istensei,
       drift.Value<int?> istenni,
       drift.Value<String?> keyword,
-      drift.Value<int?> generalFirstup,
-      drift.Value<int?> generalLastup,
       drift.Value<int?> globalPoint,
       drift.Value<int?> fav,
       drift.Value<int?> reviewCount,
@@ -3699,16 +3579,6 @@ class $$NovelsTableFilterComposer
 
   drift.ColumnFilters<String> get keyword => $composableBuilder(
     column: $table.keyword,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
-  drift.ColumnFilters<int> get generalFirstup => $composableBuilder(
-    column: $table.generalFirstup,
-    builder: (column) => drift.ColumnFilters(column),
-  );
-
-  drift.ColumnFilters<int> get generalLastup => $composableBuilder(
-    column: $table.generalLastup,
     builder: (column) => drift.ColumnFilters(column),
   );
 
@@ -3877,16 +3747,6 @@ class $$NovelsTableOrderingComposer
     builder: (column) => drift.ColumnOrderings(column),
   );
 
-  drift.ColumnOrderings<int> get generalFirstup => $composableBuilder(
-    column: $table.generalFirstup,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
-  drift.ColumnOrderings<int> get generalLastup => $composableBuilder(
-    column: $table.generalLastup,
-    builder: (column) => drift.ColumnOrderings(column),
-  );
-
   drift.ColumnOrderings<int> get globalPoint => $composableBuilder(
     column: $table.globalPoint,
     builder: (column) => drift.ColumnOrderings(column),
@@ -4020,16 +3880,6 @@ class $$NovelsTableAnnotationComposer
   drift.GeneratedColumn<String> get keyword =>
       $composableBuilder(column: $table.keyword, builder: (column) => column);
 
-  drift.GeneratedColumn<int> get generalFirstup => $composableBuilder(
-    column: $table.generalFirstup,
-    builder: (column) => column,
-  );
-
-  drift.GeneratedColumn<int> get generalLastup => $composableBuilder(
-    column: $table.generalLastup,
-    builder: (column) => column,
-  );
-
   drift.GeneratedColumn<int> get globalPoint => $composableBuilder(
     column: $table.globalPoint,
     builder: (column) => column,
@@ -4140,8 +3990,6 @@ class $$NovelsTableTableManager
                 drift.Value<int?> istensei = const drift.Value.absent(),
                 drift.Value<int?> istenni = const drift.Value.absent(),
                 drift.Value<String?> keyword = const drift.Value.absent(),
-                drift.Value<int?> generalFirstup = const drift.Value.absent(),
-                drift.Value<int?> generalLastup = const drift.Value.absent(),
                 drift.Value<int?> globalPoint = const drift.Value.absent(),
                 drift.Value<int?> fav = const drift.Value.absent(),
                 drift.Value<int?> reviewCount = const drift.Value.absent(),
@@ -4176,8 +4024,6 @@ class $$NovelsTableTableManager
                 istensei: istensei,
                 istenni: istenni,
                 keyword: keyword,
-                generalFirstup: generalFirstup,
-                generalLastup: generalLastup,
                 globalPoint: globalPoint,
                 fav: fav,
                 reviewCount: reviewCount,
@@ -4213,8 +4059,6 @@ class $$NovelsTableTableManager
                 drift.Value<int?> istensei = const drift.Value.absent(),
                 drift.Value<int?> istenni = const drift.Value.absent(),
                 drift.Value<String?> keyword = const drift.Value.absent(),
-                drift.Value<int?> generalFirstup = const drift.Value.absent(),
-                drift.Value<int?> generalLastup = const drift.Value.absent(),
                 drift.Value<int?> globalPoint = const drift.Value.absent(),
                 drift.Value<int?> fav = const drift.Value.absent(),
                 drift.Value<int?> reviewCount = const drift.Value.absent(),
@@ -4249,8 +4093,6 @@ class $$NovelsTableTableManager
                 istensei: istensei,
                 istenni: istenni,
                 keyword: keyword,
-                generalFirstup: generalFirstup,
-                generalLastup: generalLastup,
                 globalPoint: globalPoint,
                 fav: fav,
                 reviewCount: reviewCount,

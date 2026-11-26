@@ -260,12 +260,6 @@ class Novels extends Table {
   /// キーワード
   TextColumn get keyword => text().nullable()();
 
-  /// 初回掲載日 YYYY-MM-DD HH:MM:SS
-  IntColumn get generalFirstup => integer().nullable()();
-
-  /// 最終掲載日 YYYY-MM-DD HH:MM:SS
-  IntColumn get generalLastup => integer().nullable()();
-
   /// 総合評価ポイント (ブックマーク数×2)+評価ポイントで算出
   IntColumn get globalPoint => integer().nullable()();
 
@@ -477,7 +471,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.test(super.e);
 
   /// 現在のデータベーススキーマバージョン
-  static const int currentSchemaVersion = 19;
+  static const int currentSchemaVersion = 20;
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -716,6 +710,13 @@ class AppDatabase extends _$AppDatabase {
             // index 用コードを削除する。
             // DROP 後に VACUUM を実行し、物理ファイルのサイズも回収する。
             await _migrateToV19();
+          }
+
+          if (from < 20) {
+            // v20: 未使用の general_firstup / general_lastup を撤去する。
+            // どちらも API の日時文字列を int.tryParse で読んでいたため常に
+            // NULL で、参照するコードも無かった（実データ 1,064 件中 0 件）。
+            await _migrateToV20();
           }
         } on MigrationException {
           rethrow;
@@ -1058,6 +1059,21 @@ class AppDatabase extends _$AppDatabase {
 
     // 物理ファイルサイズを回収する。FTS 撤去で生じた空きページもここで詰められる。
     await customStatement('VACUUM');
+  }
+
+  /// v20: 未使用の `general_firstup` / `general_lastup` を撤去する。
+  ///
+  /// 両列は API の日時文字列を `int.tryParse` で読んでいたため常に NULL で、
+  /// 参照するコードも無かった。列の有無を確認してから落とすので、途中まで
+  /// 適用された DB でも安全に再実行できる。
+  Future<void> _migrateToV20() async {
+    final columns = await customSelect('PRAGMA table_info(novels)').get();
+    final names = columns.map((row) => row.read<String>('name')).toSet();
+    for (final column in const ['general_firstup', 'general_lastup']) {
+      if (names.contains(column)) {
+        await customStatement('ALTER TABLE novels DROP COLUMN "$column"');
+      }
+    }
   }
 
   /// 小説情報の取得

@@ -222,7 +222,13 @@ void main() {
         expect(picker.sourceExistedDuringSave, isTrue);
         expect(
           picker.savedSuggestedName,
-          matches(RegExp(r'^novelty_backup_\d{8}_\d{6}_v19\.db$')),
+          matches(
+            RegExp(
+              r'^novelty_backup_\d{8}_\d{6}_v'
+              '${AppDatabase.currentSchemaVersion}'
+              r'\.db$',
+            ),
+          ),
         );
         // The temporary copy is removed once the picker has it.
         expect(File(picker.savedSourcePath!).existsSync(), isFalse);
