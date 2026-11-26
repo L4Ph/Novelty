@@ -125,32 +125,40 @@ class SettingsController extends ChangeNotifier {
   }
 
   /// Reads the stored settings. Called once at startup.
+  ///
+  /// A failure lands in [AsyncError] rather than leaving the app on the
+  /// startup spinner forever; the root renders that state.
   Future<void> load() async {
-    final repo = _prefs;
-    final themeModeIndex =
-        await repo.getInt(_themeModeKey) ?? ThemeMode.system.index;
-    final fontSize = await repo.getDouble(_fontSizeKey) ?? 16.0;
-    final lineHeight = await repo.getDouble(_lineHeightKey) ?? 1.5;
-    final isVertical = await repo.getBool(_isVerticalKey) ?? false;
-    final isIncognito = await repo.getBool(_isIncognitoKey) ?? false;
-    final isPageFlip = await repo.getBool(_isPageFlipKey) ?? false;
-    final isRubyEnabled = await repo.getBool(_isRubyEnabledKey) ?? true;
-    final isOfflineMode = await repo.getBool(_isOfflineModeKey) ?? false;
+    try {
+      final repo = _prefs;
+      final themeModeIndex =
+          await repo.getInt(_themeModeKey) ?? ThemeMode.system.index;
+      final fontSize = await repo.getDouble(_fontSizeKey) ?? 16.0;
+      final lineHeight = await repo.getDouble(_lineHeightKey) ?? 1.5;
+      final isVertical = await repo.getBool(_isVerticalKey) ?? false;
+      final isIncognito = await repo.getBool(_isIncognitoKey) ?? false;
+      final isPageFlip = await repo.getBool(_isPageFlipKey) ?? false;
+      final isRubyEnabled = await repo.getBool(_isRubyEnabledKey) ?? true;
+      final isOfflineMode = await repo.getBool(_isOfflineModeKey) ?? false;
 
-    _setState(
-      AsyncData(
-        AppSettings(
-          themeMode: ThemeMode.values[themeModeIndex],
-          fontSize: fontSize,
-          lineHeight: lineHeight,
-          isVertical: isVertical,
-          isIncognito: isIncognito,
-          isPageFlip: isPageFlip,
-          isRubyEnabled: isRubyEnabled,
-          isOfflineMode: isOfflineMode,
+      _setState(
+        AsyncData(
+          AppSettings(
+            themeMode: ThemeMode.values[themeModeIndex],
+            fontSize: fontSize,
+            lineHeight: lineHeight,
+            isVertical: isVertical,
+            isIncognito: isIncognito,
+            isPageFlip: isPageFlip,
+            isRubyEnabled: isRubyEnabled,
+            isOfflineMode: isOfflineMode,
+          ),
         ),
-      ),
-    );
+      );
+    } on Object catch (error, stackTrace) {
+      debugPrint('Failed to load settings: $error\n$stackTrace');
+      _setState(AsyncError(error, stackTrace));
+    }
   }
 
   /// Sets the theme mode.

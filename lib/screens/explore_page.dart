@@ -340,8 +340,16 @@ class _EnrichedSearchResultsState extends State<_EnrichedSearchResults> {
   void _onSearchChanged() => _scheduleEnrich();
 
   /// Queued behind the previous run so no result is skipped.
+  ///
+  /// A failed run is caught here: if the error reached the chain, every later
+  /// `.then` would be skipped and enrichment would stop for good.
   void _scheduleEnrich() {
-    _enrichQueue = _enrichQueue.then((_) => _enrichNewResults());
+    _enrichQueue = _enrichQueue.then((_) => _enrichNewResults()).catchError((
+      Object error,
+      StackTrace stackTrace,
+    ) {
+      debugPrint('Failed to enrich search results: $error\n$stackTrace');
+    });
   }
 
   /// Enriches the results that arrived since the last run.
@@ -381,6 +389,8 @@ class _EnrichedSearchResultsState extends State<_EnrichedSearchResults> {
         );
         _lastEnrichedCount = results.length;
       });
+    } on Object catch (error, stackTrace) {
+      debugPrint('Failed to enrich search results: $error\n$stackTrace');
     } finally {
       if (mounted) setState(() => _isEnriching = false);
     }

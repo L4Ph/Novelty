@@ -117,18 +117,12 @@ class _SearchPageState extends State<SearchPage> {
       // Target fields (title, author, keyword) are not narrowed here: the FTS
       // query already searched them, and the narou API treats them as
       // "include in the search" rather than as strict field filters.
-
-      if (searchText.isNotEmpty) {}
-
       return true;
     }).toList();
 
     // Ordering: the DB result follows the FTS rank (or the library's added-at
-    // order), and the query's order is applied client-side. Sorting by
+    // order), so the query's order is not applied. Sorting by
     // novelUpdatedAt/lastup is intentionally left out.
-
-    if (query.order == 'new') {}
-
     return filteredNovels;
   }
 

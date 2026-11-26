@@ -5,6 +5,7 @@ import 'package:novelty/repositories/preferences_repository.dart';
 import 'package:novelty/utils/settings_provider.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:tiny_state/tiny_state.dart';
 
 import 'settings_provider_rollback_test.mocks.dart';
 
@@ -186,6 +187,17 @@ void main() {
       // 永続化が呼ばれたことを確認
       verify(mockPrefsRepo.setBool('is_ruby_enabled', true)).called(1);
       verify(mockPrefsRepo.setDouble('line_height', 1.3)).called(1);
+    });
+
+    test('読み込みに失敗するとAsyncErrorになり、起動スピナーのままにならない', () async {
+      when(
+        mockPrefsRepo.getInt(any),
+      ).thenThrow(StateError('preferences are unavailable'));
+
+      await settings.load();
+
+      expect(settings.value, isNull);
+      expect(settings.state, isA<AsyncError<AppSettings>>());
     });
   });
 }

@@ -138,7 +138,11 @@ class _LibraryPageState extends State<LibraryPage> {
         builder: (context, state) => state.when(
           data: (novels) {
             final all = novels.cast<Novel>();
-            final filtered = all.where((novel) => _matches(novel, filter));
+            // Materialised: a lazy WhereIterable re-runs the predicate for
+            // every elementAt, which is quadratic over the rows on screen.
+            final filtered = all
+                .where((novel) => _matches(novel, filter))
+                .toList();
             if (filtered.isEmpty) {
               return Center(
                 child: Text(
@@ -149,7 +153,7 @@ class _LibraryPageState extends State<LibraryPage> {
             return ListView.builder(
               itemCount: filtered.length,
               itemBuilder: (context, index) {
-                final novel = filtered.elementAt(index);
+                final novel = filtered[index];
 
                 return NovelListTile(
                   item: novel.toModel(),
